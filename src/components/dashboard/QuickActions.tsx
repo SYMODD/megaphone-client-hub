@@ -2,19 +2,22 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Users, FileText, Database } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const QuickActions = () => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-        <CardContent className="p-6 text-center">
-          <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-            <Plus className="w-6 h-6 text-white" />
-          </div>
-          <h3 className="font-semibold text-slate-800 mb-1">Nouveau Client</h3>
-          <p className="text-sm text-slate-500">Ajouter un client</p>
-        </CardContent>
-      </Card>
+      <Link to="/nouveau-client">
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
+          <CardContent className="p-6 text-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+              <Plus className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="font-semibold text-slate-800 mb-1">Nouveau Client</h3>
+            <p className="text-sm text-slate-500">Ajouter un client</p>
+          </CardContent>
+        </Card>
+      </Link>
 
       <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
         <CardContent className="p-6 text-center">
