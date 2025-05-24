@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Upload, Save } from "lucide-react";
+import { ArrowLeft, Save, Scan } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Navigation } from "@/components/layout/Navigation";
@@ -22,7 +22,7 @@ const NewClient = () => {
     prenom: "",
     nationalite: "",
     passeport: "",
-    photo: null as File | null,
+    scannedImage: null as string | null,
     observations: "",
     dateEnregistrement: new Date().toISOString().split('T')[0]
   });
@@ -31,13 +31,26 @@ const NewClient = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.size <= 5 * 1024 * 1024) { // 5MB max
-      setFormData(prev => ({ ...prev, photo: file }));
-    } else {
-      alert("La photo doit faire moins de 5 Mo");
-    }
+  const handleScanPassport = () => {
+    // Créer un input file temporaire pour accéder à la caméra
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment'; // Utilise la caméra arrière sur mobile
+    
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const result = event.target?.result as string;
+          setFormData(prev => ({ ...prev, scannedImage: result }));
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    
+    input.click();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -128,31 +141,28 @@ const NewClient = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="photo">Photo du client</Label>
+                  <Label>Scanner le passeport</Label>
                   <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
-                    <Upload className="w-8 h-8 mx-auto mb-2 text-slate-400" />
+                    <Scan className="w-8 h-8 mx-auto mb-2 text-slate-400" />
                     <p className="text-sm text-slate-600 mb-2">
-                      Glissez votre photo ici ou cliquez pour parcourir
+                      Scannez le passeport avec l'appareil photo
                     </p>
                     <p className="text-xs text-slate-400 mb-4">
-                      Formats acceptés: JPG, PNG (max 5 Mo)
+                      Appuyez sur le bouton pour utiliser la caméra
                     </p>
-                    <Input
-                      type="file"
-                      accept="image/jpeg,image/png"
-                      onChange={handlePhotoUpload}
-                      className="hidden"
-                      id="photo-upload"
-                    />
-                    <Label htmlFor="photo-upload" className="cursor-pointer">
-                      <Button type="button" variant="outline" size="sm">
-                        Choisir un fichier
-                      </Button>
-                    </Label>
-                    {formData.photo && (
-                      <p className="text-sm text-green-600 mt-2">
-                        ✓ {formData.photo.name}
-                      </p>
+                    <Button type="button" variant="outline" size="sm" onClick={handleScanPassport}>
+                      <Scan className="w-4 h-4 mr-2" />
+                      Scanner le passeport
+                    </Button>
+                    {formData.scannedImage && (
+                      <div className="mt-4">
+                        <p className="text-sm text-green-600 mb-2">✓ Passeport scanné</p>
+                        <img 
+                          src={formData.scannedImage} 
+                          alt="Passeport scanné" 
+                          className="max-w-full h-32 object-cover rounded border mx-auto"
+                        />
+                      </div>
                     )}
                   </div>
                 </div>
