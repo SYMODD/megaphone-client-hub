@@ -101,14 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
-    // First, check if user exists and is active
-    const { data: userData, error: userError } = await supabase
-      .from("profiles")
-      .select("statut")
-      .eq("id", (await supabase.auth.signInWithPassword({ email, password: "temp" }))?.data?.user?.id)
-      .single();
-
-    // Attempt login first to get user ID
+    // Attempt login
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -124,12 +117,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq("id", data.user.id)
         .single();
 
-      if (profileError) {
+      if (profileError && profileError.code !== "PGRST116") {
         console.error("Error checking user status:", profileError);
         return { data, error: profileError };
       }
 
-      if (profileData.statut === "inactif") {
+      if (profileData && profileData.statut === "inactif") {
         // Sign out the user and return error
         await supabase.auth.signOut();
         return { 

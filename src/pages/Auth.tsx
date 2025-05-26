@@ -4,33 +4,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
-import { Database } from "@/integrations/supabase/types";
-
-type AppRole = Database["public"]["Enums"]["app_role"];
-type PointOperation = Database["public"]["Enums"]["point_operation"];
-
-const pointOperationLabels: Record<PointOperation, string> = {
-  "aeroport_marrakech": "Aéroport Marrakech",
-  "aeroport_casablanca": "Aéroport Casablanca", 
-  "aeroport_agadir": "Aéroport Agadir",
-  "navire_atlas": "Navire Atlas",
-  "navire_meridien": "Navire Méridien",
-  "agence_centrale": "Agence Centrale"
-};
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
-  const { user, signIn, signUp, loading } = useAuth();
+  const { user, signIn, loading } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("login");
-
-  // Check if current user is admin (only admin can access signup)
-  const isAdmin = user?.email === "essbane.salim@gmail.com";
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
 
   // Redirect if already authenticated
   if (user && !loading) {
@@ -42,19 +26,12 @@ const Auth = () => {
     password: "",
   });
 
-  const [signupForm, setSignupForm] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-    nom: "",
-    prenom: "",
-    role: "agent" as AppRole,
-    point_operation: "agence_centrale" as PointOperation,
-  });
+  const [resetEmail, setResetEmail] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     setIsLoading(true);
 
     try {
@@ -69,78 +46,29 @@ const Auth = () => {
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Only allow signup if user is admin
-    if (!isAdmin) {
-      setError("Seul l'administrateur peut créer de nouveaux comptes");
-      return;
-    }
-
     setError(null);
+    setSuccess(null);
     setIsLoading(true);
 
-    if (signupForm.password !== signupForm.confirmPassword) {
-      setError("Les mots de passe ne correspondent pas");
-      setIsLoading(false);
-      return;
-    }
-
-    if (signupForm.password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères");
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const { error } = await signUp(signupForm.email, signupForm.password, {
-        nom: signupForm.nom,
-        prenom: signupForm.prenom,
-        role: signupForm.role,
-        point_operation: signupForm.point_operation,
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth`,
       });
 
       if (error) {
-        if (error.message.includes("already registered")) {
-          setError("Cet email est déjà utilisé");
-        } else {
-          setError(error.message);
-        }
+        setError(error.message);
       } else {
-        setError(null);
-        // Reset form on success
-        setSignupForm({
-          email: "",
-          password: "",
-          confirmPassword: "",
-          nom: "",
-          prenom: "",
-          role: "agent",
-          point_operation: "agence_centrale",
-        });
-        setActiveTab("login");
-        alert("Compte créé avec succès ! L'utilisateur peut maintenant se connecter.");
+        setSuccess("Un lien de réinitialisation a été envoyé à votre adresse email.");
+        setResetEmail("");
+        setShowPasswordReset(false);
       }
     } catch (error) {
       setError("Une erreur inattendue s'est produite");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Handle tab change - prevent access to signup tab for non-admin users
-  const handleTabChange = (value: string) => {
-    if (value === "signup" && !user) {
-      setError("Seul l'administrateur peut créer de nouveaux comptes. Veuillez vous connecter.");
-      return;
-    }
-    if (value === "signup" && user && !isAdmin) {
-      setError("Seul l'administrateur peut créer de nouveaux comptes");
-      return;
-    }
-    setError(null);
-    setActiveTab(value);
   };
 
   if (loading) {
@@ -164,188 +92,99 @@ const Auth = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Authentification</CardTitle>
+            <CardTitle>
+              {showPasswordReset ? "Réinitialiser le mot de passe" : "Connexion"}
+            </CardTitle>
             <CardDescription>
-              {user && isAdmin 
-                ? "Connectez-vous ou créez un compte pour accéder à l'application"
+              {showPasswordReset 
+                ? "Entrez votre email pour recevoir un lien de réinitialisation"
                 : "Connectez-vous pour accéder à l'application"
               }
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Connexion</TabsTrigger>
-                <TabsTrigger 
-                  value="signup" 
-                  disabled={!user || !isAdmin}
-                  className={!user || !isAdmin ? "opacity-50 cursor-not-allowed" : ""}
-                >
-                  Inscription
-                </TabsTrigger>
-              </TabsList>
+            {(error || success) && (
+              <Alert className={`mb-4 ${success ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                <AlertDescription className={success ? 'text-green-700' : 'text-red-700'}>
+                  {error || success}
+                </AlertDescription>
+              </Alert>
+            )}
 
-              {error && (
-                <Alert className="mt-4 border-red-200 bg-red-50">
-                  <AlertDescription className="text-red-700">{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      value={loginForm.email}
-                      onChange={(e) =>
-                        setLoginForm({ ...loginForm, email: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Mot de passe</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      value={loginForm.password}
-                      onChange={(e) =>
-                        setLoginForm({ ...loginForm, password: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Connexion..." : "Se connecter"}
+            {showPasswordReset ? (
+              <form onSubmit={handlePasswordReset} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">Email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button type="submit" className="flex-1" disabled={isLoading}>
+                    {isLoading ? "Envoi..." : "Envoyer le lien"}
                   </Button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="signup">
-                {user && isAdmin ? (
-                  <form onSubmit={handleSignup} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-nom">Nom</Label>
-                        <Input
-                          id="signup-nom"
-                          value={signupForm.nom}
-                          onChange={(e) =>
-                            setSignupForm({ ...signupForm, nom: e.target.value })
-                          }
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-prenom">Prénom</Label>
-                        <Input
-                          id="signup-prenom"
-                          value={signupForm.prenom}
-                          onChange={(e) =>
-                            setSignupForm({ ...signupForm, prenom: e.target.value })
-                          }
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        value={signupForm.email}
-                        onChange={(e) =>
-                          setSignupForm({ ...signupForm, email: e.target.value })
-                        }
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-role">Rôle</Label>
-                      <Select
-                        value={signupForm.role}
-                        onValueChange={(value: AppRole) =>
-                          setSignupForm({ ...signupForm, role: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="agent">Agent</SelectItem>
-                          <SelectItem value="superviseur">Superviseur</SelectItem>
-                          <SelectItem value="admin">Administrateur</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-point">Point d'opération</Label>
-                      <Select
-                        value={signupForm.point_operation}
-                        onValueChange={(value: PointOperation) =>
-                          setSignupForm({ ...signupForm, point_operation: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(pointOperationLabels).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password">Mot de passe</Label>
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        value={signupForm.password}
-                        onChange={(e) =>
-                          setSignupForm({ ...signupForm, password: e.target.value })
-                        }
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-confirm">Confirmer le mot de passe</Label>
-                      <Input
-                        id="signup-confirm"
-                        type="password"
-                        value={signupForm.confirmPassword}
-                        onChange={(e) =>
-                          setSignupForm({ ...signupForm, confirmPassword: e.target.value })
-                        }
-                        required
-                      />
-                    </div>
-
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? "Inscription..." : "Créer le compte"}
-                    </Button>
-                  </form>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-slate-600 mb-4">
-                      Seul l'administrateur peut créer de nouveaux comptes.
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      Veuillez vous connecter avec un compte administrateur pour accéder à cette fonctionnalité.
-                    </p>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowPasswordReset(false);
+                      setError(null);
+                      setSuccess(null);
+                    }}
+                  >
+                    Annuler
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="login-email">Email</Label>
+                  <Input
+                    id="login-email"
+                    type="email"
+                    value={loginForm.email}
+                    onChange={(e) =>
+                      setLoginForm({ ...loginForm, email: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="login-password">Mot de passe</Label>
+                  <Input
+                    id="login-password"
+                    type="password"
+                    value={loginForm.password}
+                    onChange={(e) =>
+                      setLoginForm({ ...loginForm, password: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Connexion..." : "Se connecter"}
+                </Button>
+                
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordReset(true);
+                      setError(null);
+                      setSuccess(null);
+                    }}
+                    className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    Mot de passe oublié ?
+                  </button>
+                </div>
+              </form>
+            )}
           </CardContent>
         </Card>
       </div>
