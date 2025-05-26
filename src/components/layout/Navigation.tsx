@@ -30,10 +30,12 @@ export const Navigation = () => {
               Base Clients
             </Button>
           </Link>
-          <Button variant="ghost" size="sm" className="whitespace-nowrap">
-            <FileText className="w-4 h-4 mr-2" />
-            Contrats
-          </Button>
+          <Link to="/contrats">
+            <Button variant="ghost" size="sm" className="whitespace-nowrap">
+              <FileText className="w-4 h-4 mr-2" />
+              Contrats
+            </Button>
+          </Link>
           {isAdmin && (
             <>
               <Link to="/gestion-utilisateurs">
