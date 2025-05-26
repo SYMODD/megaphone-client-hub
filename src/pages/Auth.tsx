@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,22 +32,32 @@ const Auth = () => {
     confirmPassword: "",
   });
 
-  // Check if we're in password reset mode
-  const accessToken = searchParams.get('access_token');
-  const refreshToken = searchParams.get('refresh_token');
-  const type = searchParams.get('type');
-  
   // Handle password reset URL parameters
-  useState(() => {
+  useEffect(() => {
+    const accessToken = searchParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token');
+    const type = searchParams.get('type');
+    
+    console.log("URL parameters:", { type, accessToken: !!accessToken, refreshToken: !!refreshToken });
+    
     if (type === 'recovery' && accessToken && refreshToken) {
+      console.log("Password recovery detected, setting up session");
       setShowNewPassword(true);
+      
       // Set the session with the tokens from the URL
       supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
+      }).then(({ error }) => {
+        if (error) {
+          console.error("Error setting session:", error);
+          setError("Erreur lors de la configuration de la session de récupération");
+        } else {
+          console.log("Session set successfully for password recovery");
+        }
       });
     }
-  });
+  }, [searchParams]);
 
   if (user && !loading && !showNewPassword) {
     return <Navigate to="/" replace />;
@@ -158,11 +168,13 @@ const Auth = () => {
     }
 
     try {
+      console.log("Updating password...");
       const { error } = await supabase.auth.updateUser({
         password: newPasswordForm.password
       });
 
       if (error) {
+        console.error("Password update error:", error);
         setError(error.message);
         toast({
           title: "Erreur",
@@ -170,6 +182,7 @@ const Auth = () => {
           variant: "destructive",
         });
       } else {
+        console.log("Password updated successfully");
         toast({
           title: "Mot de passe modifié",
           description: "Votre mot de passe a été modifié avec succès.",
@@ -178,6 +191,7 @@ const Auth = () => {
         navigate("/", { replace: true });
       }
     } catch (error) {
+      console.error("Unexpected error:", error);
       const errorMessage = "Une erreur inattendue s'est produite";
       setError(errorMessage);
       toast({
