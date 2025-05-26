@@ -5,34 +5,51 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 const Auth = () => {
-  const { user, signIn, signUp, loading } = useAuth();
+  const { user, signIn, loading } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
-  // ALL hooks must be called before any early returns
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  
   const [loginForm, setLoginForm] = useState({
     email: "",
     password: "",
   });
-  const [signupForm, setSignupForm] = useState({
-    email: "",
-    password: "",
-    nom: "",
-    prenom: "",
-  });
+  
   const [resetEmail, setResetEmail] = useState("");
+  const [newPasswordForm, setNewPasswordForm] = useState({
+    password: "",
+    confirmPassword: "",
+  });
 
-  // Now we can have early returns after all hooks are declared
-  if (user && !loading) {
+  // Check if we're in password reset mode
+  const accessToken = searchParams.get('access_token');
+  const refreshToken = searchParams.get('refresh_token');
+  const type = searchParams.get('type');
+  
+  // Handle password reset URL parameters
+  useState(() => {
+    if (type === 'recovery' && accessToken && refreshToken) {
+      setShowNewPassword(true);
+      // Set the session with the tokens from the URL
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+    }
+  });
+
+  if (user && !loading && !showNewPassword) {
     return <Navigate to="/" replace />;
   }
 
@@ -56,10 +73,10 @@ const Auth = () => {
     try {
       const { error } = await signIn(loginForm.email, loginForm.password);
       if (error) {
-        setError(error.message);
+        setError("Email ou mot de passe incorrect");
         toast({
           title: "Erreur de connexion",
-          description: error.message,
+          description: "Email ou mot de passe incorrect",
           variant: "destructive",
         });
       } else {
@@ -67,62 +84,6 @@ const Auth = () => {
           title: "Connexion réussie",
           description: "Vous êtes maintenant connecté.",
         });
-      }
-    } catch (error) {
-      const errorMessage = "Une erreur inattendue s'est produite";
-      setError(errorMessage);
-      toast({
-        title: "Erreur",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    setIsLoading(true);
-
-    // Vérifier que seul l'admin peut s'inscrire
-    if (signupForm.email !== "essbane.salim@gmail.com") {
-      const errorMessage = "Seul l'administrateur peut créer un compte via cette méthode.";
-      setError(errorMessage);
-      toast({
-        title: "Accès non autorisé",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const { error } = await signUp(signupForm.email, signupForm.password, {
-        nom: signupForm.nom,
-        prenom: signupForm.prenom,
-        role: "admin",
-        point_operation: "agence_centrale",
-      });
-
-      if (error) {
-        setError(error.message);
-        toast({
-          title: "Erreur lors de la création du compte",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        const successMessage = "Compte administrateur créé avec succès ! Vous pouvez maintenant vous connecter.";
-        setSuccess(successMessage);
-        toast({
-          title: "Compte créé",
-          description: successMessage,
-        });
-        setSignupForm({ email: "", password: "", nom: "", prenom: "" });
       }
     } catch (error) {
       const errorMessage = "Une erreur inattendue s'est produite";
@@ -145,7 +106,7 @@ const Auth = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/auth`,
+        redirectTo: `${window.location.origin}/auth?type=recovery`,
       });
 
       if (error) {
@@ -178,6 +139,57 @@ const Auth = () => {
     }
   };
 
+  const handleNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setIsLoading(true);
+
+    if (newPasswordForm.password !== newPasswordForm.confirmPassword) {
+      setError("Les mots de passe ne correspondent pas");
+      setIsLoading(false);
+      return;
+    }
+
+    if (newPasswordForm.password.length < 6) {
+      setError("Le mot de passe doit contenir au moins 6 caractères");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPasswordForm.password
+      });
+
+      if (error) {
+        setError(error.message);
+        toast({
+          title: "Erreur",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Mot de passe modifié",
+          description: "Votre mot de passe a été modifié avec succès.",
+        });
+        // Clear URL parameters and redirect to dashboard
+        navigate("/", { replace: true });
+      }
+    } catch (error) {
+      const errorMessage = "Une erreur inattendue s'est produite";
+      setError(errorMessage);
+      toast({
+        title: "Erreur",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -189,12 +201,18 @@ const Auth = () => {
         <Card>
           <CardHeader>
             <CardTitle>
-              {showPasswordReset ? "Réinitialiser le mot de passe" : "Authentification"}
+              {showNewPassword 
+                ? "Nouveau mot de passe" 
+                : showPasswordReset 
+                ? "Réinitialiser le mot de passe" 
+                : "Connexion"}
             </CardTitle>
             <CardDescription>
-              {showPasswordReset 
+              {showNewPassword
+                ? "Entrez votre nouveau mot de passe"
+                : showPasswordReset 
                 ? "Entrez votre email pour recevoir un lien de réinitialisation"
-                : "Connectez-vous ou créez le compte administrateur"
+                : "Connectez-vous à votre compte"
               }
             </CardDescription>
           </CardHeader>
@@ -207,7 +225,39 @@ const Auth = () => {
               </Alert>
             )}
 
-            {showPasswordReset ? (
+            {showNewPassword ? (
+              <form onSubmit={handleNewPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">Nouveau mot de passe</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    value={newPasswordForm.password}
+                    onChange={(e) =>
+                      setNewPasswordForm({ ...newPasswordForm, password: e.target.value })
+                    }
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    value={newPasswordForm.confirmPassword}
+                    onChange={(e) =>
+                      setNewPasswordForm({ ...newPasswordForm, confirmPassword: e.target.value })
+                    }
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Modification..." : "Modifier le mot de passe"}
+                </Button>
+              </form>
+            ) : showPasswordReset ? (
               <form onSubmit={handlePasswordReset} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="reset-email">Email</Label>
@@ -237,125 +287,49 @@ const Auth = () => {
                 </div>
               </form>
             ) : (
-              <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="login">Connexion</TabsTrigger>
-                  <TabsTrigger value="signup">Créer Admin</TabsTrigger>
-                </TabsList>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="login-email">Email</Label>
+                  <Input
+                    id="login-email"
+                    type="email"
+                    value={loginForm.email}
+                    onChange={(e) =>
+                      setLoginForm({ ...loginForm, email: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="login-password">Mot de passe</Label>
+                  <Input
+                    id="login-password"
+                    type="password"
+                    value={loginForm.password}
+                    onChange={(e) =>
+                      setLoginForm({ ...loginForm, password: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Connexion..." : "Se connecter"}
+                </Button>
                 
-                <TabsContent value="login">
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="login-email">Email</Label>
-                      <Input
-                        id="login-email"
-                        type="email"
-                        value={loginForm.email}
-                        onChange={(e) =>
-                          setLoginForm({ ...loginForm, email: e.target.value })
-                        }
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="login-password">Mot de passe</Label>
-                      <Input
-                        id="login-password"
-                        type="password"
-                        value={loginForm.password}
-                        onChange={(e) =>
-                          setLoginForm({ ...loginForm, password: e.target.value })
-                        }
-                        required
-                      />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? "Connexion..." : "Se connecter"}
-                    </Button>
-                    
-                    <div className="text-center">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowPasswordReset(true);
-                          setError(null);
-                          setSuccess(null);
-                        }}
-                        className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                      >
-                        Mot de passe oublié ?
-                      </button>
-                    </div>
-                  </form>
-                </TabsContent>
-
-                <TabsContent value="signup">
-                  <form onSubmit={handleSignup} className="space-y-4">
-                    <Alert className="border-blue-200 bg-blue-50">
-                      <AlertDescription className="text-blue-700">
-                        Seul l'email essbane.salim@gmail.com peut créer un compte administrateur.
-                      </AlertDescription>
-                    </Alert>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-nom">Nom</Label>
-                        <Input
-                          id="signup-nom"
-                          value={signupForm.nom}
-                          onChange={(e) =>
-                            setSignupForm({ ...signupForm, nom: e.target.value })
-                          }
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-prenom">Prénom</Label>
-                        <Input
-                          id="signup-prenom"
-                          value={signupForm.prenom}
-                          onChange={(e) =>
-                            setSignupForm({ ...signupForm, prenom: e.target.value })
-                          }
-                          required
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        value={signupForm.email}
-                        onChange={(e) =>
-                          setSignupForm({ ...signupForm, email: e.target.value })
-                        }
-                        placeholder="essbane.salim@gmail.com"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password">Mot de passe</Label>
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        value={signupForm.password}
-                        onChange={(e) =>
-                          setSignupForm({ ...signupForm, password: e.target.value })
-                        }
-                        required
-                        minLength={6}
-                      />
-                    </div>
-                    
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? "Création..." : "Créer le compte admin"}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordReset(true);
+                      setError(null);
+                      setSuccess(null);
+                    }}
+                    className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    Mot de passe oublié ?
+                  </button>
+                </div>
+              </form>
             )}
           </CardContent>
         </Card>
