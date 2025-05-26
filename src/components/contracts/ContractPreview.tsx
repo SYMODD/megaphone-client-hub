@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Print } from "lucide-react";
+import { Download, Printer } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -235,7 +235,7 @@ export const ContractPreview = ({ client, template }: ContractPreviewProps) => {
           Prévisualisation du contrat
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={handlePrint}>
-              <Print className="w-4 h-4 mr-2" />
+              <Printer className="w-4 h-4 mr-2" />
               Imprimer
             </Button>
             <Button variant="outline" size="sm">
