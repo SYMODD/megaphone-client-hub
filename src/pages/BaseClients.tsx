@@ -10,6 +10,7 @@ import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface Client {
   id: string;
@@ -27,6 +28,7 @@ interface Client {
 
 const BaseClients = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,16 +44,36 @@ const BaseClients = () => {
   const fetchClients = async () => {
     try {
       setLoading(true);
+      setError(null);
+      console.log('Fetching clients from database...');
+      
       const { data, error } = await supabase
         .from('clients')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Clients fetched successfully:', data);
       setClients(data || []);
+      
+      if (data && data.length > 0) {
+        toast({
+          title: "Clients chargés",
+          description: `${data.length} client(s) trouvé(s) dans la base de données.`,
+        });
+      }
     } catch (error) {
       console.error('Error fetching clients:', error);
       setError('Erreur lors du chargement des clients');
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les clients. Vérifiez votre connexion.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -92,8 +114,17 @@ const BaseClients = () => {
         <AuthenticatedHeader />
         <Navigation />
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center text-red-600">
-            <p>{error}</p>
+          <div className="text-center">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+              <p className="text-red-600 font-medium">{error}</p>
+              <Button 
+                onClick={fetchClients} 
+                className="mt-4"
+                variant="outline"
+              >
+                Réessayer
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -239,9 +270,18 @@ const BaseClients = () => {
                 </Table>
               </div>
 
-              {filteredClients.length === 0 && (
+              {filteredClients.length === 0 && clients.length > 0 && (
                 <div className="text-center py-8">
                   <p className="text-slate-500">Aucun client trouvé avec les critères sélectionnés.</p>
+                </div>
+              )}
+
+              {clients.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-slate-500">Aucun client dans la base de données.</p>
+                  <p className="text-sm text-slate-400 mt-2">
+                    Les clients s'afficheront ici une fois qu'ils seront ajoutés à la base de données.
+                  </p>
                 </div>
               )}
             </CardContent>
