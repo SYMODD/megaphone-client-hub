@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { LogOut, User, Shield, Users, Eye } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { RoleIndicator } from "../dashboard/RoleIndicator";
 
 export const AuthenticatedHeader = () => {
   const { profile, signOut } = useAuth();
@@ -14,45 +15,6 @@ export const AuthenticatedHeader = () => {
       toast.success("Déconnexion réussie");
     } catch (error) {
       toast.error("Erreur lors de la déconnexion");
-    }
-  };
-
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case "admin":
-        return "Administrateur";
-      case "superviseur":
-        return "Superviseur";
-      case "agent":
-        return "Agent";
-      default:
-        return role;
-    }
-  };
-
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case "admin":
-        return <Shield className="w-3 h-3" />;
-      case "superviseur":
-        return <Eye className="w-3 h-3" />;
-      case "agent":
-        return <Users className="w-3 h-3" />;
-      default:
-        return <User className="w-3 h-3" />;
-    }
-  };
-
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case "admin":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "superviseur":
-        return "bg-purple-100 text-purple-800 border-purple-200";
-      case "agent":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
@@ -80,29 +42,29 @@ export const AuthenticatedHeader = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            {profile && (
+            {profile ? (
               <div className="flex items-center space-x-3">
                 <div className="text-right">
                   <p className="text-sm font-medium text-slate-800">
                     {profile.prenom} {profile.nom}
                   </p>
                   <div className="flex items-center space-x-2 text-xs text-slate-600">
-                    <Badge 
-                      variant="outline" 
-                      className={`px-2 py-0.5 text-xs font-medium border ${getRoleColor(profile.role)}`}
-                    >
-                      <span className="flex items-center gap-1">
-                        {getRoleIcon(profile.role)}
-                        {getRoleLabel(profile.role)}
-                      </span>
-                    </Badge>
-                    <span>•</span>
-                    <span>{getPointLabel(profile.point_operation)}</span>
+                    <RoleIndicator role={profile.role} size="sm" />
+                    {profile.point_operation && (
+                      <>
+                        <span>•</span>
+                        <span>{getPointLabel(profile.point_operation)}</span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                   <User className="w-4 h-4 text-blue-600" />
                 </div>
+              </div>
+            ) : (
+              <div className="text-sm text-slate-600">
+                Chargement...
               </div>
             )}
             

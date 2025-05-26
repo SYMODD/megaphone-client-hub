@@ -17,6 +17,9 @@ import { Link } from "react-router-dom";
 const Index = () => {
   const { user, profile } = useAuth();
 
+  console.log("User:", user);
+  console.log("Profile:", profile);
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
@@ -48,16 +51,33 @@ const Index = () => {
           <p className="text-xl text-slate-600 mb-4">
             Client Manager Dashboard
           </p>
-          {profile && (
-            <div className="space-y-2">
-              <p className="text-slate-500 mb-4">
-                Bienvenue, {profile.prenom} {profile.nom}
-              </p>
-              <div className="flex justify-center">
-                <RoleIndicator role={profile.role} size="lg" />
+          
+          {/* User Info Section - Plus visible */}
+          <div className="bg-white rounded-lg shadow-sm border p-6 max-w-md mx-auto mb-6">
+            {profile ? (
+              <div className="space-y-3">
+                <p className="text-lg font-medium text-slate-800">
+                  Bienvenue, {profile.prenom} {profile.nom}
+                </p>
+                <div className="flex flex-col items-center space-y-2">
+                  <RoleIndicator role={profile.role} size="lg" />
+                  {profile.point_operation && (
+                    <p className="text-sm text-slate-600">
+                      Point d'opération: {profile.point_operation}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="space-y-2">
+                <p className="text-slate-600">Chargement du profil...</p>
+                <div className="text-xs text-slate-500">
+                  Email: {user.email}
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center justify-center space-x-2">
             <Badge variant="secondary" className="px-3 py-1">
               <Users className="w-4 h-4 mr-1" />
