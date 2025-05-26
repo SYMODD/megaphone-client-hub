@@ -27,6 +27,9 @@ export const useAuthOperations = () => {
           variant: "destructive",
         });
       } else {
+        // Clear any previous errors on successful login
+        setError(null);
+        setSuccess("Connexion réussie");
         toast({
           title: "Connexion réussie",
           description: "Vous êtes maintenant connecté.",

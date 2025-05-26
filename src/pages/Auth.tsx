@@ -55,6 +55,12 @@ const Auth = () => {
     }
   }, [searchParams, setError]);
 
+  // Clear errors and success messages when user changes between forms
+  useEffect(() => {
+    setError(null);
+    setSuccess(null);
+  }, [showPasswordReset, showNewPassword, setError, setSuccess]);
+
   if (user && !loading && !showNewPassword) {
     return <Navigate to="/" replace />;
   }
