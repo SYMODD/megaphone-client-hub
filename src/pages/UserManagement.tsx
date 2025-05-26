@@ -360,7 +360,6 @@ const UserManagement = () => {
                       <SelectContent>
                         <SelectItem value="agent">Agent</SelectItem>
                         <SelectItem value="superviseur">Superviseur</SelectItem>
-                        {isAdmin && <SelectItem value="admin">Administrateur</SelectItem>}
                       </SelectContent>
                     </Select>
                   </div>
