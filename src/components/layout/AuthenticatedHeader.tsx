@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Shield, Users, Eye } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -27,6 +27,32 @@ export const AuthenticatedHeader = () => {
         return "Agent";
       default:
         return role;
+    }
+  };
+
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case "admin":
+        return <Shield className="w-3 h-3" />;
+      case "superviseur":
+        return <Eye className="w-3 h-3" />;
+      case "agent":
+        return <Users className="w-3 h-3" />;
+      default:
+        return <User className="w-3 h-3" />;
+    }
+  };
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case "admin":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "superviseur":
+        return "bg-purple-100 text-purple-800 border-purple-200";
+      case "agent":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
@@ -61,7 +87,15 @@ export const AuthenticatedHeader = () => {
                     {profile.prenom} {profile.nom}
                   </p>
                   <div className="flex items-center space-x-2 text-xs text-slate-600">
-                    <span>{getRoleLabel(profile.role)}</span>
+                    <Badge 
+                      variant="outline" 
+                      className={`px-2 py-0.5 text-xs font-medium border ${getRoleColor(profile.role)}`}
+                    >
+                      <span className="flex items-center gap-1">
+                        {getRoleIcon(profile.role)}
+                        {getRoleLabel(profile.role)}
+                      </span>
+                    </Badge>
                     <span>•</span>
                     <span>{getPointLabel(profile.point_operation)}</span>
                   </div>

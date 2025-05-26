@@ -8,6 +8,7 @@ import { NationalityChart } from "@/components/dashboard/NationalityChart";
 import { RecentClients } from "@/components/dashboard/RecentClients";
 import { RegistrationChart } from "@/components/dashboard/RegistrationChart";
 import { QuickActions } from "@/components/dashboard/QuickActions";
+import { RoleIndicator } from "@/components/dashboard/RoleIndicator";
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,9 +49,14 @@ const Index = () => {
             Client Manager Dashboard
           </p>
           {profile && (
-            <p className="text-slate-500 mb-4">
-              Bienvenue, {profile.prenom} {profile.nom}
-            </p>
+            <div className="space-y-2">
+              <p className="text-slate-500 mb-4">
+                Bienvenue, {profile.prenom} {profile.nom}
+              </p>
+              <div className="flex justify-center">
+                <RoleIndicator role={profile.role} size="lg" />
+              </div>
+            </div>
           )}
           <div className="flex items-center justify-center space-x-2">
             <Badge variant="secondary" className="px-3 py-1">
