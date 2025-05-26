@@ -5,12 +5,21 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Search, Filter, Eye, Edit, FileText, Download } from "lucide-react";
+import { Search, Filter, Eye, Edit, FileText, Download, FileSpreadsheet, FileType } from "lucide-react";
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
+import { DateRange } from "react-day-picker";
 
 interface Client {
   id: string;
@@ -36,6 +45,7 @@ const BaseClients = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedNationality, setSelectedNationality] = useState("");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -109,7 +119,23 @@ const BaseClients = () => {
     
     const matchesNationality = selectedNationality === "" || client.nationalite === selectedNationality;
     
-    return matchesSearch && matchesNationality;
+    // Filtre par date
+    let matchesDateRange = true;
+    if (dateRange?.from) {
+      const clientDate = new Date(client.date_enregistrement);
+      const fromDate = new Date(dateRange.from);
+      fromDate.setHours(0, 0, 0, 0);
+      
+      if (dateRange.to) {
+        const toDate = new Date(dateRange.to);
+        toDate.setHours(23, 59, 59, 999);
+        matchesDateRange = clientDate >= fromDate && clientDate <= toDate;
+      } else {
+        matchesDateRange = clientDate >= fromDate;
+      }
+    }
+    
+    return matchesSearch && matchesNationality && matchesDateRange;
   });
 
   const nationalities = [...new Set(clients.map(client => client.nationalite))];
@@ -117,6 +143,42 @@ const BaseClients = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handleExport = (format: 'csv' | 'pdf') => {
+    if (filteredClients.length === 0) {
+      toast({
+        title: "Aucune donnée à exporter",
+        description: "Il n'y a aucun client correspondant aux critères sélectionnés.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const filename = `clients${dateRange?.from ? `_${dateRange.from.toISOString().split('T')[0]}` : ''}${dateRange?.to ? `_au_${dateRange.to.toISOString().split('T')[0]}` : ''}`;
+      
+      if (format === 'csv') {
+        exportToCSV(filteredClients, filename);
+        toast({
+          title: "Export CSV réussi",
+          description: `${filteredClients.length} client(s) exporté(s) en CSV.`,
+        });
+      } else {
+        exportToPDF(filteredClients, filename);
+        toast({
+          title: "Export PDF réussi", 
+          description: `${filteredClients.length} client(s) exporté(s) en PDF.`,
+        });
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'export:', error);
+      toast({
+        title: "Erreur d'export",
+        description: "Une erreur est survenue lors de l'exportation des données.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -205,7 +267,7 @@ const BaseClients = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input
@@ -226,11 +288,30 @@ const BaseClients = () => {
                     <option key={nationality} value={nationality}>{nationality}</option>
                   ))}
                 </select>
+
+                <DateRangePicker
+                  dateRange={dateRange}
+                  onDateRangeChange={setDateRange}
+                />
                 
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Download className="w-4 h-4" />
-                  Exporter
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2">
+                      <Download className="w-4 h-4" />
+                      Exporter
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => handleExport('csv')}>
+                      <FileSpreadsheet className="w-4 h-4 mr-2" />
+                      Exporter en CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                      <FileType className="w-4 h-4 mr-2" />
+                      Exporter en PDF
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </CardContent>
           </Card>
