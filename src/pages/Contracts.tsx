@@ -8,6 +8,9 @@ import { useToast } from "@/hooks/use-toast";
 import { ClientSelector } from "@/components/contracts/ClientSelector";
 import { ContractConfiguration } from "@/components/contracts/ContractConfiguration";
 import { ContractPreview } from "@/components/contracts/ContractPreview";
+import { ContractTypeManager } from "@/components/contracts/ContractTypeManager";
+import { generateContractHTML, downloadContractAsHTML } from "@/utils/contractGenerator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Client {
   id: string;
@@ -20,6 +23,13 @@ interface Client {
   observations?: string;
 }
 
+interface ContractTemplate {
+  id: string;
+  name: string;
+  description: string;
+  template: string;
+}
+
 const Contracts = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -28,10 +38,12 @@ const Contracts = () => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [showPreview, setShowPreview] = useState(false);
+  const [customTemplates, setCustomTemplates] = useState<ContractTemplate[]>([]);
 
   useEffect(() => {
     if (user) {
       fetchClients();
+      loadCustomTemplates();
     }
   }, [user]);
 
@@ -65,6 +77,18 @@ const Contracts = () => {
     }
   };
 
+  const loadCustomTemplates = () => {
+    const savedTemplates = localStorage.getItem('customContractTemplates');
+    if (savedTemplates) {
+      setCustomTemplates(JSON.parse(savedTemplates));
+    }
+  };
+
+  const saveCustomTemplates = (templates: ContractTemplate[]) => {
+    localStorage.setItem('customContractTemplates', JSON.stringify(templates));
+    setCustomTemplates(templates);
+  };
+
   const handleClientSelect = (client: Client) => {
     setSelectedClient(client);
     setShowPreview(false);
@@ -80,6 +104,53 @@ const Contracts = () => {
       return;
     }
     setShowPreview(true);
+  };
+
+  const handleDownloadHTML = () => {
+    if (!selectedClient || !selectedTemplate) {
+      toast({
+        title: "Sélection incomplète",
+        description: "Veuillez sélectionner un client et un modèle de contrat.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const htmlContent = generateContractHTML(selectedClient, selectedTemplate, customTemplates);
+    const filename = `contrat_${selectedClient.prenom}_${selectedClient.nom}_${new Date().toISOString().split('T')[0]}.html`;
+    
+    downloadContractAsHTML(htmlContent, filename);
+    
+    toast({
+      title: "Téléchargement réussi",
+      description: "Le contrat HTML a été téléchargé avec succès.",
+    });
+  };
+
+  const handleAddTemplate = (template: ContractTemplate) => {
+    const newTemplates = [...customTemplates, template];
+    saveCustomTemplates(newTemplates);
+  };
+
+  const handleUpdateTemplate = (template: ContractTemplate) => {
+    const newTemplates = customTemplates.map(t => t.id === template.id ? template : t);
+    saveCustomTemplates(newTemplates);
+  };
+
+  const handleDeleteTemplate = (id: string) => {
+    const newTemplates = customTemplates.filter(t => t.id !== id);
+    saveCustomTemplates(newTemplates);
+    
+    // Si le template supprimé était sélectionné, déselectionner
+    if (selectedTemplate === id) {
+      setSelectedTemplate("");
+      setShowPreview(false);
+    }
+    
+    toast({
+      title: "Modèle supprimé",
+      description: "Le modèle de contrat a été supprimé avec succès.",
+    });
   };
 
   if (loading) {
@@ -109,27 +180,47 @@ const Contracts = () => {
             <p className="text-sm sm:text-base text-slate-600">Créez des contrats personnalisés pour vos clients</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-            <ClientSelector
-              clients={clients}
-              selectedClient={selectedClient}
-              onClientSelect={handleClientSelect}
-            />
+          <Tabs defaultValue="generate" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="generate">Générer un contrat</TabsTrigger>
+              <TabsTrigger value="manage">Gérer les modèles</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="generate" className="space-y-4 lg:space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                <ClientSelector
+                  clients={clients}
+                  selectedClient={selectedClient}
+                  onClientSelect={handleClientSelect}
+                />
 
-            <ContractConfiguration
-              selectedClient={selectedClient}
-              selectedTemplate={selectedTemplate}
-              onTemplateSelect={setSelectedTemplate}
-              onGenerateContract={handleGenerateContract}
-            />
-          </div>
+                <ContractConfiguration
+                  selectedClient={selectedClient}
+                  selectedTemplate={selectedTemplate}
+                  customTemplates={customTemplates}
+                  onTemplateSelect={setSelectedTemplate}
+                  onGenerateContract={handleGenerateContract}
+                  onDownloadHTML={handleDownloadHTML}
+                />
+              </div>
 
-          {showPreview && selectedClient && selectedTemplate && (
-            <ContractPreview
-              client={selectedClient}
-              template={selectedTemplate}
-            />
-          )}
+              {showPreview && selectedClient && selectedTemplate && (
+                <ContractPreview
+                  client={selectedClient}
+                  template={selectedTemplate}
+                />
+              )}
+            </TabsContent>
+            
+            <TabsContent value="manage">
+              <ContractTypeManager
+                customTemplates={customTemplates}
+                onAddTemplate={handleAddTemplate}
+                onUpdateTemplate={handleUpdateTemplate}
+                onDeleteTemplate={handleDeleteTemplate}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>

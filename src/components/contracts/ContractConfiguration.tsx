@@ -14,18 +14,29 @@ interface Client {
   observations?: string;
 }
 
+interface ContractTemplate {
+  id: string;
+  name: string;
+  description: string;
+  template: string;
+}
+
 interface ContractConfigurationProps {
   selectedClient: Client | null;
   selectedTemplate: string;
+  customTemplates: ContractTemplate[];
   onTemplateSelect: (template: string) => void;
   onGenerateContract: () => void;
+  onDownloadHTML: () => void;
 }
 
 export const ContractConfiguration = ({
   selectedClient,
   selectedTemplate,
+  customTemplates,
   onTemplateSelect,
   onGenerateContract,
+  onDownloadHTML,
 }: ContractConfigurationProps) => {
   return (
     <Card>
@@ -48,12 +59,14 @@ export const ContractConfiguration = ({
           <ContractTemplateSelector
             selectedTemplate={selectedTemplate}
             onTemplateSelect={onTemplateSelect}
+            customTemplates={customTemplates}
           />
 
           <ContractActions
             selectedClient={selectedClient}
             selectedTemplate={selectedTemplate}
             onGenerateContract={onGenerateContract}
+            onDownloadHTML={onDownloadHTML}
           />
         </div>
       </CardContent>
