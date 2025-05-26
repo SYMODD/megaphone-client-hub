@@ -63,8 +63,8 @@ export const AuthenticatedHeader = () => {
                 </div>
               </div>
             ) : (
-              <div className="text-sm text-slate-600">
-                Chargement...
+              <div className="flex items-center space-x-2">
+                <RoleIndicator role="agent" size="sm" />
               </div>
             )}
             
