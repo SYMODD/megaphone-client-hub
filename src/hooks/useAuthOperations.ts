@@ -18,19 +18,72 @@ export const useAuthOperations = () => {
     setIsLoading(true);
 
     try {
-      console.log("Attempting to sign in with:", email.toLowerCase());
-      const { error } = await signIn(email.toLowerCase().trim(), password);
+      const normalizedEmail = email.toLowerCase().trim();
+      console.log("=== DEBUG LOGIN START ===");
+      console.log("Original email:", email);
+      console.log("Normalized email:", normalizedEmail);
+      console.log("Password length:", password.length);
+      
+      // Vérifier d'abord si l'utilisateur existe
+      console.log("Checking if user exists in profiles table...");
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, nom, prenom, statut")
+        .ilike("id", `%${normalizedEmail.split('@')[0]}%`);
+      
+      console.log("Profile search result:", { profiles, profileError });
+      
+      // Essayer la connexion
+      console.log("Attempting sign in...");
+      const { data, error } = await signIn(normalizedEmail, password);
+      
+      console.log("Sign in result:", { 
+        hasUser: !!data?.user, 
+        hasSession: !!data?.session,
+        errorCode: error?.code,
+        errorMessage: error?.message,
+        error: error 
+      });
       
       if (error) {
-        console.error("Sign in error:", error);
-        setError("Email ou mot de passe incorrect");
+        console.error("=== SIGN IN ERROR DETAILS ===");
+        console.error("Error object:", error);
+        console.error("Error code:", error.code);
+        console.error("Error message:", error.message);
+        
+        let userFriendlyMessage = "Email ou mot de passe incorrect";
+        
+        // Messages d'erreur plus spécifiques selon le code d'erreur
+        switch (error.code) {
+          case "invalid_credentials":
+            userFriendlyMessage = "Les identifiants fournis sont incorrects. Vérifiez votre email et mot de passe.";
+            break;
+          case "email_not_confirmed":
+            userFriendlyMessage = "Veuillez confirmer votre email avant de vous connecter.";
+            break;
+          case "too_many_requests":
+            userFriendlyMessage = "Trop de tentatives de connexion. Veuillez attendre quelques minutes.";
+            break;
+          case "user_not_found":
+            userFriendlyMessage = "Aucun compte trouvé avec cet email.";
+            break;
+          default:
+            userFriendlyMessage = `Erreur de connexion: ${error.message}`;
+        }
+        
+        setError(userFriendlyMessage);
         toast({
           title: "Erreur de connexion",
-          description: "Email ou mot de passe incorrect",
+          description: userFriendlyMessage,
           variant: "destructive",
         });
+        
+        console.log("=== DEBUG LOGIN END (ERROR) ===");
       } else {
-        console.log("Login successful");
+        console.log("=== LOGIN SUCCESS ===");
+        console.log("User ID:", data?.user?.id);
+        console.log("Session valid:", !!data?.session);
+        
         setError(null);
         setSuccess("Connexion réussie");
         toast({
@@ -40,16 +93,24 @@ export const useAuthOperations = () => {
         setTimeout(() => {
           setSuccess(null);
         }, 2000);
+        
+        console.log("=== DEBUG LOGIN END (SUCCESS) ===");
       }
     } catch (error) {
-      console.error("Unexpected error:", error);
-      const errorMessage = "Une erreur inattendue s'est produite";
+      console.error("=== UNEXPECTED ERROR ===");
+      console.error("Caught error:", error);
+      console.error("Error type:", typeof error);
+      console.error("Error constructor:", error?.constructor?.name);
+      
+      const errorMessage = "Une erreur inattendue s'est produite lors de la connexion";
       setError(errorMessage);
       toast({
         title: "Erreur",
         description: errorMessage,
         variant: "destructive",
       });
+      
+      console.log("=== DEBUG LOGIN END (CATCH) ===");
     } finally {
       setIsLoading(false);
     }

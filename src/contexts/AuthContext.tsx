@@ -115,27 +115,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
-    console.log("Attempting to sign in with:", email);
+    const normalizedEmail = email.toLowerCase().trim();
+    console.log("=== AuthContext signIn ===");
+    console.log("Normalized email:", normalizedEmail);
+    
+    // Première vérification : l'utilisateur existe-t-il dans auth.users ?
+    console.log("Attempting Supabase auth sign in...");
     
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
       password,
     });
 
-    console.log("Sign in response:", { data, error });
+    console.log("Supabase auth response:", { 
+      hasData: !!data, 
+      hasUser: !!data?.user,
+      hasSession: !!data?.session,
+      userId: data?.user?.id,
+      errorCode: error?.code,
+      errorMessage: error?.message
+    });
 
     if (error) {
-      console.error("Sign in error:", error);
+      console.error("Supabase auth error:", error);
       return { data, error };
     }
 
-    // Check if user is active after successful authentication
+    // Si l'authentification réussit, vérifier le statut dans profiles
     if (data.user) {
+      console.log("Auth successful, checking user status in profiles...");
+      
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("statut")
+        .select("statut, nom, prenom, role")
         .eq("id", data.user.id)
         .single();
+
+      console.log("Profile check result:", { 
+        profileData, 
+        profileError: profileError?.code 
+      });
 
       if (profileError && profileError.code !== "PGRST116") {
         console.error("Error checking user status:", profileError);
@@ -143,15 +162,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (profileData && profileData.statut === "inactif") {
+        console.log("User account is inactive");
         // Sign out the user and return error
         await supabase.auth.signOut();
         return { 
           data: null, 
           error: { 
-            message: "Votre compte est inactif. Veuillez contacter l'administrateur." 
+            message: "Votre compte est inactif. Veuillez contacter l'administrateur.",
+            code: "account_inactive"
           } 
         };
       }
+      
+      console.log("User is active, login successful");
     }
 
     return { data, error };
