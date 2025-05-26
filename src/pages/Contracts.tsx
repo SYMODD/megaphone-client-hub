@@ -115,45 +115,45 @@ const Contracts = () => {
       <AuthenticatedHeader />
       <Navigation />
       
-      <main className="container mx-auto px-4 py-8">
-        <div className="space-y-6">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="space-y-4 sm:space-y-6">
           {/* En-tête */}
-          <div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">Génération de Contrats</h1>
-            <p className="text-slate-600">Créez des contrats personnalisés pour vos clients</p>
+          <div className="px-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">Génération de Contrats</h1>
+            <p className="text-sm sm:text-base text-slate-600">Créez des contrats personnalisés pour vos clients</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
             {/* Sélection du client */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
+              <CardHeader className="pb-3 sm:pb-6">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                  <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
                   Sélectionner un client
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm">
                   Choisissez le client pour lequel générer un contrat
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                     <Input
                       placeholder="Rechercher un client..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 text-sm"
                     />
                   </div>
 
-                  <div className="max-h-96 overflow-y-auto">
+                  <div className="max-h-80 sm:max-h-96 overflow-y-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Client</TableHead>
-                          <TableHead>Nationalité</TableHead>
-                          <TableHead>Action</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Client</TableHead>
+                          <TableHead className="text-xs sm:text-sm hidden sm:table-cell">Nationalité</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Action</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -165,19 +165,23 @@ const Contracts = () => {
                             }`}
                             onClick={() => handleClientSelect(client)}
                           >
-                            <TableCell>
-                              <div>
-                                <p className="font-semibold">{client.prenom} {client.nom}</p>
-                                <p className="text-sm text-slate-500">{client.numero_passeport}</p>
+                            <TableCell className="py-2 sm:py-3">
+                              <div className="min-w-0">
+                                <p className="font-medium text-sm truncate">{client.prenom} {client.nom}</p>
+                                <p className="text-xs text-slate-500 truncate">{client.numero_passeport}</p>
+                                <div className="sm:hidden mt-1">
+                                  <Badge variant="outline" className="text-xs">{client.nationalite}</Badge>
+                                </div>
                               </div>
                             </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{client.nationalite}</Badge>
+                            <TableCell className="hidden sm:table-cell py-2 sm:py-3">
+                              <Badge variant="outline" className="text-xs">{client.nationalite}</Badge>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="py-2 sm:py-3">
                               <Button 
                                 variant={selectedClient?.id === client.id ? "default" : "ghost"} 
                                 size="sm"
+                                className="text-xs"
                               >
                                 {selectedClient?.id === client.id ? "Sélectionné" : "Sélectionner"}
                               </Button>
@@ -189,8 +193,8 @@ const Contracts = () => {
                   </div>
 
                   {filteredClients.length === 0 && (
-                    <div className="text-center py-8">
-                      <p className="text-slate-500">Aucun client trouvé.</p>
+                    <div className="text-center py-6 sm:py-8">
+                      <p className="text-slate-500 text-sm">Aucun client trouvé.</p>
                     </div>
                   )}
                 </div>
@@ -199,19 +203,19 @@ const Contracts = () => {
 
             {/* Sélection du modèle et génération */}
             <Card>
-              <CardHeader>
-                <CardTitle>Configuration du contrat</CardTitle>
-                <CardDescription>
+              <CardHeader className="pb-3 sm:pb-6">
+                <CardTitle className="text-lg sm:text-xl">Configuration du contrat</CardTitle>
+                <CardDescription className="text-sm">
                   Choisissez le type de contrat à générer
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {selectedClient && (
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <h4 className="font-semibold text-blue-800">Client sélectionné :</h4>
-                      <p className="text-blue-700">{selectedClient.prenom} {selectedClient.nom}</p>
-                      <p className="text-sm text-blue-600">{selectedClient.numero_passeport} - {selectedClient.nationalite}</p>
+                    <div className="p-3 sm:p-4 bg-blue-50 rounded-lg">
+                      <h4 className="font-medium text-blue-800 text-sm sm:text-base">Client sélectionné :</h4>
+                      <p className="text-blue-700 text-sm truncate">{selectedClient.prenom} {selectedClient.nom}</p>
+                      <p className="text-xs sm:text-sm text-blue-600 break-all">{selectedClient.numero_passeport} - {selectedClient.nationalite}</p>
                     </div>
                   )}
 
@@ -220,11 +224,11 @@ const Contracts = () => {
                     onTemplateSelect={setSelectedTemplate}
                   />
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Button 
                       onClick={handleGenerateContract}
                       disabled={!selectedClient || !selectedTemplate}
-                      className="flex-1"
+                      className="flex-1 text-sm"
                     >
                       <Eye className="w-4 h-4 mr-2" />
                       Prévisualiser
@@ -232,6 +236,7 @@ const Contracts = () => {
                     <Button 
                       variant="outline"
                       disabled={!selectedClient || !selectedTemplate}
+                      className="flex-1 sm:flex-none text-sm"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Télécharger PDF

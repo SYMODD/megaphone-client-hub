@@ -42,26 +42,26 @@ export const ContractTemplateSelector = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Modèles de contrats</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-base sm:text-lg">Modèles de contrats</CardTitle>
+        <CardDescription className="text-sm">
           Sélectionnez le type de contrat à générer
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-2 sm:gap-3">
           {contractTemplates.map((template) => {
             const Icon = template.icon;
             return (
               <Button
                 key={template.id}
                 variant={selectedTemplate === template.id ? "default" : "outline"}
-                className="h-auto p-4 justify-start"
+                className="h-auto p-3 sm:p-4 justify-start text-left"
                 onClick={() => onTemplateSelect(template.id)}
               >
-                <Icon className="w-5 h-5 mr-3" />
-                <div className="text-left">
-                  <div className="font-semibold">{template.name}</div>
-                  <div className="text-sm text-muted-foreground">
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm sm:text-base truncate">{template.name}</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground line-clamp-2 break-words">
                     {template.description}
                   </div>
                 </div>
