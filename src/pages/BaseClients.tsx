@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,124 +8,97 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Filter, Eye, Edit, FileText, Download } from "lucide-react";
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
-// Données d'exemple des clients
-const clientsData = [
-  {
-    id: 1,
-    nom: "Dubois",
-    prenom: "Marie",
-    nationalite: "France",
-    dateEnregistrement: "2024-01-15",
-    statut: "Actif",
-    telephone: "+33 6 12 34 56 78",
-    email: "marie.dubois@email.com"
-  },
-  {
-    id: 2,
-    nom: "Benali",
-    prenom: "Ahmed",
-    nationalite: "Algérie",
-    dateEnregistrement: "2024-01-14",
-    statut: "Actif",
-    telephone: "+213 5 55 12 34 56",
-    email: "ahmed.benali@email.com"
-  },
-  {
-    id: 3,
-    nom: "Diallo",
-    prenom: "Fatou",
-    nationalite: "Sénégal",
-    dateEnregistrement: "2024-01-13",
-    statut: "En attente",
-    telephone: "+221 77 123 45 67",
-    email: "fatou.diallo@email.com"
-  },
-  {
-    id: 4,
-    nom: "El Mansouri",
-    prenom: "Youssef",
-    nationalite: "Maroc",
-    dateEnregistrement: "2024-01-12",
-    statut: "Actif",
-    telephone: "+212 6 12 34 56 78",
-    email: "youssef.elmansouri@email.com"
-  },
-  {
-    id: 5,
-    nom: "Trabelsi",
-    prenom: "Leila",
-    nationalite: "Tunisie",
-    dateEnregistrement: "2024-01-11",
-    statut: "Inactif",
-    telephone: "+216 20 123 456",
-    email: "leila.trabelsi@email.com"
-  },
-  {
-    id: 6,
-    nom: "Nguyen",
-    prenom: "Van",
-    nationalite: "Vietnam",
-    dateEnregistrement: "2024-01-10",
-    statut: "Actif",
-    telephone: "+84 90 123 4567",
-    email: "van.nguyen@email.com"
-  },
-  {
-    id: 7,
-    nom: "Silva",
-    prenom: "Carlos",
-    nationalite: "Brésil",
-    dateEnregistrement: "2024-01-09",
-    statut: "Actif",
-    telephone: "+55 11 98765 4321",
-    email: "carlos.silva@email.com"
-  },
-  {
-    id: 8,
-    nom: "Petrov",
-    prenom: "Ivan",
-    nationalite: "Russie",
-    dateEnregistrement: "2024-01-08",
-    statut: "En attente",
-    telephone: "+7 909 123 4567",
-    email: "ivan.petrov@email.com"
-  }
-];
+interface Client {
+  id: string;
+  nom: string;
+  prenom: string;
+  nationalite: string;
+  numero_passeport: string;
+  date_enregistrement: string;
+  photo_url?: string;
+  observations?: string;
+  created_at: string;
+  updated_at: string;
+  agent_id: string;
+}
 
 const BaseClients = () => {
+  const { user } = useAuth();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedNationality, setSelectedNationality] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
 
-  // Filtrer les clients selon les critères de recherche
-  const filteredClients = clientsData.filter(client => {
-    const matchesSearch = searchTerm === "" || 
-      client.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesNationality = selectedNationality === "" || client.nationalite === selectedNationality;
-    const matchesStatus = selectedStatus === "" || client.statut === selectedStatus;
-    
-    return matchesSearch && matchesNationality && matchesStatus;
-  });
+  useEffect(() => {
+    if (user) {
+      fetchClients();
+    }
+  }, [user]);
 
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case "Actif":
-        return "default";
-      case "En attente":
-        return "secondary";
-      case "Inactif":
-        return "destructive";
-      default:
-        return "outline";
+  const fetchClients = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      setError('Erreur lors du chargement des clients');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const nationalities = [...new Set(clientsData.map(client => client.nationalite))];
-  const statuses = [...new Set(clientsData.map(client => client.statut))];
+  // Filtrer les clients selon les critères de recherche
+  const filteredClients = clients.filter(client => {
+    const matchesSearch = searchTerm === "" || 
+      client.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.numero_passeport.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesNationality = selectedNationality === "" || client.nationalite === selectedNationality;
+    
+    return matchesSearch && matchesNationality;
+  });
+
+  const nationalities = [...new Set(clients.map(client => client.nationalite))];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+        <AuthenticatedHeader />
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-slate-600">Chargement des clients...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+        <AuthenticatedHeader />
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-red-600">
+            <p>{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -141,27 +114,19 @@ const BaseClients = () => {
           </div>
 
           {/* Statistiques rapides */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardContent className="p-4">
-                <div className="text-2xl font-bold text-blue-600">{clientsData.length}</div>
+                <div className="text-2xl font-bold text-blue-600">{clients.length}</div>
                 <p className="text-sm text-slate-600">Total clients</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold text-green-600">
-                  {clientsData.filter(c => c.statut === "Actif").length}
+                  {clients.filter(c => new Date(c.date_enregistrement) >= new Date(Date.now() - 30*24*60*60*1000)).length}
                 </div>
-                <p className="text-sm text-slate-600">Clients actifs</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-2xl font-bold text-orange-600">
-                  {clientsData.filter(c => c.statut === "En attente").length}
-                </div>
-                <p className="text-sm text-slate-600">En attente</p>
+                <p className="text-sm text-slate-600">Nouveaux ce mois</p>
               </CardContent>
             </Card>
             <Card>
@@ -183,11 +148,11 @@ const BaseClients = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input
-                    placeholder="Rechercher par nom, prénom ou email"
+                    placeholder="Rechercher par nom, prénom ou passeport"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -202,17 +167,6 @@ const BaseClients = () => {
                   <option value="">Toutes les nationalités</option>
                   {nationalities.map(nationality => (
                     <option key={nationality} value={nationality}>{nationality}</option>
-                  ))}
-                </select>
-                
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                >
-                  <option value="">Tous les statuts</option>
-                  {statuses.map(status => (
-                    <option key={status} value={status}>{status}</option>
                   ))}
                 </select>
                 
@@ -241,9 +195,8 @@ const BaseClients = () => {
                     <TableRow>
                       <TableHead>Nom complet</TableHead>
                       <TableHead>Nationalité</TableHead>
-                      <TableHead>Contact</TableHead>
+                      <TableHead>Numéro de passeport</TableHead>
                       <TableHead>Date d'enregistrement</TableHead>
-                      <TableHead>Statut</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -253,22 +206,19 @@ const BaseClients = () => {
                         <TableCell className="font-medium">
                           <div>
                             <p className="font-semibold">{client.prenom} {client.nom}</p>
-                            <p className="text-sm text-slate-500">{client.email}</p>
+                            {client.observations && (
+                              <p className="text-sm text-slate-500">{client.observations}</p>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">{client.nationalite}</Badge>
                         </TableCell>
-                        <TableCell className="text-sm">
-                          {client.telephone}
+                        <TableCell className="text-sm font-mono">
+                          {client.numero_passeport}
                         </TableCell>
                         <TableCell className="text-sm">
-                          {new Date(client.dateEnregistrement).toLocaleDateString('fr-FR')}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(client.statut)}>
-                            {client.statut}
-                          </Badge>
+                          {new Date(client.date_enregistrement).toLocaleDateString('fr-FR')}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end space-x-2">
