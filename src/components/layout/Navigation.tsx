@@ -1,65 +1,83 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Database, FileText, Shield, UserPlus, Eye } from "lucide-react";
+import { Users, Plus, Database, FileText, Shield, UserPlus, Eye, Menu } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { RoleIndicator } from "../dashboard/RoleIndicator";
+import { useState } from "react";
 
 export const Navigation = () => {
   const { profile, user } = useAuth();
   const isAdmin = profile?.role === "admin" || user?.email === "essbane.salim@gmail.com";
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const navigationItems = [
+    { to: "/", icon: Users, label: "Dashboard" },
+    { to: "/nouveau-client", icon: Plus, label: "Nouveau Client" },
+    { to: "/base-clients", icon: Database, label: "Base Clients" },
+    { to: "/contrats", icon: FileText, label: "Contrats" },
+    ...(isAdmin ? [
+      { to: "/gestion-utilisateurs", icon: Shield, label: "Gestion Utilisateurs" },
+      { to: "/gestion-utilisateurs", icon: UserPlus, label: "Créer utilisateur" }
+    ] : [])
+  ];
 
   return (
     <nav className="bg-white border-b border-slate-100">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between py-2">
+      <div className="container mx-auto px-3 sm:px-4">
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center justify-between py-2">
           <div className="flex items-center space-x-1 overflow-x-auto">
-            <Link to="/">
-              <Button variant="ghost" size="sm" className="whitespace-nowrap">
-                <Users className="w-4 h-4 mr-2" />
-                Dashboard
-              </Button>
-            </Link>
-            <Link to="/nouveau-client">
-              <Button variant="ghost" size="sm" className="whitespace-nowrap">
-                <Plus className="w-4 h-4 mr-2" />
-                Nouveau Client
-              </Button>
-            </Link>
-            <Link to="/base-clients">
-              <Button variant="ghost" size="sm" className="whitespace-nowrap">
-                <Database className="w-4 h-4 mr-2" />
-                Base Clients
-              </Button>
-            </Link>
-            <Link to="/contrats">
-              <Button variant="ghost" size="sm" className="whitespace-nowrap">
-                <FileText className="w-4 h-4 mr-2" />
-                Contrats
-              </Button>
-            </Link>
-            {isAdmin && (
-              <>
-                <Link to="/gestion-utilisateurs">
-                  <Button variant="ghost" size="sm" className="whitespace-nowrap">
-                    <Shield className="w-4 h-4 mr-2" />
-                    Gestion Utilisateurs
-                  </Button>
-                </Link>
-                <Link to="/gestion-utilisateurs">
-                  <Button variant="ghost" size="sm" className="whitespace-nowrap">
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Créer un utilisateur
-                  </Button>
-                </Link>
-              </>
-            )}
+            {navigationItems.map((item) => (
+              <Link key={item.to + item.label} to={item.to}>
+                <Button variant="ghost" size="sm" className="whitespace-nowrap">
+                  <item.icon className="w-4 h-4 mr-2" />
+                  {item.label}
+                </Button>
+              </Link>
+            ))}
           </div>
           
           {profile && (
             <div className="flex items-center">
               <RoleIndicator role={profile.role} size="sm" />
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Navigation */}
+        <div className="md:hidden">
+          <div className="flex items-center justify-between py-2">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+            
+            {profile && (
+              <RoleIndicator role={profile.role} size="sm" />
+            )}
+          </div>
+
+          {/* Mobile Menu */}
+          {isMobileMenuOpen && (
+            <div className="pb-3 space-y-1 border-t border-slate-100 mt-2 pt-2">
+              {navigationItems.map((item) => (
+                <Link 
+                  key={item.to + item.label} 
+                  to={item.to}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Button variant="ghost" size="sm" className="w-full justify-start">
+                    <item.icon className="w-4 h-4 mr-3" />
+                    {item.label}
+                  </Button>
+                </Link>
+              ))}
             </div>
           )}
         </div>
