@@ -20,7 +20,6 @@ export type Database = {
           numero_passeport: string
           observations: string | null
           photo_url: string | null
-          point_operation: Database["public"]["Enums"]["point_operation"]
           prenom: string
           updated_at: string | null
         }
@@ -34,7 +33,6 @@ export type Database = {
           numero_passeport: string
           observations?: string | null
           photo_url?: string | null
-          point_operation: Database["public"]["Enums"]["point_operation"]
           prenom: string
           updated_at?: string | null
         }
@@ -48,7 +46,6 @@ export type Database = {
           numero_passeport?: string
           observations?: string | null
           photo_url?: string | null
-          point_operation?: Database["public"]["Enums"]["point_operation"]
           prenom?: string
           updated_at?: string | null
         }
@@ -56,34 +53,34 @@ export type Database = {
       }
       profiles: {
         Row: {
-          created_at: string | null
+          created_at: string
           id: string
           nom: string
           point_operation: Database["public"]["Enums"]["point_operation"]
           prenom: string
           role: Database["public"]["Enums"]["app_role"]
           statut: Database["public"]["Enums"]["user_status"]
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           id: string
           nom: string
-          point_operation: Database["public"]["Enums"]["point_operation"]
+          point_operation?: Database["public"]["Enums"]["point_operation"]
           prenom: string
           role?: Database["public"]["Enums"]["app_role"]
           statut?: Database["public"]["Enums"]["user_status"]
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           id?: string
           nom?: string
           point_operation?: Database["public"]["Enums"]["point_operation"]
           prenom?: string
           role?: Database["public"]["Enums"]["app_role"]
           statut?: Database["public"]["Enums"]["user_status"]
-          updated_at?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -92,17 +89,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_user_operation_point: {
-        Args: { _user_id: string }
-        Returns: Database["public"]["Enums"]["point_operation"]
-      }
-      has_role: {
-        Args: {
-          _user_id: string
-          _role: Database["public"]["Enums"]["app_role"]
-        }
-        Returns: boolean
-      }
       is_user_active: {
         Args: { _user_id: string }
         Returns: boolean

@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
 
 const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
@@ -46,9 +47,25 @@ const Auth = () => {
       const { error } = await signIn(loginForm.email, loginForm.password);
       if (error) {
         setError(error.message);
+        toast({
+          title: "Erreur de connexion",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Connexion réussie",
+          description: "Vous êtes maintenant connecté.",
+        });
       }
     } catch (error) {
-      setError("Une erreur inattendue s'est produite");
+      const errorMessage = "Une erreur inattendue s'est produite";
+      setError(errorMessage);
+      toast({
+        title: "Erreur",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +79,13 @@ const Auth = () => {
 
     // Vérifier que seul l'admin peut s'inscrire
     if (signupForm.email !== "essbane.salim@gmail.com") {
-      setError("Seul l'administrateur peut créer un compte via cette méthode.");
+      const errorMessage = "Seul l'administrateur peut créer un compte via cette méthode.";
+      setError(errorMessage);
+      toast({
+        title: "Accès non autorisé",
+        description: errorMessage,
+        variant: "destructive",
+      });
       setIsLoading(false);
       return;
     }
@@ -77,12 +100,28 @@ const Auth = () => {
 
       if (error) {
         setError(error.message);
+        toast({
+          title: "Erreur lors de la création du compte",
+          description: error.message,
+          variant: "destructive",
+        });
       } else {
-        setSuccess("Compte administrateur créé avec succès ! Vous pouvez maintenant vous connecter.");
+        const successMessage = "Compte administrateur créé avec succès ! Vous pouvez maintenant vous connecter.";
+        setSuccess(successMessage);
+        toast({
+          title: "Compte créé",
+          description: successMessage,
+        });
         setSignupForm({ email: "", password: "", nom: "", prenom: "" });
       }
     } catch (error) {
-      setError("Une erreur inattendue s'est produite");
+      const errorMessage = "Une erreur inattendue s'est produite";
+      setError(errorMessage);
+      toast({
+        title: "Erreur",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -101,13 +140,29 @@ const Auth = () => {
 
       if (error) {
         setError(error.message);
+        toast({
+          title: "Erreur de réinitialisation",
+          description: error.message,
+          variant: "destructive",
+        });
       } else {
-        setSuccess("Un lien de réinitialisation a été envoyé à votre adresse email.");
+        const successMessage = "Un lien de réinitialisation a été envoyé à votre adresse email.";
+        setSuccess(successMessage);
+        toast({
+          title: "Email envoyé",
+          description: successMessage,
+        });
         setResetEmail("");
         setShowPasswordReset(false);
       }
     } catch (error) {
-      setError("Une erreur inattendue s'est produite");
+      const errorMessage = "Une erreur inattendue s'est produite";
+      setError(errorMessage);
+      toast({
+        title: "Erreur",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
