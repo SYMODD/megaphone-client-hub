@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Edit, Trash2, MapPin, Tag } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface OperationPoint {
   id: string;
@@ -31,6 +32,7 @@ interface Category {
 }
 
 export const OperationPointsManagement = () => {
+  const { profile, user } = useAuth();
   const [operationPoints, setOperationPoints] = useState<OperationPoint[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +41,9 @@ export const OperationPointsManagement = () => {
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [editingPoint, setEditingPoint] = useState<OperationPoint | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+
+  // Check if current user is admin - same logic as in UserManagement
+  const isAdmin = profile?.role === "admin" || user?.email === "essbane.salim@gmail.com";
 
   const [pointForm, setPointForm] = useState({
     nom: "",
@@ -171,6 +176,26 @@ export const OperationPointsManagement = () => {
     }
   };
 
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cette catégorie ? Tous les points d'opération associés seront également supprimés.")) return;
+
+    try {
+      const { error } = await supabase
+        .from("categories_points")
+        .delete()
+        .eq("id", categoryId);
+
+      if (error) throw error;
+
+      fetchCategories();
+      fetchOperationPoints(); // Refresh points as some might have been deleted
+      alert("Catégorie supprimée avec succès !");
+    } catch (error: any) {
+      console.error("Error deleting category:", error);
+      setError(error.message || "Erreur lors de la suppression de la catégorie");
+    }
+  };
+
   const openEditPoint = (point: OperationPoint) => {
     setEditingPoint(point);
     setPointForm({
@@ -261,14 +286,28 @@ export const OperationPointsManagement = () => {
             {categories.map((category) => (
               <Card key={category.id} className="border-l-4 border-l-blue-500">
                 <CardContent className="p-4">
-                  <h3 className="font-medium">{category.nom}</h3>
-                  {category.description && (
-                    <p className="text-sm text-slate-600 mt-1">{category.description}</p>
-                  )}
-                  <div className="mt-2">
-                    <Badge variant="outline">
-                      {operationPoints.filter(p => p.categorie_id === category.id).length} point(s)
-                    </Badge>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-medium">{category.nom}</h3>
+                      {category.description && (
+                        <p className="text-sm text-slate-600 mt-1">{category.description}</p>
+                      )}
+                      <div className="mt-2">
+                        <Badge variant="outline">
+                          {operationPoints.filter(p => p.categorie_id === category.id).length} point(s)
+                        </Badge>
+                      </div>
+                    </div>
+                    {isAdmin && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteCategory(category.id)}
+                        className="ml-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
