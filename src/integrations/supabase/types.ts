@@ -62,6 +62,7 @@ export type Database = {
           point_operation: Database["public"]["Enums"]["point_operation"]
           prenom: string
           role: Database["public"]["Enums"]["app_role"]
+          statut: Database["public"]["Enums"]["user_status"]
           updated_at: string | null
         }
         Insert: {
@@ -71,6 +72,7 @@ export type Database = {
           point_operation: Database["public"]["Enums"]["point_operation"]
           prenom: string
           role?: Database["public"]["Enums"]["app_role"]
+          statut?: Database["public"]["Enums"]["user_status"]
           updated_at?: string | null
         }
         Update: {
@@ -80,6 +82,7 @@ export type Database = {
           point_operation?: Database["public"]["Enums"]["point_operation"]
           prenom?: string
           role?: Database["public"]["Enums"]["app_role"]
+          statut?: Database["public"]["Enums"]["user_status"]
           updated_at?: string | null
         }
         Relationships: []
@@ -100,6 +103,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_user_active: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "agent" | "superviseur" | "admin"
@@ -110,6 +117,7 @@ export type Database = {
         | "navire_atlas"
         | "navire_meridien"
         | "agence_centrale"
+      user_status: "actif" | "inactif"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -234,6 +242,7 @@ export const Constants = {
         "navire_meridien",
         "agence_centrale",
       ],
+      user_status: ["actif", "inactif"],
     },
   },
 } as const

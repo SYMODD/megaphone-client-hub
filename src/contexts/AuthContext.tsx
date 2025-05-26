@@ -101,10 +101,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
+    // First, check if user exists and is active
+    const { data: userData, error: userError } = await supabase
+      .from("profiles")
+      .select("statut")
+      .eq("id", (await supabase.auth.signInWithPassword({ email, password: "temp" }))?.data?.user?.id)
+      .single();
+
+    // Attempt login first to get user ID
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    if (error) return { data, error };
+
+    // Check if user is active after successful authentication
+    if (data.user) {
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("statut")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profileError) {
+        console.error("Error checking user status:", profileError);
+        return { data, error: profileError };
+      }
+
+      if (profileData.statut === "inactif") {
+        // Sign out the user and return error
+        await supabase.auth.signOut();
+        return { 
+          data: null, 
+          error: { 
+            message: "Votre compte est inactif. Veuillez contacter l'administrateur." 
+          } 
+        };
+      }
+    }
+
     return { data, error };
   };
 

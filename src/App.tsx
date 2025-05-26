@@ -10,6 +10,7 @@ import { SignupRedirect } from "@/components/auth/SignupRedirect";
 import Index from "./pages/Index";
 import NewClient from "./pages/NewClient";
 import Auth from "./pages/Auth";
+import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,11 @@ const App = () => (
             <Route path="/nouveau-client" element={
               <ProtectedRoute>
                 <NewClient />
+              </ProtectedRoute>
+            } />
+            <Route path="/gestion-utilisateurs" element={
+              <ProtectedRoute>
+                <UserManagement />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

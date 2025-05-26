@@ -1,9 +1,13 @@
 
 import { Button } from "@/components/ui/button";
-import { Users, Plus, Database, FileText } from "lucide-react";
+import { Users, Plus, Database, FileText, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Navigation = () => {
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === "admin";
+
   return (
     <nav className="bg-white border-b border-slate-100">
       <div className="container mx-auto px-4">
@@ -28,6 +32,14 @@ export const Navigation = () => {
             <FileText className="w-4 h-4 mr-2" />
             Contrats
           </Button>
+          {isAdmin && (
+            <Link to="/gestion-utilisateurs">
+              <Button variant="ghost" size="sm" className="whitespace-nowrap">
+                <Shield className="w-4 h-4 mr-2" />
+                Gestion Utilisateurs
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </nav>
