@@ -10,6 +10,7 @@ import { SignupRedirect } from "@/components/auth/SignupRedirect";
 import Index from "./pages/Index";
 import NewClient from "./pages/NewClient";
 import BaseClients from "./pages/BaseClients";
+import Contracts from "./pages/Contracts";
 import Auth from "./pages/Auth";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
@@ -39,6 +40,11 @@ const App = () => (
             <Route path="/base-clients" element={
               <ProtectedRoute>
                 <BaseClients />
+              </ProtectedRoute>
+            } />
+            <Route path="/contrats" element={
+              <ProtectedRoute>
+                <Contracts />
               </ProtectedRoute>
             } />
             <Route path="/gestion-utilisateurs" element={
