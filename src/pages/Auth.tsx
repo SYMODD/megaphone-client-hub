@@ -9,33 +9,43 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
+  
+  // ALL hooks must be called before any early returns
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
-
-  // Redirect if already authenticated
-  if (user && !loading) {
-    return <Navigate to="/" replace />;
-  }
-
   const [loginForm, setLoginForm] = useState({
     email: "",
     password: "",
   });
-
   const [signupForm, setSignupForm] = useState({
     email: "",
     password: "",
     nom: "",
     prenom: "",
   });
-
   const [resetEmail, setResetEmail] = useState("");
+
+  // Now we can have early returns after all hooks are declared
+  if (user && !loading) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-slate-600">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,17 +177,6 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-slate-600">Chargement...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
