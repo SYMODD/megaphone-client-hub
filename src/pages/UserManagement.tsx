@@ -12,13 +12,22 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
-import { Users, Plus, Edit, Shield, ShieldAlert } from "lucide-react";
+import { OperationPointsManagement } from "@/components/OperationPointsManagement";
+import { Users, Plus, Edit, Shield, ShieldAlert, Settings } from "lucide-react";
 import { Database } from "@/integrations/supabase/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type AppRole = Database["public"]["Enums"]["app_role"];
 type PointOperation = Database["public"]["Enums"]["point_operation"];
 type UserStatus = Database["public"]["Enums"]["user_status"];
+
+interface OperationPoint {
+  id: string;
+  nom: string;
+  code: string;
+  categorie_id: string;
+  actif: boolean;
+}
 
 const pointOperationLabels: Record<PointOperation, string> = {
   "aeroport_marrakech": "Aéroport Marrakech",
@@ -38,11 +47,13 @@ const roleLabels: Record<AppRole, string> = {
 const UserManagement = () => {
   const { user, profile } = useAuth();
   const [users, setUsers] = useState<Profile[]>([]);
+  const [operationPoints, setOperationPoints] = useState<OperationPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isPointsManagementOpen, setIsPointsManagementOpen] = useState(false);
 
   const [createForm, setCreateForm] = useState({
     email: "",
@@ -64,28 +75,58 @@ const UserManagement = () => {
 
   // Check if current user is admin - updated to match Navigation logic
   const isAdmin = profile?.role === "admin" || user?.email === "essbane.salim@gmail.com";
+  const isSupervisor = profile?.role === "superviseur";
+  const canManageUsers = isAdmin || isSupervisor;
 
   useEffect(() => {
-    if (!isAdmin) return;
-    fetchUsers();
-  }, [isAdmin]);
+    if (!canManageUsers) return;
+    fetchData();
+  }, [canManageUsers]);
 
-  const fetchUsers = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setUsers(data || []);
+      await Promise.all([
+        fetchUsers(),
+        fetchOperationPoints()
+      ]);
     } catch (error) {
-      console.error("Error fetching users:", error);
-      setError("Erreur lors du chargement des utilisateurs");
+      console.error("Error fetching data:", error);
+      setError("Erreur lors du chargement des données");
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchUsers = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    setUsers(data || []);
+  };
+
+  const fetchOperationPoints = async () => {
+    const { data, error } = await supabase
+      .from("points_operation")
+      .select("*")
+      .eq("actif", true)
+      .order("nom");
+
+    if (error) throw error;
+    setOperationPoints(data || []);
+  };
+
+  const getOperationPointLabel = (code: PointOperation) => {
+    const customPoint = operationPoints.find(p => p.code === code);
+    return customPoint ? customPoint.nom : pointOperationLabels[code];
+  };
+
+  const getAvailableOperationPoints = () => {
+    // Return all active operation points
+    return operationPoints;
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -194,7 +235,7 @@ const UserManagement = () => {
     return <div>Veuillez vous connecter</div>;
   }
 
-  if (!isAdmin) {
+  if (!canManageUsers) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
         <AuthenticatedHeader />
@@ -203,7 +244,7 @@ const UserManagement = () => {
           <Alert className="border-red-200 bg-red-50">
             <ShieldAlert className="h-4 w-4" />
             <AlertDescription className="text-red-700">
-              Accès refusé. Seuls les administrateurs peuvent gérer les utilisateurs.
+              Accès refusé. Seuls les administrateurs et superviseurs peuvent gérer les utilisateurs.
             </AlertDescription>
           </Alert>
         </div>
@@ -226,123 +267,135 @@ const UserManagement = () => {
               Créer, modifier et gérer les utilisateurs du système
             </p>
           </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Nouvel Utilisateur
+          <div className="flex space-x-3">
+            {isAdmin && (
+              <Button 
+                variant="outline" 
+                onClick={() => setIsPointsManagementOpen(true)}
+                className="bg-slate-600 hover:bg-slate-700 text-white"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Gérer les Points
               </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Créer un nouvel utilisateur</DialogTitle>
-                <DialogDescription>
-                  Remplissez les informations pour créer un nouveau compte utilisateur.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleCreateUser} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="create-nom">Nom</Label>
-                    <Input
-                      id="create-nom"
-                      value={createForm.nom}
-                      onChange={(e) => setCreateForm({ ...createForm, nom: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="create-prenom">Prénom</Label>
-                    <Input
-                      id="create-prenom"
-                      value={createForm.prenom}
-                      onChange={(e) => setCreateForm({ ...createForm, prenom: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="create-email">Email</Label>
-                  <Input
-                    id="create-email"
-                    type="email"
-                    value={createForm.email}
-                    onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="create-password">Mot de passe</Label>
-                  <Input
-                    id="create-password"
-                    type="password"
-                    value={createForm.password}
-                    onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                    required
-                    minLength={6}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="create-role">Rôle</Label>
-                  <Select
-                    value={createForm.role}
-                    onValueChange={(value: AppRole) => setCreateForm({ ...createForm, role: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="agent">Agent</SelectItem>
-                      <SelectItem value="superviseur">Superviseur</SelectItem>
-                      <SelectItem value="admin">Administrateur</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="create-point">Point d'opération</Label>
-                  <Select
-                    value={createForm.point_operation}
-                    onValueChange={(value: PointOperation) => setCreateForm({ ...createForm, point_operation: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(pointOperationLabels).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="create-statut">Statut</Label>
-                  <Select
-                    value={createForm.statut}
-                    onValueChange={(value: UserStatus) => setCreateForm({ ...createForm, statut: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="actif">Actif</SelectItem>
-                      <SelectItem value="inactif">Inactif</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button type="submit" className="w-full">
-                  Créer l'utilisateur
+            )}
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nouvel Utilisateur
                 </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Créer un nouvel utilisateur</DialogTitle>
+                  <DialogDescription>
+                    Remplissez les informations pour créer un nouveau compte utilisateur.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleCreateUser} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="create-nom">Nom</Label>
+                      <Input
+                        id="create-nom"
+                        value={createForm.nom}
+                        onChange={(e) => setCreateForm({ ...createForm, nom: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="create-prenom">Prénom</Label>
+                      <Input
+                        id="create-prenom"
+                        value={createForm.prenom}
+                        onChange={(e) => setCreateForm({ ...createForm, prenom: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="create-email">Email</Label>
+                    <Input
+                      id="create-email"
+                      type="email"
+                      value={createForm.email}
+                      onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="create-password">Mot de passe</Label>
+                    <Input
+                      id="create-password"
+                      type="password"
+                      value={createForm.password}
+                      onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="create-role">Rôle</Label>
+                    <Select
+                      value={createForm.role}
+                      onValueChange={(value: AppRole) => setCreateForm({ ...createForm, role: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="agent">Agent</SelectItem>
+                        <SelectItem value="superviseur">Superviseur</SelectItem>
+                        {isAdmin && <SelectItem value="admin">Administrateur</SelectItem>}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="create-point">Point d'opération</Label>
+                    <Select
+                      value={createForm.point_operation}
+                      onValueChange={(value: PointOperation) => setCreateForm({ ...createForm, point_operation: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getAvailableOperationPoints().map((point) => (
+                          <SelectItem key={point.code} value={point.code}>
+                            {point.nom}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="create-statut">Statut</Label>
+                    <Select
+                      value={createForm.statut}
+                      onValueChange={(value: UserStatus) => setCreateForm({ ...createForm, statut: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="actif">Actif</SelectItem>
+                        <SelectItem value="inactif">Inactif</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button type="submit" className="w-full">
+                    Créer l'utilisateur
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {error && (
@@ -392,7 +445,7 @@ const UserManagement = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {pointOperationLabels[user.point_operation]}
+                        {getOperationPointLabel(user.point_operation)}
                       </TableCell>
                       <TableCell>
                         <Badge variant={user.statut === "actif" ? "default" : "destructive"}>
@@ -469,7 +522,7 @@ const UserManagement = () => {
                   <SelectContent>
                     <SelectItem value="agent">Agent</SelectItem>
                     <SelectItem value="superviseur">Superviseur</SelectItem>
-                    <SelectItem value="admin">Administrateur</SelectItem>
+                    {isAdmin && <SelectItem value="admin">Administrateur</SelectItem>}
                   </SelectContent>
                 </Select>
               </div>
@@ -484,9 +537,9 @@ const UserManagement = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(pointOperationLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
+                    {getAvailableOperationPoints().map((point) => (
+                      <SelectItem key={point.code} value={point.code}>
+                        {point.nom}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -513,6 +566,19 @@ const UserManagement = () => {
                 Enregistrer les modifications
               </Button>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Operation Points Management Dialog */}
+        <Dialog open={isPointsManagementOpen} onOpenChange={setIsPointsManagementOpen}>
+          <DialogContent className="sm:max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Gestion des Points d'Opération</DialogTitle>
+              <DialogDescription>
+                Gérer les catégories et points d'opération du système.
+              </DialogDescription>
+            </DialogHeader>
+            <OperationPointsManagement />
           </DialogContent>
         </Dialog>
       </main>

@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      categories_points: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          nom: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          nom: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          nom?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           agent_id: string
@@ -50,6 +74,44 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      points_operation: {
+        Row: {
+          actif: boolean | null
+          categorie_id: string | null
+          code: string
+          created_at: string | null
+          id: string
+          nom: string
+          updated_at: string | null
+        }
+        Insert: {
+          actif?: boolean | null
+          categorie_id?: string | null
+          code: string
+          created_at?: string | null
+          id?: string
+          nom: string
+          updated_at?: string | null
+        }
+        Update: {
+          actif?: boolean | null
+          categorie_id?: string | null
+          code?: string
+          created_at?: string | null
+          id?: string
+          nom?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "points_operation_categorie_id_fkey"
+            columns: ["categorie_id"]
+            isOneToOne: false
+            referencedRelation: "categories_points"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
