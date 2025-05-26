@@ -78,6 +78,11 @@ const UserManagement = () => {
   const isSupervisor = profile?.role === "superviseur";
   const canManageUsers = isAdmin || isSupervisor;
 
+  // Helper function to check if point operation should be shown
+  const shouldShowPointOperation = (role: AppRole) => {
+    return role === "agent" || role === "admin";
+  };
+
   useEffect(() => {
     if (!canManageUsers) return;
     fetchData();
@@ -134,6 +139,9 @@ const UserManagement = () => {
     setError(null);
 
     try {
+      // For supervisors, set point_operation to agence_centrale by default
+      const pointOperation = createForm.role === "superviseur" ? "agence_centrale" : createForm.point_operation;
+
       // Create user with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: createForm.email,
@@ -142,7 +150,7 @@ const UserManagement = () => {
           nom: createForm.nom,
           prenom: createForm.prenom,
           role: createForm.role,
-          point_operation: createForm.point_operation,
+          point_operation: pointOperation,
         }
       });
 
@@ -181,13 +189,16 @@ const UserManagement = () => {
     if (!editingUser) return;
 
     try {
+      // For supervisors, set point_operation to agence_centrale by default
+      const pointOperation = editForm.role === "superviseur" ? "agence_centrale" : editForm.point_operation;
+
       const { error } = await supabase
         .from("profiles")
         .update({
           nom: editForm.nom,
           prenom: editForm.prenom,
           role: editForm.role,
-          point_operation: editForm.point_operation,
+          point_operation: pointOperation,
           statut: editForm.statut,
         })
         .eq("id", editingUser.id);
@@ -354,24 +365,26 @@ const UserManagement = () => {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="create-point">Point d'opération</Label>
-                    <Select
-                      value={createForm.point_operation}
-                      onValueChange={(value: PointOperation) => setCreateForm({ ...createForm, point_operation: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getAvailableOperationPoints().map((point) => (
-                          <SelectItem key={point.code} value={point.code}>
-                            {point.nom}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {shouldShowPointOperation(createForm.role) && (
+                    <div className="space-y-2">
+                      <Label htmlFor="create-point">Point d'opération</Label>
+                      <Select
+                        value={createForm.point_operation}
+                        onValueChange={(value: PointOperation) => setCreateForm({ ...createForm, point_operation: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getAvailableOperationPoints().map((point) => (
+                            <SelectItem key={point.code} value={point.code}>
+                              {point.nom}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="create-statut">Statut</Label>
@@ -445,7 +458,11 @@ const UserManagement = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {getOperationPointLabel(user.point_operation)}
+                        {user.role === "superviseur" ? (
+                          <Badge variant="outline">Tous les points</Badge>
+                        ) : (
+                          getOperationPointLabel(user.point_operation)
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant={user.statut === "actif" ? "default" : "destructive"}>
@@ -527,24 +544,26 @@ const UserManagement = () => {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="edit-point">Point d'opération</Label>
-                <Select
-                  value={editForm.point_operation}
-                  onValueChange={(value: PointOperation) => setEditForm({ ...editForm, point_operation: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getAvailableOperationPoints().map((point) => (
-                      <SelectItem key={point.code} value={point.code}>
-                        {point.nom}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {shouldShowPointOperation(editForm.role) && (
+                <div className="space-y-2">
+                  <Label htmlFor="edit-point">Point d'opération</Label>
+                  <Select
+                    value={editForm.point_operation}
+                    onValueChange={(value: PointOperation) => setEditForm({ ...editForm, point_operation: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getAvailableOperationPoints().map((point) => (
+                        <SelectItem key={point.code} value={point.code}>
+                          {point.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="edit-statut">Statut</Label>
