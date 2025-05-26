@@ -9,7 +9,7 @@ import { useState } from "react";
 
 export const Navigation = () => {
   const { profile, user } = useAuth();
-  const isAdmin = profile?.role === "admin" || user?.email === "essbane.salim@gmail.com";
+  const isAdmin = profile?.role === "admin" || user?.email?.toLowerCase() === "essbane.salim@gmail.com";
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navigationItems = [

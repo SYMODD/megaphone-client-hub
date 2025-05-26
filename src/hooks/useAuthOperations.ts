@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,8 +18,11 @@ export const useAuthOperations = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
+      console.log("Attempting to sign in with:", email.toLowerCase());
+      const { error } = await signIn(email.toLowerCase().trim(), password);
+      
       if (error) {
+        console.error("Sign in error:", error);
         setError("Email ou mot de passe incorrect");
         toast({
           title: "Erreur de connexion",
@@ -26,19 +30,19 @@ export const useAuthOperations = () => {
           variant: "destructive",
         });
       } else {
-        // Clear any previous errors on successful login
+        console.log("Login successful");
         setError(null);
         setSuccess("Connexion réussie");
         toast({
           title: "Connexion réussie",
           description: "Vous êtes maintenant connecté.",
         });
-        // Clear success message after a short delay
         setTimeout(() => {
           setSuccess(null);
         }, 2000);
       }
     } catch (error) {
+      console.error("Unexpected error:", error);
       const errorMessage = "Une erreur inattendue s'est produite";
       setError(errorMessage);
       toast({
