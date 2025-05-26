@@ -37,7 +37,23 @@ export const ContractTypeManager = ({
   });
 
   const handleSubmit = () => {
-    if (!formData.name || !formData.description || !formData.template) {
+    // Nettoyage des champs et validation améliorée
+    const trimmedData = {
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      template: formData.template.trim(),
+    };
+
+    console.log('Form data before validation:', formData);
+    console.log('Trimmed data:', trimmedData);
+
+    if (!trimmedData.name || !trimmedData.description || !trimmedData.template) {
+      console.log('Validation failed:', {
+        name: !trimmedData.name,
+        description: !trimmedData.description,
+        template: !trimmedData.template
+      });
+      
       toast({
         title: "Erreur",
         description: "Veuillez remplir tous les champs.",
@@ -48,10 +64,12 @@ export const ContractTypeManager = ({
 
     const newTemplate: ContractTemplate = {
       id: editingId || `custom_${Date.now()}`,
-      name: formData.name,
-      description: formData.description,
-      template: formData.template,
+      name: trimmedData.name,
+      description: trimmedData.description,
+      template: trimmedData.template,
     };
+
+    console.log('Creating/updating template:', newTemplate);
 
     if (editingId) {
       onUpdateTemplate(newTemplate);
