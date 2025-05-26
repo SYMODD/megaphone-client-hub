@@ -8,13 +8,34 @@ import { NationalityChart } from "@/components/dashboard/NationalityChart";
 import { RecentClients } from "@/components/dashboard/RecentClients";
 import { RegistrationChart } from "@/components/dashboard/RegistrationChart";
 import { QuickActions } from "@/components/dashboard/QuickActions";
-import { Header } from "@/components/layout/Header";
+import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 const Index = () => {
+  const { user, profile } = useAuth();
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center space-y-6">
+          <h1 className="text-4xl font-bold text-slate-800">Sud Megaphone</h1>
+          <p className="text-xl text-slate-600">Client Manager Dashboard</p>
+          <p className="text-slate-500">Connectez-vous pour accéder à l'application</p>
+          <Link to="/auth">
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              Se connecter
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Header />
+      <AuthenticatedHeader />
       <Navigation />
       
       <main className="container mx-auto px-4 py-8 space-y-8">
@@ -26,6 +47,11 @@ const Index = () => {
           <p className="text-xl text-slate-600 mb-4">
             Client Manager Dashboard
           </p>
+          {profile && (
+            <p className="text-slate-500 mb-4">
+              Bienvenue, {profile.prenom} {profile.nom}
+            </p>
+          )}
           <div className="flex items-center justify-center space-x-2">
             <Badge variant="secondary" className="px-3 py-1">
               <Users className="w-4 h-4 mr-1" />

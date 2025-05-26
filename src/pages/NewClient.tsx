@@ -7,9 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save, Scan } from "lucide-react";
-import { Link } from "react-router-dom";
-import { Header } from "@/components/layout/Header";
+import { Link, useNavigate } from "react-router-dom";
+import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const nationalities = [
   "France", "Algérie", "Maroc", "Tunisie", "Sénégal", "Mali", "Burkina Faso", 
@@ -17,14 +20,18 @@ const nationalities = [
 ];
 
 const NewClient = () => {
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
     nationalite: "",
-    passeport: "",
+    numero_passeport: "",
     scannedImage: null as string | null,
     observations: "",
-    dateEnregistrement: new Date().toISOString().split('T')[0]
+    date_enregistrement: new Date().toISOString().split('T')[0]
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -32,11 +39,10 @@ const NewClient = () => {
   };
 
   const handleScanPassport = () => {
-    // Créer un input file temporaire pour accéder à la caméra
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.capture = 'environment'; // Utilise la caméra arrière sur mobile
+    input.capture = 'environment';
     
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
@@ -53,16 +59,97 @@ const NewClient = () => {
     input.click();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const uploadImage = async (imageBase64: string): Promise<string | null> => {
+    try {
+      // Convert base64 to blob
+      const response = await fetch(imageBase64);
+      const blob = await response.blob();
+      
+      // Generate unique filename
+      const filename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.jpg`;
+      
+      // Upload to Supabase storage
+      const { data, error } = await supabase.storage
+        .from('client-photos')
+        .upload(filename, blob, {
+          contentType: 'image/jpeg'
+        });
+
+      if (error) {
+        console.error('Error uploading image:', error);
+        toast.error("Erreur lors du téléchargement de l'image");
+        return null;
+      }
+
+      // Get public URL
+      const { data: publicURL } = supabase.storage
+        .from('client-photos')
+        .getPublicUrl(data.path);
+
+      return publicURL.publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error("Erreur lors du téléchargement de l'image");
+      return null;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Données client:", formData);
-    // TODO: Envoyer les données vers la base de données
-    alert("Client enregistré avec succès!");
+    
+    if (!user || !profile) {
+      toast.error("Vous devez être connecté pour ajouter un client");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      let photoUrl = null;
+      
+      // Upload image if present
+      if (formData.scannedImage) {
+        photoUrl = await uploadImage(formData.scannedImage);
+      }
+
+      // Insert client data
+      const { error } = await supabase
+        .from('clients')
+        .insert({
+          nom: formData.nom,
+          prenom: formData.prenom,
+          nationalite: formData.nationalite,
+          numero_passeport: formData.numero_passeport,
+          photo_url: photoUrl,
+          observations: formData.observations,
+          date_enregistrement: formData.date_enregistrement,
+          point_operation: profile.point_operation,
+          agent_id: user.id
+        });
+
+      if (error) {
+        console.error('Error inserting client:', error);
+        if (error.code === '23505') {
+          toast.error("Ce numéro de passeport existe déjà");
+        } else {
+          toast.error("Erreur lors de l'enregistrement du client");
+        }
+        return;
+      }
+
+      toast.success("Client enregistré avec succès!");
+      navigate("/");
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Une erreur inattendue s'est produite");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Header />
+      <AuthenticatedHeader />
       <Navigation />
       
       <main className="container mx-auto px-4 py-8">
@@ -129,11 +216,11 @@ const NewClient = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="passeport">Numéro de passeport *</Label>
+                    <Label htmlFor="numero_passeport">Numéro de passeport *</Label>
                     <Input
-                      id="passeport"
-                      value={formData.passeport}
-                      onChange={(e) => handleInputChange("passeport", e.target.value)}
+                      id="numero_passeport"
+                      value={formData.numero_passeport}
+                      onChange={(e) => handleInputChange("numero_passeport", e.target.value)}
                       placeholder="Numéro de passeport"
                       required
                     />
@@ -168,12 +255,12 @@ const NewClient = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="dateEnregistrement">Date d'enregistrement</Label>
+                  <Label htmlFor="date_enregistrement">Date d'enregistrement</Label>
                   <Input
-                    id="dateEnregistrement"
+                    id="date_enregistrement"
                     type="date"
-                    value={formData.dateEnregistrement}
-                    onChange={(e) => handleInputChange("dateEnregistrement", e.target.value)}
+                    value={formData.date_enregistrement}
+                    onChange={(e) => handleInputChange("date_enregistrement", e.target.value)}
                   />
                 </div>
 
@@ -190,13 +277,13 @@ const NewClient = () => {
 
                 <div className="flex justify-end space-x-4 pt-6">
                   <Link to="/">
-                    <Button type="button" variant="outline">
+                    <Button type="button" variant="outline" disabled={isLoading}>
                       Annuler
                     </Button>
                   </Link>
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
                     <Save className="w-4 h-4 mr-2" />
-                    Enregistrer le client
+                    {isLoading ? "Enregistrement..." : "Enregistrer le client"}
                   </Button>
                 </div>
               </form>

@@ -9,16 +9,107 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      clients: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          date_enregistrement: string
+          id: string
+          nationalite: string
+          nom: string
+          numero_passeport: string
+          observations: string | null
+          photo_url: string | null
+          point_operation: Database["public"]["Enums"]["point_operation"]
+          prenom: string
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          date_enregistrement?: string
+          id?: string
+          nationalite: string
+          nom: string
+          numero_passeport: string
+          observations?: string | null
+          photo_url?: string | null
+          point_operation: Database["public"]["Enums"]["point_operation"]
+          prenom: string
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          date_enregistrement?: string
+          id?: string
+          nationalite?: string
+          nom?: string
+          numero_passeport?: string
+          observations?: string | null
+          photo_url?: string | null
+          point_operation?: Database["public"]["Enums"]["point_operation"]
+          prenom?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          nom: string
+          point_operation: Database["public"]["Enums"]["point_operation"]
+          prenom: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          nom: string
+          point_operation: Database["public"]["Enums"]["point_operation"]
+          prenom: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nom?: string
+          point_operation?: Database["public"]["Enums"]["point_operation"]
+          prenom?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_operation_point: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["point_operation"]
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "agent" | "superviseur" | "admin"
+      point_operation:
+        | "aeroport_marrakech"
+        | "aeroport_casablanca"
+        | "aeroport_agadir"
+        | "navire_atlas"
+        | "navire_meridien"
+        | "agence_centrale"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +224,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["agent", "superviseur", "admin"],
+      point_operation: [
+        "aeroport_marrakech",
+        "aeroport_casablanca",
+        "aeroport_agadir",
+        "navire_atlas",
+        "navire_meridien",
+        "agence_centrale",
+      ],
+    },
   },
 } as const
