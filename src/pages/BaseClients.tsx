@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Search, Filter, Eye, Edit, FileText, Download } from "lucide-react";
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
@@ -26,6 +26,8 @@ interface Client {
   agent_id: string;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 const BaseClients = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -34,12 +36,14 @@ const BaseClients = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedNationality, setSelectedNationality] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     if (user) {
       fetchClients();
     }
-  }, [user]);
+  }, [user, currentPage]);
 
   const fetchClients = async () => {
     try {
@@ -47,10 +51,22 @@ const BaseClients = () => {
       setError(null);
       console.log('Fetching clients from database...');
       
+      // Get total count
+      const { count } = await supabase
+        .from('clients')
+        .select('*', { count: 'exact', head: true });
+
+      setTotalCount(count || 0);
+
+      // Get paginated data
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
       if (error) {
         console.error('Supabase error:', error);
@@ -64,6 +80,11 @@ const BaseClients = () => {
         toast({
           title: "Clients chargés",
           description: `${data.length} client(s) trouvé(s) dans la base de données.`,
+        });
+      } else if (count === 0) {
+        toast({
+          title: "Aucun client",
+          description: "Aucun client n'a été trouvé dans la base de données.",
         });
       }
     } catch (error) {
@@ -79,7 +100,7 @@ const BaseClients = () => {
     }
   };
 
-  // Filtrer les clients selon les critères de recherche
+  // Filter clients locally (for the current page)
   const filteredClients = clients.filter(client => {
     const matchesSearch = searchTerm === "" || 
       client.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -92,6 +113,11 @@ const BaseClients = () => {
   });
 
   const nationalities = [...new Set(clients.map(client => client.nationalite))];
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   if (loading) {
     return (
@@ -148,7 +174,7 @@ const BaseClients = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardContent className="p-4">
-                <div className="text-2xl font-bold text-blue-600">{clients.length}</div>
+                <div className="text-2xl font-bold text-blue-600">{totalCount}</div>
                 <p className="text-sm text-slate-600">Total clients</p>
               </CardContent>
             </Card>
@@ -213,10 +239,10 @@ const BaseClients = () => {
           <Card>
             <CardHeader>
               <CardTitle>
-                Clients ({filteredClients.length} résultat{filteredClients.length > 1 ? 's' : ''})
+                Clients ({filteredClients.length} résultat{filteredClients.length > 1 ? 's' : ''} sur {totalCount})
               </CardTitle>
               <CardDescription>
-                Liste complète des clients avec leurs informations principales
+                Liste complète des clients avec leurs informations principales - Page {currentPage} sur {totalPages}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -276,12 +302,50 @@ const BaseClients = () => {
                 </div>
               )}
 
-              {clients.length === 0 && (
+              {totalCount === 0 && (
                 <div className="text-center py-8">
                   <p className="text-slate-500">Aucun client dans la base de données.</p>
                   <p className="text-sm text-slate-400 mt-2">
                     Les clients s'afficheront ici une fois qu'ils seront ajoutés à la base de données.
                   </p>
+                  <p className="text-sm text-slate-400 mt-2">
+                    Utilisez la page "Nouveau Client" pour ajouter votre premier client.
+                  </p>
+                </div>
+              )}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-6">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => handlePageChange(page)}
+                            isActive={currentPage === page}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 </div>
               )}
             </CardContent>
