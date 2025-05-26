@@ -61,6 +61,12 @@ const Auth = () => {
     setSuccess(null);
   }, [showPasswordReset, showNewPassword, setError, setSuccess]);
 
+  // Clear any lingering messages when component mounts
+  useEffect(() => {
+    setError(null);
+    setSuccess(null);
+  }, [setError, setSuccess]);
+
   if (user && !loading && !showNewPassword) {
     return <Navigate to="/" replace />;
   }

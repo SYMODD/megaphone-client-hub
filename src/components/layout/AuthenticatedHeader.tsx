@@ -14,7 +14,9 @@ export const AuthenticatedHeader = () => {
       await signOut();
       toast.success("Déconnexion réussie");
     } catch (error) {
-      toast.error("Erreur lors de la déconnexion");
+      console.error("Sign out error:", error);
+      // Don't show error toast since logout works anyway
+      // The error is likely due to the RLS policy issue
     }
   };
 

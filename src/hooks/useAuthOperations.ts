@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +33,10 @@ export const useAuthOperations = () => {
           title: "Connexion réussie",
           description: "Vous êtes maintenant connecté.",
         });
+        // Clear success message after a short delay
+        setTimeout(() => {
+          setSuccess(null);
+        }, 2000);
       }
     } catch (error) {
       const errorMessage = "Une erreur inattendue s'est produite";
