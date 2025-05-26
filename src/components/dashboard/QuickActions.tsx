@@ -19,15 +19,17 @@ export const QuickActions = () => {
         </Card>
       </Link>
 
-      <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-        <CardContent className="p-6 text-center">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-            <Database className="w-6 h-6 text-white" />
-          </div>
-          <h3 className="font-semibold text-slate-800 mb-1">Base Clients</h3>
-          <p className="text-sm text-slate-500">Consulter la liste</p>
-        </CardContent>
-      </Card>
+      <Link to="/base-clients">
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
+          <CardContent className="p-6 text-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+              <Database className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="font-semibold text-slate-800 mb-1">Base Clients</h3>
+            <p className="text-sm text-slate-500">Consulter la liste</p>
+          </CardContent>
+        </Card>
+      </Link>
 
       <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
         <CardContent className="p-6 text-center">

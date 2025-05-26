@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { SignupRedirect } from "@/components/auth/SignupRedirect";
 import Index from "./pages/Index";
 import NewClient from "./pages/NewClient";
+import BaseClients from "./pages/BaseClients";
 import Auth from "./pages/Auth";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
@@ -33,6 +34,11 @@ const App = () => (
             <Route path="/nouveau-client" element={
               <ProtectedRoute>
                 <NewClient />
+              </ProtectedRoute>
+            } />
+            <Route path="/base-clients" element={
+              <ProtectedRoute>
+                <BaseClients />
               </ProtectedRoute>
             } />
             <Route path="/gestion-utilisateurs" element={

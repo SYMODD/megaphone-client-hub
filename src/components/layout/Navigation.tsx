@@ -24,10 +24,12 @@ export const Navigation = () => {
               Nouveau Client
             </Button>
           </Link>
-          <Button variant="ghost" size="sm" className="whitespace-nowrap">
-            <Database className="w-4 h-4 mr-2" />
-            Base Clients
-          </Button>
+          <Link to="/base-clients">
+            <Button variant="ghost" size="sm" className="whitespace-nowrap">
+              <Database className="w-4 h-4 mr-2" />
+              Base Clients
+            </Button>
+          </Link>
           <Button variant="ghost" size="sm" className="whitespace-nowrap">
             <FileText className="w-4 h-4 mr-2" />
             Contrats
