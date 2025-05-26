@@ -31,15 +31,17 @@ export const QuickActions = () => {
         </Card>
       </Link>
 
-      <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-        <CardContent className="p-6 text-center">
-          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-            <FileText className="w-6 h-6 text-white" />
-          </div>
-          <h3 className="font-semibold text-slate-800 mb-1">Contrats</h3>
-          <p className="text-sm text-slate-500">Générer PDF</p>
-        </CardContent>
-      </Card>
+      <Link to="/contrats">
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
+          <CardContent className="p-6 text-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="font-semibold text-slate-800 mb-1">Contrats</h3>
+            <p className="text-sm text-slate-500">Générer PDF</p>
+          </CardContent>
+        </Card>
+      </Link>
 
       <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
         <CardContent className="p-6 text-center">
