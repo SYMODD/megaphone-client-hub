@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ const UserManagement = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isPointsManagementOpen, setIsPointsManagementOpen] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
 
   const [createForm, setCreateForm] = useState({
     email: "",
@@ -137,33 +139,44 @@ const UserManagement = () => {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setCreateLoading(true);
 
     try {
       // For supervisors, set point_operation to agence_centrale by default
       const pointOperation = createForm.role === "superviseur" ? "agence_centrale" : createForm.point_operation;
 
-      // Create user with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Use standard signup instead of admin API
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: createForm.email,
         password: createForm.password,
-        user_metadata: {
-          nom: createForm.nom,
-          prenom: createForm.prenom,
-          role: createForm.role,
-          point_operation: pointOperation,
+        options: {
+          data: {
+            nom: createForm.nom,
+            prenom: createForm.prenom,
+            role: createForm.role,
+            point_operation: pointOperation,
+          }
         }
       });
 
       if (authError) throw authError;
 
-      // Update profile with status
+      // If user was created successfully, update the profile with status
       if (authData.user) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update({ statut: createForm.statut })
-          .eq("id", authData.user.id);
+        // Wait a moment for the trigger to create the profile
+        setTimeout(async () => {
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .update({ statut: createForm.statut })
+            .eq("id", authData.user.id);
 
-        if (profileError) throw profileError;
+          if (profileError) {
+            console.error("Error updating profile status:", profileError);
+          }
+          
+          // Refresh the users list
+          fetchUsers();
+        }, 1000);
       }
 
       setCreateForm({
@@ -176,11 +189,12 @@ const UserManagement = () => {
         statut: "actif",
       });
       setIsCreateDialogOpen(false);
-      fetchUsers();
-      alert("Utilisateur créé avec succès !");
+      alert("Utilisateur créé avec succès ! Un email de confirmation a été envoyé.");
     } catch (error: any) {
       console.error("Error creating user:", error);
       setError(error.message || "Erreur lors de la création de l'utilisateur");
+    } finally {
+      setCreateLoading(false);
     }
   };
 
@@ -219,11 +233,17 @@ const UserManagement = () => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ?")) return;
 
     try {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
+      // Since we can't use admin API, we'll just delete the profile
+      // The user will still exist in auth but won't be accessible through the app
+      const { error } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", userId);
+
       if (error) throw error;
 
       fetchUsers();
-      alert("Utilisateur supprimé avec succès !");
+      alert("Profil utilisateur supprimé avec succès !");
     } catch (error: any) {
       console.error("Error deleting user:", error);
       setError(error.message || "Erreur lors de la suppression de l'utilisateur");
@@ -401,8 +421,8 @@ const UserManagement = () => {
                     </Select>
                   </div>
 
-                  <Button type="submit" className="w-full">
-                    Créer l'utilisateur
+                  <Button type="submit" className="w-full" disabled={createLoading}>
+                    {createLoading ? "Création en cours..." : "Créer l'utilisateur"}
                   </Button>
                 </form>
               </DialogContent>
