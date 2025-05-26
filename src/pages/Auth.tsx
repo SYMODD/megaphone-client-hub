@@ -1,36 +1,32 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { useAuthOperations } from "@/hooks/useAuthOperations";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { PasswordResetForm } from "@/components/auth/PasswordResetForm";
+import { NewPasswordForm } from "@/components/auth/NewPasswordForm";
+import { AuthAlert } from "@/components/auth/AuthAlert";
 
 const Auth = () => {
-  const { user, signIn, loading } = useAuth();
-  const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const [searchParams] = useSearchParams();
   
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   
-  const [loginForm, setLoginForm] = useState({
-    email: "",
-    password: "",
-  });
-  
-  const [resetEmail, setResetEmail] = useState("");
-  const [newPasswordForm, setNewPasswordForm] = useState({
-    password: "",
-    confirmPassword: "",
-  });
+  const {
+    error,
+    success,
+    isLoading,
+    setError,
+    setSuccess,
+    handleLogin,
+    handlePasswordReset,
+    handleNewPassword,
+  } = useAuthOperations();
 
   // Handle password reset URL parameters
   useEffect(() => {
@@ -57,7 +53,7 @@ const Auth = () => {
         }
       });
     }
-  }, [searchParams]);
+  }, [searchParams, setError]);
 
   if (user && !loading && !showNewPassword) {
     return <Navigate to="/" replace />;
@@ -74,134 +70,28 @@ const Auth = () => {
     );
   }
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleShowPasswordReset = () => {
+    setShowPasswordReset(true);
     setError(null);
     setSuccess(null);
-    setIsLoading(true);
-
-    try {
-      const { error } = await signIn(loginForm.email, loginForm.password);
-      if (error) {
-        setError("Email ou mot de passe incorrect");
-        toast({
-          title: "Erreur de connexion",
-          description: "Email ou mot de passe incorrect",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Connexion réussie",
-          description: "Vous êtes maintenant connecté.",
-        });
-      }
-    } catch (error) {
-      const errorMessage = "Une erreur inattendue s'est produite";
-      setError(errorMessage);
-      toast({
-        title: "Erreur",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
   };
 
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCancelPasswordReset = () => {
+    setShowPasswordReset(false);
     setError(null);
     setSuccess(null);
-    setIsLoading(true);
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/auth?type=recovery`,
-      });
-
-      if (error) {
-        setError(error.message);
-        toast({
-          title: "Erreur de réinitialisation",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        const successMessage = "Un lien de réinitialisation a été envoyé à votre adresse email.";
-        setSuccess(successMessage);
-        toast({
-          title: "Email envoyé",
-          description: successMessage,
-        });
-        setResetEmail("");
-        setShowPasswordReset(false);
-      }
-    } catch (error) {
-      const errorMessage = "Une erreur inattendue s'est produite";
-      setError(errorMessage);
-      toast({
-        title: "Erreur",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
   };
 
-  const handleNewPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    setIsLoading(true);
+  const getCardTitle = () => {
+    if (showNewPassword) return "Nouveau mot de passe";
+    if (showPasswordReset) return "Réinitialiser le mot de passe";
+    return "Connexion";
+  };
 
-    if (newPasswordForm.password !== newPasswordForm.confirmPassword) {
-      setError("Les mots de passe ne correspondent pas");
-      setIsLoading(false);
-      return;
-    }
-
-    if (newPasswordForm.password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères");
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      console.log("Updating password...");
-      const { error } = await supabase.auth.updateUser({
-        password: newPasswordForm.password
-      });
-
-      if (error) {
-        console.error("Password update error:", error);
-        setError(error.message);
-        toast({
-          title: "Erreur",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        console.log("Password updated successfully");
-        toast({
-          title: "Mot de passe modifié",
-          description: "Votre mot de passe a été modifié avec succès.",
-        });
-        // Clear URL parameters and redirect to dashboard
-        navigate("/", { replace: true });
-      }
-    } catch (error) {
-      console.error("Unexpected error:", error);
-      const errorMessage = "Une erreur inattendue s'est produite";
-      setError(errorMessage);
-      toast({
-        title: "Erreur",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const getCardDescription = () => {
+    if (showNewPassword) return "Entrez votre nouveau mot de passe";
+    if (showPasswordReset) return "Entrez votre email pour recevoir un lien de réinitialisation";
+    return "Connectez-vous à votre compte";
   };
 
   return (
@@ -214,136 +104,29 @@ const Auth = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>
-              {showNewPassword 
-                ? "Nouveau mot de passe" 
-                : showPasswordReset 
-                ? "Réinitialiser le mot de passe" 
-                : "Connexion"}
-            </CardTitle>
-            <CardDescription>
-              {showNewPassword
-                ? "Entrez votre nouveau mot de passe"
-                : showPasswordReset 
-                ? "Entrez votre email pour recevoir un lien de réinitialisation"
-                : "Connectez-vous à votre compte"
-              }
-            </CardDescription>
+            <CardTitle>{getCardTitle()}</CardTitle>
+            <CardDescription>{getCardDescription()}</CardDescription>
           </CardHeader>
           <CardContent>
-            {(error || success) && (
-              <Alert className={`mb-4 ${success ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
-                <AlertDescription className={success ? 'text-green-700' : 'text-red-700'}>
-                  {error || success}
-                </AlertDescription>
-              </Alert>
-            )}
+            <AuthAlert error={error} success={success} />
 
             {showNewPassword ? (
-              <form onSubmit={handleNewPassword} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">Nouveau mot de passe</Label>
-                  <Input
-                    id="new-password"
-                    type="password"
-                    value={newPasswordForm.password}
-                    onChange={(e) =>
-                      setNewPasswordForm({ ...newPasswordForm, password: e.target.value })
-                    }
-                    required
-                    minLength={6}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
-                  <Input
-                    id="confirm-password"
-                    type="password"
-                    value={newPasswordForm.confirmPassword}
-                    onChange={(e) =>
-                      setNewPasswordForm({ ...newPasswordForm, confirmPassword: e.target.value })
-                    }
-                    required
-                    minLength={6}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Modification..." : "Modifier le mot de passe"}
-                </Button>
-              </form>
+              <NewPasswordForm
+                onNewPassword={handleNewPassword}
+                isLoading={isLoading}
+              />
             ) : showPasswordReset ? (
-              <form onSubmit={handlePasswordReset} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="reset-email">Email</Label>
-                  <Input
-                    id="reset-email"
-                    type="email"
-                    value={resetEmail}
-                    onChange={(e) => setResetEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="flex space-x-2">
-                  <Button type="submit" className="flex-1" disabled={isLoading}>
-                    {isLoading ? "Envoi..." : "Envoyer le lien"}
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => {
-                      setShowPasswordReset(false);
-                      setError(null);
-                      setSuccess(null);
-                    }}
-                  >
-                    Annuler
-                  </Button>
-                </div>
-              </form>
+              <PasswordResetForm
+                onPasswordReset={handlePasswordReset}
+                onCancel={handleCancelPasswordReset}
+                isLoading={isLoading}
+              />
             ) : (
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    value={loginForm.email}
-                    onChange={(e) =>
-                      setLoginForm({ ...loginForm, email: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Mot de passe</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    value={loginForm.password}
-                    onChange={(e) =>
-                      setLoginForm({ ...loginForm, password: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Connexion..." : "Se connecter"}
-                </Button>
-                
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowPasswordReset(true);
-                      setError(null);
-                      setSuccess(null);
-                    }}
-                    className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                  >
-                    Mot de passe oublié ?
-                  </button>
-                </div>
-              </form>
+              <LoginForm
+                onLogin={handleLogin}
+                onShowPasswordReset={handleShowPasswordReset}
+                isLoading={isLoading}
+              />
             )}
           </CardContent>
         </Card>
