@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,8 +62,8 @@ const UserManagement = () => {
     statut: "actif" as UserStatus,
   });
 
-  // Check if current user is admin
-  const isAdmin = profile?.role === "admin";
+  // Check if current user is admin - updated to match Navigation logic
+  const isAdmin = profile?.role === "admin" || user?.email === "essbane.salim@gmail.com";
 
   useEffect(() => {
     if (!isAdmin) return;
