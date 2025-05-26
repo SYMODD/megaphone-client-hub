@@ -27,6 +27,10 @@ const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("login");
+
+  // Check if current user is admin (only admin can access signup)
+  const isAdmin = user?.email === "essbane.salim@gmail.com";
 
   // Redirect if already authenticated
   if (user && !loading) {
@@ -67,6 +71,13 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Only allow signup if user is admin
+    if (!isAdmin) {
+      setError("Seul l'administrateur peut créer de nouveaux comptes");
+      return;
+    }
+
     setError(null);
     setIsLoading(true);
 
@@ -96,12 +107,40 @@ const Auth = () => {
         } else {
           setError(error.message);
         }
+      } else {
+        setError(null);
+        // Reset form on success
+        setSignupForm({
+          email: "",
+          password: "",
+          confirmPassword: "",
+          nom: "",
+          prenom: "",
+          role: "agent",
+          point_operation: "agence_centrale",
+        });
+        setActiveTab("login");
+        alert("Compte créé avec succès ! L'utilisateur peut maintenant se connecter.");
       }
     } catch (error) {
       setError("Une erreur inattendue s'est produite");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Handle tab change - prevent access to signup tab for non-admin users
+  const handleTabChange = (value: string) => {
+    if (value === "signup" && !user) {
+      setError("Seul l'administrateur peut créer de nouveaux comptes. Veuillez vous connecter.");
+      return;
+    }
+    if (value === "signup" && user && !isAdmin) {
+      setError("Seul l'administrateur peut créer de nouveaux comptes");
+      return;
+    }
+    setError(null);
+    setActiveTab(value);
   };
 
   if (loading) {
@@ -127,14 +166,23 @@ const Auth = () => {
           <CardHeader>
             <CardTitle>Authentification</CardTitle>
             <CardDescription>
-              Connectez-vous ou créez un compte pour accéder à l'application
+              {user && isAdmin 
+                ? "Connectez-vous ou créez un compte pour accéder à l'application"
+                : "Connectez-vous pour accéder à l'application"
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Connexion</TabsTrigger>
-                <TabsTrigger value="signup">Inscription</TabsTrigger>
+                <TabsTrigger 
+                  value="signup" 
+                  disabled={!user || !isAdmin}
+                  className={!user || !isAdmin ? "opacity-50 cursor-not-allowed" : ""}
+                >
+                  Inscription
+                </TabsTrigger>
               </TabsList>
 
               {error && (
@@ -176,115 +224,126 @@ const Auth = () => {
               </TabsContent>
 
               <TabsContent value="signup">
-                <form onSubmit={handleSignup} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                {user && isAdmin ? (
+                  <form onSubmit={handleSignup} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-nom">Nom</Label>
+                        <Input
+                          id="signup-nom"
+                          value={signupForm.nom}
+                          onChange={(e) =>
+                            setSignupForm({ ...signupForm, nom: e.target.value })
+                          }
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-prenom">Prénom</Label>
+                        <Input
+                          id="signup-prenom"
+                          value={signupForm.prenom}
+                          onChange={(e) =>
+                            setSignupForm({ ...signupForm, prenom: e.target.value })
+                          }
+                          required
+                        />
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="signup-nom">Nom</Label>
+                      <Label htmlFor="signup-email">Email</Label>
                       <Input
-                        id="signup-nom"
-                        value={signupForm.nom}
+                        id="signup-email"
+                        type="email"
+                        value={signupForm.email}
                         onChange={(e) =>
-                          setSignupForm({ ...signupForm, nom: e.target.value })
+                          setSignupForm({ ...signupForm, email: e.target.value })
                         }
                         required
                       />
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="signup-prenom">Prénom</Label>
+                      <Label htmlFor="signup-role">Rôle</Label>
+                      <Select
+                        value={signupForm.role}
+                        onValueChange={(value: AppRole) =>
+                          setSignupForm({ ...signupForm, role: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="agent">Agent</SelectItem>
+                          <SelectItem value="superviseur">Superviseur</SelectItem>
+                          <SelectItem value="admin">Administrateur</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-point">Point d'opération</Label>
+                      <Select
+                        value={signupForm.point_operation}
+                        onValueChange={(value: PointOperation) =>
+                          setSignupForm({ ...signupForm, point_operation: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(pointOperationLabels).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Mot de passe</Label>
                       <Input
-                        id="signup-prenom"
-                        value={signupForm.prenom}
+                        id="signup-password"
+                        type="password"
+                        value={signupForm.password}
                         onChange={(e) =>
-                          setSignupForm({ ...signupForm, prenom: e.target.value })
+                          setSignupForm({ ...signupForm, password: e.target.value })
                         }
                         required
                       />
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      value={signupForm.email}
-                      onChange={(e) =>
-                        setSignupForm({ ...signupForm, email: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-confirm">Confirmer le mot de passe</Label>
+                      <Input
+                        id="signup-confirm"
+                        type="password"
+                        value={signupForm.confirmPassword}
+                        onChange={(e) =>
+                          setSignupForm({ ...signupForm, confirmPassword: e.target.value })
+                        }
+                        required
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-role">Rôle</Label>
-                    <Select
-                      value={signupForm.role}
-                      onValueChange={(value: AppRole) =>
-                        setSignupForm({ ...signupForm, role: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="agent">Agent</SelectItem>
-                        <SelectItem value="superviseur">Superviseur</SelectItem>
-                        <SelectItem value="admin">Administrateur</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? "Inscription..." : "Créer le compte"}
+                    </Button>
+                  </form>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-slate-600 mb-4">
+                      Seul l'administrateur peut créer de nouveaux comptes.
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      Veuillez vous connecter avec un compte administrateur pour accéder à cette fonctionnalité.
+                    </p>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-point">Point d'opération</Label>
-                    <Select
-                      value={signupForm.point_operation}
-                      onValueChange={(value: PointOperation) =>
-                        setSignupForm({ ...signupForm, point_operation: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(pointOperationLabels).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Mot de passe</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      value={signupForm.password}
-                      onChange={(e) =>
-                        setSignupForm({ ...signupForm, password: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-confirm">Confirmer le mot de passe</Label>
-                    <Input
-                      id="signup-confirm"
-                      type="password"
-                      value={signupForm.confirmPassword}
-                      onChange={(e) =>
-                        setSignupForm({ ...signupForm, confirmPassword: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Inscription..." : "S'inscrire"}
-                  </Button>
-                </form>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>
