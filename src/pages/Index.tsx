@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, FileText, Database, TrendingUp } from "lucide-react";
+import { Users, Plus, FileText, Database, TrendingUp, User, MapPin } from "lucide-react";
 import { ClientStats } from "@/components/dashboard/ClientStats";
 import { NationalityChart } from "@/components/dashboard/NationalityChart";
 import { RecentClients } from "@/components/dashboard/RecentClients";
@@ -19,6 +19,18 @@ const Index = () => {
 
   console.log("User:", user);
   console.log("Profile:", profile);
+
+  const getPointLabel = (point: string) => {
+    const labels: Record<string, string> = {
+      "aeroport_marrakech": "Aéroport Marrakech",
+      "aeroport_casablanca": "Aéroport Casablanca", 
+      "aeroport_agadir": "Aéroport Agadir",
+      "navire_atlas": "Navire Atlas",
+      "navire_meridien": "Navire Méridien",
+      "agence_centrale": "Agence Centrale"
+    };
+    return labels[point] || point;
+  };
 
   if (!user) {
     return (
@@ -48,35 +60,41 @@ const Index = () => {
           <h1 className="text-4xl font-bold text-slate-800 mb-2">
             Sud Megaphone
           </h1>
-          <p className="text-xl text-slate-600 mb-4">
+          <p className="text-xl text-slate-600 mb-6">
             Client Manager Dashboard
           </p>
           
-          {/* User Info Section - Plus visible */}
-          <div className="bg-white rounded-lg shadow-sm border p-6 max-w-md mx-auto mb-6">
-            {profile ? (
-              <div className="space-y-3">
-                <p className="text-lg font-medium text-slate-800">
-                  Bienvenue, {profile.prenom} {profile.nom}
-                </p>
-                <div className="flex flex-col items-center space-y-2">
-                  <RoleIndicator role={profile.role} size="lg" />
-                  {profile.point_operation && (
-                    <p className="text-sm text-slate-600">
-                      Point d'opération: {profile.point_operation}
-                    </p>
-                  )}
+          {/* Enhanced User Profile Card */}
+          {profile && (
+            <div className="bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 rounded-2xl shadow-xl p-1 max-w-lg mx-auto mb-8">
+              <div className="bg-white rounded-xl p-6 space-y-4">
+                <div className="flex items-center justify-center space-x-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
+                    <User className="w-8 h-8 text-white" />
+                  </div>
+                  <div className="text-center">
+                    <h2 className="text-2xl font-bold text-slate-800 mb-1">
+                      {profile.prenom} {profile.nom}
+                    </h2>
+                    <div className="flex justify-center">
+                      <RoleIndicator role={profile.role} size="lg" />
+                    </div>
+                  </div>
+                </div>
+                
+                {profile.point_operation && (
+                  <div className="flex items-center justify-center space-x-2 text-slate-600 bg-slate-50 rounded-lg px-4 py-2">
+                    <MapPin className="w-4 h-4" />
+                    <span className="font-medium">{getPointLabel(profile.point_operation)}</span>
+                  </div>
+                )}
+                
+                <div className="text-xs text-slate-400 font-mono bg-slate-50 rounded px-2 py-1">
+                  {user.email}
                 </div>
               </div>
-            ) : (
-              <div className="space-y-2">
-                <p className="text-slate-600">Chargement du profil...</p>
-                <div className="text-xs text-slate-500">
-                  Email: {user.email}
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           <div className="flex items-center justify-center space-x-2">
             <Badge variant="secondary" className="px-3 py-1">

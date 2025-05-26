@@ -12,13 +12,13 @@ export const RoleIndicator = ({ role, size = "md", showIcon = true }: RoleIndica
   const getRoleLabel = (role: string) => {
     switch (role) {
       case "admin":
-        return "Administrateur";
+        return "ADMINISTRATEUR";
       case "superviseur":
-        return "Superviseur";
+        return "SUPERVISEUR";
       case "agent":
-        return "Agent";
+        return "AGENT";
       default:
-        return role;
+        return role.toUpperCase();
     }
   };
 
@@ -37,36 +37,36 @@ export const RoleIndicator = ({ role, size = "md", showIcon = true }: RoleIndica
     }
   };
 
-  const getRoleColor = (role: string) => {
+  const getRoleStyle = (role: string) => {
     switch (role) {
       case "admin":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-gradient-to-r from-red-500 to-red-600 text-white border-red-300 shadow-lg";
       case "superviseur":
-        return "bg-purple-100 text-purple-800 border-purple-200";
+        return "bg-gradient-to-r from-purple-500 to-purple-600 text-white border-purple-300 shadow-lg";
       case "agent":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-300 shadow-lg";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gradient-to-r from-gray-500 to-gray-600 text-white border-gray-300 shadow-lg";
     }
   };
 
   const getSizeClasses = (size: string) => {
     switch (size) {
       case "sm":
-        return "px-2 py-0.5 text-xs";
+        return "px-2 py-1 text-xs font-bold";
       case "lg":
-        return "px-4 py-2 text-base";
+        return "px-6 py-3 text-lg font-bold tracking-wide";
       default:
-        return "px-3 py-1 text-sm";
+        return "px-4 py-2 text-sm font-bold";
     }
   };
 
   return (
     <Badge 
       variant="outline" 
-      className={`font-medium border ${getRoleColor(role)} ${getSizeClasses(size)}`}
+      className={`border-0 ${getRoleStyle(role)} ${getSizeClasses(size)} hover:scale-105 transition-transform duration-200`}
     >
-      <span className="flex items-center gap-1">
+      <span className="flex items-center gap-2">
         {showIcon && getRoleIcon(role)}
         {getRoleLabel(role)}
       </span>
