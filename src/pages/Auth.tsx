@@ -28,7 +28,6 @@ const Auth = () => {
     const accessToken = searchParams.get('access_token') || hashParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token');
     const type = searchParams.get('type') || hashParams.get('type');
-    const token = searchParams.get('token') || hashParams.get('token'); // Simple token parameter
     const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash');
     const error = searchParams.get('error') || hashParams.get('error');
     const expiresAt = searchParams.get('expires_at') || hashParams.get('expires_at');
@@ -36,7 +35,6 @@ const Auth = () => {
     
     console.log("Recovery parameters found:", { 
       type, 
-      token: !!token,
       hasAccessToken: !!accessToken, 
       hasRefreshToken: !!refreshToken,
       hasTokenHash: !!tokenHash,
@@ -45,13 +43,13 @@ const Auth = () => {
       error
     });
     
-    // Improved recovery link detection - check for multiple indicators
-    const isRecoveryLink = type === 'recovery' || 
-                          token || // Direct token parameter from Supabase
-                          tokenHash ||
-                          (accessToken && refreshToken && (expiresAt || expiresIn)) ||
-                          (accessToken && type) ||
-                          error;
+    // Détection améliorée des liens de récupération
+    const isRecoveryLink = 
+      type === 'recovery' || 
+      tokenHash ||
+      (accessToken && (refreshToken || expiresAt || expiresIn)) ||
+      error === 'access_denied' || // Cas d'erreur de récupération
+      error === 'invalid_request'; // Autre cas d'erreur
     
     console.log("Recovery link detection result:", isRecoveryLink);
     

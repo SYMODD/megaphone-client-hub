@@ -54,19 +54,11 @@ export const useRecoveryTokenVerification = () => {
         return;
       }
 
-      // Vérifier que c'est bien un lien de récupération
-      if (type !== 'recovery' && !tokenHash && !accessToken) {
-        console.error("Not a valid recovery link");
-        setError("Lien de récupération invalide. Veuillez demander un nouveau lien.");
-        setIsCheckingToken(false);
-        return;
-      }
-
       try {
-        // Traitement pour les différents types de tokens
+        // Méthode 1: Utiliser les tokens d'accès et de refresh si disponibles
         if (accessToken && refreshToken) {
-          console.log("Setting up session with recovery tokens");
-          const { error: sessionError } = await supabase.auth.setSession({
+          console.log("Method 1: Setting up session with access/refresh tokens");
+          const { data, error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
@@ -79,9 +71,11 @@ export const useRecoveryTokenVerification = () => {
             setIsValidToken(true);
             setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
           }
-        } else if (tokenHash) {
-          console.log("Verifying recovery token hash...");
-          const { error: verifyError } = await supabase.auth.verifyOtp({
+        }
+        // Méthode 2: Utiliser le token_hash avec verifyOtp
+        else if (tokenHash) {
+          console.log("Method 2: Verifying recovery token hash...");
+          const { data, error: verifyError } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
             type: 'recovery'
           });
@@ -94,8 +88,35 @@ export const useRecoveryTokenVerification = () => {
             setIsValidToken(true);
             setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
           }
-        } else {
-          setError("Paramètres de récupération manquants. Veuillez demander un nouveau lien.");
+        }
+        // Méthode 3: Utiliser seulement l'access token si disponible
+        else if (accessToken && type === 'recovery') {
+          console.log("Method 3: Using access token only");
+          const { data, error: userError } = await supabase.auth.getUser(accessToken);
+          
+          if (userError) {
+            console.error("Error getting user with access token:", userError);
+            setError("Le lien de récupération n'est plus valide ou a expiré.");
+          } else {
+            // Créer une session temporaire
+            const { error: sessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken || '', // refresh token peut être vide
+            });
+            
+            if (sessionError) {
+              console.error("Error creating session:", sessionError);
+              setError("Erreur lors de la configuration de la session.");
+            } else {
+              console.log("Session created successfully with access token");
+              setIsValidToken(true);
+              setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
+            }
+          }
+        }
+        else {
+          console.log("No valid recovery method found");
+          setError("Paramètres de récupération manquants ou invalides. Veuillez demander un nouveau lien.");
         }
       } catch (error) {
         console.error("Unexpected error during token verification:", error);
