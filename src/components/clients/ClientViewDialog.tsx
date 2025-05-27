@@ -3,7 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarDays, User, Globe, FileText, Camera } from "lucide-react";
+import { CalendarDays, User, Globe, FileText, UserCheck } from "lucide-react";
+import { useAgentInfo } from "@/hooks/useAgentInfo";
+import { generateClientNumber, formatAgentName } from "@/utils/clientUtils";
 
 interface Client {
   id: string;
@@ -26,7 +28,11 @@ interface ClientViewDialogProps {
 }
 
 export const ClientViewDialog = ({ client, open, onOpenChange }: ClientViewDialogProps) => {
+  const { agentInfo, loading: agentLoading } = useAgentInfo(client?.agent_id || null);
+
   if (!client) return null;
+
+  const clientNumber = generateClientNumber(client.id);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -86,10 +92,30 @@ export const ClientViewDialog = ({ client, open, onOpenChange }: ClientViewDialo
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">ID Client</CardTitle>
+                <CardTitle className="text-sm">Numéro client</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="font-mono text-sm break-all">{client.id}</p>
+                <p className="font-mono text-lg font-semibold text-blue-600">{clientNumber}</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <UserCheck className="w-4 h-4" />
+                  Agent responsable
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {agentLoading ? (
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-slate-200 rounded w-24"></div>
+                  </div>
+                ) : agentInfo ? (
+                  <p className="font-semibold">{formatAgentName(agentInfo.nom, agentInfo.prenom)}</p>
+                ) : (
+                  <p className="text-slate-500 text-sm">Agent non trouvé</p>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -108,23 +134,23 @@ export const ClientViewDialog = ({ client, open, onOpenChange }: ClientViewDialo
             </Card>
           )}
 
-          {/* Métadonnées */}
+          {/* Métadonnées - Section repliée */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Informations système</CardTitle>
+              <CardTitle className="text-sm text-slate-400">Informations techniques</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Créé le :</span>
+              <div className="flex justify-between text-xs text-slate-400">
+                <span>Créé le :</span>
                 <span>{new Date(client.created_at).toLocaleString('fr-FR')}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Modifié le :</span>
+              <div className="flex justify-between text-xs text-slate-400">
+                <span>Modifié le :</span>
                 <span>{new Date(client.updated_at).toLocaleString('fr-FR')}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Agent :</span>
-                <span className="font-mono text-xs">{client.agent_id}</span>
+              <div className="flex justify-between text-xs text-slate-400">
+                <span>ID système :</span>
+                <span className="font-mono">{client.id}</span>
               </div>
             </CardContent>
           </Card>
