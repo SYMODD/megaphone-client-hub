@@ -2,47 +2,65 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { AuthStateManager } from "@/components/auth/AuthStateManager";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 const Auth = () => {
   const { user, loading } = useAuth();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [isRecoveryFlow, setIsRecoveryFlow] = useState(false);
   const [hasCheckedParams, setHasCheckedParams] = useState(false);
 
   // Check if this is a password recovery link with improved detection
   useEffect(() => {
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    const type = searchParams.get('type');
-    const tokenHash = searchParams.get('token_hash');
-    const error = searchParams.get('error');
+    // Parse URL fragment (hash) for recovery tokens
+    const hash = window.location.hash;
+    const hashParams = new URLSearchParams(hash.substring(1));
     
-    console.log("Auth page - URL parameters:", { 
+    // Get parameters from both search params and hash
+    const accessToken = searchParams.get('access_token') || hashParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token');
+    const type = searchParams.get('type') || hashParams.get('type');
+    const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash');
+    const error = searchParams.get('error') || hashParams.get('error');
+    
+    console.log("Auth page - URL analysis:", { 
+      currentUrl: window.location.href,
+      hash: hash,
+      searchParamsString: searchParams.toString(),
       type, 
       hasAccessToken: !!accessToken, 
       hasRefreshToken: !!refreshToken,
       hasTokenHash: !!tokenHash,
-      error,
-      urlParams: searchParams.toString()
+      error
     });
     
-    // Améliorer la détection des liens de récupération
+    // Improved recovery link detection
     const isRecoveryLink = type === 'recovery' || 
                           tokenHash ||
-                          (accessToken && refreshToken && !type) ||
+                          (accessToken && refreshToken) ||
                           error;
     
-    console.log("Recovery link detection:", { isRecoveryLink, type, hasTokenHash: !!tokenHash, hasTokens: !!(accessToken && refreshToken) });
+    console.log("Recovery link detection:", { 
+      isRecoveryLink, 
+      type, 
+      hasTokenHash: !!tokenHash, 
+      hasTokens: !!(accessToken && refreshToken) 
+    });
     
     if (isRecoveryLink) {
       console.log("Recovery link detected - staying on auth page for password reset");
       setIsRecoveryFlow(true);
+      
+      // Clean the URL by removing the hash fragment after processing
+      if (hash) {
+        window.history.replaceState({}, document.title, "/auth");
+      }
     }
     
     setHasCheckedParams(true);
-  }, [searchParams]);
+  }, [searchParams, location]);
 
   // Show loading while checking parameters
   if (loading || !hasCheckedParams) {

@@ -31,21 +31,27 @@ export const AuthStateManager = () => {
   useEffect(() => {
     if (hasProcessedRecovery) return;
 
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    const type = searchParams.get('type');
-    const tokenHash = searchParams.get('token_hash');
-    const error = searchParams.get('error');
-    const errorDescription = searchParams.get('error_description');
+    // Parse URL fragment (hash) for recovery tokens
+    const hash = window.location.hash;
+    const hashParams = new URLSearchParams(hash.substring(1));
     
-    console.log("AuthStateManager - Processing URL parameters:", { 
+    // Get parameters from both search params and hash
+    const accessToken = searchParams.get('access_token') || hashParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token');
+    const type = searchParams.get('type') || hashParams.get('type');
+    const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash');
+    const error = searchParams.get('error') || hashParams.get('error');
+    const errorDescription = searchParams.get('error_description') || hashParams.get('error_description');
+    
+    console.log("AuthStateManager - Processing recovery parameters:", { 
+      currentUrl: window.location.href,
+      hash: hash,
       type, 
       hasAccessToken: !!accessToken, 
       hasRefreshToken: !!refreshToken,
       hasTokenHash: !!tokenHash,
       error,
-      errorDescription,
-      allParams: Object.fromEntries(searchParams.entries())
+      errorDescription
     });
     
     // Gérer les erreurs d'abord
@@ -53,22 +59,19 @@ export const AuthStateManager = () => {
       console.error("Auth error in URL:", error, errorDescription);
       setError("Erreur lors de la récupération : " + (errorDescription || error));
       setHasProcessedRecovery(true);
-      // Nettoyer l'URL
-      window.history.replaceState({}, document.title, "/auth");
       return;
     }
     
     // Détecter et traiter les liens de récupération
     const isRecoveryLink = type === 'recovery' || 
                           tokenHash ||
-                          (accessToken && refreshToken && !type);
+                          (accessToken && refreshToken);
     
     console.log("Recovery link check:", { 
       isRecoveryLink, 
       type, 
       hasTokenHash: !!tokenHash, 
-      hasTokens: !!(accessToken && refreshToken),
-      noTypeWithTokens: !!(accessToken && refreshToken && !type)
+      hasTokens: !!(accessToken && refreshToken)
     });
     
     if (isRecoveryLink) {
@@ -107,13 +110,9 @@ export const AuthStateManager = () => {
           }
         });
       }
-      
-      // Nettoyer l'URL après traitement
-      window.history.replaceState({}, document.title, "/auth");
-    } else if (searchParams.toString()) {
+    } else if (searchParams.toString() || hash) {
       // Nettoyer les paramètres non liés à la récupération
       console.log("Cleaning non-recovery URL parameters");
-      window.history.replaceState({}, document.title, "/auth");
       setHasProcessedRecovery(true);
     } else {
       setHasProcessedRecovery(true);
