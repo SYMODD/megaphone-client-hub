@@ -24,7 +24,6 @@ export const useRecoveryTokenVerification = () => {
       const accessToken = searchParams.get('access_token') || hashParams.get('access_token');
       const refreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token');
       const type = searchParams.get('type') || hashParams.get('type');
-      const token = searchParams.get('token') || hashParams.get('token');
       const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash');
       const error = searchParams.get('error') || hashParams.get('error');
       const errorDescription = searchParams.get('error_description') || hashParams.get('error_description');
@@ -33,7 +32,6 @@ export const useRecoveryTokenVerification = () => {
         currentUrl: window.location.href,
         hash: hash,
         type, 
-        token: !!token,
         hasAccessToken: !!accessToken, 
         hasRefreshToken: !!refreshToken,
         hasTokenHash: !!tokenHash,
@@ -50,14 +48,14 @@ export const useRecoveryTokenVerification = () => {
       }
 
       // Si aucun paramètre de récupération n'est trouvé, rediriger vers auth
-      if (!type && !tokenHash && !accessToken && !refreshToken && !token) {
+      if (!type && !tokenHash && !accessToken && !refreshToken) {
         console.log("No recovery parameters found, redirecting to auth");
         navigate("/auth", { replace: true });
         return;
       }
 
       // Vérifier que c'est bien un lien de récupération
-      if (type !== 'recovery' && !tokenHash && !accessToken && !token) {
+      if (type !== 'recovery' && !tokenHash && !accessToken) {
         console.error("Not a valid recovery link");
         setError("Lien de récupération invalide. Veuillez demander un nouveau lien.");
         setIsCheckingToken(false);
@@ -85,22 +83,6 @@ export const useRecoveryTokenVerification = () => {
           console.log("Verifying recovery token hash...");
           const { error: verifyError } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
-            type: 'recovery'
-          });
-
-          if (verifyError) {
-            console.error("Error verifying recovery token:", verifyError);
-            setError("Le lien de récupération n'est plus valide ou a expiré.");
-          } else {
-            console.log("Recovery token verified successfully");
-            setIsValidToken(true);
-            setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
-          }
-        } else if (token && type === 'recovery') {
-          console.log("Verifying simple recovery token...");
-          // Pour les tokens simples, on essaie de vérifier directement
-          const { error: verifyError } = await supabase.auth.verifyOtp({
-            token: token,
             type: 'recovery'
           });
 
