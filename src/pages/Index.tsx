@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,7 @@ import { RoleIndicator } from "@/components/dashboard/RoleIndicator";
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { AdminFilters } from "@/components/dashboard/AdminFilters";
 import { useAdminFilters } from "@/hooks/useAdminFilters";
 import { useAgentData } from "@/hooks/useAgentData";
@@ -22,6 +23,11 @@ const Index = () => {
 
   console.log("User:", user);
   console.log("Profile:", profile);
+
+  // Rediriger les agents vers la page "Nouveau Client"
+  if (profile?.role === "agent") {
+    return <Navigate to="/nouveau-client" replace />;
+  }
 
   // Utiliser les filtres seulement pour admin et superviseur
   const shouldUseFilters = profile && (profile.role === "admin" || profile.role === "superviseur");
