@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, Upload, RotateCcw } from "lucide-react";
-import { ImageCropper } from "./ImageCropper";
 
 interface PassportImageCaptureProps {
   isScanning: boolean;
@@ -17,10 +16,6 @@ export const PassportImageCapture = ({
   onImageCapture, 
   onResetScan 
 }: PassportImageCaptureProps) => {
-  const [capturedImageUrl, setCapturedImageUrl] = useState<string | null>(null);
-  const [showCropper, setShowCropper] = useState(false);
-  const [originalFile, setOriginalFile] = useState<File | null>(null);
-
   const handleFileUpload = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -28,14 +23,7 @@ export const PassportImageCapture = ({
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        setOriginalFile(file);
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const result = event.target?.result as string;
-          setCapturedImageUrl(result);
-          setShowCropper(true);
-        };
-        reader.readAsDataURL(file);
+        onImageCapture(file);
       }
     };
     input.click();
@@ -49,83 +37,11 @@ export const PassportImageCapture = ({
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        setOriginalFile(file);
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const result = event.target?.result as string;
-          setCapturedImageUrl(result);
-          setShowCropper(true);
-        };
-        reader.readAsDataURL(file);
+        onImageCapture(file);
       }
     };
     input.click();
   };
-
-  const handleCropComplete = (croppedImageUrl: string) => {
-    fetch(croppedImageUrl)
-      .then(res => res.blob())
-      .then(blob => {
-        const file = new File([blob], 'cropped-passport.jpg', { type: 'image/jpeg' });
-        onImageCapture(file);
-        setShowCropper(false);
-        setCapturedImageUrl(null);
-        setOriginalFile(null);
-      });
-  };
-
-  const handleCropCancel = () => {
-    setShowCropper(false);
-    setCapturedImageUrl(null);
-    setOriginalFile(null);
-  };
-
-  const handleSkipCropping = () => {
-    if (originalFile) {
-      onImageCapture(originalFile);
-      setShowCropper(false);
-      setCapturedImageUrl(null);
-      setOriginalFile(null);
-    }
-  };
-
-  const handleRetakePhoto = () => {
-    setShowCropper(false);
-    setCapturedImageUrl(null);
-    setOriginalFile(null);
-  };
-
-  // Show cropper interface
-  if (showCropper && capturedImageUrl) {
-    return (
-      <div className="space-y-4">
-        <ImageCropper
-          imageUrl={capturedImageUrl}
-          onCropComplete={handleCropComplete}
-          onCancel={handleCropCancel}
-        />
-        <div className="flex justify-center space-x-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={handleRetakePhoto}
-            className="text-sm"
-          >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Reprendre la photo
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={handleSkipCropping}
-            className="text-sm"
-          >
-            Ignorer le recadrage
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   // Show captured image with options
   if (!scannedImage) {
@@ -136,6 +52,9 @@ export const PassportImageCapture = ({
             <h4 className="font-medium text-gray-700 mb-2">Scanner le passeport</h4>
             <p className="text-sm text-gray-500">
               Prenez une photo claire de la page principale du passeport
+            </p>
+            <p className="text-xs text-blue-600 mt-2">
+              L'OCR analysera automatiquement toute l'image pour extraire les données MRZ
             </p>
           </div>
           
