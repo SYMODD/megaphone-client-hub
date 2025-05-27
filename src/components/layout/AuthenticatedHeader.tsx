@@ -52,7 +52,7 @@ export const AuthenticatedHeader = () => {
                   </p>
                   <div className="flex items-center space-x-2 text-xs text-slate-600">
                     <RoleIndicator role={profile.role} size="sm" />
-                    {profile.point_operation && (
+                    {profile.point_operation && profile.role !== "admin" && (
                       <>
                         <span>•</span>
                         <span className="hidden md:inline">{getPointLabel(profile.point_operation)}</span>
