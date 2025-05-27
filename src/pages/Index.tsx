@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -94,7 +95,7 @@ const Index = () => {
                   </div>
                 </div>
                 
-                {profile.point_operation && profile.role === "agent" && (
+                {profile.point_operation && (
                   <div className="flex items-center justify-center space-x-2 text-slate-600 bg-slate-50 rounded-lg px-3 sm:px-4 py-2">
                     <MapPin className="w-4 h-4" />
                     <span className="font-medium text-sm sm:text-base">{getPointLabel(profile.point_operation)}</span>
