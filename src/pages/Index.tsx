@@ -32,12 +32,15 @@ const Index = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
-        <div className="text-center space-y-6">
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-800">Sud Megaphone</h1>
-          <p className="text-lg sm:text-xl text-slate-600">Client Manager Dashboard</p>
+        <div className="text-center space-y-6 max-w-md mx-auto">
+          <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto shadow-xl">
+            <User className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Sud Megaphone</h1>
+          <p className="text-lg text-slate-600">Client Manager Dashboard</p>
           <p className="text-slate-500">Connectez-vous pour accéder à l'application</p>
           <Link to="/auth">
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
               Se connecter
             </Button>
           </Link>
@@ -70,42 +73,48 @@ const Index = () => {
       <AuthenticatedHeader />
       <Navigation />
       
-      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-6 sm:space-y-8">
-        {/* Welcome Section */}
-        <div className="text-center space-y-4">
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-800 mb-2">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        {/* Welcome Section - Mobile Optimized */}
+        <div className="text-center space-y-3 sm:space-y-4">
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
+              <User className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+            </div>
+          </div>
+          
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 mb-2">
             Sud Megaphone
           </h1>
-          <p className="text-lg sm:text-xl text-slate-600 mb-4 sm:mb-6">
+          <p className="text-base sm:text-lg lg:text-xl text-slate-600 mb-3 sm:mb-4">
             Client Manager Dashboard
           </p>
           
-          {/* Enhanced User Profile Card */}
+          {/* Enhanced User Profile Card - Mobile Optimized */}
           {profile && (
-            <div className="bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 rounded-2xl shadow-xl p-1 max-w-lg mx-auto mb-6 sm:mb-8">
-              <div className="bg-white rounded-xl p-4 sm:p-6 space-y-3 sm:space-y-4">
-                <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+            <div className="bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 rounded-2xl shadow-xl p-1 max-w-sm sm:max-w-lg mx-auto mb-4 sm:mb-6">
+              <div className="bg-white rounded-xl p-3 sm:p-6 space-y-2 sm:space-y-4">
+                <div className="flex flex-col items-center space-y-2 sm:space-y-3">
                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
                     <User className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                   </div>
-                  <div className="text-center sm:text-left">
-                    <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-1">
+                  <div className="text-center">
+                    <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-800 mb-1">
                       {profile.prenom} {profile.nom}
                     </h2>
-                    <div className="flex justify-center sm:justify-start">
+                    <div className="flex justify-center">
                       <RoleIndicator role={profile.role} size="lg" />
                     </div>
                   </div>
                 </div>
                 
                 {profile.point_operation && (
-                  <div className="flex items-center justify-center space-x-2 text-slate-600 bg-slate-50 rounded-lg px-3 sm:px-4 py-2">
-                    <MapPin className="w-4 h-4" />
-                    <span className="font-medium text-sm sm:text-base">{getPointLabel(profile.point_operation)}</span>
+                  <div className="flex items-center justify-center space-x-2 text-slate-600 bg-slate-50 rounded-lg px-3 py-2 text-center">
+                    <MapPin className="w-4 h-4 flex-shrink-0" />
+                    <span className="font-medium text-xs sm:text-sm">{getPointLabel(profile.point_operation)}</span>
                   </div>
                 )}
                 
-                <div className="text-xs text-slate-400 font-mono bg-slate-50 rounded px-2 py-1 break-all">
+                <div className="text-xs text-slate-400 font-mono bg-slate-50 rounded px-2 py-1 break-all text-center">
                   {user.email}
                 </div>
               </div>
@@ -124,31 +133,37 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Admin Filters - Only show for admin and superviseur */}
+        {/* Admin Filters - Mobile Optimized */}
         {isAdminOrSuperviseur && (
-          <AdminFilters
-            selectedPoint={adminFilters.selectedPoint}
-            selectedCategory={adminFilters.selectedCategory}
-            onPointChange={adminFilters.handlePointChange}
-            onCategoryChange={adminFilters.handleCategoryChange}
-            onClearFilters={adminFilters.clearFilters}
-          />
+          <div className="px-1 sm:px-0">
+            <AdminFilters
+              selectedPoint={adminFilters.selectedPoint}
+              selectedCategory={adminFilters.selectedCategory}
+              onPointChange={adminFilters.handlePointChange}
+              onCategoryChange={adminFilters.handleCategoryChange}
+              onClearFilters={adminFilters.clearFilters}
+            />
+          </div>
         )}
 
-        {/* Quick Actions */}
+        {/* Quick Actions - Already Mobile Optimized */}
         <QuickActions />
 
-        {/* Stats Overview - Pass filtered data as props */}
-        <ClientStats data={agentData} />
+        {/* Stats Overview - Mobile Optimized */}
+        <div className="px-1 sm:px-0">
+          <ClientStats data={agentData} />
+        </div>
 
-        {/* Charts and Analytics - Pass filtered data as props */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* Charts and Analytics - Mobile Optimized */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 px-1 sm:px-0">
           <NationalityChart data={agentData} />
           <RegistrationChart data={agentData} />
         </div>
 
-        {/* Recent Activity - Pass filtered data as props */}
-        <RecentClients data={agentData} />
+        {/* Recent Activity - Mobile Optimized */}
+        <div className="px-1 sm:px-0">
+          <RecentClients data={agentData} />
+        </div>
       </main>
     </div>
   );
