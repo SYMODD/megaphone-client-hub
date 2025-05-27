@@ -1,13 +1,26 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, Edit, FileText } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAgentData } from "@/hooks/useAgentData";
 
-export const RecentClients = () => {
-  // Removed useAgentData call - the data will come from the parent component
-  const { recentClients } = useAgentData();
+interface RecentClientsProps {
+  data: {
+    recentClients: Array<{
+      id: number;
+      nom: string;
+      prenom: string;
+      nationalite: string;
+      dateEnregistrement: string;
+      photo?: string | null;
+      pointOperation: string;
+    }>;
+  };
+}
+
+export const RecentClients = ({ data }: RecentClientsProps) => {
+  const { recentClients } = data;
 
   return (
     <Card>
@@ -74,3 +87,4 @@ export const RecentClients = () => {
     </Card>
   );
 };
+

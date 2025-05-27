@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -135,20 +136,21 @@ const Index = () => {
         {/* Quick Actions */}
         <QuickActions />
 
-        {/* Stats Overview */}
-        <ClientStats />
+        {/* Stats Overview - Pass filtered data as props */}
+        <ClientStats data={agentData} />
 
-        {/* Charts and Analytics */}
+        {/* Charts and Analytics - Pass filtered data as props */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <NationalityChart />
-          <RegistrationChart />
+          <NationalityChart data={agentData} />
+          <RegistrationChart data={agentData} />
         </div>
 
-        {/* Recent Activity */}
-        <RecentClients />
+        {/* Recent Activity - Pass filtered data as props */}
+        <RecentClients data={agentData} />
       </main>
     </div>
   );
 };
 
 export default Index;
+

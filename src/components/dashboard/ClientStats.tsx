@@ -1,12 +1,19 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, TrendingUp, Calendar, Globe } from "lucide-react";
-import { useAgentData } from "@/hooks/useAgentData";
 
-export const ClientStats = () => {
-  // Removed useAgentData call - the data will come from the parent component
-  // The hook is now called in Index.tsx with filters
-  const { totalClients, newThisMonth, contractsGenerated, nationalities } = useAgentData();
+interface ClientStatsProps {
+  data: {
+    totalClients: number;
+    newThisMonth: number;
+    contractsGenerated: number;
+    nationalities: number;
+  };
+}
+
+export const ClientStats = ({ data }: ClientStatsProps) => {
+  const { totalClients, newThisMonth, contractsGenerated, nationalities } = data;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -56,3 +63,4 @@ export const ClientStats = () => {
     </div>
   );
 };
+

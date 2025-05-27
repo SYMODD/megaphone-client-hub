@@ -1,11 +1,19 @@
 
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { useAgentData } from "@/hooks/useAgentData";
 
-export const RegistrationChart = () => {
-  // Removed useAgentData call - the data will come from the parent component
-  const { registrationData } = useAgentData();
+interface RegistrationChartProps {
+  data: {
+    registrationData: Array<{
+      month: string;
+      clients: number;
+    }>;
+  };
+}
+
+export const RegistrationChart = ({ data }: RegistrationChartProps) => {
+  const { registrationData } = data;
 
   return (
     <Card>
@@ -41,3 +49,4 @@ export const RegistrationChart = () => {
     </Card>
   );
 };
+
