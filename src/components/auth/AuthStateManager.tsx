@@ -26,58 +26,68 @@ export const AuthStateManager = () => {
     handleNewPassword,
   } = useAuthOperations();
 
-  // Handle password reset URL parameters - improved detection
+  // Améliorer la détection des liens de récupération de mot de passe
   useEffect(() => {
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
     const type = searchParams.get('type');
     const tokenHash = searchParams.get('token_hash');
-    const token = searchParams.get('token');
+    const error = searchParams.get('error');
+    const errorDescription = searchParams.get('error_description');
     
     console.log("URL parameters detected:", { 
       type, 
       hasAccessToken: !!accessToken, 
       hasRefreshToken: !!refreshToken,
       hasTokenHash: !!tokenHash,
-      hasToken: !!token,
-      fullParams: Object.fromEntries(searchParams.entries())
+      error,
+      errorDescription,
+      allParams: Object.fromEntries(searchParams.entries())
     });
     
-    // Amélioration: détecter différents types de liens de récupération
+    // Gérer les erreurs d'abord
+    if (error) {
+      console.error("Auth error in URL:", error, errorDescription);
+      setError("Erreur lors de la récupération : " + (errorDescription || error));
+      // Nettoyer l'URL
+      navigate("/auth", { replace: true });
+      return;
+    }
+    
+    // Détecter les liens de récupération de mot de passe
     const isRecoveryLink = type === 'recovery' || 
-                          (accessToken && refreshToken) ||
-                          (tokenHash && type === 'recovery');
+                          (accessToken && refreshToken && type !== 'signup') ||
+                          tokenHash;
     
     if (isRecoveryLink) {
       console.log("Password recovery link detected, setting up new password form");
       setShowNewPassword(true);
       setShowPasswordReset(false);
       
-      // Si nous avons les tokens d'accès, configurons la session
+      // Gérer les différents types de tokens de récupération
       if (accessToken && refreshToken) {
-        console.log("Setting up session with tokens from URL");
+        console.log("Setting up session with access/refresh tokens");
         supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
         }).then(({ error }) => {
           if (error) {
             console.error("Error setting session:", error);
-            setError("Erreur lors de la configuration de la session de récupération");
+            setError("Erreur lors de la configuration de la session. Veuillez recommencer la procédure.");
           } else {
             console.log("Session set successfully for password recovery");
             setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
           }
         });
       } else if (tokenHash) {
-        // Vérifier le token avec Supabase
-        console.log("Verifying recovery token...");
+        console.log("Verifying recovery token hash...");
         supabase.auth.verifyOtp({
           token_hash: tokenHash,
           type: 'recovery'
         }).then(({ error }) => {
           if (error) {
             console.error("Error verifying recovery token:", error);
-            setError("Le lien de récupération n'est plus valide ou a expiré");
+            setError("Le lien de récupération n'est plus valide ou a expiré. Veuillez demander un nouveau lien.");
           } else {
             console.log("Recovery token verified successfully");
             setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
@@ -85,9 +95,8 @@ export const AuthStateManager = () => {
         });
       }
       
-      // Nettoyer l'URL après traitement
-      const newUrl = window.location.pathname;
-      navigate(newUrl, { replace: true });
+      // Nettoyer l'URL après traitement mais garder la page auth
+      navigate("/auth", { replace: true });
     }
   }, [searchParams, setError, setSuccess, navigate]);
 

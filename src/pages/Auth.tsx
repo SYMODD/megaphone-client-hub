@@ -8,17 +8,17 @@ const Auth = () => {
   const { user, loading } = useAuth();
   const [searchParams] = useSearchParams();
 
-  // Check if this is a password recovery link
+  // Check if this is a password recovery link with better detection
   const accessToken = searchParams.get('access_token');
   const refreshToken = searchParams.get('refresh_token');
   const type = searchParams.get('type');
   const tokenHash = searchParams.get('token_hash');
-  const token = searchParams.get('token');
+  const error = searchParams.get('error');
   
   const isRecoveryLink = type === 'recovery' || 
-                        (accessToken && refreshToken) ||
-                        (tokenHash && type === 'recovery') ||
-                        (token && type === 'recovery');
+                        (accessToken && refreshToken && type !== 'signup') ||
+                        tokenHash ||
+                        error; // Inclure les erreurs pour les afficher
 
   // If user is authenticated but this is NOT a recovery link, redirect to dashboard
   if (user && !loading && !isRecoveryLink) {
