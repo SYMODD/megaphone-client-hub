@@ -98,11 +98,10 @@ export const useRecoveryTokenVerification = () => {
           }
         } else if (token && type === 'recovery') {
           console.log("Verifying simple recovery token...");
-          // Fixed: Use email verification for simple token
+          // Pour les tokens simples, on essaie de vérifier directement
           const { error: verifyError } = await supabase.auth.verifyOtp({
             token: token,
-            type: 'recovery',
-            email: '' // This will be handled by Supabase internally
+            type: 'recovery'
           });
 
           if (verifyError) {
@@ -123,7 +122,7 @@ export const useRecoveryTokenVerification = () => {
         setIsCheckingToken(false);
         
         // Nettoyer l'URL après traitement
-        if (hash) {
+        if (hash || searchParams.toString()) {
           window.history.replaceState({}, document.title, "/reset-password");
         }
       }
