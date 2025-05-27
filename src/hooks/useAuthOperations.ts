@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -115,11 +116,16 @@ export const useAuthOperations = () => {
     setIsLoading(true);
 
     try {
+      // Amélioration: URL de redirection plus explicite
+      const redirectUrl = `${window.location.origin}/auth?type=recovery`;
+      console.log("Sending password reset email with redirect URL:", redirectUrl);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?type=recovery`,
+        redirectTo: redirectUrl,
       });
 
       if (error) {
+        console.error("Password reset error:", error);
         setError(error.message);
         toast({
           title: "Erreur de réinitialisation",
@@ -127,7 +133,7 @@ export const useAuthOperations = () => {
           variant: "destructive",
         });
       } else {
-        const successMessage = "Un lien de réinitialisation a été envoyé à votre adresse email.";
+        const successMessage = "Un lien de réinitialisation a été envoyé à votre adresse email. Cliquez sur le lien pour définir votre nouveau mot de passe.";
         setSuccess(successMessage);
         toast({
           title: "Email envoyé",
@@ -136,6 +142,7 @@ export const useAuthOperations = () => {
         return true;
       }
     } catch (error) {
+      console.error("Unexpected error during password reset:", error);
       const errorMessage = "Une erreur inattendue s'est produite";
       setError(errorMessage);
       toast({
@@ -174,7 +181,7 @@ export const useAuthOperations = () => {
 
       if (error) {
         console.error("Password update error:", error);
-        setError(error.message);
+        setError(`Erreur lors de la mise à jour du mot de passe: ${error.message}`);
         toast({
           title: "Erreur",
           description: error.message,
@@ -184,9 +191,15 @@ export const useAuthOperations = () => {
         console.log("Password updated successfully");
         toast({
           title: "Mot de passe modifié",
-          description: "Votre mot de passe a été modifié avec succès.",
+          description: "Votre mot de passe a été modifié avec succès. Vous allez être redirigé.",
         });
-        navigate("/", { replace: true });
+        
+        // Attendre un peu avant la redirection pour que l'utilisateur voie le message
+        setTimeout(() => {
+          navigate("/", { replace: true });
+        }, 2000);
+        
+        setSuccess("Mot de passe modifié avec succès ! Redirection en cours...");
         return true;
       }
     } catch (error) {

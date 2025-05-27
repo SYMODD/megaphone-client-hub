@@ -28,32 +28,66 @@ const Auth = () => {
     handleNewPassword,
   } = useAuthOperations();
 
-  // Handle password reset URL parameters
+  // Handle password reset URL parameters - improved detection
   useEffect(() => {
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
     const type = searchParams.get('type');
+    const tokenHash = searchParams.get('token_hash');
+    const token = searchParams.get('token');
     
-    console.log("URL parameters:", { type, accessToken: !!accessToken, refreshToken: !!refreshToken });
+    console.log("URL parameters detected:", { 
+      type, 
+      hasAccessToken: !!accessToken, 
+      hasRefreshToken: !!refreshToken,
+      hasTokenHash: !!tokenHash,
+      hasToken: !!token
+    });
     
-    if (type === 'recovery' && accessToken && refreshToken) {
-      console.log("Password recovery detected, setting up session");
+    // Amélioration: détecter différents types de liens de récupération
+    const isRecoveryLink = type === 'recovery' || 
+                          (accessToken && refreshToken) ||
+                          (tokenHash && type === 'recovery') ||
+                          (token && type === 'recovery');
+    
+    if (isRecoveryLink) {
+      console.log("Password recovery link detected, setting up new password form");
       setShowNewPassword(true);
+      setShowPasswordReset(false);
       
-      // Set the session with the tokens from the URL
-      supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      }).then(({ error }) => {
-        if (error) {
-          console.error("Error setting session:", error);
-          setError("Erreur lors de la configuration de la session de récupération");
-        } else {
-          console.log("Session set successfully for password recovery");
-        }
-      });
+      // Si nous avons les tokens d'accès, configurons la session
+      if (accessToken && refreshToken) {
+        console.log("Setting up session with tokens from URL");
+        supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        }).then(({ error }) => {
+          if (error) {
+            console.error("Error setting session:", error);
+            setError("Erreur lors de la configuration de la session de récupération");
+          } else {
+            console.log("Session set successfully for password recovery");
+            setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
+          }
+        });
+      } else if (tokenHash) {
+        // Vérifier le token avec Supabase
+        console.log("Verifying recovery token...");
+        supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: 'recovery'
+        }).then(({ error }) => {
+          if (error) {
+            console.error("Error verifying recovery token:", error);
+            setError("Le lien de récupération n'est plus valide ou a expiré");
+          } else {
+            console.log("Recovery token verified successfully");
+            setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
+          }
+        });
+      }
     }
-  }, [searchParams, setError]);
+  }, [searchParams, setError, setSuccess]);
 
   // Clear errors and success messages when user changes between forms
   useEffect(() => {
@@ -84,6 +118,7 @@ const Auth = () => {
 
   const handleShowPasswordReset = () => {
     setShowPasswordReset(true);
+    setShowNewPassword(false);
     setError(null);
     setSuccess(null);
   };
@@ -101,7 +136,7 @@ const Auth = () => {
   };
 
   const getCardDescription = () => {
-    if (showNewPassword) return "Entrez votre nouveau mot de passe";
+    if (showNewPassword) return "Définissez votre nouveau mot de passe";
     if (showPasswordReset) return "Entrez votre email pour recevoir un lien de réinitialisation";
     return "Connectez-vous à votre compte";
   };
