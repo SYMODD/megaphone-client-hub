@@ -15,15 +15,15 @@ export const ClientForm = () => {
 
   return (
     <form onSubmit={handleFormSubmit} className="space-y-6">
-      <PersonalInfoSection 
-        formData={formData}
-        onInputChange={handleInputChange}
-      />
-
       <PassportSection 
         scannedImage={formData.scannedImage}
         onImageScanned={(image) => handleInputChange("scannedImage", image)}
         onMRZDataExtracted={handleMRZDataExtracted}
+      />
+
+      <PersonalInfoSection 
+        formData={formData}
+        onInputChange={handleInputChange}
       />
 
       <RegistrationSection 
