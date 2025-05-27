@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { MRZData } from "@/services/ocrService";
 import { toast } from "sonner";
 import { usePassportOCR } from "@/hooks/usePassportOCR";
-import { PassportAPIKeyInput } from "./PassportAPIKeyInput";
+import { AdminAPIKeySection } from "./AdminAPIKeySection";
 import { PassportImageCapture } from "./PassportImageCapture";
 import { PassportDataDisplay } from "./PassportDataDisplay";
 
@@ -54,7 +54,7 @@ export const PassportOCRScanner = ({ onDataExtracted, onImageScanned, scannedIma
     <div className="space-y-4">
       <Label>Scanner le passeport avec OCR</Label>
       
-      <PassportAPIKeyInput
+      <AdminAPIKeySection
         apiKey={apiKey}
         onApiKeyChange={setApiKey}
         showApiKey={showApiKey}
