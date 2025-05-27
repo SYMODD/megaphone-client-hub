@@ -9,55 +9,29 @@ const Auth = () => {
   const { user, loading } = useAuth();
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const [hasCheckedParams, setHasCheckedParams] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
-  // Check if this is a password recovery link
   useEffect(() => {
-    console.log("=== AUTH PAGE RECOVERY CHECK ===");
-    console.log("Current URL:", window.location.href);
-    console.log("Search params:", searchParams.toString());
-    console.log("Location hash:", location.hash);
-    
-    // Parse URL fragment (hash) for recovery tokens
+    // Simple check - if we're on /auth and have recovery-related parameters,
+    // let Supabase handle the flow naturally by redirecting to /reset-password
     const hash = window.location.hash;
-    const hashParams = new URLSearchParams(hash.substring(1));
-    
-    // Get parameters from both search params and hash
-    const accessToken = searchParams.get('access_token') || hashParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token');
-    const type = searchParams.get('type') || hashParams.get('type');
-    const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash');
-    const error = searchParams.get('error') || hashParams.get('error');
-    
-    console.log("Recovery parameters found:", { 
-      type, 
-      hasAccessToken: !!accessToken, 
-      hasRefreshToken: !!refreshToken,
-      hasTokenHash: !!tokenHash,
-      error
-    });
-    
-    // Simple detection of recovery links - check for any recovery-related parameters
-    const isRecoveryLink = !!(type === 'recovery' || tokenHash || (accessToken && refreshToken));
-    
-    console.log("Recovery link detection result:", isRecoveryLink);
-    
-    if (isRecoveryLink) {
-      console.log("Recovery link detected - redirecting to /reset-password");
-      // Redirect immediately to preserve all parameters
-      const fullUrl = window.location.href;
-      const newUrl = fullUrl.replace('/auth', '/reset-password');
-      
-      console.log("Redirecting to:", newUrl);
-      window.location.replace(newUrl);
+    const hasRecoveryParams = 
+      searchParams.get('type') === 'recovery' ||
+      hash.includes('type=recovery') ||
+      hash.includes('access_token') ||
+      searchParams.get('access_token');
+
+    if (hasRecoveryParams) {
+      console.log("Recovery parameters detected, redirecting to reset password page");
+      window.location.replace('/reset-password' + window.location.search + window.location.hash);
       return;
     }
-    
-    setHasCheckedParams(true);
-  }, [searchParams, location]);
 
-  // Show loading while checking parameters
-  if (loading || !hasCheckedParams) {
+    setIsReady(true);
+  }, [searchParams]);
+
+  // Show loading while checking for recovery parameters or auth state
+  if (loading || !isReady) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
