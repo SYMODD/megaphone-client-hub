@@ -31,6 +31,8 @@ interface ContractTemplate {
   icon?: string;
 }
 
+const STORAGE_KEY = 'customContractTemplates';
+
 const Contracts = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
@@ -86,15 +88,41 @@ const Contracts = () => {
   };
 
   const loadCustomTemplates = () => {
-    const savedTemplates = localStorage.getItem('customContractTemplates');
-    if (savedTemplates) {
-      setCustomTemplates(JSON.parse(savedTemplates));
+    try {
+      const savedTemplates = localStorage.getItem(STORAGE_KEY);
+      console.log('Données brutes du localStorage:', savedTemplates);
+      
+      if (savedTemplates) {
+        const parsedTemplates = JSON.parse(savedTemplates);
+        console.log('Modèles parsés:', parsedTemplates);
+        setCustomTemplates(parsedTemplates);
+      } else {
+        console.log('Aucun modèle trouvé dans le localStorage');
+        setCustomTemplates([]);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des modèles:', error);
+      setCustomTemplates([]);
     }
   };
 
   const saveCustomTemplates = (templates: ContractTemplate[]) => {
-    localStorage.setItem('customContractTemplates', JSON.stringify(templates));
-    setCustomTemplates(templates);
+    try {
+      console.log('Sauvegarde des modèles:', templates);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
+      setCustomTemplates(templates);
+      
+      // Vérification immédiate
+      const saved = localStorage.getItem(STORAGE_KEY);
+      console.log('Vérification sauvegarde:', saved);
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder le modèle.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleClientSelect = (client: Client) => {
@@ -138,11 +166,21 @@ const Contracts = () => {
   const handleAddTemplate = (template: ContractTemplate) => {
     const newTemplates = [...customTemplates, template];
     saveCustomTemplates(newTemplates);
+    
+    toast({
+      title: "Modèle ajouté",
+      description: "Le nouveau modèle a été ajouté avec succès.",
+    });
   };
 
   const handleUpdateTemplate = (template: ContractTemplate) => {
     const newTemplates = customTemplates.map(t => t.id === template.id ? template : t);
     saveCustomTemplates(newTemplates);
+    
+    toast({
+      title: "Modèle modifié",
+      description: "Le modèle a été modifié avec succès.",
+    });
   };
 
   const handleDeleteTemplate = (id: string) => {
@@ -192,6 +230,20 @@ const Contracts = () => {
               {isAgent ? "Créez des contrats pour vos clients" : "Créez des contrats personnalisés pour vos clients"}
             </p>
           </div>
+
+          {/* Debug info - à supprimer en production */}
+          {!isAgent && (
+            <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg text-sm">
+              <strong>Debug:</strong> {customTemplates.length} modèle(s) chargé(s)
+              {customTemplates.length > 0 && (
+                <ul className="mt-1 list-disc list-inside">
+                  {customTemplates.map(t => (
+                    <li key={t.id}>{t.name}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
 
           {isAgent ? (
             // Interface simplifiée pour les agents

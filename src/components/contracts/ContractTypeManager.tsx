@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -32,22 +32,34 @@ export const ContractTypeManager = ({
   const [isAdding, setIsAdding] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<ContractTemplate | null>(null);
 
+  // Debug: Afficher les modèles chargés
+  useEffect(() => {
+    console.log("Modèles personnalisés chargés:", customTemplates);
+    console.log("Nombre de modèles:", customTemplates.length);
+  }, [customTemplates]);
+
   const handleSubmit = (template: ContractTemplate) => {
+    console.log("Soumission du modèle:", template);
+    
     if (editingTemplate) {
       onUpdateTemplate(template);
       setEditingTemplate(null);
+      toast({
+        title: "Succès",
+        description: "Modèle modifié avec succès.",
+      });
     } else {
       onAddTemplate(template);
       setIsAdding(false);
+      toast({
+        title: "Succès",
+        description: "Nouveau modèle ajouté avec succès.",
+      });
     }
-    
-    toast({
-      title: "Succès",
-      description: editingTemplate ? "Modèle modifié avec succès." : "Nouveau modèle ajouté avec succès.",
-    });
   };
 
   const handleEdit = (template: ContractTemplate) => {
+    console.log("Édition du modèle:", template);
     setEditingTemplate(template);
     setIsAdding(true);
   };
@@ -58,6 +70,7 @@ export const ContractTypeManager = ({
   };
 
   const handleDelete = (id: string) => {
+    console.log("Suppression du modèle ID:", id);
     onDeleteTemplate(id);
     toast({
       title: "Modèle supprimé",
