@@ -27,7 +27,7 @@ export const AuthStateManager = () => {
     handleNewPassword,
   } = useAuthOperations();
 
-  // Améliorer la détection des liens de récupération de mot de passe
+  // Traitement des liens de récupération de mot de passe
   useEffect(() => {
     if (hasProcessedRecovery) return;
 
@@ -38,7 +38,7 @@ export const AuthStateManager = () => {
     const error = searchParams.get('error');
     const errorDescription = searchParams.get('error_description');
     
-    console.log("AuthStateManager - URL parameters detected:", { 
+    console.log("AuthStateManager - Processing URL parameters:", { 
       type, 
       hasAccessToken: !!accessToken, 
       hasRefreshToken: !!refreshToken,
@@ -53,25 +53,33 @@ export const AuthStateManager = () => {
       console.error("Auth error in URL:", error, errorDescription);
       setError("Erreur lors de la récupération : " + (errorDescription || error));
       setHasProcessedRecovery(true);
-      // Nettoyer l'URL immédiatement
+      // Nettoyer l'URL
       window.history.replaceState({}, document.title, "/auth");
       return;
     }
     
-    // Détecter les liens de récupération de mot de passe
+    // Détecter et traiter les liens de récupération
     const isRecoveryLink = type === 'recovery' || 
-                          (accessToken && refreshToken) ||
-                          tokenHash;
+                          tokenHash ||
+                          (accessToken && refreshToken && !type);
+    
+    console.log("Recovery link check:", { 
+      isRecoveryLink, 
+      type, 
+      hasTokenHash: !!tokenHash, 
+      hasTokens: !!(accessToken && refreshToken),
+      noTypeWithTokens: !!(accessToken && refreshToken && !type)
+    });
     
     if (isRecoveryLink) {
-      console.log("Password recovery link detected, setting up new password form");
+      console.log("Password recovery detected - setting up new password form");
       setShowNewPassword(true);
       setShowPasswordReset(false);
       setHasProcessedRecovery(true);
       
-      // Gérer les différents types de tokens de récupération
+      // Traiter les différents types de tokens de récupération
       if (accessToken && refreshToken) {
-        console.log("Setting up session with access/refresh tokens");
+        console.log("Setting up session with recovery tokens");
         supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
@@ -80,7 +88,7 @@ export const AuthStateManager = () => {
             console.error("Error setting session:", error);
             setError("Erreur lors de la configuration de la session. Veuillez recommencer la procédure.");
           } else {
-            console.log("Session set successfully for password recovery");
+            console.log("Session configured successfully for password recovery");
             setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
           }
         });
@@ -100,11 +108,11 @@ export const AuthStateManager = () => {
         });
       }
       
-      // Nettoyer l'URL après traitement mais garder la page auth
+      // Nettoyer l'URL après traitement
       window.history.replaceState({}, document.title, "/auth");
     } else if (searchParams.toString()) {
-      // Si il y a des paramètres mais ce n'est pas un lien de récupération, nettoyer l'URL
-      console.log("Cleaning URL parameters that are not recovery-related");
+      // Nettoyer les paramètres non liés à la récupération
+      console.log("Cleaning non-recovery URL parameters");
       window.history.replaceState({}, document.title, "/auth");
       setHasProcessedRecovery(true);
     } else {
@@ -114,7 +122,7 @@ export const AuthStateManager = () => {
 
   // Clear errors and success messages when user changes between forms
   useEffect(() => {
-    if (!hasProcessedRecovery) return; // Ne pas clear pendant le traitement initial
+    if (!hasProcessedRecovery) return;
     setError(null);
     setSuccess(null);
   }, [showPasswordReset, hasProcessedRecovery, setError, setSuccess]);

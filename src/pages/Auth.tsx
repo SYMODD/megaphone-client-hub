@@ -11,7 +11,7 @@ const Auth = () => {
   const [isRecoveryFlow, setIsRecoveryFlow] = useState(false);
   const [hasCheckedParams, setHasCheckedParams] = useState(false);
 
-  // Check if this is a password recovery link with better detection
+  // Check if this is a password recovery link with improved detection
   useEffect(() => {
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
@@ -28,13 +28,16 @@ const Auth = () => {
       urlParams: searchParams.toString()
     });
     
+    // Améliorer la détection des liens de récupération
     const isRecoveryLink = type === 'recovery' || 
-                          (accessToken && refreshToken && type !== 'signup') ||
                           tokenHash ||
+                          (accessToken && refreshToken && !type) ||
                           error;
     
+    console.log("Recovery link detection:", { isRecoveryLink, type, hasTokenHash: !!tokenHash, hasTokens: !!(accessToken && refreshToken) });
+    
     if (isRecoveryLink) {
-      console.log("Recovery link detected - staying on auth page");
+      console.log("Recovery link detected - staying on auth page for password reset");
       setIsRecoveryFlow(true);
     }
     
@@ -53,23 +56,10 @@ const Auth = () => {
     );
   }
 
-  // If user is authenticated but this is NOT a recovery link and NOT a recovery flow, redirect to dashboard
+  // Only redirect authenticated users if this is NOT a recovery flow
   if (user && !isRecoveryFlow) {
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    const type = searchParams.get('type');
-    const tokenHash = searchParams.get('token_hash');
-    const error = searchParams.get('error');
-    
-    const hasRecoveryParams = type === 'recovery' || 
-                            (accessToken && refreshToken && type !== 'signup') ||
-                            tokenHash ||
-                            error;
-    
-    if (!hasRecoveryParams) {
-      console.log("User authenticated and no recovery params - redirecting to dashboard");
-      return <Navigate to="/" replace />;
-    }
+    console.log("User authenticated and not in recovery flow - redirecting to dashboard");
+    return <Navigate to="/" replace />;
   }
 
   return (
