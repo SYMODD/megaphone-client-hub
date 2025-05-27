@@ -2,11 +2,26 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { AuthStateManager } from "@/components/auth/AuthStateManager";
+import { useSearchParams } from "react-router-dom";
 
 const Auth = () => {
   const { user, loading } = useAuth();
+  const [searchParams] = useSearchParams();
 
-  if (user && !loading) {
+  // Check if this is a password recovery link
+  const accessToken = searchParams.get('access_token');
+  const refreshToken = searchParams.get('refresh_token');
+  const type = searchParams.get('type');
+  const tokenHash = searchParams.get('token_hash');
+  const token = searchParams.get('token');
+  
+  const isRecoveryLink = type === 'recovery' || 
+                        (accessToken && refreshToken) ||
+                        (tokenHash && type === 'recovery') ||
+                        (token && type === 'recovery');
+
+  // If user is authenticated but this is NOT a recovery link, redirect to dashboard
+  if (user && !loading && !isRecoveryLink) {
     return <Navigate to="/" replace />;
   }
 
