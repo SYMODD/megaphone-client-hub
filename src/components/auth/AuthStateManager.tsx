@@ -53,14 +53,14 @@ export const AuthStateManager = () => {
       console.error("Auth error in URL:", error, errorDescription);
       setError("Erreur lors de la récupération : " + (errorDescription || error));
       setHasProcessedRecovery(true);
-      // Nettoyer l'URL
-      navigate("/auth", { replace: true });
+      // Nettoyer l'URL immédiatement
+      window.history.replaceState({}, document.title, "/auth");
       return;
     }
     
     // Détecter les liens de récupération de mot de passe
     const isRecoveryLink = type === 'recovery' || 
-                          (accessToken && refreshToken && type !== 'signup') ||
+                          (accessToken && refreshToken) ||
                           tokenHash;
     
     if (isRecoveryLink) {
@@ -101,9 +101,16 @@ export const AuthStateManager = () => {
       }
       
       // Nettoyer l'URL après traitement mais garder la page auth
-      navigate("/auth", { replace: true });
+      window.history.replaceState({}, document.title, "/auth");
+    } else if (searchParams.toString()) {
+      // Si il y a des paramètres mais ce n'est pas un lien de récupération, nettoyer l'URL
+      console.log("Cleaning URL parameters that are not recovery-related");
+      window.history.replaceState({}, document.title, "/auth");
+      setHasProcessedRecovery(true);
+    } else {
+      setHasProcessedRecovery(true);
     }
-  }, [searchParams, setError, setSuccess, navigate, hasProcessedRecovery]);
+  }, [searchParams, setError, setSuccess, hasProcessedRecovery]);
 
   // Clear errors and success messages when user changes between forms
   useEffect(() => {

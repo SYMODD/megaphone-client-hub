@@ -9,6 +9,7 @@ const Auth = () => {
   const { user, loading } = useAuth();
   const [searchParams] = useSearchParams();
   const [isRecoveryFlow, setIsRecoveryFlow] = useState(false);
+  const [hasCheckedParams, setHasCheckedParams] = useState(false);
 
   // Check if this is a password recovery link with better detection
   useEffect(() => {
@@ -23,7 +24,8 @@ const Auth = () => {
       hasAccessToken: !!accessToken, 
       hasRefreshToken: !!refreshToken,
       hasTokenHash: !!tokenHash,
-      error
+      error,
+      urlParams: searchParams.toString()
     });
     
     const isRecoveryLink = type === 'recovery' || 
@@ -35,10 +37,24 @@ const Auth = () => {
       console.log("Recovery link detected - staying on auth page");
       setIsRecoveryFlow(true);
     }
+    
+    setHasCheckedParams(true);
   }, [searchParams]);
 
+  // Show loading while checking parameters
+  if (loading || !hasCheckedParams) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-slate-600">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
   // If user is authenticated but this is NOT a recovery link and NOT a recovery flow, redirect to dashboard
-  if (user && !loading && !isRecoveryFlow) {
+  if (user && !isRecoveryFlow) {
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
     const type = searchParams.get('type');
@@ -54,17 +70,6 @@ const Auth = () => {
       console.log("User authenticated and no recovery params - redirecting to dashboard");
       return <Navigate to="/" replace />;
     }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-slate-600">Chargement...</p>
-        </div>
-      </div>
-    );
   }
 
   return (
