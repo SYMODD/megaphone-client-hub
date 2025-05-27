@@ -13,29 +13,29 @@ const NewClient = () => {
       <AuthenticatedHeader />
       <Navigation />
       
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-4 mb-6">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
             <Link to="/">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Retour
               </Button>
             </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-800">Nouveau Client</h1>
-              <p className="text-slate-600">Ajouter un nouveau client à la base de données</p>
+            <div className="w-full sm:w-auto">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Nouveau Client</h1>
+              <p className="text-sm sm:text-base text-slate-600 mt-1">Ajouter un nouveau client à la base de données</p>
             </div>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Informations du client</CardTitle>
-              <CardDescription>
+          <Card className="shadow-lg">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg sm:text-xl">Informations du client</CardTitle>
+              <CardDescription className="text-sm sm:text-base">
                 Remplissez tous les champs obligatoires pour créer un nouveau dossier client
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 sm:px-6">
               <ClientForm />
             </CardContent>
           </Card>

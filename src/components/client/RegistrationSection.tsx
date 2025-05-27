@@ -13,27 +13,29 @@ interface RegistrationSectionProps {
 
 export const RegistrationSection = ({ formData, onInputChange }: RegistrationSectionProps) => {
   return (
-    <>
+    <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="date_enregistrement">Date d'enregistrement</Label>
+        <Label htmlFor="date_enregistrement" className="text-sm font-medium">Date d'enregistrement</Label>
         <Input
           id="date_enregistrement"
           type="date"
           value={formData.date_enregistrement}
           onChange={(e) => onInputChange("date_enregistrement", e.target.value)}
+          className="text-sm"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="observations">Observations</Label>
+        <Label htmlFor="observations" className="text-sm font-medium">Observations</Label>
         <Textarea
           id="observations"
           value={formData.observations}
           onChange={(e) => onInputChange("observations", e.target.value)}
           placeholder="Notes, commentaires ou informations supplémentaires..."
           rows={4}
+          className="text-sm resize-none"
         />
       </div>
-    </>
+    </div>
   );
 };

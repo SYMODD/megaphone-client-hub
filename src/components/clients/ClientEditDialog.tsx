@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -103,83 +104,90 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Edit className="w-5 h-5" />
+      <DialogContent className="max-w-[95vw] sm:max-w-md mx-2 sm:mx-auto max-h-[95vh] overflow-y-auto">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="flex items-center gap-2 text-lg">
+            <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
             Modifier le client
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="prenom">Prénom</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="prenom" className="text-sm">Prénom</Label>
               <Input
                 id="prenom"
                 value={formData.prenom}
                 onChange={(e) => setFormData(prev => ({ ...prev, prenom: e.target.value }))}
                 placeholder="Prénom"
+                className="text-sm"
               />
             </div>
-            <div>
-              <Label htmlFor="nom">Nom</Label>
+            <div className="space-y-2">
+              <Label htmlFor="nom" className="text-sm">Nom</Label>
               <Input
                 id="nom"
                 value={formData.nom}
                 onChange={(e) => setFormData(prev => ({ ...prev, nom: e.target.value }))}
                 placeholder="Nom"
+                className="text-sm"
               />
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="nationalite">Nationalité</Label>
+          <div className="space-y-2">
+            <Label htmlFor="nationalite" className="text-sm">Nationalité</Label>
             <Input
               id="nationalite"
               value={formData.nationalite}
               onChange={(e) => setFormData(prev => ({ ...prev, nationalite: e.target.value }))}
               placeholder="Nationalité"
+              className="text-sm"
             />
           </div>
 
-          <div>
-            <Label htmlFor="numero_passeport">Numéro de passeport</Label>
+          <div className="space-y-2">
+            <Label htmlFor="numero_passeport" className="text-sm">Numéro de passeport</Label>
             <Input
               id="numero_passeport"
               value={formData.numero_passeport}
               onChange={(e) => setFormData(prev => ({ ...prev, numero_passeport: e.target.value }))}
               placeholder="Numéro de passeport"
+              className="text-sm font-mono"
             />
           </div>
 
-          <div>
-            <Label htmlFor="date_enregistrement">Date d'enregistrement</Label>
+          <div className="space-y-2">
+            <Label htmlFor="date_enregistrement" className="text-sm">Date d'enregistrement</Label>
             <Input
               id="date_enregistrement"
               type="date"
               value={formData.date_enregistrement}
               onChange={(e) => setFormData(prev => ({ ...prev, date_enregistrement: e.target.value }))}
+              className="text-sm"
             />
           </div>
 
-          <div>
-            <Label htmlFor="observations">Observations</Label>
+          <div className="space-y-2">
+            <Label htmlFor="observations" className="text-sm">Observations</Label>
             <Textarea
               id="observations"
               value={formData.observations}
               onChange={(e) => setFormData(prev => ({ ...prev, observations: e.target.value }))}
               placeholder="Observations (optionnel)"
               rows={3}
+              className="text-sm resize-none"
             />
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="pt-4 flex-col sm:flex-row gap-2 sm:gap-0">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={loading}
+            className="w-full sm:w-auto order-2 sm:order-1"
           >
             <X className="w-4 h-4 mr-2" />
             Annuler
@@ -187,6 +195,7 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
           <Button
             onClick={handleSave}
             disabled={loading}
+            className="w-full sm:w-auto order-1 sm:order-2"
           >
             <Save className="w-4 h-4 mr-2" />
             {loading ? "Sauvegarde..." : "Sauvegarder"}

@@ -14,27 +14,29 @@ export const ClientForm = () => {
   };
 
   return (
-    <form onSubmit={handleFormSubmit} className="space-y-6">
-      <PassportSection 
-        scannedImage={formData.scannedImage}
-        onImageScanned={(image) => handleInputChange("scannedImage", image)}
-        onMRZDataExtracted={handleMRZDataExtracted}
-      />
+    <form onSubmit={handleFormSubmit} className="space-y-4 sm:space-y-6">
+      <div className="space-y-4 sm:space-y-6">
+        <PassportSection 
+          scannedImage={formData.scannedImage}
+          onImageScanned={(image) => handleInputChange("scannedImage", image)}
+          onMRZDataExtracted={handleMRZDataExtracted}
+        />
 
-      <PersonalInfoSection 
-        formData={formData}
-        onInputChange={handleInputChange}
-      />
+        <PersonalInfoSection 
+          formData={formData}
+          onInputChange={handleInputChange}
+        />
 
-      <RegistrationSection 
-        formData={formData}
-        onInputChange={handleInputChange}
-      />
+        <RegistrationSection 
+          formData={formData}
+          onInputChange={handleInputChange}
+        />
 
-      <FormActions 
-        isLoading={isLoading}
-        onSubmit={handleSubmit}
-      />
+        <FormActions 
+          isLoading={isLoading}
+          onSubmit={handleSubmit}
+        />
+      </div>
     </form>
   );
 };

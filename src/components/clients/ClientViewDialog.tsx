@@ -36,50 +36,52 @@ export const ClientViewDialog = ({ client, open, onOpenChange }: ClientViewDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <User className="w-5 h-5" />
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[95vh] overflow-y-auto mx-2 sm:mx-auto">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <User className="w-4 h-4 sm:w-5 sm:h-5" />
             Détails du client
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-6">
-          {/* Photo et informations principales */}
-          <div className="flex items-start gap-6">
-            <Avatar className="w-24 h-24">
+        <div className="space-y-4 sm:space-y-6">
+          {/* Photo et informations principales - Responsive */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
+            <Avatar className="w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0">
               <AvatarImage src={client.photo_url || undefined} />
-              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-lg">
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-base sm:text-lg">
                 {client.prenom[0]}{client.nom[0]}
               </AvatarFallback>
             </Avatar>
             
-            <div className="flex-1 space-y-2">
-              <h3 className="text-2xl font-bold text-slate-800">
+            <div className="flex-1 space-y-2 text-center sm:text-left w-full">
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-800 break-words">
                 {client.prenom} {client.nom}
               </h3>
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-slate-500" />
-                <Badge variant="outline">{client.nationalite}</Badge>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 justify-center sm:justify-start">
+                <div className="flex items-center gap-2 justify-center sm:justify-start">
+                  <Globe className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                  <Badge variant="outline" className="text-xs sm:text-sm">{client.nationalite}</Badge>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-slate-500" />
-                <span className="font-mono text-sm">{client.numero_passeport}</span>
+              <div className="flex items-center gap-2 justify-center sm:justify-start">
+                <FileText className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                <span className="font-mono text-xs sm:text-sm break-all">{client.numero_passeport}</span>
               </div>
             </div>
           </div>
 
-          {/* Informations détaillées */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4" />
+          {/* Informations détaillées - Responsive Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <Card className="w-full">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs sm:text-sm flex items-center gap-2">
+                  <CalendarDays className="w-3 h-3 sm:w-4 sm:h-4" />
                   Date d'enregistrement
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-lg font-semibold">
+              <CardContent className="pt-0">
+                <p className="text-sm sm:text-lg font-semibold leading-tight">
                   {new Date(client.date_enregistrement).toLocaleDateString('fr-FR', {
                     weekday: 'long',
                     year: 'numeric',
@@ -90,67 +92,67 @@ export const ClientViewDialog = ({ client, open, onOpenChange }: ClientViewDialo
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Numéro client</CardTitle>
+            <Card className="w-full">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs sm:text-sm">Numéro client</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="font-mono text-lg font-semibold text-blue-600">{clientNumber}</p>
+              <CardContent className="pt-0">
+                <p className="font-mono text-sm sm:text-lg font-semibold text-blue-600 break-all">{clientNumber}</p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <UserCheck className="w-4 h-4" />
+            <Card className="w-full sm:col-span-2">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs sm:text-sm flex items-center gap-2">
+                  <UserCheck className="w-3 h-3 sm:w-4 sm:h-4" />
                   Agent responsable
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 {agentLoading ? (
                   <div className="animate-pulse">
-                    <div className="h-4 bg-slate-200 rounded w-24"></div>
+                    <div className="h-4 bg-slate-200 rounded w-20 sm:w-24"></div>
                   </div>
                 ) : agentInfo ? (
-                  <p className="font-semibold">{formatAgentName(agentInfo.nom, agentInfo.prenom)}</p>
+                  <p className="font-semibold text-sm sm:text-base">{formatAgentName(agentInfo.nom, agentInfo.prenom)}</p>
                 ) : (
-                  <p className="text-slate-500 text-sm">Agent non trouvé</p>
+                  <p className="text-slate-500 text-xs sm:text-sm">Agent non trouvé</p>
                 )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Observations */}
+          {/* Observations - Responsive */}
           {client.observations && (
             <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Observations</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs sm:text-sm">Observations</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-sm text-slate-600 whitespace-pre-line">
+              <CardContent className="pt-0">
+                <div className="text-xs sm:text-sm text-slate-600 whitespace-pre-line leading-relaxed">
                   {client.observations}
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Métadonnées - Section repliée */}
+          {/* Métadonnées - Responsive */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm text-slate-400">Informations techniques</CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs sm:text-sm text-slate-400">Informations techniques</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex justify-between text-xs text-slate-400">
+            <CardContent className="pt-0 space-y-2">
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-xs text-slate-400">
                 <span>Créé le :</span>
-                <span>{new Date(client.created_at).toLocaleString('fr-FR')}</span>
+                <span className="font-mono break-all">{new Date(client.created_at).toLocaleString('fr-FR')}</span>
               </div>
-              <div className="flex justify-between text-xs text-slate-400">
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-xs text-slate-400">
                 <span>Modifié le :</span>
-                <span>{new Date(client.updated_at).toLocaleString('fr-FR')}</span>
+                <span className="font-mono break-all">{new Date(client.updated_at).toLocaleString('fr-FR')}</span>
               </div>
-              <div className="flex justify-between text-xs text-slate-400">
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-xs text-slate-400">
                 <span>ID système :</span>
-                <span className="font-mono">{client.id}</span>
+                <span className="font-mono break-all">{client.id}</span>
               </div>
             </CardContent>
           </Card>
