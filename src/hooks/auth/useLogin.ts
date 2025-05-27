@@ -18,6 +18,7 @@ export const useLogin = () => {
       console.log("Original email:", email);
       console.log("Normalized email:", normalizedEmail);
       console.log("Password length:", password.length);
+      console.log("Password first 3 chars:", password.substring(0, 3) + "...");
       
       console.log("Attempting sign in...");
       const { data, error } = await signIn(normalizedEmail, password);
@@ -27,7 +28,11 @@ export const useLogin = () => {
         hasSession: !!data?.session,
         errorCode: error?.code,
         errorMessage: error?.message,
-        error: error 
+        userData: data?.user ? {
+          id: data.user.id,
+          email: data.user.email,
+          emailConfirmed: data.user.email_confirmed_at
+        } : null
       });
       
       if (error) {
@@ -35,13 +40,35 @@ export const useLogin = () => {
         console.error("Error object:", error);
         console.error("Error code:", error.code);
         console.error("Error message:", error.message);
+        console.error("Error status:", error.status);
         
-        handleAuthError(error, "Email ou mot de passe incorrect");
+        // Gestion d'erreurs améliorée
+        let errorMessage = "Email ou mot de passe incorrect";
+        
+        switch (error.code) {
+          case "invalid_credentials":
+            errorMessage = "Les identifiants sont incorrects. Vérifiez votre email et mot de passe.";
+            break;
+          case "email_not_confirmed":
+            errorMessage = "Veuillez confirmer votre email avant de vous connecter.";
+            break;
+          case "too_many_requests":
+            errorMessage = "Trop de tentatives de connexion. Veuillez attendre quelques minutes.";
+            break;
+          case "account_inactive":
+            errorMessage = error.message;
+            break;
+          default:
+            errorMessage = `Erreur de connexion: ${error.message}`;
+        }
+        
+        handleAuthError(error, errorMessage);
         console.log("=== DEBUG LOGIN END (ERROR) ===");
       } else {
         console.log("=== LOGIN SUCCESS ===");
         console.log("User ID:", data?.user?.id);
         console.log("Session valid:", !!data?.session);
+        console.log("Access token present:", !!data?.session?.access_token);
         
         showSuccess("Vous êtes maintenant connecté.", "Connexion réussie");
         setTimeout(() => {

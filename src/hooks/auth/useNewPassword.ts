@@ -26,6 +26,23 @@ export const useNewPassword = () => {
     }
 
     try {
+      console.log("=== PASSWORD UPDATE START ===");
+      
+      // Vérifier d'abord si nous avons une session active
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log("Current session:", {
+        hasSession: !!sessionData.session,
+        hasUser: !!sessionData.session?.user,
+        userId: sessionData.session?.user?.id
+      });
+      
+      if (!sessionData.session) {
+        console.error("No active session for password update");
+        setError("Session expirée. Veuillez recommencer la procédure de récupération.");
+        setIsLoading(false);
+        return false;
+      }
+
       console.log("Updating password...");
       const { error } = await supabase.auth.updateUser({
         password: password
@@ -38,18 +55,23 @@ export const useNewPassword = () => {
         console.log("Password updated successfully");
         showSuccess("Votre mot de passe a été modifié avec succès. Vous allez être redirigé.", "Mot de passe modifié");
         
+        // Attendre un peu plus longtemps pour que l'utilisateur voie le message
         setTimeout(() => {
           navigate("/", { replace: true });
-        }, 2000);
+        }, 3000);
         
+        console.log("=== PASSWORD UPDATE END (SUCCESS) ===");
         return true;
       }
     } catch (error) {
+      console.error("=== PASSWORD UPDATE UNEXPECTED ERROR ===");
       console.error("Unexpected error:", error);
       handleAuthError(error, "Une erreur inattendue s'est produite");
     } finally {
       setIsLoading(false);
     }
+    
+    console.log("=== PASSWORD UPDATE END (FAILURE) ===");
     return false;
   };
 

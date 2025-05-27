@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthOperations } from "@/hooks/useAuthOperations";
 import { LoginForm } from "./LoginForm";
@@ -11,6 +11,7 @@ import { AuthCard } from "./AuthCard";
 
 export const AuthStateManager = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   
@@ -38,7 +39,8 @@ export const AuthStateManager = () => {
       hasAccessToken: !!accessToken, 
       hasRefreshToken: !!refreshToken,
       hasTokenHash: !!tokenHash,
-      hasToken: !!token
+      hasToken: !!token,
+      fullParams: Object.fromEntries(searchParams.entries())
     });
     
     // Amélioration: détecter différents types de liens de récupération
@@ -82,9 +84,28 @@ export const AuthStateManager = () => {
             setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
           }
         });
+      } else if (token) {
+        // Essayer de vérifier le token simple
+        console.log("Verifying simple recovery token...");
+        supabase.auth.verifyOtp({
+          token: token,
+          type: 'recovery'
+        }).then(({ error }) => {
+          if (error) {
+            console.error("Error verifying simple recovery token:", error);
+            setError("Le lien de récupération n'est plus valide ou a expiré");
+          } else {
+            console.log("Simple recovery token verified successfully");
+            setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
+          }
+        });
       }
+      
+      // Nettoyer l'URL après traitement
+      const newUrl = window.location.pathname;
+      navigate(newUrl, { replace: true });
     }
-  }, [searchParams, setError, setSuccess]);
+  }, [searchParams, setError, setSuccess, navigate]);
 
   // Clear errors and success messages when user changes between forms
   useEffect(() => {
