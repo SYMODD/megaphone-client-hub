@@ -24,14 +24,14 @@ const Index = () => {
   console.log("User:", user);
   console.log("Profile:", profile);
 
-  // Utiliser les filtres seulement pour admin et superviseur
-  const shouldUseFilters = profile?.role === "admin" || profile?.role === "superviseur";
-  const agentData = useAgentData(shouldUseFilters ? adminFilters.filters : undefined);
-
-  // Rediriger les agents vers la page "Nouveau Client" - AFTER all hooks are called
+  // Rediriger les agents vers la page "Nouveau Client" AVANT tout autre traitement
   if (profile?.role === "agent") {
     return <Navigate to="/nouveau-client" replace />;
   }
+
+  // Utiliser les filtres seulement pour admin et superviseur
+  const shouldUseFilters = profile?.role === "admin" || profile?.role === "superviseur";
+  const agentData = useAgentData(shouldUseFilters ? adminFilters.filters : undefined);
 
   const getPointLabel = (point: string) => {
     const labels: Record<string, string> = {
