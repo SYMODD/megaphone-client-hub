@@ -1,7 +1,9 @@
 
-import { useRef, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
+import Cropper from "react-easy-crop";
 import { Button } from "@/components/ui/button";
-import { Check, X, RotateCw } from "lucide-react";
+import { Check, X, RotateCw, ZoomIn, ZoomOut } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 
 interface ImageCropperProps {
   imageUrl: string;
@@ -9,210 +11,203 @@ interface ImageCropperProps {
   onCancel: () => void;
 }
 
+interface Area {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface CropArea extends Area {}
+
+interface PixelCrop extends Area {}
+
 export const ImageCropper = ({ imageUrl, onCropComplete, onCancel }: ImageCropperProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [cropArea, setCropArea] = useState({ x: 50, y: 50, width: 200, height: 100 });
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<PixelCrop | null>(null);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    setIsDragging(true);
-    setCropArea(prev => ({ ...prev, x, y }));
+  const onCropChange = useCallback((crop: { x: number; y: number }) => {
+    setCrop(crop);
   }, []);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging) return;
-    
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    setCropArea(prev => ({
-      ...prev,
-      width: Math.max(50, x - prev.x),
-      height: Math.max(30, y - prev.y)
-    }));
-  }, [isDragging]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
+  const onZoomChange = useCallback((zoom: number) => {
+    setZoom(zoom);
   }, []);
+
+  const onCropCompleteCallback = useCallback(
+    (croppedArea: CropArea, croppedAreaPixels: PixelCrop) => {
+      setCroppedAreaPixels(croppedAreaPixels);
+    },
+    []
+  );
+
+  const createImage = (url: string): Promise<HTMLImageElement> =>
+    new Promise((resolve, reject) => {
+      const image = new Image();
+      image.addEventListener('load', () => resolve(image));
+      image.addEventListener('error', error => reject(error));
+      image.setAttribute('crossOrigin', 'anonymous');
+      image.src = url;
+    });
+
+  const getCroppedImg = async (
+    imageSrc: string,
+    pixelCrop: PixelCrop,
+    rotation = 0
+  ): Promise<string> => {
+    const image = await createImage(imageSrc);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      throw new Error('No 2d context');
+    }
+
+    const maxSize = Math.max(image.width, image.height);
+    const safeArea = 2 * ((maxSize / 2) * Math.sqrt(2));
+
+    canvas.width = safeArea;
+    canvas.height = safeArea;
+
+    ctx.translate(safeArea / 2, safeArea / 2);
+    ctx.rotate((rotation * Math.PI) / 180);
+    ctx.translate(-safeArea / 2, -safeArea / 2);
+
+    ctx.drawImage(
+      image,
+      safeArea / 2 - image.width * 0.5,
+      safeArea / 2 - image.height * 0.5
+    );
+
+    const data = ctx.getImageData(0, 0, safeArea, safeArea);
+
+    canvas.width = pixelCrop.width;
+    canvas.height = pixelCrop.height;
+
+    ctx.putImageData(
+      data,
+      Math.round(0 - safeArea / 2 + image.width * 0.5 - pixelCrop.x),
+      Math.round(0 - safeArea / 2 + image.height * 0.5 - pixelCrop.y)
+    );
+
+    return canvas.toDataURL('image/jpeg', 0.9);
+  };
+
+  const handleCrop = useCallback(async () => {
+    if (!croppedAreaPixels) return;
+
+    try {
+      const croppedImage = await getCroppedImg(imageUrl, croppedAreaPixels, rotation);
+      onCropComplete(croppedImage);
+    } catch (error) {
+      console.error('Error cropping image:', error);
+    }
+  }, [croppedAreaPixels, imageUrl, rotation, onCropComplete]);
 
   const handleRotate = () => {
     setRotation(prev => (prev + 90) % 360);
   };
 
-  const handleCrop = useCallback(() => {
-    const canvas = canvasRef.current;
-    const image = imageRef.current;
-    if (!canvas || !image) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Create a new canvas for the cropped image
-    const cropCanvas = document.createElement('canvas');
-    const cropCtx = cropCanvas.getContext('2d');
-    if (!cropCtx) return;
-
-    cropCanvas.width = cropArea.width;
-    cropCanvas.height = cropArea.height;
-
-    // Calculate scale factors
-    const scaleX = image.naturalWidth / canvas.width;
-    const scaleY = image.naturalHeight / canvas.height;
-
-    // Apply rotation if needed
-    cropCtx.save();
-    cropCtx.translate(cropCanvas.width / 2, cropCanvas.height / 2);
-    cropCtx.rotate((rotation * Math.PI) / 180);
-    cropCtx.translate(-cropCanvas.width / 2, -cropCanvas.height / 2);
-
-    // Draw the cropped portion
-    cropCtx.drawImage(
-      image,
-      cropArea.x * scaleX,
-      cropArea.y * scaleY,
-      cropArea.width * scaleX,
-      cropArea.height * scaleY,
-      0,
-      0,
-      cropCanvas.width,
-      cropCanvas.height
-    );
-
-    cropCtx.restore();
-
-    // Convert to data URL
-    const croppedImageUrl = cropCanvas.toDataURL('image/jpeg', 0.9);
-    onCropComplete(croppedImageUrl);
-  }, [cropArea, rotation, onCropComplete]);
-
-  const drawCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    const image = imageRef.current;
-    if (!canvas || !image) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Set canvas size to fit the container
-    const maxWidth = 400;
-    const maxHeight = 300;
-    const aspectRatio = image.naturalWidth / image.naturalHeight;
-    
-    let canvasWidth = maxWidth;
-    let canvasHeight = maxWidth / aspectRatio;
-    
-    if (canvasHeight > maxHeight) {
-      canvasHeight = maxHeight;
-      canvasWidth = maxHeight * aspectRatio;
-    }
-    
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-
-    // Clear canvas
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-    // Draw image with rotation
-    ctx.save();
-    ctx.translate(canvasWidth / 2, canvasHeight / 2);
-    ctx.rotate((rotation * Math.PI) / 180);
-    ctx.drawImage(image, -canvasWidth / 2, -canvasHeight / 2, canvasWidth, canvasHeight);
-    ctx.restore();
-
-    // Draw crop area overlay
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-    ctx.clearRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height);
-
-    // Draw crop area border
-    ctx.strokeStyle = '#3b82f6';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height);
-
-    // Draw corner handles
-    const handleSize = 8;
-    ctx.fillStyle = '#3b82f6';
-    const corners = [
-      { x: cropArea.x - handleSize/2, y: cropArea.y - handleSize/2 },
-      { x: cropArea.x + cropArea.width - handleSize/2, y: cropArea.y - handleSize/2 },
-      { x: cropArea.x - handleSize/2, y: cropArea.y + cropArea.height - handleSize/2 },
-      { x: cropArea.x + cropArea.width - handleSize/2, y: cropArea.y + cropArea.height - handleSize/2 }
-    ];
-    
-    corners.forEach(corner => {
-      ctx.fillRect(corner.x, corner.y, handleSize, handleSize);
-    });
-  }, [cropArea, rotation]);
-
   return (
     <div className="space-y-4">
       <div className="text-center">
-        <h3 className="text-lg font-semibold mb-2">Rogner l'image</h3>
+        <h3 className="text-lg font-semibold mb-2">Rogner l'image du passeport</h3>
         <p className="text-sm text-gray-600 mb-4">
-          Sélectionnez la zone MRZ du passeport en cliquant et glissant
+          Ajustez le cadre pour inclure uniquement la zone MRZ (lignes de texte en bas du passeport)
         </p>
       </div>
 
-      <div className="relative border rounded-lg overflow-hidden bg-gray-100">
-        <img
-          ref={imageRef}
-          src={imageUrl}
-          alt="Image à rogner"
-          className="hidden"
-          onLoad={drawCanvas}
-        />
-        <canvas
-          ref={canvasRef}
-          className="max-w-full cursor-crosshair"
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
+      <div className="relative w-full h-80 bg-gray-100 rounded-lg overflow-hidden">
+        <Cropper
+          image={imageUrl}
+          crop={crop}
+          zoom={zoom}
+          rotation={rotation}
+          aspect={3 / 1}
+          onCropChange={onCropChange}
+          onZoomChange={onZoomChange}
+          onCropComplete={onCropCompleteCallback}
+          showGrid={true}
+          cropSize={{ width: 300, height: 100 }}
         />
       </div>
 
-      <div className="flex items-center justify-between">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleRotate}
-          className="flex items-center gap-2"
-        >
-          <RotateCw className="w-4 h-4" />
-          Rotation
-        </Button>
-        
-        <div className="flex gap-2">
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Zoom</label>
+            <div className="flex items-center space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setZoom(Math.max(1, zoom - 0.1))}
+                disabled={zoom <= 1}
+              >
+                <ZoomOut className="w-4 h-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setZoom(Math.min(3, zoom + 0.1))}
+                disabled={zoom >= 3}
+              >
+                <ZoomIn className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+          <Slider
+            value={[zoom]}
+            onValueChange={(value) => setZoom(value[0])}
+            max={3}
+            min={1}
+            step={0.1}
+            className="w-full"
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
           <Button
             type="button"
             variant="outline"
-            onClick={onCancel}
+            onClick={handleRotate}
             className="flex items-center gap-2"
           >
-            <X className="w-4 h-4" />
-            Annuler
+            <RotateCw className="w-4 h-4" />
+            Rotation (90°)
           </Button>
-          <Button
-            type="button"
-            onClick={handleCrop}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-          >
-            <Check className="w-4 h-4" />
-            Confirmer
-          </Button>
+          
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              className="flex items-center gap-2"
+            >
+              <X className="w-4 h-4" />
+              Annuler
+            </Button>
+            <Button
+              type="button"
+              onClick={handleCrop}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+              disabled={!croppedAreaPixels}
+            >
+              <Check className="w-4 h-4" />
+              Confirmer le recadrage
+            </Button>
+          </div>
         </div>
+      </div>
+
+      <div className="bg-blue-50 p-3 rounded-lg">
+        <p className="text-sm text-blue-800">
+          <strong>Conseil :</strong> La zone MRZ se trouve généralement en bas du passeport et contient 2-3 lignes de caractères. 
+          Assurez-vous que le cadre inclut uniquement cette zone pour une meilleure reconnaissance OCR.
+        </p>
       </div>
     </div>
   );

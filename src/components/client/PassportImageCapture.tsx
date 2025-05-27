@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, Upload, Crop } from "lucide-react";
+import { Camera, Upload, RotateCcw } from "lucide-react";
 import { ImageCropper } from "./ImageCropper";
 
 interface PassportImageCaptureProps {
@@ -63,7 +63,6 @@ export const PassportImageCapture = ({
   };
 
   const handleCropComplete = (croppedImageUrl: string) => {
-    // Convert the cropped image to a File object
     fetch(croppedImageUrl)
       .then(res => res.blob())
       .then(blob => {
@@ -90,6 +89,12 @@ export const PassportImageCapture = ({
     }
   };
 
+  const handleRetakePhoto = () => {
+    setShowCropper(false);
+    setCapturedImageUrl(null);
+    setOriginalFile(null);
+  };
+
   // Show cropper interface
   if (showCropper && capturedImageUrl) {
     return (
@@ -99,14 +104,23 @@ export const PassportImageCapture = ({
           onCropComplete={handleCropComplete}
           onCancel={handleCropCancel}
         />
-        <div className="text-center">
+        <div className="flex justify-center space-x-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={handleRetakePhoto}
+            className="text-sm"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Reprendre la photo
+          </Button>
           <Button
             type="button"
             variant="ghost"
             onClick={handleSkipCropping}
             className="text-sm"
           >
-            Ignorer le rognage et continuer
+            Ignorer le recadrage
           </Button>
         </div>
       </div>
@@ -118,28 +132,38 @@ export const PassportImageCapture = ({
     return (
       <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
         <div className="space-y-4">
+          <div className="text-center mb-4">
+            <h4 className="font-medium text-gray-700 mb-2">Scanner le passeport</h4>
+            <p className="text-sm text-gray-500">
+              Prenez une photo claire de la page principale du passeport
+            </p>
+          </div>
+          
           <div className="flex justify-center space-x-4">
             <Button 
               type="button" 
               variant="outline" 
               onClick={handleCameraCapture}
               disabled={isScanning}
+              className="flex-1 max-w-40"
             >
               <Camera className="w-4 h-4 mr-2" />
-              Prendre une photo
+              Appareil photo
             </Button>
             <Button 
               type="button" 
               variant="outline" 
               onClick={handleFileUpload}
               disabled={isScanning}
+              className="flex-1 max-w-40"
             >
               <Upload className="w-4 h-4 mr-2" />
-              Téléverser une image
+              Téléverser
             </Button>
           </div>
+          
           {isScanning && (
-            <div className="flex items-center justify-center space-x-2">
+            <div className="flex items-center justify-center space-x-2 mt-4">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
               <span className="text-sm text-gray-600">Analyse OCR en cours...</span>
             </div>
