@@ -46,8 +46,7 @@ export const AuthStateManager = () => {
     // Amélioration: détecter différents types de liens de récupération
     const isRecoveryLink = type === 'recovery' || 
                           (accessToken && refreshToken) ||
-                          (tokenHash && type === 'recovery') ||
-                          (token && type === 'recovery');
+                          (tokenHash && type === 'recovery');
     
     if (isRecoveryLink) {
       console.log("Password recovery link detected, setting up new password form");
@@ -81,21 +80,6 @@ export const AuthStateManager = () => {
             setError("Le lien de récupération n'est plus valide ou a expiré");
           } else {
             console.log("Recovery token verified successfully");
-            setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
-          }
-        });
-      } else if (token) {
-        // Essayer de vérifier le token simple
-        console.log("Verifying simple recovery token...");
-        supabase.auth.verifyOtp({
-          token: token,
-          type: 'recovery'
-        }).then(({ error }) => {
-          if (error) {
-            console.error("Error verifying simple recovery token:", error);
-            setError("Le lien de récupération n'est plus valide ou a expiré");
-          } else {
-            console.log("Simple recovery token verified successfully");
             setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
           }
         });
