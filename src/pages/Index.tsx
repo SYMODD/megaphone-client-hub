@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +29,7 @@ const Index = () => {
   }
 
   // Utiliser les filtres seulement pour admin et superviseur
-  const shouldUseFilters = profile && (profile.role === "admin" || profile.role === "superviseur");
+  const shouldUseFilters = profile?.role === "admin" || profile?.role === "superviseur";
   const agentData = useAgentData(shouldUseFilters ? adminFilters.filters : undefined);
 
   const getPointLabel = (point: string) => {
