@@ -1,20 +1,13 @@
 
-import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { useAuthOperations } from "@/hooks/useAuthOperations";
 import { LoginForm } from "./LoginForm";
 import { PasswordResetForm } from "./PasswordResetForm";
-import { NewPasswordForm } from "./NewPasswordForm";
 import { AuthAlert } from "./AuthAlert";
 import { AuthCard } from "./AuthCard";
 
 export const AuthStateManager = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const [showPasswordReset, setShowPasswordReset] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [hasProcessedRecovery, setHasProcessedRecovery] = useState(false);
   
   const {
     error,
@@ -24,98 +17,11 @@ export const AuthStateManager = () => {
     setSuccess,
     handleLogin,
     handlePasswordReset,
-    handleNewPassword,
   } = useAuthOperations();
 
-  // Process password recovery links - simplified logic
-  useEffect(() => {
-    if (hasProcessedRecovery) return;
-
-    // Parse URL fragment (hash) for recovery tokens
-    const hash = window.location.hash;
-    const hashParams = new URLSearchParams(hash.substring(1));
-    
-    // Get parameters from both search params and hash
-    const accessToken = searchParams.get('access_token') || hashParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token');
-    const type = searchParams.get('type') || hashParams.get('type');
-    const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash');
-    const error = searchParams.get('error') || hashParams.get('error');
-    const errorDescription = searchParams.get('error_description') || hashParams.get('error_description');
-    
-    console.log("AuthStateManager - Processing recovery parameters:", { 
-      type, 
-      hasAccessToken: !!accessToken, 
-      hasRefreshToken: !!refreshToken,
-      hasTokenHash: !!tokenHash,
-      error,
-      errorDescription
-    });
-    
-    // Handle errors first
-    if (error) {
-      console.error("Auth error in URL:", error, errorDescription);
-      setError("Erreur lors de la récupération : " + (errorDescription || error));
-      setHasProcessedRecovery(true);
-      return;
-    }
-    
-    // Detect recovery links with simplified logic
-    const isRecoveryLink = type === 'recovery' || tokenHash;
-    
-    console.log("Recovery link check:", { isRecoveryLink, type, hasTokenHash: !!tokenHash });
-    
-    if (isRecoveryLink) {
-      console.log("Password recovery detected - setting up new password form");
-      setShowNewPassword(true);
-      setShowPasswordReset(false);
-      setHasProcessedRecovery(true);
-      
-      // Process recovery tokens
-      if (tokenHash) {
-        console.log("Processing token hash for recovery...");
-        supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: 'recovery'
-        }).then(({ error }) => {
-          if (error) {
-            console.error("Error verifying recovery token:", error);
-            setError("Le lien de récupération n'est plus valide ou a expiré. Veuillez demander un nouveau lien.");
-          } else {
-            console.log("Recovery token verified successfully");
-            setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
-          }
-        });
-      } else if (accessToken && refreshToken) {
-        console.log("Setting up session with recovery tokens");
-        supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        }).then(({ error }) => {
-          if (error) {
-            console.error("Error setting session:", error);
-            setError("Erreur lors de la configuration de la session. Veuillez recommencer la procédure.");
-          } else {
-            console.log("Session configured successfully for password recovery");
-            setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
-          }
-        });
-      }
-    } else {
-      setHasProcessedRecovery(true);
-    }
-  }, [searchParams, setError, setSuccess, hasProcessedRecovery]);
-
   // Clear errors and success messages when user changes between forms
-  useEffect(() => {
-    if (!hasProcessedRecovery) return;
-    setError(null);
-    setSuccess(null);
-  }, [showPasswordReset, hasProcessedRecovery, setError, setSuccess]);
-
   const handleShowPasswordReset = () => {
     setShowPasswordReset(true);
-    setShowNewPassword(false);
     setError(null);
     setSuccess(null);
   };
@@ -127,13 +33,11 @@ export const AuthStateManager = () => {
   };
 
   const getCardTitle = () => {
-    if (showNewPassword) return "Nouveau mot de passe";
     if (showPasswordReset) return "Réinitialiser le mot de passe";
     return "Connexion";
   };
 
   const getCardDescription = () => {
-    if (showNewPassword) return "Définissez votre nouveau mot de passe";
     if (showPasswordReset) return "Entrez votre email pour recevoir un lien de réinitialisation";
     return "Connectez-vous à votre compte";
   };
@@ -142,12 +46,7 @@ export const AuthStateManager = () => {
     <AuthCard title={getCardTitle()} description={getCardDescription()}>
       <AuthAlert error={error} success={success} />
 
-      {showNewPassword ? (
-        <NewPasswordForm
-          onNewPassword={handleNewPassword}
-          isLoading={isLoading}
-        />
-      ) : showPasswordReset ? (
+      {showPasswordReset ? (
         <PasswordResetForm
           onPasswordReset={handlePasswordReset}
           onCancel={handleCancelPasswordReset}

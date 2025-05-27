@@ -53,7 +53,7 @@ export const useRecoveryTokenVerification = () => {
       }
 
       try {
-        // Method 1: Use token_hash with verifyOtp (most reliable for recovery links)
+        // Method 1: Use token_hash with verifyOtp (most common for recovery links)
         if (tokenHash) {
           console.log("Method 1: Verifying recovery token hash...");
           const { data, error: verifyError } = await supabase.auth.verifyOtp({
@@ -65,13 +65,13 @@ export const useRecoveryTokenVerification = () => {
             console.error("Error verifying recovery token:", verifyError);
             setError("Le lien de récupération n'est plus valide ou a expiré. Veuillez demander un nouveau lien.");
           } else {
-            console.log("Recovery token verified successfully");
+            console.log("Recovery token verified successfully:", data);
             setIsValidToken(true);
             setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
           }
         }
         // Method 2: Use access/refresh tokens if available
-        else if (accessToken && refreshToken && type === 'recovery') {
+        else if (accessToken && refreshToken) {
           console.log("Method 2: Setting up session with access/refresh tokens");
           const { data, error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -82,7 +82,7 @@ export const useRecoveryTokenVerification = () => {
             console.error("Error setting session:", sessionError);
             setError("Le lien de récupération n'est plus valide ou a expiré. Veuillez demander un nouveau lien.");
           } else {
-            console.log("Session configured successfully for password recovery");
+            console.log("Session configured successfully for password recovery:", data);
             setIsValidToken(true);
             setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
           }
@@ -97,10 +97,8 @@ export const useRecoveryTokenVerification = () => {
       } finally {
         setIsCheckingToken(false);
         
-        // Clean up URL after processing
-        if (hash || searchParams.toString()) {
-          window.history.replaceState({}, document.title, "/reset-password");
-        }
+        // Clean up URL after processing to prevent reprocessing
+        window.history.replaceState({}, document.title, "/reset-password");
       }
     };
 

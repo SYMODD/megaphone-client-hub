@@ -37,27 +37,19 @@ const Auth = () => {
       error
     });
     
-    // Simple detection of recovery links - only redirect if we have recovery-specific parameters
-    const isRecoveryLink = type === 'recovery' || tokenHash;
+    // Simple detection of recovery links - check for any recovery-related parameters
+    const isRecoveryLink = !!(type === 'recovery' || tokenHash || (accessToken && refreshToken));
     
     console.log("Recovery link detection result:", isRecoveryLink);
     
     if (isRecoveryLink) {
       console.log("Recovery link detected - redirecting to /reset-password");
-      // Construct the full URL with all parameters to preserve them
-      const currentParams = window.location.search;
-      const currentHash = window.location.hash;
+      // Redirect immediately to preserve all parameters
+      const fullUrl = window.location.href;
+      const newUrl = fullUrl.replace('/auth', '/reset-password');
       
-      let redirectUrl = '/reset-password';
-      if (currentParams) {
-        redirectUrl += currentParams;
-      }
-      if (currentHash) {
-        redirectUrl += currentHash;
-      }
-      
-      console.log("Redirecting to:", redirectUrl);
-      window.location.replace(redirectUrl);
+      console.log("Redirecting to:", newUrl);
+      window.location.replace(newUrl);
       return;
     }
     
