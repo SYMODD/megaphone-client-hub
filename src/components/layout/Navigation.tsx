@@ -17,9 +17,8 @@ export const Navigation = () => {
   let navigationItems = [];
 
   if (isAgent) {
-    // Pour les agents : seulement nouveau client et contrats
+    // Pour les agents : seulement nouveau client et contrats (sans dashboard)
     navigationItems = [
-      { to: "/", icon: Users, label: "Dashboard" },
       { to: "/nouveau-client", icon: Plus, label: "Nouveau Client" },
       { to: "/contrats", icon: FileText, label: "Contrats" }
     ];
