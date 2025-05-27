@@ -6,12 +6,26 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Edit2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { IconSelector } from "./IconSelector";
+import { getIconComponent } from "@/utils/iconUtils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ContractTemplate {
   id: string;
   name: string;
   description: string;
   template: string;
+  icon?: string;
 }
 
 interface ContractTypeManagerProps {
@@ -34,6 +48,7 @@ export const ContractTypeManager = ({
     name: "",
     description: "",
     template: "",
+    icon: "Star",
   });
 
   const handleSubmit = () => {
@@ -42,6 +57,7 @@ export const ContractTypeManager = ({
       name: formData.name.trim(),
       description: formData.description.trim(),
       template: formData.template.trim(),
+      icon: formData.icon,
     };
 
     console.log('Form data before validation:', formData);
@@ -67,6 +83,7 @@ export const ContractTypeManager = ({
       name: trimmedData.name,
       description: trimmedData.description,
       template: trimmedData.template,
+      icon: trimmedData.icon,
     };
 
     console.log('Creating/updating template:', newTemplate);
@@ -79,7 +96,7 @@ export const ContractTypeManager = ({
       setIsAdding(false);
     }
 
-    setFormData({ name: "", description: "", template: "" });
+    setFormData({ name: "", description: "", template: "", icon: "Star" });
     
     toast({
       title: "Succès",
@@ -92,6 +109,7 @@ export const ContractTypeManager = ({
       name: template.name,
       description: template.description,
       template: template.template,
+      icon: template.icon || "Star",
     });
     setEditingId(template.id);
     setIsAdding(true);
@@ -100,7 +118,15 @@ export const ContractTypeManager = ({
   const handleCancel = () => {
     setIsAdding(false);
     setEditingId(null);
-    setFormData({ name: "", description: "", template: "" });
+    setFormData({ name: "", description: "", template: "", icon: "Star" });
+  };
+
+  const handleDelete = (id: string) => {
+    onDeleteTemplate(id);
+    toast({
+      title: "Modèle supprimé",
+      description: "Le modèle de contrat a été supprimé avec succès.",
+    });
   };
 
   return (
@@ -144,6 +170,10 @@ export const ContractTypeManager = ({
                   placeholder="ex: Contrat pour les services premium"
                 />
               </div>
+              <IconSelector
+                selectedIcon={formData.icon}
+                onIconSelect={(icon) => setFormData({ ...formData, icon })}
+              />
               <div>
                 <label className="text-sm font-medium">Template HTML</label>
                 <Textarea
@@ -167,33 +197,60 @@ export const ContractTypeManager = ({
         )}
 
         <div className="space-y-2">
-          {customTemplates.map((template) => (
-            <div
-              key={template.id}
-              className="flex items-center justify-between p-3 border rounded-lg"
-            >
-              <div className="flex-1">
-                <h4 className="font-medium">{template.name}</h4>
-                <p className="text-sm text-gray-600">{template.description}</p>
+          {customTemplates.map((template) => {
+            const IconComponent = getIconComponent(template.icon || "Star");
+            return (
+              <div
+                key={template.id}
+                className="flex items-center justify-between p-3 border rounded-lg"
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <IconComponent className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h4 className="font-medium">{template.name}</h4>
+                    <p className="text-sm text-gray-600">{template.description}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleEdit(template)}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer le modèle</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Êtes-vous sûr de vouloir supprimer le modèle "{template.name}" ? 
+                          Cette action est irréversible.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => handleDelete(template.id)}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          Supprimer
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleEdit(template)}
-                >
-                  <Edit2 className="w-4 h-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onDeleteTemplate(template.id)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
           {customTemplates.length === 0 && (
             <p className="text-center text-gray-500 py-4">
               Aucun modèle personnalisé. Cliquez sur "Ajouter" pour créer votre premier modèle.

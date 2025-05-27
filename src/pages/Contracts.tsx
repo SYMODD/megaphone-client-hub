@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
@@ -27,6 +28,7 @@ interface ContractTemplate {
   name: string;
   description: string;
   template: string;
+  icon?: string;
 }
 
 const Contracts = () => {
