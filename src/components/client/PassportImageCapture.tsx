@@ -1,6 +1,8 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, Upload } from "lucide-react";
+import { Camera, Upload, Crop } from "lucide-react";
+import { ImageCropper } from "./ImageCropper";
 
 interface PassportImageCaptureProps {
   isScanning: boolean;
@@ -15,6 +17,10 @@ export const PassportImageCapture = ({
   onImageCapture, 
   onResetScan 
 }: PassportImageCaptureProps) => {
+  const [capturedImageUrl, setCapturedImageUrl] = useState<string | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const [originalFile, setOriginalFile] = useState<File | null>(null);
+
   const handleFileUpload = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -22,7 +28,14 @@ export const PassportImageCapture = ({
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        onImageCapture(file);
+        setOriginalFile(file);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const result = event.target?.result as string;
+          setCapturedImageUrl(result);
+          setShowCropper(true);
+        };
+        reader.readAsDataURL(file);
       }
     };
     input.click();
@@ -36,12 +49,71 @@ export const PassportImageCapture = ({
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        onImageCapture(file);
+        setOriginalFile(file);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const result = event.target?.result as string;
+          setCapturedImageUrl(result);
+          setShowCropper(true);
+        };
+        reader.readAsDataURL(file);
       }
     };
     input.click();
   };
 
+  const handleCropComplete = (croppedImageUrl: string) => {
+    // Convert the cropped image to a File object
+    fetch(croppedImageUrl)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], 'cropped-passport.jpg', { type: 'image/jpeg' });
+        onImageCapture(file);
+        setShowCropper(false);
+        setCapturedImageUrl(null);
+        setOriginalFile(null);
+      });
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setCapturedImageUrl(null);
+    setOriginalFile(null);
+  };
+
+  const handleSkipCropping = () => {
+    if (originalFile) {
+      onImageCapture(originalFile);
+      setShowCropper(false);
+      setCapturedImageUrl(null);
+      setOriginalFile(null);
+    }
+  };
+
+  // Show cropper interface
+  if (showCropper && capturedImageUrl) {
+    return (
+      <div className="space-y-4">
+        <ImageCropper
+          imageUrl={capturedImageUrl}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+        <div className="text-center">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={handleSkipCropping}
+            className="text-sm"
+          >
+            Ignorer le rognage et continuer
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show captured image with options
   if (!scannedImage) {
     return (
       <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
