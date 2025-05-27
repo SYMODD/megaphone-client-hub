@@ -54,6 +54,22 @@ export const AdminFilters = ({
 
   const availablePoints = getPointsByCategory(selectedCategory);
 
+  const handleCategoryChange = (value: string) => {
+    if (value === "all") {
+      onCategoryChange(null);
+    } else {
+      onCategoryChange(value);
+    }
+  };
+
+  const handlePointChange = (value: string) => {
+    if (value === "all") {
+      onPointChange(null);
+    } else {
+      onPointChange(value);
+    }
+  };
+
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -69,12 +85,12 @@ export const AdminFilters = ({
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
           <div className="flex-1 space-y-2">
             <label className="text-sm font-medium">Catégorie</label>
-            <Select value={selectedCategory || ""} onValueChange={(value) => onCategoryChange(value || null)}>
+            <Select value={selectedCategory || "all"} onValueChange={handleCategoryChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Toutes les catégories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Toutes les catégories</SelectItem>
+                <SelectItem value="all">Toutes les catégories</SelectItem>
                 {categoryOptions.map((category) => (
                   <SelectItem key={category.value} value={category.value}>
                     {category.label}
@@ -86,12 +102,12 @@ export const AdminFilters = ({
 
           <div className="flex-1 space-y-2">
             <label className="text-sm font-medium">Point d'opération</label>
-            <Select value={selectedPoint || ""} onValueChange={(value) => onPointChange(value || null)}>
+            <Select value={selectedPoint || "all"} onValueChange={handlePointChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Tous les points" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les points</SelectItem>
+                <SelectItem value="all">Tous les points</SelectItem>
                 {availablePoints.map((point) => (
                   <SelectItem key={point.value} value={point.value}>
                     {point.label}
