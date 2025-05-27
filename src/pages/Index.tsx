@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { AdminFilters } from "@/components/dashboard/AdminFilters";
 import { useAdminFilters } from "@/hooks/useAdminFilters";
+import { useAgentData } from "@/hooks/useAgentData";
 
 const Index = () => {
   const { user, profile } = useAuth();
