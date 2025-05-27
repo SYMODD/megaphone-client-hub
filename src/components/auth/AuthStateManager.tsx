@@ -27,7 +27,7 @@ export const AuthStateManager = () => {
     handleNewPassword,
   } = useAuthOperations();
 
-  // Traitement des liens de récupération de mot de passe
+  // Process password recovery links - simplified logic
   useEffect(() => {
     if (hasProcessedRecovery) return;
 
@@ -42,25 +42,17 @@ export const AuthStateManager = () => {
     const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash');
     const error = searchParams.get('error') || hashParams.get('error');
     const errorDescription = searchParams.get('error_description') || hashParams.get('error_description');
-    const expiresAt = searchParams.get('expires_at') || hashParams.get('expires_at');
-    const expiresIn = searchParams.get('expires_in') || hashParams.get('expires_in');
-    const tokenType = searchParams.get('token_type') || hashParams.get('token_type');
     
     console.log("AuthStateManager - Processing recovery parameters:", { 
-      currentUrl: window.location.href,
-      hash: hash,
       type, 
       hasAccessToken: !!accessToken, 
       hasRefreshToken: !!refreshToken,
       hasTokenHash: !!tokenHash,
-      hasExpiresAt: !!expiresAt,
-      hasExpiresIn: !!expiresIn,
-      tokenType,
       error,
       errorDescription
     });
     
-    // Gérer les erreurs d'abord
+    // Handle errors first
     if (error) {
       console.error("Auth error in URL:", error, errorDescription);
       setError("Erreur lors de la récupération : " + (errorDescription || error));
@@ -68,21 +60,10 @@ export const AuthStateManager = () => {
       return;
     }
     
-    // Détecter et traiter les liens de récupération avec une logique améliorée
-    const isRecoveryLink = type === 'recovery' || 
-                          tokenHash ||
-                          (accessToken && refreshToken && tokenType === 'bearer') ||
-                          (accessToken && (expiresAt || expiresIn)) ||
-                          (accessToken && type);
+    // Detect recovery links with simplified logic
+    const isRecoveryLink = type === 'recovery' || tokenHash;
     
-    console.log("Recovery link check:", { 
-      isRecoveryLink, 
-      type, 
-      hasTokenHash: !!tokenHash, 
-      hasTokens: !!(accessToken && refreshToken),
-      tokenType,
-      hasExpirationInfo: !!(expiresAt || expiresIn)
-    });
+    console.log("Recovery link check:", { isRecoveryLink, type, hasTokenHash: !!tokenHash });
     
     if (isRecoveryLink) {
       console.log("Password recovery detected - setting up new password form");
@@ -90,8 +71,22 @@ export const AuthStateManager = () => {
       setShowPasswordReset(false);
       setHasProcessedRecovery(true);
       
-      // Traiter les différents types de tokens de récupération
-      if (accessToken && refreshToken) {
+      // Process recovery tokens
+      if (tokenHash) {
+        console.log("Processing token hash for recovery...");
+        supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: 'recovery'
+        }).then(({ error }) => {
+          if (error) {
+            console.error("Error verifying recovery token:", error);
+            setError("Le lien de récupération n'est plus valide ou a expiré. Veuillez demander un nouveau lien.");
+          } else {
+            console.log("Recovery token verified successfully");
+            setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
+          }
+        });
+      } else if (accessToken && refreshToken) {
         console.log("Setting up session with recovery tokens");
         supabase.auth.setSession({
           access_token: accessToken,
@@ -105,25 +100,7 @@ export const AuthStateManager = () => {
             setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
           }
         });
-      } else if (tokenHash) {
-        console.log("Verifying recovery token hash...");
-        supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: 'recovery'
-        }).then(({ error }) => {
-          if (error) {
-            console.error("Error verifying recovery token:", error);
-            setError("Le lien de récupération n'est plus valide ou a expiré. Veuillez demander un nouveau lien.");
-          } else {
-            console.log("Recovery token verified successfully");
-            setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
-          }
-        });
       }
-    } else if (searchParams.toString() || hash) {
-      // Nettoyer les paramètres non liés à la récupération
-      console.log("Cleaning non-recovery URL parameters");
-      setHasProcessedRecovery(true);
     } else {
       setHasProcessedRecovery(true);
     }

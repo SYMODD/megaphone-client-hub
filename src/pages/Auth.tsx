@@ -9,15 +9,13 @@ const Auth = () => {
   const { user, loading } = useAuth();
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const [isRecoveryFlow, setIsRecoveryFlow] = useState(false);
   const [hasCheckedParams, setHasCheckedParams] = useState(false);
 
-  // Check if this is a password recovery link with improved detection
+  // Check if this is a password recovery link
   useEffect(() => {
     console.log("=== AUTH PAGE RECOVERY CHECK ===");
     console.log("Current URL:", window.location.href);
     console.log("Search params:", searchParams.toString());
-    console.log("Location search:", location.search);
     console.log("Location hash:", location.hash);
     
     // Parse URL fragment (hash) for recovery tokens
@@ -30,48 +28,36 @@ const Auth = () => {
     const type = searchParams.get('type') || hashParams.get('type');
     const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash');
     const error = searchParams.get('error') || hashParams.get('error');
-    const expiresAt = searchParams.get('expires_at') || hashParams.get('expires_at');
-    const expiresIn = searchParams.get('expires_in') || hashParams.get('expires_in');
     
     console.log("Recovery parameters found:", { 
       type, 
       hasAccessToken: !!accessToken, 
       hasRefreshToken: !!refreshToken,
       hasTokenHash: !!tokenHash,
-      hasExpiresAt: !!expiresAt,
-      hasExpiresIn: !!expiresIn,
       error
     });
     
-    // Détection améliorée des liens de récupération
-    const isRecoveryLink = 
-      type === 'recovery' || 
-      tokenHash ||
-      (accessToken && (refreshToken || expiresAt || expiresIn)) ||
-      error === 'access_denied' || // Cas d'erreur de récupération
-      error === 'invalid_request'; // Autre cas d'erreur
+    // Simple detection of recovery links - only redirect if we have recovery-specific parameters
+    const isRecoveryLink = type === 'recovery' || tokenHash;
     
     console.log("Recovery link detection result:", isRecoveryLink);
     
     if (isRecoveryLink) {
       console.log("Recovery link detected - redirecting to /reset-password");
-      setIsRecoveryFlow(true);
-      
-      // Redirect to /reset-password with current URL parameters
-      const currentParams = new URLSearchParams(window.location.search);
+      // Construct the full URL with all parameters to preserve them
+      const currentParams = window.location.search;
       const currentHash = window.location.hash;
       
-      // Construct the full URL with all parameters
       let redirectUrl = '/reset-password';
-      if (currentParams.toString()) {
-        redirectUrl += '?' + currentParams.toString();
+      if (currentParams) {
+        redirectUrl += currentParams;
       }
       if (currentHash) {
         redirectUrl += currentHash;
       }
       
       console.log("Redirecting to:", redirectUrl);
-      window.location.href = redirectUrl;
+      window.location.replace(redirectUrl);
       return;
     }
     
@@ -90,9 +76,9 @@ const Auth = () => {
     );
   }
 
-  // Only redirect authenticated users if this is NOT a recovery flow
-  if (user && !isRecoveryFlow) {
-    console.log("User authenticated and not in recovery flow - redirecting to dashboard");
+  // Redirect authenticated users to dashboard
+  if (user) {
+    console.log("User authenticated - redirecting to dashboard");
     return <Navigate to="/" replace />;
   }
 

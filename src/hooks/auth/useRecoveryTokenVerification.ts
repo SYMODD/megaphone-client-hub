@@ -13,7 +13,7 @@ export const useRecoveryTokenVerification = () => {
 
   useEffect(() => {
     const verifyRecoveryToken = async () => {
-      console.log("=== RESET PASSWORD PAGE ===");
+      console.log("=== RESET PASSWORD TOKEN VERIFICATION ===");
       console.log("Current URL:", window.location.href);
       
       // Parse URL fragment (hash) for recovery tokens
@@ -29,8 +29,6 @@ export const useRecoveryTokenVerification = () => {
       const errorDescription = searchParams.get('error_description') || hashParams.get('error_description');
       
       console.log("Recovery token parameters:", { 
-        currentUrl: window.location.href,
-        hash: hash,
         type, 
         hasAccessToken: !!accessToken, 
         hasRefreshToken: !!refreshToken,
@@ -39,7 +37,7 @@ export const useRecoveryTokenVerification = () => {
         errorDescription
       });
 
-      // Gérer les erreurs d'URL
+      // Handle URL errors first
       if (error) {
         console.error("Recovery error in URL:", error, errorDescription);
         setError("Erreur lors de la récupération : " + (errorDescription || error));
@@ -47,34 +45,17 @@ export const useRecoveryTokenVerification = () => {
         return;
       }
 
-      // Si aucun paramètre de récupération n'est trouvé, rediriger vers auth
-      if (!type && !tokenHash && !accessToken && !refreshToken) {
+      // If no recovery parameters found, redirect to auth
+      if (!type && !tokenHash && !accessToken) {
         console.log("No recovery parameters found, redirecting to auth");
         navigate("/auth", { replace: true });
         return;
       }
 
       try {
-        // Méthode 1: Utiliser les tokens d'accès et de refresh si disponibles
-        if (accessToken && refreshToken) {
-          console.log("Method 1: Setting up session with access/refresh tokens");
-          const { data, error: sessionError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-
-          if (sessionError) {
-            console.error("Error setting session:", sessionError);
-            setError("Le lien de récupération n'est plus valide ou a expiré.");
-          } else {
-            console.log("Session configured successfully for password recovery");
-            setIsValidToken(true);
-            setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
-          }
-        }
-        // Méthode 2: Utiliser le token_hash avec verifyOtp
-        else if (tokenHash) {
-          console.log("Method 2: Verifying recovery token hash...");
+        // Method 1: Use token_hash with verifyOtp (most reliable for recovery links)
+        if (tokenHash) {
+          console.log("Method 1: Verifying recovery token hash...");
           const { data, error: verifyError } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
             type: 'recovery'
@@ -82,41 +63,33 @@ export const useRecoveryTokenVerification = () => {
 
           if (verifyError) {
             console.error("Error verifying recovery token:", verifyError);
-            setError("Le lien de récupération n'est plus valide ou a expiré.");
+            setError("Le lien de récupération n'est plus valide ou a expiré. Veuillez demander un nouveau lien.");
           } else {
             console.log("Recovery token verified successfully");
             setIsValidToken(true);
             setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
           }
         }
-        // Méthode 3: Utiliser seulement l'access token si disponible
-        else if (accessToken && type === 'recovery') {
-          console.log("Method 3: Using access token only");
-          const { data, error: userError } = await supabase.auth.getUser(accessToken);
-          
-          if (userError) {
-            console.error("Error getting user with access token:", userError);
-            setError("Le lien de récupération n'est plus valide ou a expiré.");
+        // Method 2: Use access/refresh tokens if available
+        else if (accessToken && refreshToken && type === 'recovery') {
+          console.log("Method 2: Setting up session with access/refresh tokens");
+          const { data, error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (sessionError) {
+            console.error("Error setting session:", sessionError);
+            setError("Le lien de récupération n'est plus valide ou a expiré. Veuillez demander un nouveau lien.");
           } else {
-            // Créer une session temporaire
-            const { error: sessionError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken || '', // refresh token peut être vide
-            });
-            
-            if (sessionError) {
-              console.error("Error creating session:", sessionError);
-              setError("Erreur lors de la configuration de la session.");
-            } else {
-              console.log("Session created successfully with access token");
-              setIsValidToken(true);
-              setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
-            }
+            console.log("Session configured successfully for password recovery");
+            setIsValidToken(true);
+            setSuccess("Veuillez définir votre nouveau mot de passe ci-dessous");
           }
         }
         else {
           console.log("No valid recovery method found");
-          setError("Paramètres de récupération manquants ou invalides. Veuillez demander un nouveau lien.");
+          setError("Paramètres de récupération manquants ou invalides. Veuillez demander un nouveau lien de récupération.");
         }
       } catch (error) {
         console.error("Unexpected error during token verification:", error);
@@ -124,7 +97,7 @@ export const useRecoveryTokenVerification = () => {
       } finally {
         setIsCheckingToken(false);
         
-        // Nettoyer l'URL après traitement
+        // Clean up URL after processing
         if (hash || searchParams.toString()) {
           window.history.replaceState({}, document.title, "/reset-password");
         }
