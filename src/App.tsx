@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { RoleProtectedRoute } from "@/components/auth/RoleProtectedRoute";
 import { SignupRedirect } from "@/components/auth/SignupRedirect";
 import Index from "./pages/Index";
 import NewClient from "./pages/NewClient";
@@ -39,7 +40,9 @@ const App = () => (
             } />
             <Route path="/base-clients" element={
               <ProtectedRoute>
-                <BaseClients />
+                <RoleProtectedRoute allowedRoles={["admin", "superviseur"]}>
+                  <BaseClients />
+                </RoleProtectedRoute>
               </ProtectedRoute>
             } />
             <Route path="/contrats" element={
@@ -49,7 +52,9 @@ const App = () => (
             } />
             <Route path="/gestion-utilisateurs" element={
               <ProtectedRoute>
-                <UserManagement />
+                <RoleProtectedRoute allowedRoles={["admin"]}>
+                  <UserManagement />
+                </RoleProtectedRoute>
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

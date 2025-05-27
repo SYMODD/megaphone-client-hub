@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
@@ -31,7 +30,7 @@ interface ContractTemplate {
 }
 
 const Contracts = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,17 +44,24 @@ const Contracts = () => {
       fetchClients();
       loadCustomTemplates();
     }
-  }, [user]);
+  }, [user, profile]);
 
   const fetchClients = async () => {
     try {
       setLoading(true);
       console.log('Fetching clients for contracts...');
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('clients')
         .select('*')
         .order('created_at', { ascending: false });
+
+      // Si c'est un agent, filtrer par ses propres clients
+      if (profile?.role === "agent" && user?.id) {
+        query = query.eq('agent_id', user.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Supabase error:', error);
@@ -168,6 +174,9 @@ const Contracts = () => {
     );
   }
 
+  // Pour les agents, ne montrer que l'onglet de génération
+  const isAgent = profile?.role === "agent";
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <AuthenticatedHeader />
@@ -177,16 +186,14 @@ const Contracts = () => {
         <div className="space-y-4 sm:space-y-6">
           <div className="px-1">
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">Génération de Contrats</h1>
-            <p className="text-sm sm:text-base text-slate-600">Créez des contrats personnalisés pour vos clients</p>
+            <p className="text-sm sm:text-base text-slate-600">
+              {isAgent ? "Créez des contrats pour vos clients" : "Créez des contrats personnalisés pour vos clients"}
+            </p>
           </div>
 
-          <Tabs defaultValue="generate" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="generate">Générer un contrat</TabsTrigger>
-              <TabsTrigger value="manage">Gérer les modèles</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="generate" className="space-y-4 lg:space-y-6">
+          {isAgent ? (
+            // Interface simplifiée pour les agents
+            <div className="space-y-4 lg:space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                 <ClientSelector
                   clients={clients}
@@ -210,17 +217,51 @@ const Contracts = () => {
                   template={selectedTemplate}
                 />
               )}
-            </TabsContent>
-            
-            <TabsContent value="manage">
-              <ContractTypeManager
-                customTemplates={customTemplates}
-                onAddTemplate={handleAddTemplate}
-                onUpdateTemplate={handleUpdateTemplate}
-                onDeleteTemplate={handleDeleteTemplate}
-              />
-            </TabsContent>
-          </Tabs>
+            </div>
+          ) : (
+            // Interface complète pour admin et superviseur
+            <Tabs defaultValue="generate" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="generate">Générer un contrat</TabsTrigger>
+                <TabsTrigger value="manage">Gérer les modèles</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="generate" className="space-y-4 lg:space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                  <ClientSelector
+                    clients={clients}
+                    selectedClient={selectedClient}
+                    onClientSelect={handleClientSelect}
+                  />
+
+                  <ContractConfiguration
+                    selectedClient={selectedClient}
+                    selectedTemplate={selectedTemplate}
+                    customTemplates={customTemplates}
+                    onTemplateSelect={setSelectedTemplate}
+                    onGenerateContract={handleGenerateContract}
+                    onDownloadHTML={handleDownloadHTML}
+                  />
+                </div>
+
+                {showPreview && selectedClient && selectedTemplate && (
+                  <ContractPreview
+                    client={selectedClient}
+                    template={selectedTemplate}
+                  />
+                )}
+              </TabsContent>
+              
+              <TabsContent value="manage">
+                <ContractTypeManager
+                  customTemplates={customTemplates}
+                  onAddTemplate={handleAddTemplate}
+                  onUpdateTemplate={handleUpdateTemplate}
+                  onDeleteTemplate={handleDeleteTemplate}
+                />
+              </TabsContent>
+            </Tabs>
+          )}
         </div>
       </main>
     </div>
