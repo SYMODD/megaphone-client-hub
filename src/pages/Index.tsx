@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,8 +29,8 @@ const Index = () => {
   }
 
   // Utiliser les filtres seulement pour admin et superviseur
-  const shouldUseFilters = profile?.role === "admin" || profile?.role === "superviseur";
-  const agentData = useAgentData(shouldUseFilters ? adminFilters.filters : undefined);
+  const isAdminOrSuperviseur = profile?.role === "admin" || profile?.role === "superviseur";
+  const agentData = useAgentData(isAdminOrSuperviseur ? adminFilters.filters : undefined);
 
   const getPointLabel = (point: string) => {
     const labels: Record<string, string> = {
@@ -122,7 +121,7 @@ const Index = () => {
         </div>
 
         {/* Admin Filters - Only show for admin and superviseur */}
-        {shouldUseFilters && (
+        {isAdminOrSuperviseur && (
           <AdminFilters
             selectedPoint={adminFilters.selectedPoint}
             selectedCategory={adminFilters.selectedCategory}
