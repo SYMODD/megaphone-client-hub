@@ -1,3 +1,4 @@
+import { convertNationalityCode } from "@/data/nationalityMappings";
 
 export interface MRZData {
   nom?: string;
@@ -119,7 +120,8 @@ const extractMRZData = (text: string): MRZData => {
         // Nationalité (positions 10-12)
         const nationality = secondLine.substring(10, 13);
         if (nationality && nationality !== '<<<') {
-          mrzData.nationalite = nationality;
+          // Convertir le code de nationalité vers le nom complet
+          mrzData.nationalite = convertNationalityCode(nationality);
         }
 
         // Date de naissance (positions 13-18) - format YYMMDD
@@ -166,7 +168,8 @@ const extractMRZData = (text: string): MRZData => {
           mrzData.numero_passeport = 'SY1071819';
         }
         if (line.includes('MAR') && !mrzData.nationalite) {
-          mrzData.nationalite = 'MAR';
+          // Convertir le code de nationalité vers le nom complet
+          mrzData.nationalite = convertNationalityCode('MAR');
         }
       }
     }
