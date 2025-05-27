@@ -14,6 +14,12 @@ const Auth = () => {
 
   // Check if this is a password recovery link with improved detection
   useEffect(() => {
+    console.log("=== AUTH PAGE RECOVERY CHECK ===");
+    console.log("Current URL:", window.location.href);
+    console.log("Search params:", searchParams.toString());
+    console.log("Location search:", location.search);
+    console.log("Location hash:", location.hash);
+    
     // Parse URL fragment (hash) for recovery tokens
     const hash = window.location.hash;
     const hashParams = new URLSearchParams(hash.substring(1));
@@ -22,16 +28,15 @@ const Auth = () => {
     const accessToken = searchParams.get('access_token') || hashParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token');
     const type = searchParams.get('type') || hashParams.get('type');
+    const token = searchParams.get('token') || hashParams.get('token'); // Simple token parameter
     const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash');
     const error = searchParams.get('error') || hashParams.get('error');
     const expiresAt = searchParams.get('expires_at') || hashParams.get('expires_at');
     const expiresIn = searchParams.get('expires_in') || hashParams.get('expires_in');
     
-    console.log("Auth page - URL analysis:", { 
-      currentUrl: window.location.href,
-      hash: hash,
-      searchParamsString: searchParams.toString(),
+    console.log("Recovery parameters found:", { 
       type, 
+      token: !!token,
       hasAccessToken: !!accessToken, 
       hasRefreshToken: !!refreshToken,
       hasTokenHash: !!tokenHash,
@@ -42,18 +47,13 @@ const Auth = () => {
     
     // Improved recovery link detection - check for multiple indicators
     const isRecoveryLink = type === 'recovery' || 
+                          token || // Direct token parameter from Supabase
                           tokenHash ||
                           (accessToken && refreshToken && (expiresAt || expiresIn)) ||
                           (accessToken && type) ||
                           error;
     
-    console.log("Recovery link detection:", { 
-      isRecoveryLink, 
-      type, 
-      hasTokenHash: !!tokenHash, 
-      hasTokens: !!(accessToken && refreshToken),
-      hasExpirationInfo: !!(expiresAt || expiresIn)
-    });
+    console.log("Recovery link detection result:", isRecoveryLink);
     
     if (isRecoveryLink) {
       console.log("Recovery link detected - redirecting to /reset-password");
