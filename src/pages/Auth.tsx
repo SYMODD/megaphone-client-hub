@@ -56,13 +56,25 @@ const Auth = () => {
     });
     
     if (isRecoveryLink) {
-      console.log("Recovery link detected - staying on auth page for password reset");
+      console.log("Recovery link detected - redirecting to /reset-password");
       setIsRecoveryFlow(true);
       
-      // Clean the URL by removing the hash fragment after processing
-      if (hash) {
-        window.history.replaceState({}, document.title, "/auth");
+      // Redirect to /reset-password with current URL parameters
+      const currentParams = new URLSearchParams(window.location.search);
+      const currentHash = window.location.hash;
+      
+      // Construct the full URL with all parameters
+      let redirectUrl = '/reset-password';
+      if (currentParams.toString()) {
+        redirectUrl += '?' + currentParams.toString();
       }
+      if (currentHash) {
+        redirectUrl += currentHash;
+      }
+      
+      console.log("Redirecting to:", redirectUrl);
+      window.location.href = redirectUrl;
+      return;
     }
     
     setHasCheckedParams(true);

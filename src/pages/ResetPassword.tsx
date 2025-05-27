@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +18,7 @@ const ResetPassword = () => {
   useEffect(() => {
     const verifyRecoveryToken = async () => {
       console.log("=== RESET PASSWORD PAGE ===");
+      console.log("Current URL:", window.location.href);
       
       // Parse URL fragment (hash) for recovery tokens
       const hash = window.location.hash;
@@ -48,6 +48,13 @@ const ResetPassword = () => {
         console.error("Recovery error in URL:", error, errorDescription);
         setError("Erreur lors de la récupération : " + (errorDescription || error));
         setIsCheckingToken(false);
+        return;
+      }
+
+      // Si aucun paramètre de récupération n'est trouvé, rediriger vers auth
+      if (!type && !tokenHash && !accessToken && !refreshToken) {
+        console.log("No recovery parameters found, redirecting to auth");
+        navigate("/auth", { replace: true });
         return;
       }
 
@@ -108,7 +115,7 @@ const ResetPassword = () => {
     };
 
     verifyRecoveryToken();
-  }, [searchParams, setError, setSuccess]);
+  }, [searchParams, setError, setSuccess, navigate]);
 
   const handleNewPassword = async (password: string, confirmPassword: string) => {
     setIsLoading(true);
