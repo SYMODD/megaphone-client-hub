@@ -14,6 +14,7 @@ export const AuthStateManager = () => {
   const navigate = useNavigate();
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [hasProcessedRecovery, setHasProcessedRecovery] = useState(false);
   
   const {
     error,
@@ -28,6 +29,8 @@ export const AuthStateManager = () => {
 
   // Améliorer la détection des liens de récupération de mot de passe
   useEffect(() => {
+    if (hasProcessedRecovery) return;
+
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
     const type = searchParams.get('type');
@@ -35,7 +38,7 @@ export const AuthStateManager = () => {
     const error = searchParams.get('error');
     const errorDescription = searchParams.get('error_description');
     
-    console.log("URL parameters detected:", { 
+    console.log("AuthStateManager - URL parameters detected:", { 
       type, 
       hasAccessToken: !!accessToken, 
       hasRefreshToken: !!refreshToken,
@@ -49,6 +52,7 @@ export const AuthStateManager = () => {
     if (error) {
       console.error("Auth error in URL:", error, errorDescription);
       setError("Erreur lors de la récupération : " + (errorDescription || error));
+      setHasProcessedRecovery(true);
       // Nettoyer l'URL
       navigate("/auth", { replace: true });
       return;
@@ -63,6 +67,7 @@ export const AuthStateManager = () => {
       console.log("Password recovery link detected, setting up new password form");
       setShowNewPassword(true);
       setShowPasswordReset(false);
+      setHasProcessedRecovery(true);
       
       // Gérer les différents types de tokens de récupération
       if (accessToken && refreshToken) {
@@ -98,19 +103,14 @@ export const AuthStateManager = () => {
       // Nettoyer l'URL après traitement mais garder la page auth
       navigate("/auth", { replace: true });
     }
-  }, [searchParams, setError, setSuccess, navigate]);
+  }, [searchParams, setError, setSuccess, navigate, hasProcessedRecovery]);
 
   // Clear errors and success messages when user changes between forms
   useEffect(() => {
+    if (!hasProcessedRecovery) return; // Ne pas clear pendant le traitement initial
     setError(null);
     setSuccess(null);
-  }, [showPasswordReset, showNewPassword, setError, setSuccess]);
-
-  // Clear any lingering messages when component mounts
-  useEffect(() => {
-    setError(null);
-    setSuccess(null);
-  }, [setError, setSuccess]);
+  }, [showPasswordReset, hasProcessedRecovery, setError, setSuccess]);
 
   const handleShowPasswordReset = () => {
     setShowPasswordReset(true);
