@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +42,7 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
   });
 
   // Mettre à jour les données du formulaire quand le client change
-  useState(() => {
+  useEffect(() => {
     if (client) {
       setFormData({
         nom: client.nom,
