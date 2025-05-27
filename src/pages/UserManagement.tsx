@@ -82,7 +82,7 @@ const UserManagement = () => {
 
   // Helper function to check if point operation should be shown
   const shouldShowPointOperation = (role: AppRole) => {
-    return role === "agent" || role === "admin";
+    return role === "agent";
   };
 
   useEffect(() => {
@@ -142,8 +142,10 @@ const UserManagement = () => {
     setCreateLoading(true);
 
     try {
-      // For supervisors, set point_operation to agence_centrale by default
-      const pointOperation = createForm.role === "superviseur" ? "agence_centrale" : createForm.point_operation;
+      // For supervisors and admins, set point_operation to agence_centrale by default
+      const pointOperation = (createForm.role === "superviseur" || createForm.role === "admin") 
+        ? "agence_centrale" 
+        : createForm.point_operation;
 
       // Use standard signup instead of admin API
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -203,8 +205,10 @@ const UserManagement = () => {
     if (!editingUser) return;
 
     try {
-      // For supervisors, set point_operation to agence_centrale by default
-      const pointOperation = editForm.role === "superviseur" ? "agence_centrale" : editForm.point_operation;
+      // For supervisors and admins, set point_operation to agence_centrale by default
+      const pointOperation = (editForm.role === "superviseur" || editForm.role === "admin") 
+        ? "agence_centrale" 
+        : editForm.point_operation;
 
       const { error } = await supabase
         .from("profiles")
@@ -380,6 +384,7 @@ const UserManagement = () => {
                       <SelectContent>
                         <SelectItem value="agent">Agent</SelectItem>
                         <SelectItem value="superviseur">Superviseur</SelectItem>
+                        {isAdmin && <SelectItem value="admin">Administrateur</SelectItem>}
                       </SelectContent>
                     </Select>
                   </div>
@@ -479,6 +484,10 @@ const UserManagement = () => {
                       <TableCell>
                         {user.role === "superviseur" ? (
                           <Badge variant="outline">Tous les points</Badge>
+                        ) : user.role === "admin" ? (
+                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                            Système complet
+                          </Badge>
                         ) : (
                           getOperationPointLabel(user.point_operation)
                         )}
