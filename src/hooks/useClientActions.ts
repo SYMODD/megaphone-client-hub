@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Client {
@@ -17,34 +18,47 @@ interface Client {
 
 export const useClientActions = () => {
   const { toast } = useToast();
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   const handleViewClient = (client: Client) => {
     console.log('Voir client:', client);
-    toast({
-      title: "Voir le client",
-      description: `Affichage des détails pour ${client.prenom} ${client.nom}`,
-    });
+    setSelectedClient(client);
+    setViewDialogOpen(true);
   };
 
   const handleEditClient = (client: Client) => {
     console.log('Modifier client:', client);
-    toast({
-      title: "Modifier le client",
-      description: `Édition du client ${client.prenom} ${client.nom}`,
-    });
+    setSelectedClient(client);
+    setEditDialogOpen(true);
   };
 
   const handleGenerateDocument = (client: Client) => {
     console.log('Générer document:', client);
-    toast({
-      title: "Générer un document",
-      description: `Génération d'un document pour ${client.prenom} ${client.nom}`,
-    });
+    setSelectedClient(client);
+    setDocumentDialogOpen(true);
+  };
+
+  const closeDialogs = () => {
+    setViewDialogOpen(false);
+    setEditDialogOpen(false);
+    setDocumentDialogOpen(false);
+    setSelectedClient(null);
   };
 
   return {
     handleViewClient,
     handleEditClient,
-    handleGenerateDocument
+    handleGenerateDocument,
+    selectedClient,
+    viewDialogOpen,
+    editDialogOpen,
+    documentDialogOpen,
+    setViewDialogOpen,
+    setEditDialogOpen,
+    setDocumentDialogOpen,
+    closeDialogs
   };
 };

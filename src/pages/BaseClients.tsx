@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
@@ -10,6 +9,9 @@ import { useClientActions } from "@/hooks/useClientActions";
 import { ClientStatistics } from "@/components/clients/ClientStatistics";
 import { ClientFilters } from "@/components/clients/ClientFilters";
 import { ClientTable } from "@/components/clients/ClientTable";
+import { ClientViewDialog } from "@/components/clients/ClientViewDialog";
+import { ClientEditDialog } from "@/components/clients/ClientEditDialog";
+import { ClientDocumentDialog } from "@/components/clients/ClientDocumentDialog";
 import { Button } from "@/components/ui/button";
 
 const BaseClients = () => {
@@ -27,7 +29,18 @@ const BaseClients = () => {
     filterClients
   } = useClientData();
 
-  const { handleViewClient, handleEditClient, handleGenerateDocument } = useClientActions();
+  const {
+    handleViewClient,
+    handleEditClient,
+    handleGenerateDocument,
+    selectedClient,
+    viewDialogOpen,
+    editDialogOpen,
+    documentDialogOpen,
+    setViewDialogOpen,
+    setEditDialogOpen,
+    setDocumentDialogOpen
+  } = useClientActions();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedNationality, setSelectedNationality] = useState("");
@@ -37,6 +50,10 @@ const BaseClients = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handleClientUpdated = () => {
+    fetchClients();
   };
 
   const handleExport = (format: 'csv' | 'pdf') => {
@@ -158,6 +175,26 @@ const BaseClients = () => {
           />
         </div>
       </main>
+
+      {/* Dialogues */}
+      <ClientViewDialog
+        client={selectedClient}
+        open={viewDialogOpen}
+        onOpenChange={setViewDialogOpen}
+      />
+      
+      <ClientEditDialog
+        client={selectedClient}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onClientUpdated={handleClientUpdated}
+      />
+      
+      <ClientDocumentDialog
+        client={selectedClient}
+        open={documentDialogOpen}
+        onOpenChange={setDocumentDialogOpen}
+      />
     </div>
   );
 };
