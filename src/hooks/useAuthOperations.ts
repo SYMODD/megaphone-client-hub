@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,16 +23,7 @@ export const useAuthOperations = () => {
       console.log("Normalized email:", normalizedEmail);
       console.log("Password length:", password.length);
       
-      // Vérifier d'abord si l'utilisateur existe
-      console.log("Checking if user exists in profiles table...");
-      const { data: profiles, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, nom, prenom, statut")
-        .ilike("id", `%${normalizedEmail.split('@')[0]}%`);
-      
-      console.log("Profile search result:", { profiles, profileError });
-      
-      // Essayer la connexion
+      // Essayer directement la connexion sans vérifier la table profiles d'abord
       console.log("Attempting sign in...");
       const { data, error } = await signIn(normalizedEmail, password);
       
@@ -57,6 +47,9 @@ export const useAuthOperations = () => {
         switch (error.code) {
           case "invalid_credentials":
             userFriendlyMessage = "Les identifiants fournis sont incorrects. Vérifiez votre email et mot de passe.";
+            break;
+          case "account_inactive":
+            userFriendlyMessage = error.message;
             break;
           case "email_not_confirmed":
             userFriendlyMessage = "Veuillez confirmer votre email avant de vous connecter.";
