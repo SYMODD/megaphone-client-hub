@@ -1,5 +1,4 @@
 
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,32 +19,16 @@ import { useAgentData } from "@/hooks/useAgentData";
 
 const Index = () => {
   const { user, profile } = useAuth();
-  const adminFilters = useAdminFilters();
 
   console.log("User:", user);
   console.log("Profile:", profile);
 
-  // Rediriger les agents vers la page "Nouveau Client" AVANT tout autre traitement
+  // Early return for agents - before any hooks are called
   if (profile?.role === "agent") {
     return <Navigate to="/nouveau-client" replace />;
   }
 
-  // Utiliser les filtres seulement pour admin et superviseur
-  const isAdminOrSuperviseur = profile?.role === "admin" || profile?.role === "superviseur";
-  const agentData = useAgentData(isAdminOrSuperviseur ? adminFilters.filters : undefined);
-
-  const getPointLabel = (point: string) => {
-    const labels: Record<string, string> = {
-      "aeroport_marrakech": "Aéroport Marrakech",
-      "aeroport_casablanca": "Aéroport Casablanca", 
-      "aeroport_agadir": "Aéroport Agadir",
-      "navire_atlas": "Navire Atlas",
-      "navire_meridien": "Navire Méridien",
-      "agence_centrale": "Agence Centrale"
-    };
-    return labels[point] || point;
-  };
-
+  // Early return for unauthenticated users
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
@@ -62,6 +45,25 @@ const Index = () => {
       </div>
     );
   }
+
+  // Now we can safely call hooks since we know we're not redirecting
+  const adminFilters = useAdminFilters();
+
+  // Use the filters only for admin and superviseur
+  const isAdminOrSuperviseur = profile?.role === "admin" || profile?.role === "superviseur";
+  const agentData = useAgentData(isAdminOrSuperviseur ? adminFilters.filters : undefined);
+
+  const getPointLabel = (point: string) => {
+    const labels: Record<string, string> = {
+      "aeroport_marrakech": "Aéroport Marrakech",
+      "aeroport_casablanca": "Aéroport Casablanca", 
+      "aeroport_agadir": "Aéroport Agadir",
+      "navire_atlas": "Navire Atlas",
+      "navire_meridien": "Navire Méridien",
+      "agence_centrale": "Agence Centrale"
+    };
+    return labels[point] || point;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -153,4 +155,3 @@ const Index = () => {
 };
 
 export default Index;
-
