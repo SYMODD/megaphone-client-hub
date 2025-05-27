@@ -85,7 +85,7 @@ export const useClientFormLogic = () => {
         photoUrl = await uploadImage(formData.scannedImage);
       }
 
-      // Insert client data
+      // Insert client data - removed point_operation as it doesn't exist in clients table
       const { error } = await supabase
         .from('clients')
         .insert({
@@ -96,7 +96,6 @@ export const useClientFormLogic = () => {
           photo_url: photoUrl,
           observations: formData.observations,
           date_enregistrement: formData.date_enregistrement,
-          point_operation: profile.point_operation,
           agent_id: user.id
         });
 
