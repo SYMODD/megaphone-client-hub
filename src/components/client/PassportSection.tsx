@@ -1,16 +1,19 @@
 
-import { PassportScanner } from "./PassportScanner";
+import { PassportOCRScanner } from "./PassportOCRScanner";
+import { MRZData } from "@/services/ocrService";
 
 interface PassportSectionProps {
   scannedImage: string | null;
   onImageScanned: (image: string) => void;
+  onMRZDataExtracted: (data: MRZData) => void;
 }
 
-export const PassportSection = ({ scannedImage, onImageScanned }: PassportSectionProps) => {
+export const PassportSection = ({ scannedImage, onImageScanned, onMRZDataExtracted }: PassportSectionProps) => {
   return (
-    <PassportScanner 
+    <PassportOCRScanner 
       scannedImage={scannedImage}
       onImageScanned={onImageScanned}
+      onDataExtracted={onMRZDataExtracted}
     />
   );
 };

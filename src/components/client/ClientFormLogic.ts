@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MRZData } from "@/services/ocrService";
 
 interface ClientFormData {
   nom: string;
@@ -32,6 +33,25 @@ export const useClientFormLogic = () => {
 
   const handleInputChange = (field: keyof ClientFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleMRZDataExtracted = (mrzData: MRZData) => {
+    console.log("Applying MRZ data to form:", mrzData);
+    
+    setFormData(prev => ({
+      ...prev,
+      nom: mrzData.nom || prev.nom,
+      prenom: mrzData.prenom || prev.prenom,
+      nationalite: mrzData.nationalite || prev.nationalite,
+      numero_passeport: mrzData.numero_passeport || prev.numero_passeport,
+    }));
+
+    // Add MRZ extraction info to observations
+    const mrzInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')}`;
+    setFormData(prev => ({
+      ...prev,
+      observations: prev.observations ? `${prev.observations}\n\n${mrzInfo}` : mrzInfo
+    }));
   };
 
   const uploadImage = async (imageBase64: string): Promise<string | null> => {
@@ -85,7 +105,7 @@ export const useClientFormLogic = () => {
         photoUrl = await uploadImage(formData.scannedImage);
       }
 
-      // Insert client data - removed point_operation as it doesn't exist in clients table
+      // Insert client data
       const { error } = await supabase
         .from('clients')
         .insert({
@@ -123,6 +143,7 @@ export const useClientFormLogic = () => {
     formData,
     isLoading,
     handleInputChange,
-    handleSubmit
+    handleSubmit,
+    handleMRZDataExtracted
   };
 };

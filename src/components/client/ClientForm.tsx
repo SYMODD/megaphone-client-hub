@@ -6,7 +6,7 @@ import { FormActions } from "./FormActions";
 import { useClientFormLogic } from "./ClientFormLogic";
 
 export const ClientForm = () => {
-  const { formData, isLoading, handleInputChange, handleSubmit } = useClientFormLogic();
+  const { formData, isLoading, handleInputChange, handleSubmit, handleMRZDataExtracted } = useClientFormLogic();
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +23,7 @@ export const ClientForm = () => {
       <PassportSection 
         scannedImage={formData.scannedImage}
         onImageScanned={(image) => handleInputChange("scannedImage", image)}
+        onMRZDataExtracted={handleMRZDataExtracted}
       />
 
       <RegistrationSection 
