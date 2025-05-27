@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -21,7 +20,7 @@ export const PassportOCRScanner = ({ onDataExtracted, onImageScanned, scannedIma
   const [extractedData, setExtractedData] = useState<MRZData | null>(null);
   const [rawText, setRawText] = useState<string>("");
   const [showRawText, setShowRawText] = useState(false);
-  const [apiKey, setApiKey] = useState("helloworld");
+  const [apiKey, setApiKey] = useState("K87783069388957");
   const [showApiKey, setShowApiKey] = useState(false);
 
   const handleImageCapture = async (file: File) => {
@@ -125,7 +124,7 @@ export const PassportOCRScanner = ({ onDataExtracted, onImageScanned, scannedIma
           </div>
         </div>
         <p className="text-xs text-gray-500">
-          Utilisez "helloworld" pour les tests ou votre clé API personnelle
+          Clé API configurée et prête à utiliser
         </p>
       </div>
 
