@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, Edit, FileText } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
 
 interface RecentClientsProps {
   data: {
@@ -21,6 +22,32 @@ interface RecentClientsProps {
 
 export const RecentClients = ({ data }: RecentClientsProps) => {
   const { recentClients } = data;
+  const { toast } = useToast();
+
+  // Action handlers for client operations
+  const handleViewClient = (client: any) => {
+    console.log('Voir client:', client);
+    toast({
+      title: "Voir le client",
+      description: `Affichage des détails pour ${client.prenom} ${client.nom}`,
+    });
+  };
+
+  const handleEditClient = (client: any) => {
+    console.log('Modifier client:', client);
+    toast({
+      title: "Modifier le client",
+      description: `Édition du client ${client.prenom} ${client.nom}`,
+    });
+  };
+
+  const handleGenerateDocument = (client: any) => {
+    console.log('Générer document:', client);
+    toast({
+      title: "Générer un document",
+      description: `Génération d'un document pour ${client.prenom} ${client.nom}`,
+    });
+  };
 
   return (
     <Card>
@@ -60,13 +87,28 @@ export const RecentClients = ({ data }: RecentClientsProps) => {
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleViewClient(client)}
+                    title="Voir les détails"
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleEditClient(client)}
+                    title="Modifier le client"
+                  >
                     <Edit className="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleGenerateDocument(client)}
+                    title="Générer un document"
+                  >
                     <FileText className="w-4 h-4" />
                   </Button>
                 </div>
@@ -87,4 +129,3 @@ export const RecentClients = ({ data }: RecentClientsProps) => {
     </Card>
   );
 };
-

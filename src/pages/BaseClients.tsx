@@ -110,6 +110,31 @@ const BaseClients = () => {
     }
   };
 
+  // Action handlers for client operations
+  const handleViewClient = (client: Client) => {
+    console.log('Voir client:', client);
+    toast({
+      title: "Voir le client",
+      description: `Affichage des détails pour ${client.prenom} ${client.nom}`,
+    });
+  };
+
+  const handleEditClient = (client: Client) => {
+    console.log('Modifier client:', client);
+    toast({
+      title: "Modifier le client",
+      description: `Édition du client ${client.prenom} ${client.nom}`,
+    });
+  };
+
+  const handleGenerateDocument = (client: Client) => {
+    console.log('Générer document:', client);
+    toast({
+      title: "Générer un document",
+      description: `Génération d'un document pour ${client.prenom} ${client.nom}`,
+    });
+  };
+
   // Filter clients locally (for the current page)
   const filteredClients = clients.filter(client => {
     const matchesSearch = searchTerm === "" || 
@@ -360,13 +385,28 @@ const BaseClients = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end space-x-2">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleViewClient(client)}
+                              title="Voir les détails"
+                            >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditClient(client)}
+                              title="Modifier le client"
+                            >
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleGenerateDocument(client)}
+                              title="Générer un document"
+                            >
                               <FileText className="w-4 h-4" />
                             </Button>
                           </div>
