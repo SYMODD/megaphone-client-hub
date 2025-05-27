@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useAgentData } from "@/hooks/useAgentData";
 
 export const RegistrationChart = () => {
+  // Removed useAgentData call - the data will come from the parent component
   const { registrationData } = useAgentData();
 
   return (

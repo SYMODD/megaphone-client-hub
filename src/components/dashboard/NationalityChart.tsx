@@ -1,9 +1,9 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { useAgentData } from "@/hooks/useAgentData";
 
 export const NationalityChart = () => {
+  // Removed useAgentData call - the data will come from the parent component
   const { nationalityData } = useAgentData();
 
   return (

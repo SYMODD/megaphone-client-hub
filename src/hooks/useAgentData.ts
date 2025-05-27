@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useMemo } from "react";
 
@@ -22,6 +21,11 @@ interface NationalityData {
 interface RegistrationData {
   month: string;
   clients: number;
+}
+
+interface AdminFilters {
+  selectedPoint?: string | null;
+  selectedCategory?: string | null;
 }
 
 // Données simulées avec points d'opération
@@ -60,35 +64,50 @@ const baseRegistrationData: RegistrationData[] = [
   { month: "Déc", clients: 23 },
 ];
 
-export const useAgentData = () => {
+export const useAgentData = (filters?: AdminFilters) => {
   const { profile } = useAuth();
 
   return useMemo(() => {
-    // Si c'est un admin ou superviseur, retourner toutes les données
-    if (!profile || profile.role === "admin" || profile.role === "superviseur") {
-      return {
-        clients: mockClients,
-        totalClients: 247,
-        newThisMonth: 23,
-        contractsGenerated: 189,
-        nationalities: 15,
-        nationalityData: baseNationalityData,
-        registrationData: baseRegistrationData,
-        recentClients: mockClients.slice(0, 5)
-      };
+    let filteredClients = mockClients;
+
+    // Si c'est un admin ou superviseur avec des filtres
+    if (profile && (profile.role === "admin" || profile.role === "superviseur") && filters) {
+      // Filtrer par catégorie
+      if (filters.selectedCategory) {
+        const categoryPrefixes: Record<string, string[]> = {
+          "aeroport": ["aeroport"],
+          "navire": ["navire"],
+          "agence": ["agence"]
+        };
+        
+        const prefixes = categoryPrefixes[filters.selectedCategory] || [];
+        if (prefixes.length > 0) {
+          filteredClients = filteredClients.filter(client => 
+            prefixes.some(prefix => client.pointOperation.startsWith(prefix))
+          );
+        }
+      }
+
+      // Filtrer par point d'opération spécifique
+      if (filters.selectedPoint) {
+        filteredClients = filteredClients.filter(
+          client => client.pointOperation === filters.selectedPoint
+        );
+      }
+    } 
+    // Si c'est un agent, filtrer par son point d'opération
+    else if (profile && profile.role === "agent") {
+      filteredClients = mockClients.filter(
+        client => client.pointOperation === profile.point_operation
+      );
     }
 
-    // Pour les agents, filtrer par point d'opération
-    const filteredClients = mockClients.filter(
-      client => client.pointOperation === profile.point_operation
-    );
-
-    // Calculer les statistiques filtrées
+    // Calculer les statistiques basées sur les clients filtrés
     const totalClients = filteredClients.length;
-    const newThisMonth = Math.ceil(totalClients * 0.2); // Approximation: 20% sont nouveaux ce mois
-    const contractsGenerated = Math.ceil(totalClients * 0.76); // 76% ont des contrats
+    const newThisMonth = Math.ceil(totalClients * 0.2);
+    const contractsGenerated = Math.ceil(totalClients * 0.76);
 
-    // Calculer les nationalités pour ce point d'opération
+    // Calculer les nationalités pour les clients filtrés
     const nationalityCounts = filteredClients.reduce((acc, client) => {
       acc[client.nationalite] = (acc[client.nationalite] || 0) + 1;
       return acc;
@@ -101,7 +120,7 @@ export const useAgentData = () => {
     }));
 
     // Ajuster les données d'enregistrement proportionnellement
-    const registrationMultiplier = totalClients / 247; // Ratio par rapport au total global
+    const registrationMultiplier = totalClients / 247;
     const registrationData = baseRegistrationData.map(item => ({
       ...item,
       clients: Math.round(item.clients * registrationMultiplier)
@@ -117,5 +136,5 @@ export const useAgentData = () => {
       registrationData,
       recentClients: filteredClients.slice(0, 5)
     };
-  }, [profile]);
+  }, [profile, filters]);
 };

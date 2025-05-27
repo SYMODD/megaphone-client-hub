@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAgentData } from "@/hooks/useAgentData";
 
 export const RecentClients = () => {
+  // Removed useAgentData call - the data will come from the parent component
   const { recentClients } = useAgentData();
 
   return (

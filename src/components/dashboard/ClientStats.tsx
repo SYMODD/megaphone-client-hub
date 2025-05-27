@@ -4,6 +4,8 @@ import { Users, TrendingUp, Calendar, Globe } from "lucide-react";
 import { useAgentData } from "@/hooks/useAgentData";
 
 export const ClientStats = () => {
+  // Removed useAgentData call - the data will come from the parent component
+  // The hook is now called in Index.tsx with filters
   const { totalClients, newThisMonth, contractsGenerated, nationalities } = useAgentData();
 
   return (

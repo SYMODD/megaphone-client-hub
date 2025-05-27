@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,12 +12,19 @@ import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
+import { AdminFilters } from "@/components/dashboard/AdminFilters";
+import { useAdminFilters } from "@/hooks/useAdminFilters";
 
 const Index = () => {
   const { user, profile } = useAuth();
+  const adminFilters = useAdminFilters();
 
   console.log("User:", user);
   console.log("Profile:", profile);
+
+  // Utiliser les filtres seulement pour admin et superviseur
+  const shouldUseFilters = profile && (profile.role === "admin" || profile.role === "superviseur");
+  const agentData = useAgentData(shouldUseFilters ? adminFilters.filters : undefined);
 
   const getPointLabel = (point: string) => {
     const labels: Record<string, string> = {
@@ -82,7 +88,7 @@ const Index = () => {
                   </div>
                 </div>
                 
-                {profile.point_operation && (
+                {profile.point_operation && profile.role === "agent" && (
                   <div className="flex items-center justify-center space-x-2 text-slate-600 bg-slate-50 rounded-lg px-3 sm:px-4 py-2">
                     <MapPin className="w-4 h-4" />
                     <span className="font-medium text-sm sm:text-base">{getPointLabel(profile.point_operation)}</span>
@@ -107,6 +113,17 @@ const Index = () => {
             </Badge>
           </div>
         </div>
+
+        {/* Admin Filters - Only show for admin and superviseur */}
+        {shouldUseFilters && (
+          <AdminFilters
+            selectedPoint={adminFilters.selectedPoint}
+            selectedCategory={adminFilters.selectedCategory}
+            onPointChange={adminFilters.handlePointChange}
+            onCategoryChange={adminFilters.handleCategoryChange}
+            onClearFilters={adminFilters.clearFilters}
+          />
+        )}
 
         {/* Quick Actions */}
         <QuickActions />
