@@ -14,8 +14,9 @@ export const usePasswordReset = () => {
     try {
       const normalizedEmail = email.toLowerCase().trim();
       
-      // Corriger l'URL de redirection pour pointer vers /reset-password
-      const redirectUrl = `${window.location.origin}/reset-password`;
+      // Utiliser l'URL actuelle comme base pour la redirection
+      const baseUrl = window.location.origin;
+      const redirectUrl = `${baseUrl}/reset-password`;
       
       console.log("=== PASSWORD RESET START ===");
       console.log("Email:", normalizedEmail);
