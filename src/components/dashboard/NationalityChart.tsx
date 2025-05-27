@@ -1,17 +1,11 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
-
-const data = [
-  { name: "France", value: 85, color: "#3B82F6" },
-  { name: "Algérie", value: 45, color: "#10B981" },
-  { name: "Maroc", value: 38, color: "#F59E0B" },
-  { name: "Tunisie", value: 25, color: "#EF4444" },
-  { name: "Sénégal", value: 20, color: "#8B5CF6" },
-  { name: "Autres", value: 34, color: "#6B7280" },
-];
+import { useAgentData } from "@/hooks/useAgentData";
 
 export const NationalityChart = () => {
+  const { nationalityData } = useAgentData();
+
   return (
     <Card>
       <CardHeader>
@@ -25,25 +19,31 @@ export const NationalityChart = () => {
       </CardHeader>
       <CardContent>
         <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                dataKey="value"
-                label={({ name, value }) => `${name}: ${value}`}
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+          {nationalityData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={nationalityData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  dataKey="value"
+                  label={({ name, value }) => `${name}: ${value}`}
+                >
+                  {nationalityData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-full text-slate-500">
+              Aucune donnée disponible pour ce point d'opération
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

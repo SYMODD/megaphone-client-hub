@@ -1,23 +1,11 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-
-const data = [
-  { month: "Jan", clients: 12 },
-  { month: "Fév", clients: 19 },
-  { month: "Mar", clients: 15 },
-  { month: "Avr", clients: 25 },
-  { month: "Mai", clients: 22 },
-  { month: "Jun", clients: 30 },
-  { month: "Jul", clients: 28 },
-  { month: "Aoû", clients: 35 },
-  { month: "Sep", clients: 31 },
-  { month: "Oct", clients: 40 },
-  { month: "Nov", clients: 38 },
-  { month: "Déc", clients: 23 },
-];
+import { useAgentData } from "@/hooks/useAgentData";
 
 export const RegistrationChart = () => {
+  const { registrationData } = useAgentData();
+
   return (
     <Card>
       <CardHeader>
@@ -32,7 +20,7 @@ export const RegistrationChart = () => {
       <CardContent>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
+            <LineChart data={registrationData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
