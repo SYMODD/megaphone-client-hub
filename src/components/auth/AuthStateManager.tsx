@@ -42,6 +42,9 @@ export const AuthStateManager = () => {
     const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash');
     const error = searchParams.get('error') || hashParams.get('error');
     const errorDescription = searchParams.get('error_description') || hashParams.get('error_description');
+    const expiresAt = searchParams.get('expires_at') || hashParams.get('expires_at');
+    const expiresIn = searchParams.get('expires_in') || hashParams.get('expires_in');
+    const tokenType = searchParams.get('token_type') || hashParams.get('token_type');
     
     console.log("AuthStateManager - Processing recovery parameters:", { 
       currentUrl: window.location.href,
@@ -50,6 +53,9 @@ export const AuthStateManager = () => {
       hasAccessToken: !!accessToken, 
       hasRefreshToken: !!refreshToken,
       hasTokenHash: !!tokenHash,
+      hasExpiresAt: !!expiresAt,
+      hasExpiresIn: !!expiresIn,
+      tokenType,
       error,
       errorDescription
     });
@@ -62,16 +68,20 @@ export const AuthStateManager = () => {
       return;
     }
     
-    // Détecter et traiter les liens de récupération
+    // Détecter et traiter les liens de récupération avec une logique améliorée
     const isRecoveryLink = type === 'recovery' || 
                           tokenHash ||
-                          (accessToken && refreshToken);
+                          (accessToken && refreshToken && tokenType === 'bearer') ||
+                          (accessToken && (expiresAt || expiresIn)) ||
+                          (accessToken && type);
     
     console.log("Recovery link check:", { 
       isRecoveryLink, 
       type, 
       hasTokenHash: !!tokenHash, 
-      hasTokens: !!(accessToken && refreshToken)
+      hasTokens: !!(accessToken && refreshToken),
+      tokenType,
+      hasExpirationInfo: !!(expiresAt || expiresIn)
     });
     
     if (isRecoveryLink) {

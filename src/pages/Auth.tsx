@@ -24,6 +24,8 @@ const Auth = () => {
     const type = searchParams.get('type') || hashParams.get('type');
     const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash');
     const error = searchParams.get('error') || hashParams.get('error');
+    const expiresAt = searchParams.get('expires_at') || hashParams.get('expires_at');
+    const expiresIn = searchParams.get('expires_in') || hashParams.get('expires_in');
     
     console.log("Auth page - URL analysis:", { 
       currentUrl: window.location.href,
@@ -33,20 +35,24 @@ const Auth = () => {
       hasAccessToken: !!accessToken, 
       hasRefreshToken: !!refreshToken,
       hasTokenHash: !!tokenHash,
+      hasExpiresAt: !!expiresAt,
+      hasExpiresIn: !!expiresIn,
       error
     });
     
-    // Improved recovery link detection
+    // Improved recovery link detection - check for multiple indicators
     const isRecoveryLink = type === 'recovery' || 
                           tokenHash ||
-                          (accessToken && refreshToken) ||
+                          (accessToken && refreshToken && (expiresAt || expiresIn)) ||
+                          (accessToken && type) ||
                           error;
     
     console.log("Recovery link detection:", { 
       isRecoveryLink, 
       type, 
       hasTokenHash: !!tokenHash, 
-      hasTokens: !!(accessToken && refreshToken) 
+      hasTokens: !!(accessToken && refreshToken),
+      hasExpirationInfo: !!(expiresAt || expiresIn)
     });
     
     if (isRecoveryLink) {
