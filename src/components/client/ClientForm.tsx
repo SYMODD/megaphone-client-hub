@@ -1,17 +1,15 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { nationalities } from "@/data/nationalities";
 import { PassportScanner } from "./PassportScanner";
+import { NationalityCombobox } from "./NationalityCombobox";
 
 interface ClientFormData {
   nom: string;
@@ -158,18 +156,10 @@ export const ClientForm = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="nationalite">Nationalité *</Label>
-          <Select onValueChange={(value) => handleInputChange("nationalite", value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Sélectionner une nationalité" />
-            </SelectTrigger>
-            <SelectContent>
-              {nationalities.map((nationality) => (
-                <SelectItem key={nationality} value={nationality}>
-                  {nationality}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <NationalityCombobox
+            value={formData.nationalite}
+            onValueChange={(value) => handleInputChange("nationalite", value)}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="numero_passeport">Numéro de passeport *</Label>
