@@ -13,6 +13,7 @@ import NewClient from "./pages/NewClient";
 import BaseClients from "./pages/BaseClients";
 import Contracts from "./pages/Contracts";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 
@@ -28,6 +29,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/*" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/signup" element={<SignupRedirect />} />
             <Route path="/" element={
               <ProtectedRoute>
