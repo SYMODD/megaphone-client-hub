@@ -12,24 +12,41 @@ import { RoleIndicator } from "@/components/dashboard/RoleIndicator";
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { Link, Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { AdminFilters } from "@/components/dashboard/AdminFilters";
 import { useAdminFilters } from "@/hooks/useAdminFilters";
 import { useAgentData } from "@/hooks/useAgentData";
 
 const Index = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, loading } = useAuth();
 
   console.log("User:", user);
   console.log("Profile:", profile);
 
-  // Early return for agents - before any hooks are called
-  if (profile?.role === "agent") {
-    return <Navigate to="/nouveau-client" replace />;
+  // Show loading while checking auth state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-slate-600">Chargement...</p>
+        </div>
+      </div>
+    );
   }
 
   // Early return for unauthenticated users
   if (!user) {
+    return <Navigate to="/agent" replace />;
+  }
+
+  // Redirect agents to their specific page
+  if (profile?.role === "agent") {
+    return <Navigate to="/nouveau-client" replace />;
+  }
+
+  // Only admin and superviseur can access the dashboard
+  if (profile && profile.role !== "admin" && profile.role !== "superviseur") {
     return <Navigate to="/agent" replace />;
   }
 

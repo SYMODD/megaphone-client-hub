@@ -7,8 +7,8 @@ import { AuthAlert } from "@/components/auth/AuthAlert";
 import { useEffect, useState } from "react";
 
 const AdminLogin = () => {
-  const { user, loading } = useAuth();
-  const [shouldRedirectToDashboard, setShouldRedirectToDashboard] = useState(false);
+  const { user, profile, loading } = useAuth();
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   const {
     error,
@@ -18,10 +18,10 @@ const AdminLogin = () => {
   } = useAuthOperations();
 
   useEffect(() => {
-    if (user && !loading) {
-      setShouldRedirectToDashboard(true);
+    if (user && profile && !loading) {
+      setShouldRedirect(true);
     }
-  }, [user, loading]);
+  }, [user, profile, loading]);
 
   // Show loading while checking auth state
   if (loading) {
@@ -35,9 +35,14 @@ const AdminLogin = () => {
     );
   }
 
-  // Redirect if already authenticated
-  if (shouldRedirectToDashboard) {
-    return <Navigate to="/" replace />;
+  // Redirect based on role after authentication
+  if (shouldRedirect) {
+    if (profile?.role === "admin" || profile?.role === "superviseur") {
+      return <Navigate to="/dashboard" replace />;
+    } else if (profile?.role === "agent") {
+      return <Navigate to="/nouveau-client" replace />;
+    }
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
