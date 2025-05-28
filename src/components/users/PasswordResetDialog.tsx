@@ -43,20 +43,39 @@ export const PasswordResetDialog = ({ isOpen, onClose, user }: PasswordResetDial
     }
 
     try {
-      // Use Supabase admin functionality to update user password
-      // Note: This requires admin privileges
-      const { error } = await supabase.auth.admin.updateUserById(user.id, {
-        password: newPassword
+      // Get the current session to include the auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        setError("Session expirée. Veuillez vous reconnecter.");
+        setLoading(false);
+        return;
+      }
+
+      // Call the Edge Function for admin password reset
+      const { data, error } = await supabase.functions.invoke('admin-reset-password', {
+        body: {
+          userId: user.id,
+          newPassword: newPassword
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       if (error) {
-        console.error("Password reset error:", error);
-        setError("Erreur lors de la réinitialisation du mot de passe. Vérifiez vos permissions d'administrateur.");
-      } else {
+        console.error("Edge function error:", error);
+        setError("Erreur lors de l'appel à la fonction de réinitialisation");
+      } else if (data?.error) {
+        console.error("Password reset error:", data.error);
+        setError(data.error);
+      } else if (data?.success) {
         alert("Mot de passe réinitialisé avec succès !");
         setNewPassword("");
         setConfirmPassword("");
         onClose();
+      } else {
+        setError("Réponse inattendue du serveur");
       }
     } catch (error: any) {
       console.error("Unexpected error:", error);
