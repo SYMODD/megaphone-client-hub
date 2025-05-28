@@ -14,9 +14,8 @@ export const usePasswordReset = () => {
     try {
       const normalizedEmail = email.toLowerCase().trim();
       
-      // Utiliser l'URL actuelle comme base pour la redirection
-      const baseUrl = window.location.origin;
-      const redirectUrl = `${baseUrl}/reset-password`;
+      // Utiliser l'URL de production déployée pour la redirection
+      const redirectUrl = "https://sudmegaphone.netlify.app/reset-password";
       
       console.log("=== PASSWORD RESET START ===");
       console.log("Email:", normalizedEmail);
