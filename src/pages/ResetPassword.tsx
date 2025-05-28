@@ -17,45 +17,73 @@ const ResetPassword = () => {
   const { error, success, setError, setSuccess, handleAuthError, showSuccess } = useAuthErrorHandling();
 
   useEffect(() => {
-    const checkRecoverySession = async () => {
-      console.log("=== CHECKING RECOVERY SESSION ===");
+    const processRecoverySession = async () => {
+      console.log("=== PROCESSING RECOVERY SESSION ===");
       console.log("Current URL:", window.location.href);
       
       try {
-        // Vérifier si nous avons une session active
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        // Récupérer les tokens depuis l'URL ou le hash
+        let accessToken = searchParams.get('access_token');
+        let refreshToken = searchParams.get('refresh_token');
         
-        console.log("Current session:", {
-          hasSession: !!session,
-          hasUser: !!session?.user,
-          userId: session?.user?.id
+        // Si pas dans les params, vérifier dans le hash
+        if (!accessToken || !refreshToken) {
+          const hash = window.location.hash.substring(1);
+          const hashParams = new URLSearchParams(hash);
+          accessToken = hashParams.get('access_token');
+          refreshToken = hashParams.get('refresh_token');
+        }
+
+        console.log("Tokens found:", { 
+          hasAccessToken: !!accessToken, 
+          hasRefreshToken: !!refreshToken 
         });
 
-        if (sessionError) {
-          console.error("Session error:", sessionError);
-          setError("Erreur lors de la vérification de la session. Veuillez réessayer.");
-          setIsCheckingSession(false);
-          return;
-        }
+        if (accessToken && refreshToken) {
+          console.log("Setting session with recovery tokens...");
+          
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
 
-        if (session?.user) {
-          console.log("Valid recovery session found");
-          setIsValidSession(true);
-          setSuccess("Vous pouvez maintenant définir votre nouveau mot de passe.");
+          if (error) {
+            console.error("Error setting session:", error);
+            setError("Lien de récupération invalide ou expiré. Veuillez demander un nouveau lien.");
+          } else if (data.session) {
+            console.log("Recovery session established successfully");
+            setIsValidSession(true);
+            setSuccess("Vous pouvez maintenant définir votre nouveau mot de passe.");
+          } else {
+            console.error("No session created");
+            setError("Impossible d'établir la session de récupération.");
+          }
         } else {
-          console.log("No valid recovery session found");
-          setError("Lien de récupération invalide ou expiré. Veuillez demander un nouveau lien.");
+          // Vérifier s'il y a déjà une session active
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError) {
+            console.error("Session error:", sessionError);
+            setError("Erreur lors de la vérification de la session.");
+          } else if (session?.user) {
+            console.log("Valid session found");
+            setIsValidSession(true);
+            setSuccess("Vous pouvez maintenant définir votre nouveau mot de passe.");
+          } else {
+            console.log("No valid recovery session found");
+            setError("Lien de récupération invalide ou expiré. Veuillez demander un nouveau lien.");
+          }
         }
       } catch (error) {
-        console.error("Unexpected error checking session:", error);
+        console.error("Unexpected error processing recovery session:", error);
         setError("Une erreur inattendue s'est produite. Veuillez réessayer.");
       } finally {
         setIsCheckingSession(false);
       }
     };
 
-    checkRecoverySession();
-  }, [setError, setSuccess]);
+    processRecoverySession();
+  }, [searchParams, setError, setSuccess]);
 
   const handleNewPassword = async (password: string, confirmPassword: string) => {
     setIsLoading(true);
