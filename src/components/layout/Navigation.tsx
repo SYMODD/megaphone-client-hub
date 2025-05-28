@@ -36,14 +36,14 @@ export const Navigation = () => {
   }
 
   return (
-    <nav className="bg-white border-b border-slate-100 shadow-sm">
-      <div className="container mx-auto px-3 sm:px-4">
+    <nav className="bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm sticky top-16 z-40">
+      <div className="container mx-auto px-3">
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center justify-between py-3">
-          <div className="flex items-center space-x-1 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center space-x-2 overflow-x-auto">
             {navigationItems.map((item) => (
               <Link key={item.to + item.label} to={item.to}>
-                <Button variant="ghost" size="sm" className="whitespace-nowrap hover:scale-105 transition-all duration-200">
+                <Button variant="ghost" size="sm" className="whitespace-nowrap hover:scale-105 transition-all duration-200 min-w-fit">
                   <div className={`w-4 h-4 mr-2 bg-gradient-to-r ${item.color} rounded p-0.5`}>
                     <item.icon className="w-full h-full text-white" />
                   </div>
@@ -60,27 +60,9 @@ export const Navigation = () => {
           )}
         </div>
 
-        {/* Tablet Navigation */}
-        <div className="hidden md:flex lg:hidden items-center justify-between py-2">
-          <div className="flex items-center space-x-1 flex-wrap gap-1">
-            {navigationItems.slice(0, 4).map((item) => (
-              <Link key={item.to + item.label} to={item.to}>
-                <Button variant="ghost" size="sm" className="text-xs px-2 py-1">
-                  <item.icon className="w-3 h-3 mr-1" />
-                  {item.label.split(' ')[0]}
-                </Button>
-              </Link>
-            ))}
-          </div>
-          
-          {profile && (
-            <RoleIndicator role={profile.role} size="sm" />
-          )}
-        </div>
-
-        {/* Mobile Navigation */}
-        <div className="md:hidden">
-          <div className="flex items-center justify-between py-2">
+        {/* Mobile Navigation - Improved */}
+        <div className="lg:hidden">
+          <div className="flex items-center justify-between py-3">
             <Button 
               variant="ghost" 
               size="sm"
@@ -88,7 +70,7 @@ export const Navigation = () => {
               className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              <span className="ml-2 text-sm">Menu</span>
+              <span className="ml-2 text-sm font-medium">Menu</span>
             </Button>
             
             {profile && (
@@ -96,10 +78,10 @@ export const Navigation = () => {
             )}
           </div>
 
-          {/* Mobile Menu Déroulant */}
+          {/* Mobile Menu - Enhanced Grid Layout */}
           {isMobileMenuOpen && (
-            <div className="pb-4 space-y-2 border-t border-slate-100 mt-2 pt-3 animate-fade-in">
-              <div className="grid grid-cols-2 gap-2">
+            <div className="pb-4 space-y-3 border-t border-slate-100 mt-2 pt-4 animate-fade-in">
+              <div className="grid grid-cols-1 gap-3">
                 {navigationItems.map((item) => (
                   <Link 
                     key={item.to + item.label} 
@@ -108,14 +90,21 @@ export const Navigation = () => {
                   >
                     <Button 
                       variant="ghost" 
-                      size="sm" 
-                      className="w-full justify-start h-auto p-3 hover:scale-105 transition-all duration-200"
+                      size="lg" 
+                      className="w-full justify-start h-auto p-4 hover:scale-[1.02] transition-all duration-200 bg-gradient-to-r from-white to-slate-50 hover:from-slate-50 hover:to-slate-100 border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md"
                     >
-                      <div className={`w-8 h-8 mr-3 bg-gradient-to-r ${item.color} rounded-lg flex items-center justify-center shadow-md`}>
-                        <item.icon className="w-4 h-4 text-white" />
+                      <div className={`w-10 h-10 mr-4 bg-gradient-to-r ${item.color} rounded-xl flex items-center justify-center shadow-md`}>
+                        <item.icon className="w-5 h-5 text-white" />
                       </div>
-                      <div className="text-left">
-                        <div className="text-sm font-medium">{item.label}</div>
+                      <div className="text-left flex-1">
+                        <div className="text-base font-semibold text-slate-800">{item.label}</div>
+                        <div className="text-xs text-slate-500 mt-0.5">
+                          {item.label === "Dashboard" && "Vue d'ensemble"}
+                          {item.label === "Nouveau Client" && "Ajouter un client"}
+                          {item.label === "Base Clients" && "Consulter la liste"}
+                          {item.label === "Contrats" && "Générer PDF"}
+                          {item.label === "Gestion Utilisateurs" && "Administration"}
+                        </div>
                       </div>
                     </Button>
                   </Link>
