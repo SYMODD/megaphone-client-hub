@@ -8,6 +8,7 @@ const Auth = () => {
   const { user, loading } = useAuth();
   const [searchParams] = useSearchParams();
   const [isRecoveryFlow, setIsRecoveryFlow] = useState(false);
+  const [shouldRedirectToDashboard, setShouldRedirectToDashboard] = useState(false);
 
   useEffect(() => {
     // Vérifier si nous sommes dans un flux de récupération
@@ -17,17 +18,24 @@ const Auth = () => {
       const type = searchParams.get('type');
       
       // Aussi vérifier dans le hash pour les tokens
-      const hash = window.location.hash;
-      const hasAccessTokenInHash = hash.includes('access_token=');
-      const hasRecoveryType = hash.includes('type=recovery') || type === 'recovery';
+      const hash = window.location.hash.substring(1);
+      const hashParams = new URLSearchParams(hash);
+      const hashAccessToken = hashParams.get('access_token');
+      const hashRefreshToken = hashParams.get('refresh_token');
+      const hashType = hashParams.get('type');
       
       console.log("=== RECOVERY FLOW CHECK ===");
       console.log("URL params:", { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
-      console.log("Hash check:", { hasAccessTokenInHash, hasRecoveryType });
+      console.log("Hash params:", { hashAccessToken: !!hashAccessToken, hashRefreshToken: !!hashRefreshToken, hashType });
       console.log("Full URL:", window.location.href);
       console.log("Full hash:", hash);
       
-      if ((accessToken && refreshToken) || (hasAccessTokenInHash && hasRecoveryType)) {
+      // Détecter si c'est un flux de récupération
+      const isRecovery = (accessToken && refreshToken && type === 'recovery') || 
+                        (hashAccessToken && hashRefreshToken && hashType === 'recovery') ||
+                        (hashAccessToken && hashType === 'recovery');
+      
+      if (isRecovery) {
         console.log("Recovery flow detected!");
         setIsRecoveryFlow(true);
         return true;
@@ -36,8 +44,14 @@ const Auth = () => {
       return false;
     };
 
-    checkRecoveryFlow();
-  }, [searchParams]);
+    const isRecovery = checkRecoveryFlow();
+    
+    // Si ce n'est pas un flux de récupération et qu'on a un utilisateur, 
+    // alors on peut rediriger vers le dashboard
+    if (!isRecovery && user && !loading) {
+      setShouldRedirectToDashboard(true);
+    }
+  }, [searchParams, user, loading]);
 
   // Show loading while checking auth state
   if (loading) {
@@ -57,8 +71,8 @@ const Auth = () => {
     return <Navigate to="/reset-password" replace />;
   }
 
-  // Redirect authenticated users to dashboard (sauf si c'est un flux de récupération)
-  if (user && !isRecoveryFlow) {
+  // Rediriger vers le dashboard seulement si ce n'est pas un flux de récupération
+  if (shouldRedirectToDashboard) {
     console.log("User authenticated - redirecting to dashboard");
     return <Navigate to="/" replace />;
   }

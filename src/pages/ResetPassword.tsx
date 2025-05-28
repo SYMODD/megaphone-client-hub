@@ -32,6 +32,12 @@ const ResetPassword = () => {
           const hashParams = new URLSearchParams(hash);
           accessToken = hashParams.get('access_token');
           refreshToken = hashParams.get('refresh_token');
+          
+          console.log("Checking hash for tokens:", { 
+            hasAccessTokenInHash: !!accessToken, 
+            hasRefreshTokenInHash: !!refreshToken,
+            fullHash: hash
+          });
         }
 
         console.log("Tokens found:", { 
