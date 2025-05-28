@@ -10,6 +10,7 @@ interface RoleSpecificLoginProps {
   onLogin: (email: string, password: string) => Promise<void>;
   onShowPasswordReset: () => void;
   isLoading: boolean;
+  hidePasswordReset?: boolean;
 }
 
 const getRoleInfo = (role: string) => {
@@ -53,7 +54,13 @@ const getRoleInfo = (role: string) => {
   }
 };
 
-export const RoleSpecificLogin = ({ role, onLogin, onShowPasswordReset, isLoading }: RoleSpecificLoginProps) => {
+export const RoleSpecificLogin = ({ 
+  role, 
+  onLogin, 
+  onShowPasswordReset, 
+  isLoading, 
+  hidePasswordReset = false 
+}: RoleSpecificLoginProps) => {
   const [loginForm, setLoginForm] = React.useState({
     email: "",
     password: "",
@@ -133,15 +140,25 @@ export const RoleSpecificLogin = ({ role, onLogin, onShowPasswordReset, isLoadin
             </Button>
           </form>
 
-          <div className="text-center mt-4">
-            <button
-              type="button"
-              onClick={onShowPasswordReset}
-              className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-            >
-              Mot de passe oublié ?
-            </button>
-          </div>
+          {!hidePasswordReset && (
+            <div className="text-center mt-4">
+              <button
+                type="button"
+                onClick={onShowPasswordReset}
+                className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                Mot de passe oublié ?
+              </button>
+            </div>
+          )}
+
+          {hidePasswordReset && (
+            <div className="text-center mt-4">
+              <p className="text-xs text-slate-500">
+                Pour réinitialiser votre mot de passe, contactez votre administrateur
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

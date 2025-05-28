@@ -12,6 +12,7 @@ interface RoleLink {
   icon: React.ComponentType<{ className?: string }>;
   color: string;
   bgGradient: string;
+  url: string;
 }
 
 const roleLinks: RoleLink[] = [
@@ -21,7 +22,8 @@ const roleLinks: RoleLink[] = [
     description: "Accès complet au système de gestion",
     icon: Shield,
     color: "text-red-600",
-    bgGradient: "from-red-500 to-red-600"
+    bgGradient: "from-red-500 to-red-600",
+    url: "/admin"
   },
   {
     role: "superviseur", 
@@ -29,7 +31,8 @@ const roleLinks: RoleLink[] = [
     description: "Supervision et gestion des agents",
     icon: Eye,
     color: "text-purple-600",
-    bgGradient: "from-purple-500 to-purple-600"
+    bgGradient: "from-purple-500 to-purple-600",
+    url: "/superviseur"
   },
   {
     role: "agent",
@@ -37,7 +40,8 @@ const roleLinks: RoleLink[] = [
     description: "Gestion des clients et contrats",
     icon: Users,
     color: "text-blue-600",
-    bgGradient: "from-blue-500 to-blue-600"
+    bgGradient: "from-blue-500 to-blue-600",
+    url: "/agent"
   }
 ];
 
@@ -57,7 +61,7 @@ export const RoleLoginLinks = () => {
         {roleLinks.map((roleLink) => (
           <Link 
             key={roleLink.role}
-            to={`/auth?role=${roleLink.role}`}
+            to={roleLink.url}
             className="block transition-transform hover:scale-105"
           >
             <Card className="h-full border-2 hover:border-slate-300 transition-colors cursor-pointer group">
@@ -79,6 +83,11 @@ export const RoleLoginLinks = () => {
                 >
                   Se connecter comme {roleLink.title}
                 </Button>
+                <div className="text-center mt-2">
+                  <span className="text-xs text-slate-500 font-mono bg-slate-100 px-2 py-1 rounded">
+                    {window.location.origin}{roleLink.url}
+                  </span>
+                </div>
               </CardContent>
             </Card>
           </Link>
