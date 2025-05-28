@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
 import { OperationPointsManagement } from "@/components/OperationPointsManagement";
-import { Users, Plus, Edit, Shield, ShieldAlert, Settings } from "lucide-react";
+import { PasswordResetDialog } from "@/components/users/PasswordResetDialog";
+import { Users, Plus, Edit, Shield, ShieldAlert, Settings, Key } from "lucide-react";
 import { Database } from "@/integrations/supabase/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -56,6 +56,8 @@ const UserManagement = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isPointsManagementOpen, setIsPointsManagementOpen] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
+  const [isPasswordResetOpen, setIsPasswordResetOpen] = useState(false);
+  const [selectedUserForReset, setSelectedUserForReset] = useState<Profile | null>(null);
 
   const [createForm, setCreateForm] = useState({
     email: "",
@@ -264,6 +266,11 @@ const UserManagement = () => {
       statut: user.statut,
     });
     setIsEditDialogOpen(true);
+  };
+
+  const openPasswordResetDialog = (user: Profile) => {
+    setSelectedUserForReset(user);
+    setIsPasswordResetOpen(true);
   };
 
   if (!user) {
@@ -506,6 +513,16 @@ const UserManagement = () => {
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
+                          {isAdmin && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openPasswordResetDialog(user)}
+                              className="text-orange-600 hover:text-orange-700"
+                            >
+                              <Key className="w-4 h-4" />
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="destructive"
@@ -628,6 +645,13 @@ const UserManagement = () => {
             <OperationPointsManagement />
           </DialogContent>
         </Dialog>
+
+        {/* Password Reset Dialog */}
+        <PasswordResetDialog
+          isOpen={isPasswordResetOpen}
+          onClose={() => setIsPasswordResetOpen(false)}
+          user={selectedUserForReset}
+        />
       </main>
     </div>
   );
