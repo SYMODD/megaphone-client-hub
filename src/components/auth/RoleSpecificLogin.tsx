@@ -1,9 +1,8 @@
 
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Eye, Users, ArrowLeft } from "lucide-react";
+import { Shield, Eye, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 
 interface RoleSpecificLoginProps {
   role: string;
@@ -75,16 +74,6 @@ export const RoleSpecificLogin = ({
 
   return (
     <div className="space-y-6">
-      {/* Header avec retour */}
-      <div className="flex items-center justify-between">
-        <Link to="/auth">
-          <Button variant="ghost" size="sm" className="flex items-center gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Retour aux options
-          </Button>
-        </Link>
-      </div>
-
       {/* Carte de connexion spécifique au rôle */}
       <Card className="border-2">
         <CardHeader className="text-center">
