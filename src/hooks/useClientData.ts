@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -30,13 +30,16 @@ export const useClientData = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
-  const fetchClients = async () => {
+  // Fonction de fetch mémorisée pour éviter les recréations inutiles
+  const fetchClients = useCallback(async () => {
+    if (!user) return;
+
     try {
       setLoading(true);
       setError(null);
       console.log('Fetching clients from database...');
       
-      // Get total count
+      // Get total count - optimisé avec head: true pour éviter de récupérer les données
       const { count } = await supabase
         .from('clients')
         .select('*', { count: 'exact', head: true });
@@ -83,28 +86,29 @@ export const useClientData = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, currentPage, toast]);
 
   useEffect(() => {
-    if (user) {
-      fetchClients();
-    }
-  }, [user, currentPage]);
+    fetchClients();
+  }, [fetchClients]);
 
-  const filterClients = (
+  // Fonction de filtrage mémorisée avec optimisations
+  const filterClients = useCallback((
     searchTerm: string,
     selectedNationality: string,
     dateRange: DateRange | undefined
   ) => {
     return clients.filter(client => {
+      // Optimisation: conversion en minuscules une seule fois
+      const searchLower = searchTerm.toLowerCase();
       const matchesSearch = searchTerm === "" || 
-        client.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.numero_passeport.toLowerCase().includes(searchTerm.toLowerCase());
+        client.nom.toLowerCase().includes(searchLower) ||
+        client.prenom.toLowerCase().includes(searchLower) ||
+        client.numero_passeport.toLowerCase().includes(searchLower);
       
       const matchesNationality = selectedNationality === "" || client.nationalite === selectedNationality;
       
-      // Filtre par date
+      // Filtre par date - optimisé
       let matchesDateRange = true;
       if (dateRange?.from) {
         const clientDate = new Date(client.date_enregistrement);
@@ -122,10 +126,17 @@ export const useClientData = () => {
       
       return matchesSearch && matchesNationality && matchesDateRange;
     });
-  };
+  }, [clients]);
 
-  const nationalities = [...new Set(clients.map(client => client.nationalite))];
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+  // Nationalités uniques mémorisées
+  const nationalities = useMemo(() => {
+    return [...new Set(clients.map(client => client.nationalite))];
+  }, [clients]);
+
+  // Nombre total de pages mémorisé
+  const totalPages = useMemo(() => {
+    return Math.ceil(totalCount / ITEMS_PER_PAGE);
+  }, [totalCount]);
 
   return {
     clients,

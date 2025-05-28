@@ -1,36 +1,42 @@
 
+import React, { memo, useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LogOut, User, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { RoleIndicator } from "../dashboard/RoleIndicator";
-import { useState } from "react";
 
-export const AuthenticatedHeader = () => {
+const AuthenticatedHeader = memo(() => {
   const { profile, signOut } = useAuth();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     try {
       await signOut();
       toast.success("Déconnexion réussie");
     } catch (error) {
       console.error("Sign out error:", error);
     }
-  };
+  }, [signOut]);
 
-  const getPointLabel = (point: string) => {
-    const labels: Record<string, string> = {
-      "aeroport_marrakech": "Aéroport Marrakech",
-      "aeroport_casablanca": "Aéroport Casablanca", 
-      "aeroport_agadir": "Aéroport Agadir",
-      "navire_atlas": "Navire Atlas",
-      "navire_meridien": "Navire Méridien",
-      "agence_centrale": "Agence Centrale"
-    };
-    return labels[point] || point;
-  };
+  const toggleMobileMenu = useCallback(() => {
+    setShowMobileMenu(prev => !prev);
+  }, []);
+
+  // Labels des points d'opération mémorisés
+  const pointLabels = useMemo(() => ({
+    "aeroport_marrakech": "Aéroport Marrakech",
+    "aeroport_casablanca": "Aéroport Casablanca", 
+    "aeroport_agadir": "Aéroport Agadir",
+    "navire_atlas": "Navire Atlas",
+    "navire_meridien": "Navire Méridien",
+    "agence_centrale": "Agence Centrale"
+  }), []);
+
+  const getPointLabel = useCallback((point: string) => {
+    return pointLabels[point as keyof typeof pointLabels] || point;
+  }, [pointLabels]);
 
   return (
     <header className="bg-white/98 backdrop-blur-lg border-b border-slate-200 sticky top-0 z-50 shadow-sm">
@@ -94,7 +100,7 @@ export const AuthenticatedHeader = () => {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              onClick={toggleMobileMenu}
               className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
             >
               {showMobileMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -137,4 +143,8 @@ export const AuthenticatedHeader = () => {
       </div>
     </header>
   );
-};
+});
+
+AuthenticatedHeader.displayName = "AuthenticatedHeader";
+
+export { AuthenticatedHeader };

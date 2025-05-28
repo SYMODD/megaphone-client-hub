@@ -1,39 +1,50 @@
 
+import React, { memo, useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, Plus, Database, FileText, Shield, UserPlus, Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { RoleIndicator } from "../dashboard/RoleIndicator";
-import { useState } from "react";
 
-export const Navigation = () => {
+const Navigation = memo(() => {
   const { profile, user } = useAuth();
   const isAdmin = profile?.role === "admin" || user?.email?.toLowerCase() === "essbane.salim@gmail.com";
   const isAgent = profile?.role === "agent";
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Navigation différente selon le rôle
-  let navigationItems = [];
+  // Navigation items mémorisés pour éviter les recalculs
+  const navigationItems = useMemo(() => {
+    if (isAgent) {
+      // Pour les agents : seulement nouveau client et contrats (sans dashboard)
+      return [
+        { to: "/nouveau-client", icon: Plus, label: "Nouveau Client", color: "from-green-500 to-emerald-600" },
+        { to: "/contrats", icon: FileText, label: "Contrats", color: "from-purple-500 to-purple-600" }
+      ];
+    } else {
+      // Pour admin et superviseur : accès complet
+      const baseItems = [
+        { to: "/", icon: Users, label: "Dashboard", color: "from-blue-500 to-blue-600" },
+        { to: "/nouveau-client", icon: Plus, label: "Nouveau Client", color: "from-green-500 to-emerald-600" },
+        { to: "/base-clients", icon: Database, label: "Base Clients", color: "from-blue-500 to-blue-600" },
+        { to: "/contrats", icon: FileText, label: "Contrats", color: "from-purple-500 to-purple-600" },
+      ];
 
-  if (isAgent) {
-    // Pour les agents : seulement nouveau client et contrats (sans dashboard)
-    navigationItems = [
-      { to: "/nouveau-client", icon: Plus, label: "Nouveau Client", color: "from-green-500 to-emerald-600" },
-      { to: "/contrats", icon: FileText, label: "Contrats", color: "from-purple-500 to-purple-600" }
-    ];
-  } else {
-    // Pour admin et superviseur : accès complet
-    navigationItems = [
-      { to: "/", icon: Users, label: "Dashboard", color: "from-blue-500 to-blue-600" },
-      { to: "/nouveau-client", icon: Plus, label: "Nouveau Client", color: "from-green-500 to-emerald-600" },
-      { to: "/base-clients", icon: Database, label: "Base Clients", color: "from-blue-500 to-blue-600" },
-      { to: "/contrats", icon: FileText, label: "Contrats", color: "from-purple-500 to-purple-600" },
-      ...(isAdmin ? [
-        { to: "/gestion-utilisateurs", icon: Shield, label: "Gestion Utilisateurs", color: "from-red-500 to-red-600" },
-      ] : [])
-    ];
-  }
+      if (isAdmin) {
+        baseItems.push({ to: "/gestion-utilisateurs", icon: Shield, label: "Gestion Utilisateurs", color: "from-red-500 to-red-600" });
+      }
+
+      return baseItems;
+    }
+  }, [isAgent, isAdmin]);
+
+  const toggleMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(prev => !prev);
+  }, []);
+
+  const closeMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(false);
+  }, []);
 
   return (
     <nav className="bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm sticky top-16 z-40">
@@ -66,7 +77,7 @@ export const Navigation = () => {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              onClick={toggleMobileMenu}
               className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -86,7 +97,7 @@ export const Navigation = () => {
                   <Link 
                     key={item.to + item.label} 
                     to={item.to}
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    onClick={closeMobileMenu}
                   >
                     <Button 
                       variant="ghost" 
@@ -116,4 +127,8 @@ export const Navigation = () => {
       </div>
     </nav>
   );
-};
+});
+
+Navigation.displayName = "Navigation";
+
+export { Navigation };

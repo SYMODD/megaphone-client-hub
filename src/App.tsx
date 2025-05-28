@@ -16,10 +16,24 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
+import { memo } from "react";
 
-const queryClient = new QueryClient();
+// Configuration optimisée du QueryClient
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (anciennement cacheTime)
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
-const App = () => (
+const App = memo(() => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -66,6 +80,8 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-);
+));
+
+App.displayName = "App";
 
 export default App;

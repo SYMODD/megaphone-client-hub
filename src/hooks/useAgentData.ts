@@ -1,5 +1,6 @@
+
 import { useAuth } from "@/contexts/AuthContext";
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 
 // Types pour les données simulées
 interface ClientData {
@@ -28,7 +29,7 @@ interface AdminFilters {
   selectedCategory?: string | null;
 }
 
-// Données simulées avec points d'opération
+// Données simulées avec points d'opération - mémorisées pour éviter les recréations
 const mockClients: ClientData[] = [
   { id: 1, nom: "Dubois", prenom: "Marie", nationalite: "France", dateEnregistrement: "2024-01-15", photo: "https://images.unsplash.com/photo-1494790108755-2616b332c8a5?w=100&h=100&fit=crop&crop=face", pointOperation: "aeroport_marrakech" },
   { id: 2, nom: "Benali", prenom: "Ahmed", nationalite: "Algérie", dateEnregistrement: "2024-01-14", pointOperation: "aeroport_casablanca" },
@@ -64,25 +65,27 @@ const baseRegistrationData: RegistrationData[] = [
   { month: "Déc", clients: 23 },
 ];
 
+// Mappings préfixe catégorie mis en cache
+const categoryPrefixes: Record<string, string[]> = {
+  "aeroport": ["aeroport"],
+  "navire": ["navire"],
+  "agence": ["agence"]
+};
+
 export const useAgentData = (filters?: AdminFilters) => {
   const { profile } = useAuth();
 
-  return useMemo(() => {
-    let filteredClients = mockClients;
+  // Mémorisation des clients filtrés avec optimisation des dépendances
+  const filteredClients = useMemo(() => {
+    let result = mockClients;
 
     // Si c'est un admin ou superviseur avec des filtres
     if (profile && (profile.role === "admin" || profile.role === "superviseur") && filters) {
       // Filtrer par catégorie
       if (filters.selectedCategory) {
-        const categoryPrefixes: Record<string, string[]> = {
-          "aeroport": ["aeroport"],
-          "navire": ["navire"],
-          "agence": ["agence"]
-        };
-        
         const prefixes = categoryPrefixes[filters.selectedCategory] || [];
         if (prefixes.length > 0) {
-          filteredClients = filteredClients.filter(client => 
+          result = result.filter(client => 
             prefixes.some(prefix => client.pointOperation.startsWith(prefix))
           );
         }
@@ -90,51 +93,71 @@ export const useAgentData = (filters?: AdminFilters) => {
 
       // Filtrer par point d'opération spécifique
       if (filters.selectedPoint) {
-        filteredClients = filteredClients.filter(
+        result = result.filter(
           client => client.pointOperation === filters.selectedPoint
         );
       }
     } 
     // Si c'est un agent, filtrer par son point d'opération
     else if (profile && profile.role === "agent") {
-      filteredClients = mockClients.filter(
+      result = mockClients.filter(
         client => client.pointOperation === profile.point_operation
       );
     }
 
-    // Calculer les statistiques basées sur les clients filtrés
+    return result;
+  }, [profile?.role, profile?.point_operation, filters?.selectedCategory, filters?.selectedPoint]);
+
+  // Mémorisation des statistiques calculées
+  const statistics = useMemo(() => {
     const totalClients = filteredClients.length;
     const newThisMonth = Math.ceil(totalClients * 0.2);
     const contractsGenerated = Math.ceil(totalClients * 0.76);
 
-    // Calculer les nationalités pour les clients filtrés
+    return { totalClients, newThisMonth, contractsGenerated };
+  }, [filteredClients.length]);
+
+  // Mémorisation des données de nationalités
+  const nationalityData = useMemo(() => {
     const nationalityCounts = filteredClients.reduce((acc, client) => {
       acc[client.nationalite] = (acc[client.nationalite] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-    const nationalityData = Object.entries(nationalityCounts).map(([name, value], index) => ({
+    return Object.entries(nationalityCounts).map(([name, value], index) => ({
       name,
       value,
       color: baseNationalityData[index % baseNationalityData.length]?.color || "#6B7280"
     }));
+  }, [filteredClients]);
 
-    // Ajuster les données d'enregistrement proportionnellement
-    const registrationMultiplier = totalClients / 247;
-    const registrationData = baseRegistrationData.map(item => ({
+  // Mémorisation des données d'enregistrement
+  const registrationData = useMemo(() => {
+    const registrationMultiplier = statistics.totalClients / 247;
+    return baseRegistrationData.map(item => ({
       ...item,
       clients: Math.round(item.clients * registrationMultiplier)
     }));
+  }, [statistics.totalClients]);
 
-    return {
-      clients: filteredClients,
-      totalClients,
-      newThisMonth,
-      contractsGenerated,
-      nationalities: Object.keys(nationalityCounts).length,
-      nationalityData,
-      registrationData,
-      recentClients: filteredClients.slice(0, 5)
-    };
-  }, [profile, filters]);
+  // Mémorisation des clients récents
+  const recentClients = useMemo(() => {
+    return filteredClients.slice(0, 5);
+  }, [filteredClients]);
+
+  // Mémorisation du nombre de nationalités
+  const nationalitiesCount = useMemo(() => {
+    return new Set(filteredClients.map(client => client.nationalite)).size;
+  }, [filteredClients]);
+
+  return useMemo(() => ({
+    clients: filteredClients,
+    totalClients: statistics.totalClients,
+    newThisMonth: statistics.newThisMonth,
+    contractsGenerated: statistics.contractsGenerated,
+    nationalities: nationalitiesCount,
+    nationalityData,
+    registrationData,
+    recentClients
+  }), [filteredClients, statistics, nationalitiesCount, nationalityData, registrationData, recentClients]);
 };
