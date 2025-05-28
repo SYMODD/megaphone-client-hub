@@ -82,75 +82,83 @@ export const AdminFilters = ({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
-          <div className="flex-1 space-y-2">
-            <label className="text-sm font-medium">Catégorie</label>
-            <Select value={selectedCategory || "all"} onValueChange={handleCategoryChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Toutes les catégories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toutes les catégories</SelectItem>
-                {categoryOptions.map((category) => (
-                  <SelectItem key={category.value} value={category.value}>
-                    {category.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="space-y-4">
+          {/* Filtres - Layout responsive amélioré */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Catégorie</label>
+              <Select value={selectedCategory || "all"} onValueChange={handleCategoryChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Toutes les catégories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes les catégories</SelectItem>
+                  {categoryOptions.map((category) => (
+                    <SelectItem key={category.value} value={category.value}>
+                      {category.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Point d'opération</label>
+              <Select value={selectedPoint || "all"} onValueChange={handlePointChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Tous les points" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les points</SelectItem>
+                  {availablePoints.map((point) => (
+                    <SelectItem key={point.value} value={point.value}>
+                      {point.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Bouton Effacer - Responsive */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium opacity-0 pointer-events-none">Actions</label>
+              {hasActiveFilters && (
+                <Button 
+                  variant="outline" 
+                  onClick={onClearFilters}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  Effacer
+                </Button>
+              )}
+            </div>
           </div>
 
-          <div className="flex-1 space-y-2">
-            <label className="text-sm font-medium">Point d'opération</label>
-            <Select value={selectedPoint || "all"} onValueChange={handlePointChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Tous les points" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les points</SelectItem>
-                {availablePoints.map((point) => (
-                  <SelectItem key={point.value} value={point.value}>
-                    {point.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
+          {/* Badges des filtres actifs */}
           {hasActiveFilters && (
-            <Button 
-              variant="outline" 
-              onClick={onClearFilters}
-              className="flex items-center gap-2"
-            >
-              <X className="w-4 h-4" />
-              Effacer
-            </Button>
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-200">
+              {selectedCategory && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  Catégorie: {categoryOptions.find(c => c.value === selectedCategory)?.label}
+                  <X 
+                    className="w-3 h-3 cursor-pointer hover:text-red-600 transition-colors" 
+                    onClick={() => onCategoryChange(null)}
+                  />
+                </Badge>
+              )}
+              {selectedPoint && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  Point: {pointOptions.find(p => p.value === selectedPoint)?.label}
+                  <X 
+                    className="w-3 h-3 cursor-pointer hover:text-red-600 transition-colors" 
+                    onClick={() => onPointChange(null)}
+                  />
+                </Badge>
+              )}
+            </div>
           )}
         </div>
-
-        {hasActiveFilters && (
-          <div className="flex flex-wrap gap-2 mt-4">
-            {selectedCategory && (
-              <Badge variant="secondary" className="flex items-center gap-1">
-                Catégorie: {categoryOptions.find(c => c.value === selectedCategory)?.label}
-                <X 
-                  className="w-3 h-3 cursor-pointer" 
-                  onClick={() => onCategoryChange(null)}
-                />
-              </Badge>
-            )}
-            {selectedPoint && (
-              <Badge variant="secondary" className="flex items-center gap-1">
-                Point: {pointOptions.find(p => p.value === selectedPoint)?.label}
-                <X 
-                  className="w-3 h-3 cursor-pointer" 
-                  onClick={() => onPointChange(null)}
-                />
-              </Badge>
-            )}
-          </div>
-        )}
       </CardContent>
     </Card>
   );
