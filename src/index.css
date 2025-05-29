@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    /* Sud Megaphone Brand Colors - Améliorés pour la lisibilité */
+    /* Sud Megaphone Brand Colors - Optimisés pour la lisibilité */
     --background: 250 250 252;
     --foreground: 15 23 42;
     
@@ -104,7 +104,7 @@
 }
 
 @layer components {
-  /* Modern Card Styles - Améliorés pour la lisibilité */
+  /* Modern Card Styles - Couleurs optimisées */
   .modern-card {
     @apply bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300;
   }
@@ -143,7 +143,7 @@
     @apply text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium px-4 py-2 rounded-lg transition-all duration-200;
   }
 
-  /* Input Styles - Améliorés pour la lisibilité */
+  /* Input Styles - Couleurs améliorées */
   .input-modern {
     @apply w-full px-4 py-3 rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200;
   }
@@ -200,7 +200,7 @@
     @apply bg-blue-50 text-blue-700 border-l-4 border-blue-500;
   }
 
-  /* Typography - Améliorée pour la lisibilité */
+  /* Typography - Couleurs améliorées pour la lisibilité */
   .text-gradient {
     @apply bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent;
   }
@@ -217,9 +217,9 @@
     @apply text-slate-600 text-sm lg:text-base;
   }
 
-  /* Labels et textes améliorés pour la lisibilité */
+  /* Labels et textes avec couleurs optimisées */
   .label-text {
-    @apply text-slate-700 font-medium;
+    @apply text-slate-800 font-medium;
   }
 
   .input-text {
@@ -227,6 +227,23 @@
   }
 
   .placeholder-text {
+    @apply text-slate-500;
+  }
+
+  /* Couleurs spécifiques pour une meilleure lisibilité */
+  .text-primary {
+    @apply text-slate-900;
+  }
+
+  .text-secondary {
+    @apply text-slate-700;
+  }
+
+  .text-muted {
+    @apply text-slate-600;
+  }
+
+  .text-light {
     @apply text-slate-500;
   }
 }
