@@ -12,7 +12,6 @@ import Index from "./pages/Index";
 import NewClient from "./pages/NewClient";
 import BaseClients from "./pages/BaseClients";
 import Contracts from "./pages/Contracts";
-import Auth from "./pages/Auth";
 import AdminLogin from "./pages/AdminLogin";
 import SuperviseurLogin from "./pages/SuperviseurLogin";
 import AgentLogin from "./pages/AgentLogin";
@@ -45,8 +44,6 @@ const App = memo(() => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Navigate to="/agent" replace />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/auth/*" element={<Auth />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/superviseur" element={<SuperviseurLogin />} />
             <Route path="/agent" element={<AgentLogin />} />
