@@ -1,8 +1,8 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, IdCard, BookOpen, Globe, CreditCard } from "lucide-react";
 import { DocumentType, documentTypes } from "@/types/documentTypes";
+import { useNavigate } from "react-router-dom";
 
 interface DocumentTypeSelectorProps {
   selectedType: DocumentType | null;
@@ -18,6 +18,29 @@ const iconMap = {
 };
 
 export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: DocumentTypeSelectorProps) => {
+  const navigate = useNavigate();
+
+  const handleTypeClick = (docType: DocumentType) => {
+    // Navigate to specific scanner page based on document type
+    switch (docType) {
+      case 'cin':
+        navigate('/scanner-cin');
+        break;
+      case 'passeport_etranger':
+        navigate('/scanner-passeport-etranger');
+        break;
+      case 'carte_sejour':
+        navigate('/scanner-carte-sejour');
+        break;
+      case 'passeport_marocain':
+        // Keep the existing logic for Moroccan passport
+        onTypeSelect(docType);
+        break;
+      default:
+        onTypeSelect(docType);
+    }
+  };
+
   if (selectedType) {
     const selected = documentTypes.find(type => type.id === selectedType);
     return (
@@ -55,7 +78,7 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
               key={docType.id}
               variant="outline"
               className="w-full justify-start h-auto p-4 hover:bg-blue-50 hover:border-blue-300"
-              onClick={() => onTypeSelect(docType.id)}
+              onClick={() => handleTypeClick(docType.id)}
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
