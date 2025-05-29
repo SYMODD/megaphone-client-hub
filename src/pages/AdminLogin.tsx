@@ -7,31 +7,26 @@ import { AuthAlert } from "@/components/auth/AuthAlert";
 import { useEffect, useState } from "react";
 
 const AdminLogin = () => {
-  const { user, profile, loading, signOut } = useAuth();
+  const { user, profile, loading } = useAuth();
   const [shouldRedirect, setShouldRedirect] = useState(false);
-  const [roleError, setRoleError] = useState<string | null>(null);
 
   const {
     error,
     success,
     isLoading,
     handleLogin,
-    setError,
   } = useAuthOperations();
 
   useEffect(() => {
     if (user && profile && !loading) {
-      // Vérifier si le rôle correspond à la page de connexion
-      if (profile.role !== "admin") {
-        // Déconnecter l'utilisateur et afficher une erreur
-        signOut().then(() => {
-          setRoleError(`Accès refusé. Cette page est réservée aux administrateurs. Vous êtes connecté en tant que ${profile.role}.`);
-        });
-      } else {
+      // Si l'utilisateur est déjà connecté avec le bon rôle, rediriger
+      if (profile.role === "admin") {
         setShouldRedirect(true);
       }
+      // Si l'utilisateur est connecté avec un autre rôle, ne pas déconnecter automatiquement
+      // Laisser l'utilisateur voir qu'il doit se connecter avec le bon compte
     }
-  }, [user, profile, loading, signOut]);
+  }, [user, profile, loading]);
 
   // Show loading while checking auth state
   if (loading) {
@@ -61,7 +56,7 @@ const AdminLogin = () => {
           <p className="text-slate-600">Connexion Administrateur</p>
         </div>
 
-        <AuthAlert error={error || roleError} success={success} />
+        <AuthAlert error={error} success={success} />
 
         <RoleSpecificLogin
           role="admin"

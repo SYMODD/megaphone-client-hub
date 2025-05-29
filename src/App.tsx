@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
+import { SmartRedirect } from "./components/auth/SmartRedirect";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -33,8 +34,8 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Redirection automatique vers /agent */}
-            <Route path="/" element={<Navigate to="/agent" replace />} />
+            {/* Redirection intelligente selon le rôle */}
+            <Route path="/" element={<SmartRedirect />} />
             
             {/* Pages de connexion publiques */}
             <Route path="/auth" element={<Auth />} />
@@ -46,7 +47,9 @@ const App = () => (
             {/* Dashboard - accessible aux admin et superviseur */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
-                <Index />
+                <RoleProtectedRoute allowedRoles={['admin', 'superviseur']} redirectTo="/agent">
+                  <Index />
+                </RoleProtectedRoute>
               </ProtectedRoute>
             } />
             
