@@ -90,11 +90,14 @@ const App = () => (
               </RoleProtectedRoute>
             } />
             
+            {/* Routes pour les contrats - ajout de la redirection */}
             <Route path="/contracts" element={
               <ProtectedRoute>
                 <Contracts />
               </ProtectedRoute>
             } />
+            <Route path="/contrat" element={<Navigate to="/contracts" replace />} />
+            <Route path="/contrats" element={<Navigate to="/contracts" replace />} />
             
             <Route path="/404" element={<NotFound />} />
             <Route path="*" element={<Navigate to="/404" replace />} />
