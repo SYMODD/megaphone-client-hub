@@ -33,10 +33,11 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Redirection automatique vers /nouveau-client pour les agents */}
-            <Route path="/" element={<Navigate to="/nouveau-client" replace />} />
+            {/* Redirection automatique vers /agent */}
+            <Route path="/" element={<Navigate to="/agent" replace />} />
             
-            <Route path="/auth" element={<Auth />} />
+            {/* Redirection de /auth vers /agent */}
+            <Route path="/auth" element={<Navigate to="/agent" replace />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/agent" element={<AgentLogin />} />
             <Route path="/admin" element={<AdminLogin />} />

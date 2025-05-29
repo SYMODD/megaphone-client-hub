@@ -24,9 +24,9 @@ export const Header = () => {
             <span className="text-xl font-bold text-slate-800">Sud Megaphone</span>
           </Link>
 
-          {/* Bouton connexion - redirige vers nouveau-client */}
+          {/* Bouton connexion - redirige vers agent */}
           <div className="flex items-center space-x-3">
-            <Link to="/nouveau-client">
+            <Link to="/agent">
               <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
                 Se connecter
               </Button>
