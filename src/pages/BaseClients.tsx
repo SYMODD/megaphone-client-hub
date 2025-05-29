@@ -15,6 +15,7 @@ import { ClientViewDialog } from "@/components/clients/ClientViewDialog";
 import { ClientEditDialog } from "@/components/clients/ClientEditDialog";
 import { ClientDocumentDialog } from "@/components/clients/ClientDocumentDialog";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 const BaseClients = () => {
   const { toast } = useToast();
@@ -132,6 +133,10 @@ const BaseClients = () => {
     }
   };
 
+  const handleRetry = () => {
+    fetchClients();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -157,7 +162,7 @@ const BaseClients = () => {
             <div className="bg-red-50 border border-red-200 rounded-lg p-6">
               <p className="text-red-600 font-medium">{error}</p>
               <Button 
-                onClick={fetchClients} 
+                onClick={handleRetry} 
                 className="mt-4"
                 variant="outline"
               >
