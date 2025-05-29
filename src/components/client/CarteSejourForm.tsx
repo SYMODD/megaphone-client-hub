@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PersonalInfoSection } from "./PersonalInfoSection";
+import { ContactInfoSection } from "./ContactInfoSection";
 import { RegistrationSection } from "./RegistrationSection";
 import { FormActions } from "./FormActions";
 import { CarteSejourScanner } from "./CarteSejourScanner";
@@ -15,6 +16,7 @@ interface CarteSejourFormData {
   prenom: string;
   nationalite: string;
   numero_passeport: string;
+  numero_telephone: string;
   scannedImage: string | null;
   observations: string;
   date_enregistrement: string;
@@ -31,6 +33,7 @@ export const CarteSejourForm = () => {
     prenom: "",
     nationalite: "",
     numero_passeport: "",
+    numero_telephone: "",
     scannedImage: null,
     observations: "",
     date_enregistrement: new Date().toISOString().split('T')[0],
@@ -91,6 +94,7 @@ export const CarteSejourForm = () => {
         prenom: formData.prenom.trim(),
         nationalite: formData.nationalite,
         numero_passeport: formData.numero_passeport.trim(),
+        numero_telephone: formData.numero_telephone.trim(),
         photo_url: photoUrl,
         observations: formData.observations,
         date_enregistrement: formData.date_enregistrement,
@@ -137,6 +141,11 @@ export const CarteSejourForm = () => {
       />
 
       <PersonalInfoSection 
+        formData={formData}
+        onInputChange={handleInputChange}
+      />
+
+      <ContactInfoSection 
         formData={formData}
         onInputChange={handleInputChange}
       />

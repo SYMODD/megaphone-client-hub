@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +12,7 @@ interface ClientFormData {
   prenom: string;
   nationalite: string;
   numero_passeport: string;
+  numero_telephone: string;
   scannedImage: string | null;
   observations: string;
   date_enregistrement: string;
@@ -28,6 +30,7 @@ export const useClientFormLogic = () => {
     prenom: "",
     nationalite: "",
     numero_passeport: "",
+    numero_telephone: "",
     scannedImage: null,
     observations: "",
     date_enregistrement: new Date().toISOString().split('T')[0]
@@ -128,6 +131,7 @@ export const useClientFormLogic = () => {
           prenom: formData.prenom,
           nationalite: formData.nationalite,
           numero_passeport: formData.numero_passeport,
+          numero_telephone: formData.numero_telephone,
           photo_url: photoUrl,
           observations: formData.observations,
           date_enregistrement: formData.date_enregistrement,

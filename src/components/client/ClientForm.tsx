@@ -1,5 +1,6 @@
 
 import { PersonalInfoSection } from "./PersonalInfoSection";
+import { ContactInfoSection } from "./ContactInfoSection";
 import { PassportSection } from "./PassportSection";
 import { RegistrationSection } from "./RegistrationSection";
 import { FormActions } from "./FormActions";
@@ -35,6 +36,11 @@ export const ClientForm = () => {
         {selectedDocumentType && (
           <>
             <PersonalInfoSection 
+              formData={formData}
+              onInputChange={handleInputChange}
+            />
+
+            <ContactInfoSection 
               formData={formData}
               onInputChange={handleInputChange}
             />
