@@ -7,21 +7,31 @@ import { AuthAlert } from "@/components/auth/AuthAlert";
 import { useEffect, useState } from "react";
 
 const AdminLogin = () => {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, signOut } = useAuth();
   const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [roleError, setRoleError] = useState<string | null>(null);
 
   const {
     error,
     success,
     isLoading,
     handleLogin,
+    setError,
   } = useAuthOperations();
 
   useEffect(() => {
     if (user && profile && !loading) {
-      setShouldRedirect(true);
+      // Vérifier si le rôle correspond à la page de connexion
+      if (profile.role !== "admin") {
+        // Déconnecter l'utilisateur et afficher une erreur
+        signOut().then(() => {
+          setRoleError(`Accès refusé. Cette page est réservée aux administrateurs. Vous êtes connecté en tant que ${profile.role}.`);
+        });
+      } else {
+        setShouldRedirect(true);
+      }
     }
-  }, [user, profile, loading]);
+  }, [user, profile, loading, signOut]);
 
   // Show loading while checking auth state
   if (loading) {
@@ -35,16 +45,8 @@ const AdminLogin = () => {
     );
   }
 
-  // Redirect based on role after authentication
-  if (shouldRedirect) {
-    // Si l'utilisateur n'est pas admin, le rediriger vers sa page de connexion appropriée
-    if (profile?.role === "agent") {
-      return <Navigate to="/agent" replace />;
-    } else if (profile?.role === "superviseur") {
-      return <Navigate to="/superviseur" replace />;
-    } else if (profile?.role === "admin") {
-      return <Navigate to="/dashboard" replace />;
-    }
+  // Redirect admin to their dashboard
+  if (shouldRedirect && profile?.role === "admin") {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -56,7 +58,7 @@ const AdminLogin = () => {
           <p className="text-slate-600 mt-2">Connexion Administrateur</p>
         </div>
 
-        <AuthAlert error={error} success={success} />
+        <AuthAlert error={error || roleError} success={success} />
 
         <RoleSpecificLogin
           role="admin"
