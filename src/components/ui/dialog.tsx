@@ -24,7 +24,8 @@ const DialogOverlay = React.forwardRef<
       className
     )}
     style={{
-      backgroundColor: 'rgba(0, 0, 0, 0.8)'
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      backdropFilter: 'none'
     }}
     {...props}
   />
@@ -44,10 +45,11 @@ const DialogContent = React.forwardRef<
         className
       )}
       style={{
-        backgroundColor: 'white',
+        backgroundColor: 'white !important',
         border: '1px solid rgb(226 232 240)',
         boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-        color: 'rgb(15 23 42)'
+        color: 'rgb(15 23 42)',
+        backdropFilter: 'none'
       }}
       {...props}
     >
@@ -99,6 +101,7 @@ const DialogTitle = React.forwardRef<
       "text-lg font-semibold leading-none tracking-tight",
       className
     )}
+    style={{ color: 'rgb(15 23 42)' }}
     {...props}
   />
 ))
@@ -111,6 +114,7 @@ const DialogDescription = React.forwardRef<
   <DialogPrimitive.Description
     ref={ref}
     className={cn("text-sm text-muted-foreground", className)}
+    style={{ color: 'rgb(100 116 139)' }}
     {...props}
   />
 ))
