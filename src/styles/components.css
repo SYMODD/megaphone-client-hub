@@ -1,0 +1,196 @@
+
+/* Component Styles */
+@layer components {
+  /* Modern Card Styles - Couleurs optimisées */
+  .modern-card {
+    @apply bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300;
+  }
+
+  .glass-card {
+    @apply bg-white/95 backdrop-blur-lg rounded-xl border border-slate-200 shadow-md;
+  }
+
+  /* Gradient Backgrounds */
+  .gradient-primary {
+    background: linear-gradient(135deg, rgb(59 130 246) 0%, rgb(147 51 234) 100%);
+  }
+
+  .gradient-secondary {
+    background: linear-gradient(135deg, rgb(139 92 246) 0%, rgb(236 72 153) 100%);
+  }
+
+  .gradient-accent {
+    background: linear-gradient(135deg, rgb(14 165 233) 0%, rgb(34 197 94) 100%);
+  }
+
+  .gradient-bg {
+    background: white;
+  }
+
+  /* Modern Button Styles - Correction des hovers */
+  .btn-primary {
+    @apply bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium px-6 py-3 rounded-lg shadow-md transition-all duration-200;
+  }
+  
+  .btn-primary:hover {
+    @apply from-blue-600 to-purple-700 shadow-lg transform scale-[1.02];
+  }
+
+  .btn-secondary {
+    @apply bg-white border border-slate-300 text-slate-700 font-medium px-6 py-3 rounded-lg shadow-sm transition-all duration-200;
+  }
+  
+  .btn-secondary:hover {
+    @apply bg-slate-50 border-slate-400 shadow-md;
+  }
+
+  .btn-ghost {
+    @apply text-slate-600 font-medium px-4 py-2 rounded-lg transition-all duration-200;
+  }
+  
+  .btn-ghost:hover {
+    @apply text-slate-900 bg-slate-100;
+  }
+
+  /* Input Styles - Couleurs corrigées */
+  .input-modern {
+    @apply w-full px-4 py-3 rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-500 transition-all duration-200;
+  }
+  
+  .input-modern:focus {
+    @apply outline-none ring-2 ring-blue-500 border-blue-500;
+  }
+
+  /* Hover Effects - Correction des problèmes de disparition */
+  .hover-lift {
+    @apply transition-all duration-300;
+  }
+  
+  .hover-lift:hover {
+    @apply transform scale-[1.02] shadow-lg;
+  }
+
+  .hover-glow {
+    @apply transition-all duration-300;
+  }
+  
+  .hover-glow:hover {
+    @apply shadow-lg shadow-blue-500/25;
+  }
+
+  /* Status Indicators */
+  .status-success {
+    @apply bg-green-100 text-green-800 border-green-200;
+  }
+
+  .status-warning {
+    @apply bg-blue-100 text-blue-800 border-blue-200;
+  }
+
+  .status-error {
+    @apply bg-red-100 text-red-800 border-red-200;
+  }
+
+  .status-info {
+    @apply bg-blue-100 text-blue-800 border-blue-200;
+  }
+
+  /* Navigation Styles - Couleurs corrigées */
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 font-medium transition-all duration-200;
+  }
+  
+  .nav-item:hover {
+    @apply text-slate-900 bg-slate-100;
+  }
+
+  .nav-item.active {
+    @apply bg-blue-50 text-blue-700 border-l-4 border-blue-500;
+  }
+
+  /* Typography - Couleurs définitives sans jaune */
+  .text-gradient {
+    @apply bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent;
+  }
+
+  .heading-primary {
+    @apply text-2xl lg:text-3xl font-bold text-slate-900 mb-2;
+  }
+
+  .heading-secondary {
+    @apply text-xl lg:text-2xl font-semibold text-slate-800 mb-4;
+  }
+
+  .text-subtle {
+    @apply text-slate-600 text-sm lg:text-base;
+  }
+
+  /* Labels et textes avec couleurs définitives */
+  .label-text {
+    color: rgb(30 41 59) !important;
+    font-weight: 500;
+  }
+
+  .input-text {
+    color: rgb(15 23 42) !important;
+  }
+
+  .placeholder-text {
+    color: rgb(148 163 184) !important;
+  }
+
+  /* Correction spécifique pour éliminer le jaune */
+  .no-yellow {
+    color: rgb(51 65 85) !important;
+    background-color: white !important;
+  }
+
+  .no-yellow * {
+    color: inherit !important;
+    background-color: inherit !important;
+  }
+
+  /* Force la couleur pour les composants spécifiques */
+  .lucide, .lucide-react {
+    color: inherit !important;
+  }
+
+  button:hover {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .interactive-element {
+    color: rgb(51 65 85) !important;
+    transition: colors 0.2s;
+  }
+
+  .interactive-element:hover {
+    color: rgb(30 41 59) !important;
+  }
+}
+
+/* Dark Mode Improvements */
+.dark .modern-card {
+  @apply bg-slate-800/95 border-slate-700;
+}
+
+.dark .glass-card {
+  @apply bg-slate-800/95 border-slate-700;
+}
+
+.dark .input-modern {
+  @apply bg-slate-800 border-slate-600 text-slate-100 placeholder-slate-400;
+}
+
+.dark .nav-item {
+  @apply text-slate-300;
+}
+
+.dark .nav-item:hover {
+  @apply text-slate-100 bg-slate-700;
+}
+
+.dark .nav-item.active {
+  @apply bg-blue-900/30 text-blue-300 border-blue-400;
+}
