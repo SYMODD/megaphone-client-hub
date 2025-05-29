@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PersonalInfoSection } from "./PersonalInfoSection";
+import { ContactInfoSection } from "./ContactInfoSection";
 import { RegistrationSection } from "./RegistrationSection";
 import { FormActions } from "./FormActions";
 import { PassportOCRScanner } from "./PassportOCRScanner";
@@ -14,6 +15,7 @@ interface PassportMarocainFormData {
   prenom: string;
   nationalite: string;
   numero_passeport: string;
+  numero_telephone: string;
   scannedImage: string | null;
   observations: string;
   date_enregistrement: string;
@@ -30,6 +32,7 @@ export const PassportMarocainForm = () => {
     prenom: "",
     nationalite: "Maroc",
     numero_passeport: "",
+    numero_telephone: "",
     scannedImage: null,
     observations: "",
     date_enregistrement: new Date().toISOString().split('T')[0],
@@ -108,6 +111,7 @@ export const PassportMarocainForm = () => {
           prenom: formData.prenom,
           nationalite: formData.nationalite,
           numero_passeport: formData.numero_passeport,
+          numero_telephone: formData.numero_telephone,
           photo_url: photoUrl,
           observations: formData.observations,
           date_enregistrement: formData.date_enregistrement,
@@ -149,6 +153,11 @@ export const PassportMarocainForm = () => {
       />
 
       <PersonalInfoSection 
+        formData={formData}
+        onInputChange={handleInputChange}
+      />
+
+      <ContactInfoSection 
         formData={formData}
         onInputChange={handleInputChange}
       />
