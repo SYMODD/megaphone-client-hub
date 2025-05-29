@@ -30,49 +30,84 @@ export const useClientData = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
-  // Fonction de fetch mémorisée pour éviter les recréations inutiles
-  const fetchClients = useCallback(async () => {
+  // États pour les filtres côté serveur
+  const [serverFilters, setServerFilters] = useState({
+    searchTerm: "",
+    nationality: "",
+    dateFrom: null as Date | null,
+    dateTo: null as Date | null
+  });
+
+  // Fonction optimisée avec filtrage côté serveur
+  const fetchClients = useCallback(async (filters?: {
+    searchTerm?: string;
+    nationality?: string;
+    dateFrom?: Date | null;
+    dateTo?: Date | null;
+    page?: number;
+  }) => {
     if (!user) return;
 
     try {
       setLoading(true);
       setError(null);
-      console.log('Fetching clients from database...');
+      console.log('Fetching clients with server-side filtering...');
       
-      // Get total count - optimisé avec head: true pour éviter de récupérer les données
-      const { count } = await supabase
+      const currentFilters = filters || serverFilters;
+      const page = filters?.page || currentPage;
+      
+      // Construction de la requête avec filtres côté serveur
+      let query = supabase
         .from('clients')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact' });
 
-      setTotalCount(count || 0);
+      // Applique les filtres de recherche côté serveur
+      if (currentFilters.searchTerm) {
+        const searchTerm = currentFilters.searchTerm.toLowerCase();
+        query = query.or(`nom.ilike.%${searchTerm}%,prenom.ilike.%${searchTerm}%,numero_passeport.ilike.%${searchTerm}%`);
+      }
 
-      // Get paginated data
-      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      // Filtre par nationalité côté serveur
+      if (currentFilters.nationality) {
+        query = query.eq('nationalite', currentFilters.nationality);
+      }
+
+      // Filtre par date côté serveur
+      if (currentFilters.dateFrom) {
+        query = query.gte('date_enregistrement', currentFilters.dateFrom.toISOString().split('T')[0]);
+      }
+      if (currentFilters.dateTo) {
+        query = query.lte('date_enregistrement', currentFilters.dateTo.toISOString().split('T')[0]);
+      }
+
+      // Tri et pagination
+      const from = (page - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
-
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
+      
+      query = query
         .order('created_at', { ascending: false })
         .range(from, to);
+
+      const { data, error, count } = await query;
 
       if (error) {
         console.error('Supabase error:', error);
         throw error;
       }
       
-      console.log('Clients fetched successfully:', data);
+      console.log('Clients fetched successfully:', data?.length, 'of', count);
       setClients(data || []);
+      setTotalCount(count || 0);
       
       if (data && data.length > 0) {
         toast({
           title: "Clients chargés",
-          description: `${data.length} client(s) trouvé(s) dans la base de données.`,
+          description: `${data.length} client(s) trouvé(s) sur ${count} total.`,
         });
       } else if (count === 0) {
         toast({
           title: "Aucun client",
-          description: "Aucun client n'a été trouvé dans la base de données.",
+          description: "Aucun client ne correspond aux critères de recherche.",
         });
       }
     } catch (error) {
@@ -86,57 +121,96 @@ export const useClientData = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, currentPage, toast]);
+  }, [user, currentPage, serverFilters, toast]);
 
-  useEffect(() => {
-    fetchClients();
+  // Fonction pour appliquer les filtres côté serveur
+  const applyServerFilters = useCallback((
+    searchTerm: string,
+    nationality: string,
+    dateRange: DateRange | undefined
+  ) => {
+    console.log('Applying server-side filters:', { searchTerm, nationality, dateRange });
+    
+    const newFilters = {
+      searchTerm,
+      nationality,
+      dateFrom: dateRange?.from || null,
+      dateTo: dateRange?.to || null
+    };
+
+    setServerFilters(newFilters);
+    setCurrentPage(1); // Reset à la première page lors du filtrage
+    
+    // Fetch immédiat avec les nouveaux filtres
+    fetchClients({ ...newFilters, page: 1 });
   }, [fetchClients]);
 
-  // Fonction de filtrage mémorisée avec optimisations
+  // Effet pour le chargement initial
+  useEffect(() => {
+    if (user) {
+      fetchClients();
+    }
+  }, [user]);
+
+  // Effet pour recharger quand la page change
+  useEffect(() => {
+    if (user && currentPage > 1) {
+      fetchClients({ page: currentPage });
+    }
+  }, [currentPage, user]);
+
+  // Fonction de filtrage locale (garde la compatibilité)
   const filterClients = useCallback((
     searchTerm: string,
     selectedNationality: string,
     dateRange: DateRange | undefined
   ) => {
-    return clients.filter(client => {
-      // Optimisation: conversion en minuscules une seule fois
-      const searchLower = searchTerm.toLowerCase();
-      const matchesSearch = searchTerm === "" || 
-        client.nom.toLowerCase().includes(searchLower) ||
-        client.prenom.toLowerCase().includes(searchLower) ||
-        client.numero_passeport.toLowerCase().includes(searchLower);
-      
-      const matchesNationality = selectedNationality === "" || client.nationalite === selectedNationality;
-      
-      // Filtre par date - optimisé
-      let matchesDateRange = true;
-      if (dateRange?.from) {
-        const clientDate = new Date(client.date_enregistrement);
-        const fromDate = new Date(dateRange.from);
-        fromDate.setHours(0, 0, 0, 0);
-        
-        if (dateRange.to) {
-          const toDate = new Date(dateRange.to);
-          toDate.setHours(23, 59, 59, 999);
-          matchesDateRange = clientDate >= fromDate && clientDate <= toDate;
-        } else {
-          matchesDateRange = clientDate >= fromDate;
-        }
-      }
-      
-      return matchesSearch && matchesNationality && matchesDateRange;
-    });
-  }, [clients]);
+    // Si les filtres ont changé, applique le filtrage côté serveur
+    if (
+      searchTerm !== serverFilters.searchTerm ||
+      selectedNationality !== serverFilters.nationality ||
+      dateRange?.from?.getTime() !== serverFilters.dateFrom?.getTime() ||
+      dateRange?.to?.getTime() !== serverFilters.dateTo?.getTime()
+    ) {
+      applyServerFilters(searchTerm, selectedNationality, dateRange);
+      return clients; // Retourne les clients actuels en attendant le nouveau fetch
+    }
+    
+    // Sinon retourne les clients déjà filtrés côté serveur
+    return clients;
+  }, [clients, serverFilters, applyServerFilters]);
 
-  // Nationalités uniques mémorisées
-  const nationalities = useMemo(() => {
-    return [...new Set(clients.map(client => client.nationalite))];
-  }, [clients]);
+  // Nationalités uniques optimisées avec cache
+  const nationalities = useMemo(async () => {
+    try {
+      console.log('Fetching unique nationalities...');
+      const { data, error } = await supabase
+        .from('clients')
+        .select('nationalite')
+        .not('nationalite', 'is', null);
+      
+      if (error) throw error;
+      
+      const uniqueNationalities = [...new Set(data?.map(client => client.nationalite) || [])];
+      console.log('Unique nationalities loaded:', uniqueNationalities.length);
+      return uniqueNationalities;
+    } catch (error) {
+      console.error('Error fetching nationalities:', error);
+      return [];
+    }
+  }, []);
 
-  // Nombre total de pages mémorisé
+  // Nombre total de pages
   const totalPages = useMemo(() => {
     return Math.ceil(totalCount / ITEMS_PER_PAGE);
   }, [totalCount]);
+
+  // Fonction pour changer de page de manière optimisée
+  const handlePageChange = useCallback((page: number) => {
+    if (page !== currentPage && page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  }, [currentPage, totalPages]);
 
   return {
     clients,
@@ -146,8 +220,9 @@ export const useClientData = () => {
     totalCount,
     totalPages,
     nationalities,
-    setCurrentPage,
+    setCurrentPage: handlePageChange,
     fetchClients,
-    filterClients
+    filterClients,
+    applyServerFilters // Nouvelle fonction pour filtrage optimisé
   };
 };

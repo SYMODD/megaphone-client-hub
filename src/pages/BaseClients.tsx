@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
@@ -6,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
 import { useClientData } from "@/hooks/useClientData";
 import { useClientActions } from "@/hooks/useClientActions";
+import { useNationalities } from "@/hooks/useNationalities";
 import { ClientStatistics } from "@/components/clients/ClientStatistics";
 import { ClientFilters } from "@/components/clients/ClientFilters";
 import { ClientTable } from "@/components/clients/ClientTable";
@@ -23,11 +25,13 @@ const BaseClients = () => {
     currentPage,
     totalCount,
     totalPages,
-    nationalities,
     setCurrentPage,
     fetchClients,
-    filterClients
+    filterClients,
+    applyServerFilters
   } = useClientData();
+
+  const { nationalities, loading: nationalitiesLoading } = useNationalities();
 
   const {
     handleViewClient,
@@ -46,6 +50,7 @@ const BaseClients = () => {
   const [selectedNationality, setSelectedNationality] = useState("");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
+  // Utilise le filtrage optimisé côté serveur
   const filteredClients = filterClients(searchTerm, selectedNationality, dateRange);
 
   const handlePageChange = (page: number) => {
@@ -56,30 +61,65 @@ const BaseClients = () => {
     fetchClients();
   };
 
-  const handleExport = (format: 'csv' | 'pdf') => {
-    if (filteredClients.length === 0) {
+  // Fonction optimisée pour l'export avec gestion de gros volumes
+  const handleExport = async (format: 'csv' | 'pdf') => {
+    if (totalCount === 0) {
       toast({
         title: "Aucune donnée à exporter",
-        description: "Il n'y a aucun client correspondant aux critères sélectionnés.",
+        description: "Il n'y a aucun client dans la base de données.",
         variant: "destructive",
       });
       return;
     }
 
     try {
+      // Pour de gros volumes, on exporte par chunks
+      const EXPORT_CHUNK_SIZE = 1000;
+      let allClients = [];
+      let currentChunk = 0;
+      
+      toast({
+        title: "Export en cours...",
+        description: `Préparation de l'export de ${totalCount} clients.`,
+      });
+
+      while (currentChunk * EXPORT_CHUNK_SIZE < totalCount) {
+        const { data, error } = await supabase
+          .from('clients')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(
+            currentChunk * EXPORT_CHUNK_SIZE, 
+            (currentChunk + 1) * EXPORT_CHUNK_SIZE - 1
+          );
+
+        if (error) throw error;
+        
+        allClients.push(...(data || []));
+        currentChunk++;
+        
+        // Toast de progression pour gros volumes
+        if (totalCount > 5000) {
+          toast({
+            title: "Export en cours...",
+            description: `${allClients.length}/${totalCount} clients chargés.`,
+          });
+        }
+      }
+
       const filename = `clients${dateRange?.from ? `_${dateRange.from.toISOString().split('T')[0]}` : ''}${dateRange?.to ? `_au_${dateRange.to.toISOString().split('T')[0]}` : ''}`;
       
       if (format === 'csv') {
-        exportToCSV(filteredClients, filename);
+        exportToCSV(allClients, filename);
         toast({
           title: "Export CSV réussi",
-          description: `${filteredClients.length} client(s) exporté(s) en CSV.`,
+          description: `${allClients.length} client(s) exporté(s) en CSV.`,
         });
       } else {
-        exportToPDF(filteredClients, filename);
+        exportToPDF(allClients, filename);
         toast({
           title: "Export PDF réussi", 
-          description: `${filteredClients.length} client(s) exporté(s) en PDF.`,
+          description: `${allClients.length} client(s) exporté(s) en PDF.`,
         });
       }
     } catch (error) {
@@ -100,7 +140,7 @@ const BaseClients = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-slate-600">Chargement des clients...</p>
+            <p className="mt-2 text-slate-600">Chargement optimisé des clients...</p>
           </div>
         </div>
       </div>
@@ -137,10 +177,17 @@ const BaseClients = () => {
       
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-6">
-          {/* En-tête */}
+          {/* En-tête avec indicateur de performance */}
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">Base Clients</h1>
-            <p className="text-slate-600">Gérez et consultez tous vos clients enregistrés</p>
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">
+              Base Clients 
+              <span className="text-sm font-normal text-slate-500 ml-2">
+                (Optimisé pour gros volumes)
+              </span>
+            </h1>
+            <p className="text-slate-600">
+              Gérez et consultez tous vos clients enregistrés avec filtrage côté serveur
+            </p>
           </div>
 
           {/* Statistiques rapides */}
@@ -150,7 +197,7 @@ const BaseClients = () => {
             nationalities={nationalities}
           />
 
-          {/* Filtres et recherche */}
+          {/* Filtres et recherche optimisés */}
           <ClientFilters
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
@@ -158,11 +205,11 @@ const BaseClients = () => {
             setSelectedNationality={setSelectedNationality}
             dateRange={dateRange}
             setDateRange={setDateRange}
-            nationalities={nationalities}
+            nationalities={nationalitiesLoading ? [] : nationalities}
             onExport={handleExport}
           />
 
-          {/* Liste des clients */}
+          {/* Liste des clients avec pagination côté serveur */}
           <ClientTable
             clients={filteredClients}
             totalCount={totalCount}
