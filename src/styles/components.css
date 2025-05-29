@@ -169,112 +169,90 @@
     color: rgb(30 41 59) !important;
   }
 
-  /* FIXES CRITIQUES POUR POPUPS TRANSPARENTS - Maximum Priority */
-  /* Force l'arrière-plan blanc pour TOUS les composants Radix UI */
+  /* CORRECTION DÉFINITIVE DES DIALOGS ET POPOVERS */
   
-  /* Popover - Maximum specificity */
-  [data-radix-popper-content-wrapper],
-  [data-radix-popper-content-wrapper] *,
-  [data-radix-portal],
-  [data-radix-portal] * {
-    background-color: white !important;
-    border: 1px solid rgb(226 232 240) !important;
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
-    z-index: 9999 !important;
-  }
-
-  /* Specific targeting for popover content */
-  [data-radix-popper-content-wrapper] > div,
-  [data-radix-portal] > div,
-  [data-state="open"][data-radix-popover-content] {
-    background-color: white !important;
-    border: 1px solid rgb(226 232 240) !important;
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+  /* Dialog fixes */
+  .dialog-overlay-fix {
+    background-color: rgba(0, 0, 0, 0.8) !important;
     backdrop-filter: none !important;
   }
 
-  /* Command palette et combobox */
-  [cmdk-root],
-  [cmdk-root] * {
-    background-color: white !important;
-  }
-
-  [cmdk-overlay] {
-    background-color: rgba(0, 0, 0, 0.5) !important;
-  }
-
-  [cmdk-dialog],
-  [cmdk-dialog] * {
+  .dialog-content-fix {
     background-color: white !important;
     border: 1px solid rgb(226 232 240) !important;
     box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25) !important;
+    color: rgb(15 23 42) !important;
+    backdrop-filter: none !important;
   }
 
-  /* Dialog et AlertDialog */
-  [data-state="open"][data-radix-dialog-overlay] {
+  .dialog-title-fix {
+    color: rgb(15 23 42) !important;
+  }
+
+  .dialog-description-fix {
+    color: rgb(100 116 139) !important;
+  }
+
+  /* Alert Dialog fixes */
+  .alert-dialog-overlay-fix {
     background-color: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: none !important;
   }
 
-  [data-state="open"][data-radix-dialog-content],
-  [data-state="open"][data-radix-dialog-content] * {
+  .alert-dialog-content-fix {
     background-color: white !important;
     border: 1px solid rgb(226 232 240) !important;
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25) !important;
+    color: rgb(15 23 42) !important;
+    backdrop-filter: none !important;
   }
 
-  [data-state="open"][data-radix-alert-dialog-content],
-  [data-state="open"][data-radix-alert-dialog-content] * {
-    background-color: white !important;
-    border: 1px solid rgb(226 232 240) !important;
+  .alert-dialog-title-fix {
+    color: rgb(15 23 42) !important;
   }
 
-  /* Dropdown menu */
-  [data-radix-dropdown-menu-content],
-  [data-radix-dropdown-menu-content] * {
-    background-color: white !important;
-    border: 1px solid rgb(226 232 240) !important;
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+  .alert-dialog-description-fix {
+    color: rgb(100 116 139) !important;
   }
 
-  /* Select dropdown */
-  [data-radix-select-content],
-  [data-radix-select-content] * {
+  /* Popover fixes */
+  .popover-content-fix {
     background-color: white !important;
     border: 1px solid rgb(226 232 240) !important;
     box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
-  }
-
-  /* Tooltip */
-  [data-radix-tooltip-content] {
-    background-color: rgb(30 41 59) !important;
-    color: white !important;
-    border: 1px solid rgb(51 65 85) !important;
-  }
-
-  /* HoverCard */
-  [data-radix-hover-card-content],
-  [data-radix-hover-card-content] * {
-    background-color: white !important;
-    border: 1px solid rgb(226 232 240) !important;
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
-  }
-
-  /* Force white background sur TOUS les contenus de portal */
-  div[data-radix-portal] {
+    color: rgb(15 23 42) !important;
+    backdrop-filter: none !important;
     z-index: 9999 !important;
   }
 
-  div[data-radix-portal] > div {
+  /* Force tous les éléments Radix UI à avoir un arrière-plan blanc */
+  [data-radix-dialog-content],
+  [data-radix-alert-dialog-content],
+  [data-radix-popover-content],
+  [data-radix-select-content],
+  [data-radix-dropdown-menu-content] {
+    background-color: white !important;
+    border: 1px solid rgb(226 232 240) !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+    color: rgb(15 23 42) !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Force tous les overlays à avoir un arrière-plan sombre opaque */
+  [data-radix-dialog-overlay],
+  [data-radix-alert-dialog-overlay] {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Force tous les portals à être opaques */
+  [data-radix-portal] {
+    z-index: 9999 !important;
+  }
+
+  [data-radix-portal] > div {
     background: white !important;
     border: 1px solid rgb(226 232 240) !important;
-  }
-
-  /* Additional global overrides for any transparent backgrounds */
-  .bg-popover {
-    background-color: white !important;
-  }
-
-  .text-popover-foreground {
-    color: rgb(15 23 42) !important;
   }
 }
 
