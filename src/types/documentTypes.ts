@@ -31,6 +31,6 @@ export const documentTypes: DocumentTypeOption[] = [
     id: 'carte_sejour',
     label: 'Carte de séjour',
     description: 'Titre de séjour',
-    icon: 'id-card'
+    icon: 'credit-card'
   }
 ];

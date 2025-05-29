@@ -1,7 +1,6 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, IdCard, BookOpen, Globe } from "lucide-react";
+import { ArrowLeft, IdCard, BookOpen, Globe, CreditCard } from "lucide-react";
 import { DocumentType, documentTypes } from "@/types/documentTypes";
 import { useNavigate } from "react-router-dom";
 
@@ -15,6 +14,7 @@ const iconMap = {
   'id-card': IdCard,
   'book-open': BookOpen,
   'globe': Globe,
+  'credit-card': CreditCard,
 };
 
 export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: DocumentTypeSelectorProps) => {
