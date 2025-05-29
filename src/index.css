@@ -93,7 +93,7 @@
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     line-height: 1.6;
-    color: rgb(15 23 42);
+    color: rgb(15 23 42) !important;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -101,7 +101,47 @@
     font-weight: 600;
     line-height: 1.3;
     letter-spacing: -0.025em;
-    color: rgb(15 23 42);
+    color: rgb(15 23 42) !important;
+  }
+
+  /* Forcer la couleur du texte pour tous les éléments */
+  p, span, div, label, button, td, th, li, a {
+    color: rgb(51 65 85) !important;
+  }
+
+  /* Couleurs spécifiques pour différents types de texte */
+  .text-primary, .primary-text {
+    color: rgb(15 23 42) !important;
+  }
+
+  .text-secondary, .secondary-text {
+    color: rgb(51 65 85) !important;
+  }
+
+  .text-muted, .muted-text {
+    color: rgb(100 116 139) !important;
+  }
+
+  .text-light, .light-text {
+    color: rgb(148 163 184) !important;
+  }
+
+  /* Forcer les couleurs dans les tables et listes */
+  table, table * {
+    color: rgb(51 65 85) !important;
+  }
+
+  ul, ol, li {
+    color: rgb(51 65 85) !important;
+  }
+
+  /* Couleurs pour les liens */
+  a {
+    color: rgb(59 130 246) !important;
+  }
+
+  a:hover {
+    color: rgb(37 99 235) !important;
   }
 }
 
@@ -249,32 +289,25 @@
 
   /* Labels et textes avec couleurs définitives */
   .label-text {
-    @apply text-slate-800 font-medium;
+    color: rgb(30 41 59) !important;
+    font-weight: 500;
   }
 
   .input-text {
-    @apply text-slate-900;
+    color: rgb(15 23 42) !important;
   }
 
   .placeholder-text {
-    @apply text-slate-500;
+    color: rgb(148 163 184) !important;
   }
 
-  /* Couleurs spécifiques pour une meilleure lisibilité */
-  .text-primary {
-    @apply text-slate-900;
+  /* Correction spécifique pour éliminer le marron */
+  .no-brown {
+    color: rgb(51 65 85) !important;
   }
 
-  .text-secondary {
-    @apply text-slate-700;
-  }
-
-  .text-muted {
-    @apply text-slate-600;
-  }
-
-  .text-light {
-    @apply text-slate-500;
+  .no-brown * {
+    color: inherit !important;
   }
 }
 
@@ -310,6 +343,27 @@
   /* Responsive Container */
   .container-modern {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Force text colors utilities */
+  .force-slate-900 {
+    color: rgb(15 23 42) !important;
+  }
+
+  .force-slate-800 {
+    color: rgb(30 41 59) !important;
+  }
+
+  .force-slate-700 {
+    color: rgb(51 65 85) !important;
+  }
+
+  .force-slate-600 {
+    color: rgb(71 85 105) !important;
+  }
+
+  .force-slate-500 {
+    color: rgb(100 116 139) !important;
   }
 }
 
@@ -403,22 +457,45 @@
   @apply bg-blue-900/30 text-blue-300 border-blue-400;
 }
 
-/* Force de couleurs spécifiques pour éviter le marron */
-p, span, div, label, button {
+/* Correction globale pour éliminer complètement le marron */
+* {
   color: inherit;
 }
 
-/* Correction spécifique pour les boutons qui disparaissent */
+/* Spécifique pour les éléments qui gardent le marron */
+[style*="color: rgb(120"] {
+  color: rgb(51 65 85) !important;
+}
+
+/* Correction pour les éléments dynamiques */
+.react-element, .dynamic-text {
+  color: rgb(51 65 85) !important;
+}
+
+/* Override pour tous les textes potentiellement marron */
+body * {
+  color: inherit !important;
+}
+
+body *:not(.text-white):not(.text-blue-500):not(.text-green-500):not(.text-red-500):not(.text-yellow-500):not(.text-purple-500) {
+  color: rgb(51 65 85) !important;
+}
+
+/* Force la couleur pour les composants spécifiques */
+.lucide, .lucide-react {
+  color: inherit !important;
+}
+
 button:hover {
   opacity: 1 !important;
   visibility: visible !important;
 }
 
-/* Correction pour les éléments interactifs */
 .interactive-element {
-  @apply text-slate-800 transition-colors duration-200;
+  color: rgb(51 65 85) !important;
+  transition: colors 0.2s;
 }
 
 .interactive-element:hover {
-  @apply text-slate-900;
+  color: rgb(30 41 59) !important;
 }
