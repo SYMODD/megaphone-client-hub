@@ -9,6 +9,7 @@
     --card: 255 255 255;
     --card-foreground: 15 23 42;
     
+    /* Force popover background to be white and opaque */
     --popover: 255 255 255;
     --popover-foreground: 15 23 42;
     
