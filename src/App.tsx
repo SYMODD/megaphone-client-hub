@@ -36,19 +36,21 @@ const App = () => (
             {/* Redirection automatique vers /agent */}
             <Route path="/" element={<Navigate to="/agent" replace />} />
             
-            {/* Redirection de /auth vers /agent */}
-            <Route path="/auth" element={<Navigate to="/agent" replace />} />
+            {/* Pages de connexion publiques */}
+            <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/agent" element={<AgentLogin />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/superviseur" element={<SuperviseurLogin />} />
             
+            {/* Dashboard - accessible aux admin et superviseur */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Index />
               </ProtectedRoute>
             } />
             
+            {/* Pages protégées - accessible à tous les utilisateurs authentifiés */}
             <Route path="/base-clients" element={
               <ProtectedRoute>
                 <BaseClients />
@@ -85,13 +87,14 @@ const App = () => (
               </ProtectedRoute>
             } />
             
+            {/* Pages admin uniquement */}
             <Route path="/users" element={
               <RoleProtectedRoute allowedRoles={['admin']}>
                 <UserManagement />
               </RoleProtectedRoute>
             } />
             
-            {/* Routes pour les contrats - ajout de la redirection */}
+            {/* Routes pour les contrats */}
             <Route path="/contracts" element={
               <ProtectedRoute>
                 <Contracts />

@@ -20,9 +20,9 @@ import { useAgentData } from "@/hooks/useAgentData";
 const Index = () => {
   const { user, profile, loading } = useAuth();
 
-  console.log("User:", user);
-  console.log("Profile:", profile);
-  console.log("Loading:", loading);
+  console.log("Dashboard - User:", user);
+  console.log("Dashboard - Profile:", profile);
+  console.log("Dashboard - Loading:", loading);
 
   // Show loading while checking auth state
   if (loading) {
@@ -36,8 +36,9 @@ const Index = () => {
     );
   }
 
-  // Early return for unauthenticated users
+  // Early return for unauthenticated users - redirect to agent login
   if (!user) {
+    console.log("No user found, redirecting to /agent");
     return <Navigate to="/agent" replace />;
   }
 
@@ -53,15 +54,21 @@ const Index = () => {
     );
   }
 
+  console.log("Profile role:", profile.role);
+
   // Redirect agents to their specific page
   if (profile.role === "agent") {
+    console.log("Agent detected, redirecting to /nouveau-client");
     return <Navigate to="/nouveau-client" replace />;
   }
 
   // Only admin and superviseur can access the dashboard
   if (profile.role !== "admin" && profile.role !== "superviseur") {
+    console.log(`Role ${profile.role} not allowed on dashboard, redirecting to /agent`);
     return <Navigate to="/agent" replace />;
   }
+
+  console.log("User authorized for dashboard, loading components...");
 
   // Now we can safely call hooks since we know we're not redirecting
   const adminFilters = useAdminFilters();
