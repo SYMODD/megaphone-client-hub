@@ -15,7 +15,7 @@ export const useCINOCR = () => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('apikey', apiKey);
-      formData.append('language', 'ara');
+      formData.append('language', 'fre'); // Changé vers français
       formData.append('isOverlayRequired', 'true');
       formData.append('detectOrientation', 'true');
       formData.append('scale', 'true');
@@ -75,38 +75,127 @@ const extractCINData = (text: string): any => {
   const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   const cinData: any = {};
 
-  // Recherche patterns typiques des CIN marocaines
-  for (const line of lines) {
-    // Numéro CIN (format: lettres + chiffres)
-    const cinMatch = line.match(/[A-Z]{1,2}\d{6,8}/);
-    if (cinMatch && !cinData.numero_cin) {
-      cinData.numero_cin = cinMatch[0];
-    }
+  // Recherche patterns spécifiques pour CIN marocaine en français
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const nextLine = i + 1 < lines.length ? lines[i + 1] : "";
+    
+    console.log(`Processing line ${i}: "${line}"`);
 
-    // Recherche nom et prénom
-    if (line.includes('NOM') || line.includes('اللقب')) {
-      const nameMatch = line.match(/(?:NOM|اللقب)[:\s]+([A-Z\s]+)/);
-      if (nameMatch) {
-        cinData.nom = nameMatch[1].trim();
+    // Numéro CIN - patterns français typiques
+    if (!cinData.numero_cin) {
+      // Pattern principal: lettres suivies de chiffres
+      const cinMatches = [
+        line.match(/\b([A-Z]{1,2}\d{6,8})\b/),
+        line.match(/N[°o]\s*:?\s*([A-Z]{1,2}\d{6,8})/i),
+        line.match(/CIN[:\s]+([A-Z]{1,2}\d{6,8})/i),
+        line.match(/IDENTITE[:\s]+([A-Z]{1,2}\d{6,8})/i)
+      ];
+      
+      for (const match of cinMatches) {
+        if (match) {
+          cinData.numero_cin = match[1];
+          console.log("Found CIN number:", match[1]);
+          break;
+        }
       }
     }
 
-    if (line.includes('PRENOM') || line.includes('الاسم')) {
-      const prenomMatch = line.match(/(?:PRENOM|الاسم)[:\s]+([A-Z\s]+)/);
-      if (prenomMatch) {
-        cinData.prenom = prenomMatch[1].trim();
+    // Nom - recherche "NOM" en français
+    if (line.toLowerCase().includes('nom') && !line.toLowerCase().includes('prenom')) {
+      const nomPatterns = [
+        line.match(/NOM[:\s]+([A-Z\s]+)/i),
+        line.match(/^([A-Z\s]+)$/), // Si la ligne ne contient que des majuscules
+      ];
+      
+      for (const match of nomPatterns) {
+        if (match && match[1].length > 1 && match[1].length < 30) {
+          cinData.nom = match[1].trim();
+          console.log("Found nom:", match[1]);
+          break;
+        }
+      }
+      
+      // Si on trouve "NOM" et que la ligne suivante contient le nom
+      if (nextLine && /^[A-Z\s]+$/.test(nextLine) && nextLine.length > 1) {
+        cinData.nom = nextLine.trim();
+        console.log("Found nom on next line:", nextLine);
       }
     }
 
-    // Date de naissance
-    const dateMatch = line.match(/(\d{2}\/\d{2}\/\d{4})/);
-    if (dateMatch && !cinData.date_naissance) {
-      cinData.date_naissance = dateMatch[1];
+    // Prénom - recherche "PRENOM" en français
+    if (line.toLowerCase().includes('prenom')) {
+      const prenomPatterns = [
+        line.match(/PRENOM[:\s]+([A-Z\s]+)/i),
+        line.match(/PRENOMS?[:\s]+([A-Z\s]+)/i),
+      ];
+      
+      for (const match of prenomPatterns) {
+        if (match && match[1].length > 1 && match[1].length < 30) {
+          cinData.prenom = match[1].trim();
+          console.log("Found prenom:", match[1]);
+          break;
+        }
+      }
+      
+      // Si on trouve "PRENOM" et que la ligne suivante contient le prénom
+      if (nextLine && /^[A-Z\s]+$/.test(nextLine) && nextLine.length > 1) {
+        cinData.prenom = nextLine.trim();
+        console.log("Found prenom on next line:", nextLine);
+      }
+    }
+
+    // Date de naissance - patterns français
+    if (!cinData.date_naissance) {
+      const datePatterns = [
+        line.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/),
+        line.match(/NE\(E\)\s+LE[:\s]+(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/i),
+        line.match(/NAISSANCE[:\s]+(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/i),
+      ];
+      
+      for (const match of datePatterns) {
+        if (match) {
+          const day = match[1].padStart(2, '0');
+          const month = match[2].padStart(2, '0');
+          const year = match[3];
+          cinData.date_naissance = `${day}/${month}/${year}`;
+          console.log("Found date de naissance:", cinData.date_naissance);
+          break;
+        }
+      }
+    }
+
+    // Lieu de naissance - patterns français
+    if (!cinData.lieu_naissance) {
+      const lieuPatterns = [
+        line.match(/NE\(E\)\s+A[:\s]+([A-Z\s]+)/i),
+        line.match(/LIEU[:\s]+([A-Z\s]+)/i),
+        line.match(/A[:\s]+([A-Z][A-Z\s]+)$/i),
+      ];
+      
+      for (const match of lieuPatterns) {
+        if (match && match[1].length > 2 && match[1].length < 50) {
+          cinData.lieu_naissance = match[1].trim();
+          console.log("Found lieu de naissance:", match[1]);
+          break;
+        }
+      }
     }
   }
 
   // Nationalité par défaut pour CIN marocaine
   cinData.nationalite = "Maroc";
+
+  // Nettoyage des données extraites
+  if (cinData.nom) {
+    cinData.nom = cinData.nom.replace(/[^A-Z\s]/g, '').trim();
+  }
+  if (cinData.prenom) {
+    cinData.prenom = cinData.prenom.replace(/[^A-Z\s]/g, '').trim();
+  }
+  if (cinData.lieu_naissance) {
+    cinData.lieu_naissance = cinData.lieu_naissance.replace(/[^A-Z\s]/g, '').trim();
+  }
 
   console.log("Final extracted CIN data:", cinData);
   return cinData;
