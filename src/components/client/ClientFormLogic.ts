@@ -21,6 +21,7 @@ export const useClientFormLogic = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType | null>(null);
   
   const [formData, setFormData] = useState<ClientFormData>({
     nom: "",
@@ -34,6 +35,11 @@ export const useClientFormLogic = () => {
 
   const handleInputChange = (field: keyof ClientFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleDocumentTypeSelect = (documentType: DocumentType) => {
+    setSelectedDocumentType(documentType);
+    setFormData(prev => ({ ...prev, document_type: documentType }));
   };
 
   const handleMRZDataExtracted = (mrzData: MRZData, documentType: DocumentType) => {
@@ -152,8 +158,10 @@ export const useClientFormLogic = () => {
   return {
     formData,
     isLoading,
+    selectedDocumentType,
     handleInputChange,
     handleSubmit,
-    handleMRZDataExtracted
+    handleMRZDataExtracted,
+    handleDocumentTypeSelect
   };
 };
