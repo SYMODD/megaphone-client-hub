@@ -16,6 +16,7 @@ import SuperviseurLogin from "./pages/SuperviseurLogin";
 import BaseClients from "./pages/BaseClients";
 import NewClient from "./pages/NewClient";
 import CINScanner from "./pages/CINScanner";
+import PassportMarocainScanner from "./pages/PassportMarocainScanner";
 import PassportEtrangerScanner from "./pages/PassportEtrangerScanner";
 import CarteSejourScanner from "./pages/CarteSejourScanner";
 import UserManagement from "./pages/UserManagement";
@@ -59,6 +60,12 @@ const App = () => (
             <Route path="/scanner-cin" element={
               <ProtectedRoute>
                 <CINScanner />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/scanner-passeport-marocain" element={
+              <ProtectedRoute>
+                <PassportMarocainScanner />
               </ProtectedRoute>
             } />
 

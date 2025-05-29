@@ -1,6 +1,7 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, IdCard, BookOpen, Globe, CreditCard } from "lucide-react";
+import { ArrowLeft, IdCard, BookOpen, Globe } from "lucide-react";
 import { DocumentType, documentTypes } from "@/types/documentTypes";
 import { useNavigate } from "react-router-dom";
 
@@ -14,7 +15,6 @@ const iconMap = {
   'id-card': IdCard,
   'book-open': BookOpen,
   'globe': Globe,
-  'credit-card': CreditCard,
 };
 
 export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: DocumentTypeSelectorProps) => {
@@ -26,15 +26,14 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
       case 'cin':
         navigate('/scanner-cin');
         break;
+      case 'passeport_marocain':
+        navigate('/scanner-passeport-marocain');
+        break;
       case 'passeport_etranger':
         navigate('/scanner-passeport-etranger');
         break;
       case 'carte_sejour':
         navigate('/scanner-carte-sejour');
-        break;
-      case 'passeport_marocain':
-        // Keep the existing logic for Moroccan passport
-        onTypeSelect(docType);
         break;
       default:
         onTypeSelect(docType);
