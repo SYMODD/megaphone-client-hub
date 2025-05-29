@@ -8,6 +8,7 @@ import { PersonalInfoSection } from "./PersonalInfoSection";
 import { RegistrationSection } from "./RegistrationSection";
 import { FormActions } from "./FormActions";
 import { CINScanner } from "./CINScanner";
+import { uploadClientPhoto } from "@/utils/storageUtils";
 
 interface CINFormData {
   nom: string;
@@ -17,7 +18,6 @@ interface CINFormData {
   scannedImage: string | null;
   observations: string;
   date_enregistrement: string;
-  document_type: 'cin';
 }
 
 export const CINForm = () => {
@@ -32,8 +32,7 @@ export const CINForm = () => {
     numero_passeport: "",
     scannedImage: null,
     observations: "",
-    date_enregistrement: new Date().toISOString().split('T')[0],
-    document_type: 'cin'
+    date_enregistrement: new Date().toISOString().split('T')[0]
   });
 
   const handleInputChange = (field: keyof CINFormData, value: string) => {
@@ -43,47 +42,31 @@ export const CINForm = () => {
   const handleCINDataExtracted = (extractedData: any) => {
     console.log("Données CIN extraites:", extractedData);
     
-    setFormData(prev => ({
-      ...prev,
-      nom: extractedData.nom || prev.nom,
-      prenom: extractedData.prenom || prev.prenom,
-      nationalite: extractedData.nationalite || prev.nationalite,
-      numero_passeport: extractedData.numero_cin || prev.numero_passeport,
-    }));
+    // Mapper les données extraites vers les champs du formulaire
+    const updatedData: Partial<CINFormData> = {};
+    
+    if (extractedData.nom) {
+      updatedData.nom = extractedData.nom;
+    }
+    if (extractedData.prenom) {
+      updatedData.prenom = extractedData.prenom;
+    }
+    if (extractedData.nationalite) {
+      updatedData.nationalite = extractedData.nationalite;
+    }
+    // Utiliser numero_cin pour le champ numero_passeport
+    if (extractedData.numero_cin) {
+      updatedData.numero_passeport = extractedData.numero_cin;
+    }
 
+    setFormData(prev => ({ ...prev, ...updatedData }));
+
+    // Ajouter l'information d'extraction aux observations
     const scanInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: CIN`;
     setFormData(prev => ({
       ...prev,
       observations: prev.observations ? `${prev.observations}\n\n${scanInfo}` : scanInfo
     }));
-  };
-
-  const uploadImage = async (imageBase64: string): Promise<string | null> => {
-    try {
-      const response = await fetch(imageBase64);
-      const blob = await response.blob();
-      const filename = `cin-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.jpg`;
-      
-      const { data, error } = await supabase.storage
-        .from('client-photos')
-        .upload(filename, blob, { contentType: 'image/jpeg' });
-
-      if (error) {
-        console.error('Error uploading image:', error);
-        toast.error("Erreur lors du téléchargement de l'image");
-        return null;
-      }
-
-      const { data: publicURL } = supabase.storage
-        .from('client-photos')
-        .getPublicUrl(data.path);
-
-      return publicURL.publicUrl;
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast.error("Erreur lors du téléchargement de l'image");
-      return null;
-    }
   };
 
   const handleSubmit = async () => {
@@ -92,35 +75,50 @@ export const CINForm = () => {
       return;
     }
 
+    // Validation des champs obligatoires
+    if (!formData.nom || !formData.prenom || !formData.numero_passeport) {
+      toast.error("Veuillez remplir tous les champs obligatoires (nom, prénom, numéro de document)");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
+      console.log("Données du formulaire à enregistrer:", formData);
+      
       let photoUrl = null;
       
       if (formData.scannedImage) {
-        photoUrl = await uploadImage(formData.scannedImage);
+        photoUrl = await uploadClientPhoto(formData.scannedImage, 'cin');
+        if (!photoUrl) {
+          toast.error("Erreur lors du téléchargement de l'image. Enregistrement sans photo.");
+        }
       }
+
+      // Préparer les données pour l'insertion
+      const clientData = {
+        nom: formData.nom.trim(),
+        prenom: formData.prenom.trim(),
+        nationalite: formData.nationalite,
+        numero_passeport: formData.numero_passeport.trim(),
+        photo_url: photoUrl,
+        observations: formData.observations,
+        date_enregistrement: formData.date_enregistrement,
+        agent_id: user.id
+      };
+
+      console.log("Données client à insérer:", clientData);
 
       const { error } = await supabase
         .from('clients')
-        .insert({
-          nom: formData.nom,
-          prenom: formData.prenom,
-          nationalite: formData.nationalite,
-          numero_passeport: formData.numero_passeport,
-          photo_url: photoUrl,
-          observations: formData.observations,
-          date_enregistrement: formData.date_enregistrement,
-          agent_id: user.id,
-          document_type: formData.document_type
-        });
+        .insert(clientData);
 
       if (error) {
         console.error('Error inserting client:', error);
         if (error.code === '23505') {
-          toast.error("Ce numéro de document existe déjà");
+          toast.error("Ce numéro de document existe déjà dans la base de données");
         } else {
-          toast.error("Erreur lors de l'enregistrement du client");
+          toast.error(`Erreur lors de l'enregistrement du client: ${error.message}`);
         }
         return;
       }
