@@ -19,7 +19,7 @@ const Navigation = memo(() => {
       // Pour les agents : seulement nouveau client et contrats (sans dashboard)
       return [
         { to: "/nouveau-client", icon: Plus, label: "Nouveau Client", color: "from-green-500 to-emerald-600" },
-        { to: "/contrats", icon: FileText, label: "Contrats", color: "from-purple-500 to-purple-600" }
+        { to: "/contracts", icon: FileText, label: "Contrats", color: "from-purple-500 to-purple-600" }
       ];
     } else {
       // Pour admin et superviseur : accès complet
@@ -27,11 +27,11 @@ const Navigation = memo(() => {
         { to: "/", icon: Users, label: "Dashboard", color: "from-blue-500 to-blue-600" },
         { to: "/nouveau-client", icon: Plus, label: "Nouveau Client", color: "from-green-500 to-emerald-600" },
         { to: "/base-clients", icon: Database, label: "Base Clients", color: "from-blue-500 to-blue-600" },
-        { to: "/contrats", icon: FileText, label: "Contrats", color: "from-purple-500 to-purple-600" },
+        { to: "/contracts", icon: FileText, label: "Contrats", color: "from-purple-500 to-purple-600" },
       ];
 
       if (isAdmin) {
-        baseItems.push({ to: "/gestion-utilisateurs", icon: Shield, label: "Gestion Utilisateurs", color: "from-red-500 to-red-600" });
+        baseItems.push({ to: "/users", icon: Shield, label: "Gestion Utilisateurs", color: "from-red-500 to-red-600" });
       }
 
       return baseItems;
@@ -54,7 +54,7 @@ const Navigation = memo(() => {
           <div className="flex items-center space-x-2 overflow-x-auto">
             {navigationItems.map((item) => (
               <Link key={item.to + item.label} to={item.to}>
-                <Button variant="ghost" size="sm" className="whitespace-nowrap hover:scale-105 transition-all duration-200 min-w-fit">
+                <Button variant="ghost" size="sm" className="whitespace-nowrap hover:scale-105 transition-all duration-200 min-w-fit text-slate-700 hover:text-slate-900 hover:bg-slate-50">
                   <div className={`w-4 h-4 mr-2 bg-gradient-to-r ${item.color} rounded p-0.5`}>
                     <item.icon className="w-full h-full text-white" />
                   </div>
@@ -78,7 +78,7 @@ const Navigation = memo(() => {
               variant="ghost" 
               size="sm"
               onClick={toggleMobileMenu}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-700 hover:text-slate-900"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               <span className="ml-2 text-sm font-medium">Menu</span>
@@ -102,7 +102,7 @@ const Navigation = memo(() => {
                     <Button 
                       variant="ghost" 
                       size="lg" 
-                      className="w-full justify-start h-auto p-4 hover:scale-[1.02] transition-all duration-200 bg-gradient-to-r from-white to-slate-50 hover:from-slate-50 hover:to-slate-100 border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md"
+                      className="w-full justify-start h-auto p-4 hover:scale-[1.02] transition-all duration-200 bg-gradient-to-r from-white to-slate-50 hover:from-slate-50 hover:to-slate-100 border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md text-slate-800 hover:text-slate-900"
                     >
                       <div className={`w-10 h-10 mr-4 bg-gradient-to-r ${item.color} rounded-xl flex items-center justify-center shadow-md`}>
                         <item.icon className="w-5 h-5 text-white" />
