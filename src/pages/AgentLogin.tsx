@@ -37,8 +37,11 @@ const AgentLogin = () => {
 
   // Redirect based on role after authentication
   if (shouldRedirect) {
-    if (profile?.role === "admin" || profile?.role === "superviseur") {
-      return <Navigate to="/dashboard" replace />;
+    // Si l'utilisateur n'est pas agent, le rediriger vers sa page de connexion appropriée
+    if (profile?.role === "admin") {
+      return <Navigate to="/admin" replace />;
+    } else if (profile?.role === "superviseur") {
+      return <Navigate to="/superviseur" replace />;
     } else if (profile?.role === "agent") {
       return <Navigate to="/nouveau-client" replace />;
     }
