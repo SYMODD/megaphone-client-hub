@@ -22,6 +22,7 @@ const Index = () => {
 
   console.log("User:", user);
   console.log("Profile:", profile);
+  console.log("Loading:", loading);
 
   // Show loading while checking auth state
   if (loading) {
@@ -40,13 +41,25 @@ const Index = () => {
     return <Navigate to="/agent" replace />;
   }
 
+  // Attendre que le profil soit chargé avant de faire des redirections
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-slate-600">Chargement du profil...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Redirect agents to their specific page
-  if (profile?.role === "agent") {
+  if (profile.role === "agent") {
     return <Navigate to="/nouveau-client" replace />;
   }
 
   // Only admin and superviseur can access the dashboard
-  if (profile && profile.role !== "admin" && profile.role !== "superviseur") {
+  if (profile.role !== "admin" && profile.role !== "superviseur") {
     return <Navigate to="/agent" replace />;
   }
 
@@ -54,7 +67,7 @@ const Index = () => {
   const adminFilters = useAdminFilters();
 
   // Use the filters only for admin and superviseur
-  const isAdminOrSuperviseur = profile?.role === "admin" || profile?.role === "superviseur";
+  const isAdminOrSuperviseur = profile.role === "admin" || profile.role === "superviseur";
   const agentData = useAgentData(isAdminOrSuperviseur ? adminFilters.filters : undefined);
 
   const getPointLabel = (point: string) => {
@@ -93,35 +106,33 @@ const Index = () => {
           </div>
           
           {/* Enhanced User Profile Card - Mobile Optimized */}
-          {profile && (
-            <Card className="max-w-md mx-auto bg-gradient-to-br from-white to-slate-50 border-0 shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex flex-col items-center space-y-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-md">
-                    <User className="w-6 h-6 text-white" />
-                  </div>
-                  
-                  <div className="text-center space-y-2">
-                    <h2 className="text-lg font-bold text-slate-800">
-                      {profile.prenom} {profile.nom}
-                    </h2>
-                    <RoleIndicator role={profile.role} size="lg" />
-                  </div>
-                  
-                  {profile.point_operation && (
-                    <div className="flex items-center space-x-2 text-slate-600 bg-slate-100 rounded-lg px-3 py-2">
-                      <MapPin className="w-4 h-4 flex-shrink-0" />
-                      <span className="font-medium text-sm">{getPointLabel(profile.point_operation)}</span>
-                    </div>
-                  )}
-                  
-                  <div className="text-xs text-slate-400 font-mono bg-slate-100 rounded px-2 py-1 break-all">
-                    {user.email}
-                  </div>
+          <Card className="max-w-md mx-auto bg-gradient-to-br from-white to-slate-50 border-0 shadow-lg">
+            <CardContent className="p-4">
+              <div className="flex flex-col items-center space-y-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-md">
+                  <User className="w-6 h-6 text-white" />
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                
+                <div className="text-center space-y-2">
+                  <h2 className="text-lg font-bold text-slate-800">
+                    {profile.prenom} {profile.nom}
+                  </h2>
+                  <RoleIndicator role={profile.role} size="lg" />
+                </div>
+                
+                {profile.point_operation && (
+                  <div className="flex items-center space-x-2 text-slate-600 bg-slate-100 rounded-lg px-3 py-2">
+                    <MapPin className="w-4 h-4 flex-shrink-0" />
+                    <span className="font-medium text-sm">{getPointLabel(profile.point_operation)}</span>
+                  </div>
+                )}
+                
+                <div className="text-xs text-slate-400 font-mono bg-slate-100 rounded px-2 py-1 break-all">
+                  {user.email}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           <div className="flex flex-wrap items-center justify-center gap-2">
             <Badge variant="secondary" className="px-3 py-1">
