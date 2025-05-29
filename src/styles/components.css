@@ -168,6 +168,75 @@
   .interactive-element:hover {
     color: rgb(30 41 59) !important;
   }
+
+  /* Fixes spécifiques pour les popups et modals */
+  [data-radix-popper-content-wrapper] {
+    z-index: 50 !important;
+  }
+
+  /* Popover Content - Force background blanc opaque */
+  [data-radix-portal] {
+    z-index: 50;
+  }
+
+  [data-radix-portal] > div {
+    background-color: white !important;
+    border: 1px solid rgb(226 232 240) !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+  }
+
+  /* Command palette et combobox */
+  [cmdk-root] {
+    background-color: white !important;
+  }
+
+  [cmdk-overlay] {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+  }
+
+  [cmdk-dialog] {
+    background-color: white !important;
+    border: 1px solid rgb(226 232 240) !important;
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25) !important;
+  }
+
+  /* Dialog et AlertDialog */
+  [data-state="open"][data-radix-dialog-overlay] {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+  }
+
+  [data-state="open"][data-radix-dialog-content] {
+    background-color: white !important;
+    border: 1px solid rgb(226 232 240) !important;
+  }
+
+  /* Dropdown menu */
+  [data-radix-dropdown-menu-content] {
+    background-color: white !important;
+    border: 1px solid rgb(226 232 240) !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+  }
+
+  /* Select dropdown */
+  [data-radix-select-content] {
+    background-color: white !important;
+    border: 1px solid rgb(226 232 240) !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+  }
+
+  /* Tooltip */
+  [data-radix-tooltip-content] {
+    background-color: rgb(30 41 59) !important;
+    color: white !important;
+    border: 1px solid rgb(51 65 85) !important;
+  }
+
+  /* HoverCard */
+  [data-radix-hover-card-content] {
+    background-color: white !important;
+    border: 1px solid rgb(226 232 240) !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+  }
 }
 
 /* Dark Mode Improvements */
