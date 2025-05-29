@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MRZData } from "@/services/ocrService";
+import { DocumentType } from "@/types/documentTypes";
 
 interface ClientFormData {
   nom: string;
@@ -14,6 +14,7 @@ interface ClientFormData {
   scannedImage: string | null;
   observations: string;
   date_enregistrement: string;
+  document_type?: DocumentType;
 }
 
 export const useClientFormLogic = () => {
@@ -35,8 +36,8 @@ export const useClientFormLogic = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleMRZDataExtracted = (mrzData: MRZData) => {
-    console.log("Applying MRZ data to form:", mrzData);
+  const handleMRZDataExtracted = (mrzData: MRZData, documentType: DocumentType) => {
+    console.log("Applying MRZ data to form:", mrzData, "Document type:", documentType);
     
     setFormData(prev => ({
       ...prev,
@@ -44,10 +45,18 @@ export const useClientFormLogic = () => {
       prenom: mrzData.prenom || prev.prenom,
       nationalite: mrzData.nationalite || prev.nationalite,
       numero_passeport: mrzData.numero_passeport || prev.numero_passeport,
+      document_type: documentType
     }));
 
-    // Add MRZ extraction info to observations
-    const mrzInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')}`;
+    // Add extraction info to observations with document type
+    const documentTypeLabels = {
+      'cin': 'CIN',
+      'passeport_marocain': 'Passeport Marocain',
+      'passeport_etranger': 'Passeport Étranger',
+      'carte_sejour': 'Carte de Séjour'
+    };
+
+    const mrzInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: ${documentTypeLabels[documentType]}`;
     setFormData(prev => ({
       ...prev,
       observations: prev.observations ? `${prev.observations}\n\n${mrzInfo}` : mrzInfo
@@ -105,7 +114,7 @@ export const useClientFormLogic = () => {
         photoUrl = await uploadImage(formData.scannedImage);
       }
 
-      // Insert client data
+      // Insert client data with document type
       const { error } = await supabase
         .from('clients')
         .insert({
@@ -116,7 +125,8 @@ export const useClientFormLogic = () => {
           photo_url: photoUrl,
           observations: formData.observations,
           date_enregistrement: formData.date_enregistrement,
-          agent_id: user.id
+          agent_id: user.id,
+          document_type: formData.document_type
         });
 
       if (error) {
