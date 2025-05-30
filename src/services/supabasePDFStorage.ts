@@ -33,7 +33,7 @@ export class SupabasePDFStorage {
       const templatesBucket = buckets.find(bucket => bucket.name === BUCKET_NAME);
       
       if (!templatesBucket) {
-        console.error(`Bucket ${BUCKET_NAME} not found. Please check Supabase configuration.`);
+        console.error(`Bucket ${BUCKET_NAME} not found. Storage policies may not be configured correctly.`);
         return false;
       }
 
@@ -113,15 +113,15 @@ export class SupabasePDFStorage {
   }
 
   static async saveTemplate(file: File, fileName: string): Promise<PDFTemplate> {
-    // Check bucket availability first
+    // Check bucket availability and permissions
     const bucketExists = await this.ensureBucket();
     if (!bucketExists) {
-      throw new Error('Storage bucket not available. Please contact support.');
+      throw new Error('Storage bucket not available. Please check your configuration.');
     }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      throw new Error('User not authenticated');
+      throw new Error('User not authenticated. Please log in to upload templates.');
     }
 
     const templateId = Date.now().toString();
@@ -131,8 +131,8 @@ export class SupabasePDFStorage {
     console.log('File size:', file.size, 'bytes');
     console.log('File type:', file.type);
 
-    // Upload file to Supabase Storage
-    const { error: uploadError } = await supabase.storage
+    // Upload file to Supabase Storage with proper error handling
+    const { data, error: uploadError } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(filePath, file, {
         contentType: 'application/pdf',
@@ -140,14 +140,22 @@ export class SupabasePDFStorage {
       });
 
     if (uploadError) {
-      console.error('Upload error:', uploadError);
-      throw new Error(`Failed to upload file: ${uploadError.message}`);
+      console.error('Upload error details:', uploadError);
+      
+      // Provide more specific error messages
+      if (uploadError.message.includes('row-level security')) {
+        throw new Error('Storage permissions error. Please contact support if this persists.');
+      } else if (uploadError.message.includes('duplicate')) {
+        throw new Error('A file with this name already exists. Please try again.');
+      } else {
+        throw new Error(`Failed to upload file: ${uploadError.message}`);
+      }
     }
 
-    console.log('File uploaded successfully, saving metadata...');
+    console.log('File uploaded successfully to:', data?.path);
 
     // Save template metadata to database
-    const { data, error } = await supabase
+    const { data: templateData, error: dbError } = await supabase
       .from('pdf_templates')
       .insert({
         id: templateId,
@@ -160,21 +168,21 @@ export class SupabasePDFStorage {
       .select()
       .single();
 
-    if (error) {
-      console.error('Database insert error:', error);
+    if (dbError) {
+      console.error('Database insert error:', dbError);
       // Clean up uploaded file if database insert fails
       await supabase.storage.from(BUCKET_NAME).remove([filePath]);
-      throw new Error(`Failed to save template metadata: ${error.message}`);
+      throw new Error(`Failed to save template metadata: ${dbError.message}`);
     }
 
-    console.log('Template saved successfully:', data);
+    console.log('Template saved successfully:', templateData);
 
     return {
-      id: data.id,
-      name: data.name,
-      fileName: data.file_name,
-      uploadDate: data.upload_date,
-      filePath: data.file_path
+      id: templateData.id,
+      name: templateData.name,
+      fileName: templateData.file_name,
+      uploadDate: templateData.upload_date,
+      filePath: templateData.file_path
     };
   }
 
