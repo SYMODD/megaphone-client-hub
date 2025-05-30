@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ interface FieldMapping {
 interface PDFFieldMappingProps {
   onFieldMappingsChange: (mappings: FieldMapping[]) => void;
   onAnalyzePDF?: () => void;
+  initialMappings?: FieldMapping[];
 }
 
 const CLIENT_FIELDS = [
@@ -36,27 +37,43 @@ const CLIENT_FIELDS = [
   { value: 'annee_courante', label: 'Année courante' },
 ];
 
-export const PDFFieldMapping = ({ onFieldMappingsChange, onAnalyzePDF }: PDFFieldMappingProps) => {
-  const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([
-    { 
-      id: '1', 
-      placeholder: '{{client.nom_complet}}', 
-      clientField: 'nom_complet', 
-      description: 'Nom complet du client',
-      x: 150,
-      y: 700,
-      fontSize: 12
-    },
-    { 
-      id: '2', 
-      placeholder: '{{client.nationalite}}', 
-      clientField: 'nationalite', 
-      description: 'Nationalité du client',
-      x: 150,
-      y: 670,
-      fontSize: 12
-    },
-  ]);
+export const PDFFieldMapping = ({ onFieldMappingsChange, onAnalyzePDF, initialMappings = [] }: PDFFieldMappingProps) => {
+  const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([]);
+
+  // Charger les mappings initiaux
+  useEffect(() => {
+    if (initialMappings.length > 0) {
+      setFieldMappings(initialMappings);
+    } else {
+      // Mappings par défaut si aucun mapping initial
+      const defaultMappings = [
+        { 
+          id: '1', 
+          placeholder: '{{client.nom_complet}}', 
+          clientField: 'nom_complet', 
+          description: 'Nom complet du client',
+          x: 150,
+          y: 700,
+          fontSize: 12
+        },
+        { 
+          id: '2', 
+          placeholder: '{{client.nationalite}}', 
+          clientField: 'nationalite', 
+          description: 'Nationalité du client',
+          x: 150,
+          y: 670,
+          fontSize: 12
+        },
+      ];
+      setFieldMappings(defaultMappings);
+    }
+  }, [initialMappings]);
+
+  // Notifier les changements
+  useEffect(() => {
+    onFieldMappingsChange(fieldMappings);
+  }, [fieldMappings, onFieldMappingsChange]);
 
   const addFieldMapping = () => {
     const newMapping: FieldMapping = {
@@ -70,13 +87,11 @@ export const PDFFieldMapping = ({ onFieldMappingsChange, onAnalyzePDF }: PDFFiel
     };
     const updated = [...fieldMappings, newMapping];
     setFieldMappings(updated);
-    onFieldMappingsChange(updated);
   };
 
   const removeFieldMapping = (id: string) => {
     const updated = fieldMappings.filter(mapping => mapping.id !== id);
     setFieldMappings(updated);
-    onFieldMappingsChange(updated);
   };
 
   const updateFieldMapping = (id: string, field: keyof FieldMapping, value: string | number) => {
@@ -86,7 +101,6 @@ export const PDFFieldMapping = ({ onFieldMappingsChange, onAnalyzePDF }: PDFFiel
         : mapping
     );
     setFieldMappings(updated);
-    onFieldMappingsChange(updated);
   };
 
   const addPresetFields = () => {
@@ -100,7 +114,6 @@ export const PDFFieldMapping = ({ onFieldMappingsChange, onAnalyzePDF }: PDFFiel
     
     const updated = [...fieldMappings, ...presetFields];
     setFieldMappings(updated);
-    onFieldMappingsChange(updated);
   };
 
   return (
@@ -122,6 +135,7 @@ export const PDFFieldMapping = ({ onFieldMappingsChange, onAnalyzePDF }: PDFFiel
               <li>• Définissez les coordonnées X et Y pour chaque champ (0,0 = coin inférieur gauche)</li>
               <li>• Les valeurs X et Y sont en points PDF (72 points = 1 pouce)</li>
               <li>• Utilisez la prévisualisation pour ajuster les positions</li>
+              <li>• Les configurations sont sauvegardées automatiquement pour chaque template</li>
             </ul>
           </div>
 

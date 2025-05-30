@@ -4,14 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, FileText, AlertCircle } from "lucide-react";
+import { Upload, FileText, AlertCircle, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface PDFTemplateUploadProps {
   onTemplateUploaded: (file: File, fileName: string) => void;
+  onCancel?: () => void;
 }
 
-export const PDFTemplateUpload = ({ onTemplateUploaded }: PDFTemplateUploadProps) => {
+export const PDFTemplateUpload = ({ onTemplateUploaded, onCancel }: PDFTemplateUploadProps) => {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const { toast } = useToast();
@@ -63,20 +64,22 @@ export const PDFTemplateUpload = ({ onTemplateUploaded }: PDFTemplateUploadProps
 
     setUploadedFile(pdfFile);
     onTemplateUploaded(pdfFile, pdfFile.name);
-    
-    toast({
-      title: "Succès",
-      description: `Template "${pdfFile.name}" uploadé avec succès.`,
-    });
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Upload className="w-5 h-5" />
-          Upload Template PDF
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Upload className="w-5 h-5" />
+            <CardTitle>Upload Template PDF</CardTitle>
+          </div>
+          {onCancel && (
+            <Button variant="ghost" size="sm" onClick={onCancel}>
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
         <CardDescription>
           Uploadez votre modèle de contrat PDF pour pouvoir y insérer les données clients
         </CardDescription>
@@ -138,7 +141,7 @@ export const PDFTemplateUpload = ({ onTemplateUploaded }: PDFTemplateUploadProps
             <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded">
               <AlertCircle className="w-4 h-4 text-green-600" />
               <p className="text-sm text-green-700">
-                Template prêt ! Vous pouvez maintenant configurer les champs à remplir.
+                Template prêt ! Il sera sauvegardé automatiquement.
               </p>
             </div>
           )}

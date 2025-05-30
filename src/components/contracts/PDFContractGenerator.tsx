@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { PDFTemplateUpload } from "./PDFTemplateUpload";
+import { PDFTemplateSelector } from "./PDFTemplateSelector";
 import { PDFFieldMapping } from "./PDFFieldMapping";
 import { ClientSelector } from "./ClientSelector";
-import { FileDown, Eye, Settings, Upload } from "lucide-react";
+import { FileDown, Eye, Settings, FileText, Upload } from "lucide-react";
 import { generatePDFContract, downloadPDFContract, previewPDFContract } from "@/utils/pdfContractGenerator";
+import { usePDFTemplates } from "@/hooks/usePDFTemplates";
 
 interface Client {
   id: string;
@@ -25,6 +27,9 @@ interface FieldMapping {
   placeholder: string;
   clientField: string;
   description?: string;
+  x?: number;
+  y?: number;
+  fontSize?: number;
 }
 
 interface PDFContractGeneratorProps {
@@ -32,35 +37,87 @@ interface PDFContractGeneratorProps {
 }
 
 export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => {
-  const [templateFile, setTemplateFile] = useState<File | null>(null);
-  const [templateName, setTemplateName] = useState<string>('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [showUpload, setShowUpload] = useState(false);
   const { toast } = useToast();
 
-  const handleTemplateUploaded = (file: File, fileName: string) => {
-    setTemplateFile(file);
-    setTemplateName(fileName);
-    setPreviewUrl(''); // Reset preview when new template is uploaded
+  const {
+    templates,
+    templateMappings,
+    saveTemplate,
+    deleteTemplate,
+    saveMappings,
+    getTemplate
+  } = usePDFTemplates();
+
+  const handleTemplateUploaded = async (file: File, fileName: string) => {
+    try {
+      const templateId = await saveTemplate(file, fileName);
+      setSelectedTemplateId(templateId);
+      setShowUpload(false);
+      setPreviewUrl('');
+
+      // Charger les mappings existants si disponibles
+      if (templateMappings[templateId]) {
+        setFieldMappings(templateMappings[templateId]);
+      } else {
+        setFieldMappings([]);
+      }
+
+      toast({
+        title: "Template uploadé avec succès",
+        description: `Le template "${fileName}" est maintenant disponible.`,
+      });
+    } catch (error) {
+      console.error('Erreur upload template:', error);
+    }
+  };
+
+  const handleTemplateSelect = async (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    setPreviewUrl('');
+
+    // Charger les mappings sauvegardés pour ce template
+    if (templateMappings[templateId]) {
+      setFieldMappings(templateMappings[templateId]);
+    } else {
+      setFieldMappings([]);
+    }
   };
 
   const handleFieldMappingsChange = (mappings: FieldMapping[]) => {
     setFieldMappings(mappings);
+    
+    // Sauvegarder automatiquement les mappings pour le template sélectionné
+    if (selectedTemplateId) {
+      saveMappings(selectedTemplateId, mappings);
+    }
   };
 
   const handleClientSelect = (client: Client) => {
     setSelectedClient(client);
   };
 
-  const canGenerate = templateFile && selectedClient && fieldMappings.length > 0;
+  const handleDeleteTemplate = (templateId: string) => {
+    deleteTemplate(templateId);
+    if (selectedTemplateId === templateId) {
+      setSelectedTemplateId(null);
+      setFieldMappings([]);
+      setPreviewUrl('');
+    }
+  };
+
+  const canGenerate = selectedTemplateId && selectedClient && fieldMappings.length > 0;
 
   const handleGenerateContract = async () => {
-    if (!canGenerate) {
+    if (!canGenerate || !selectedTemplateId) {
       toast({
         title: "Configuration incomplète",
-        description: "Veuillez uploader un template, sélectionner un client et configurer au moins un champ.",
+        description: "Veuillez sélectionner un template, un client et configurer au moins un champ.",
         variant: "destructive",
       });
       return;
@@ -69,7 +126,12 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
     setIsGenerating(true);
     
     try {
-      const pdfBytes = await generatePDFContract(templateFile!, selectedClient!, fieldMappings);
+      const templateFile = await getTemplate(selectedTemplateId);
+      if (!templateFile) {
+        throw new Error('Template non trouvé');
+      }
+
+      const pdfBytes = await generatePDFContract(templateFile, selectedClient!, fieldMappings);
       const filename = `contrat_${selectedClient!.prenom}_${selectedClient!.nom}_${new Date().toISOString().split('T')[0]}.pdf`;
       
       downloadPDFContract(pdfBytes, filename);
@@ -92,17 +154,22 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
   };
 
   const handlePreviewContract = async () => {
-    if (!canGenerate) {
+    if (!canGenerate || !selectedTemplateId) {
       toast({
         title: "Configuration incomplète",
-        description: "Veuillez uploader un template, sélectionner un client et configurer au moins un champ.",
+        description: "Veuillez sélectionner un template, un client et configurer au moins un champ.",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      const pdfBytes = await generatePDFContract(templateFile!, selectedClient!, fieldMappings);
+      const templateFile = await getTemplate(selectedTemplateId);
+      if (!templateFile) {
+        throw new Error('Template non trouvé');
+      }
+
+      const pdfBytes = await generatePDFContract(templateFile, selectedClient!, fieldMappings);
       const url = previewPDFContract(pdfBytes);
       setPreviewUrl(url);
       
@@ -121,6 +188,8 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
     }
   };
 
+  const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
+
   return (
     <div className="space-y-6">
       <Card>
@@ -130,16 +199,16 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
             Générateur de Contrats PDF
           </CardTitle>
           <CardDescription>
-            Uploadez un template PDF, configurez les champs et générez des contrats personnalisés
+            Sélectionnez un template PDF, configurez les champs et générez des contrats personnalisés
           </CardDescription>
         </CardHeader>
       </Card>
 
-      <Tabs defaultValue="upload" className="space-y-6">
+      <Tabs defaultValue="templates" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="upload" className="flex items-center gap-2">
-            <Upload className="w-4 h-4" />
-            Upload
+          <TabsTrigger value="templates" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Templates
           </TabsTrigger>
           <TabsTrigger value="fields" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
@@ -155,12 +224,28 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="upload">
-          <PDFTemplateUpload onTemplateUploaded={handleTemplateUploaded} />
+        <TabsContent value="templates">
+          {showUpload ? (
+            <PDFTemplateUpload 
+              onTemplateUploaded={handleTemplateUploaded}
+              onCancel={() => setShowUpload(false)}
+            />
+          ) : (
+            <PDFTemplateSelector
+              templates={templates}
+              selectedTemplateId={selectedTemplateId}
+              onTemplateSelect={handleTemplateSelect}
+              onDeleteTemplate={handleDeleteTemplate}
+              onUploadNew={() => setShowUpload(true)}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="fields">
-          <PDFFieldMapping onFieldMappingsChange={handleFieldMappingsChange} />
+          <PDFFieldMapping 
+            onFieldMappingsChange={handleFieldMappingsChange}
+            initialMappings={fieldMappings}
+          />
         </TabsContent>
 
         <TabsContent value="client">
@@ -176,7 +261,7 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
             <CardHeader>
               <CardTitle>Génération du contrat</CardTitle>
               <CardDescription>
-                {templateName && `Template: ${templateName}`}
+                {selectedTemplate && `Template: ${selectedTemplate.name}`}
                 {selectedClient && ` • Client: ${selectedClient.prenom} ${selectedClient.nom}`}
                 {fieldMappings.length > 0 && ` • ${fieldMappings.length} champ(s) configuré(s)`}
               </CardDescription>
@@ -218,7 +303,7 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                     <h4 className="font-medium text-amber-900 mb-2">Configuration requise :</h4>
                     <ul className="text-sm text-amber-700 space-y-1">
-                      {!templateFile && <li>• Uploadez un template PDF</li>}
+                      {!selectedTemplateId && <li>• Sélectionnez ou uploadez un template PDF</li>}
                       {!selectedClient && <li>• Sélectionnez un client</li>}
                       {fieldMappings.length === 0 && <li>• Configurez au moins un champ</li>}
                     </ul>
