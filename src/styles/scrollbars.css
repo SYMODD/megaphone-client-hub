@@ -3,93 +3,318 @@
    BARRES DE DÉFILEMENT GLOBALES - FORCE MAXIMALE ABSOLUE
    ============================================================================= */
 
-/* Webkit scrollbars - Force absolue avec sélecteurs multiples */
+/* Reset complet pour tous les éléments scrollables */
+*,
+*::before,
+*::after,
 html,
 body,
-*,
 div,
 section,
 main,
 article,
 aside,
 nav,
+header,
+footer,
+ul,
+ol,
+li,
+table,
+tbody,
+thead,
+tr,
+td,
+th,
+textarea,
+pre,
+code,
+[class*="scroll"],
+[class*="overflow"],
 [data-radix-scroll-area-viewport],
 .overflow-auto,
 .overflow-y-auto,
 .overflow-x-auto,
 .overflow-scroll {
-  scrollbar-width: thin !important;
+  /* Firefox */
+  scrollbar-width: auto !important;
   scrollbar-color: #4a5568 #e2e8f0 !important;
 }
 
-html ::-webkit-scrollbar,
-body ::-webkit-scrollbar,
-* ::-webkit-scrollbar,
-div ::-webkit-scrollbar,
-section ::-webkit-scrollbar,
-main ::-webkit-scrollbar,
-[data-radix-scroll-area-viewport] ::-webkit-scrollbar,
-.overflow-auto ::-webkit-scrollbar,
-.overflow-y-auto ::-webkit-scrollbar,
-.overflow-x-auto ::-webkit-scrollbar,
-.overflow-scroll ::-webkit-scrollbar {
-  width: 12px !important;
-  height: 12px !important;
+/* Webkit scrollbars - Application universelle avec priorité maximale */
+*::-webkit-scrollbar,
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+div::-webkit-scrollbar,
+section::-webkit-scrollbar,
+main::-webkit-scrollbar,
+article::-webkit-scrollbar,
+aside::-webkit-scrollbar,
+nav::-webkit-scrollbar,
+header::-webkit-scrollbar,
+footer::-webkit-scrollbar,
+ul::-webkit-scrollbar,
+ol::-webkit-scrollbar,
+li::-webkit-scrollbar,
+table::-webkit-scrollbar,
+tbody::-webkit-scrollbar,
+thead::-webkit-scrollbar,
+tr::-webkit-scrollbar,
+td::-webkit-scrollbar,
+th::-webkit-scrollbar,
+textarea::-webkit-scrollbar,
+pre::-webkit-scrollbar,
+code::-webkit-scrollbar,
+[class*="scroll"]::-webkit-scrollbar,
+[class*="overflow"]::-webkit-scrollbar,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar,
+.overflow-auto::-webkit-scrollbar,
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-x-auto::-webkit-scrollbar,
+.overflow-scroll::-webkit-scrollbar {
+  width: 16px !important;
+  height: 16px !important;
   background: transparent !important;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
-html ::-webkit-scrollbar-track,
-body ::-webkit-scrollbar-track,
-* ::-webkit-scrollbar-track,
-div ::-webkit-scrollbar-track,
-section ::-webkit-scrollbar-track,
-main ::-webkit-scrollbar-track,
-[data-radix-scroll-area-viewport] ::-webkit-scrollbar-track,
-.overflow-auto ::-webkit-scrollbar-track,
-.overflow-y-auto ::-webkit-scrollbar-track,
-.overflow-x-auto ::-webkit-scrollbar-track,
-.overflow-scroll ::-webkit-scrollbar-track {
-  background-color: #e2e8f0 !important;
-  border-radius: 6px !important;
-  border: 1px solid #cbd5e0 !important;
-  box-shadow: inset 0 0 3px rgba(0,0,0,0.1) !important;
+/* Track de la scrollbar - Fond visible */
+*::-webkit-scrollbar-track,
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+div::-webkit-scrollbar-track,
+section::-webkit-scrollbar-track,
+main::-webkit-scrollbar-track,
+article::-webkit-scrollbar-track,
+aside::-webkit-scrollbar-track,
+nav::-webkit-scrollbar-track,
+header::-webkit-scrollbar-track,
+footer::-webkit-scrollbar-track,
+ul::-webkit-scrollbar-track,
+ol::-webkit-scrollbar-track,
+li::-webkit-scrollbar-track,
+table::-webkit-scrollbar-track,
+tbody::-webkit-scrollbar-track,
+thead::-webkit-scrollbar-track,
+tr::-webkit-scrollbar-track,
+td::-webkit-scrollbar-track,
+th::-webkit-scrollbar-track,
+textarea::-webkit-scrollbar-track,
+pre::-webkit-scrollbar-track,
+code::-webkit-scrollbar-track,
+[class*="scroll"]::-webkit-scrollbar-track,
+[class*="overflow"]::-webkit-scrollbar-track,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-track,
+.overflow-auto::-webkit-scrollbar-track,
+.overflow-y-auto::-webkit-scrollbar-track,
+.overflow-x-auto::-webkit-scrollbar-track,
+.overflow-scroll::-webkit-scrollbar-track {
+  background-color: #f1f5f9 !important;
+  border-radius: 8px !important;
+  border: 2px solid #cbd5e0 !important;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.15) !important;
+  margin: 2px !important;
 }
 
-html ::-webkit-scrollbar-thumb,
-body ::-webkit-scrollbar-thumb,
-* ::-webkit-scrollbar-thumb,
-div ::-webkit-scrollbar-thumb,
-section ::-webkit-scrollbar-thumb,
-main ::-webkit-scrollbar-thumb,
-[data-radix-scroll-area-viewport] ::-webkit-scrollbar-thumb,
-.overflow-auto ::-webkit-scrollbar-thumb,
-.overflow-y-auto ::-webkit-scrollbar-thumb,
-.overflow-x-auto ::-webkit-scrollbar-thumb,
-.overflow-scroll ::-webkit-scrollbar-thumb {
-  background-color: #4a5568 !important;
-  border-radius: 6px !important;
-  border: 1px solid #e2e8f0 !important;
-  min-height: 30px !important;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+/* Thumb de la scrollbar - Poignée visible et contrastée */
+*::-webkit-scrollbar-thumb,
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+div::-webkit-scrollbar-thumb,
+section::-webkit-scrollbar-thumb,
+main::-webkit-scrollbar-thumb,
+article::-webkit-scrollbar-thumb,
+aside::-webkit-scrollbar-thumb,
+nav::-webkit-scrollbar-thumb,
+header::-webkit-scrollbar-thumb,
+footer::-webkit-scrollbar-thumb,
+ul::-webkit-scrollbar-thumb,
+ol::-webkit-scrollbar-thumb,
+li::-webkit-scrollbar-thumb,
+table::-webkit-scrollbar-thumb,
+tbody::-webkit-scrollbar-thumb,
+thead::-webkit-scrollbar-thumb,
+tr::-webkit-scrollbar-thumb,
+td::-webkit-scrollbar-thumb,
+th::-webkit-scrollbar-thumb,
+textarea::-webkit-scrollbar-thumb,
+pre::-webkit-scrollbar-thumb,
+code::-webkit-scrollbar-thumb,
+[class*="scroll"]::-webkit-scrollbar-thumb,
+[class*="overflow"]::-webkit-scrollbar-thumb,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb,
+.overflow-auto::-webkit-scrollbar-thumb,
+.overflow-y-auto::-webkit-scrollbar-thumb,
+.overflow-x-auto::-webkit-scrollbar-thumb,
+.overflow-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
+  border-radius: 8px !important;
+  border: 2px solid #e2e8f0 !important;
+  min-height: 40px !important;
+  min-width: 40px !important;
+  box-shadow: 
+    0 2px 8px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.2) !important;
+  cursor: pointer !important;
 }
 
-html ::-webkit-scrollbar-thumb:hover,
-body ::-webkit-scrollbar-thumb:hover,
-* ::-webkit-scrollbar-thumb:hover,
-div ::-webkit-scrollbar-thumb:hover,
-section ::-webkit-scrollbar-thumb:hover,
-main ::-webkit-scrollbar-thumb:hover,
-[data-radix-scroll-area-viewport] ::-webkit-scrollbar-thumb:hover,
-.overflow-auto ::-webkit-scrollbar-thumb:hover,
-.overflow-y-auto ::-webkit-scrollbar-thumb:hover,
-.overflow-x-auto ::-webkit-scrollbar-thumb:hover,
-.overflow-scroll ::-webkit-scrollbar-thumb:hover {
-  background-color: #2d3748 !important;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
+/* Hover state pour la poignée */
+*::-webkit-scrollbar-thumb:hover,
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover,
+div::-webkit-scrollbar-thumb:hover,
+section::-webkit-scrollbar-thumb:hover,
+main::-webkit-scrollbar-thumb:hover,
+article::-webkit-scrollbar-thumb:hover,
+aside::-webkit-scrollbar-thumb:hover,
+nav::-webkit-scrollbar-thumb:hover,
+header::-webkit-scrollbar-thumb:hover,
+footer::-webkit-scrollbar-thumb:hover,
+ul::-webkit-scrollbar-thumb:hover,
+ol::-webkit-scrollbar-thumb:hover,
+li::-webkit-scrollbar-thumb:hover,
+table::-webkit-scrollbar-thumb:hover,
+tbody::-webkit-scrollbar-thumb:hover,
+thead::-webkit-scrollbar-thumb:hover,
+tr::-webkit-scrollbar-thumb:hover,
+td::-webkit-scrollbar-thumb:hover,
+th::-webkit-scrollbar-thumb:hover,
+textarea::-webkit-scrollbar-thumb:hover,
+pre::-webkit-scrollbar-thumb:hover,
+code::-webkit-scrollbar-thumb:hover,
+[class*="scroll"]::-webkit-scrollbar-thumb:hover,
+[class*="overflow"]::-webkit-scrollbar-thumb:hover,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb:hover,
+.overflow-auto::-webkit-scrollbar-thumb:hover,
+.overflow-y-auto::-webkit-scrollbar-thumb:hover,
+.overflow-x-auto::-webkit-scrollbar-thumb:hover,
+.overflow-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%) !important;
+  box-shadow: 
+    0 4px 12px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.3) !important;
+  transform: scale(1.05) !important;
 }
 
-/* Force sur le viewport de scroll-area */
+/* Active state pour la poignée */
+*::-webkit-scrollbar-thumb:active,
+html::-webkit-scrollbar-thumb:active,
+body::-webkit-scrollbar-thumb:active,
+div::-webkit-scrollbar-thumb:active,
+section::-webkit-scrollbar-thumb:active,
+main::-webkit-scrollbar-thumb:active,
+article::-webkit-scrollbar-thumb:active,
+aside::-webkit-scrollbar-thumb:active,
+nav::-webkit-scrollbar-thumb:active,
+header::-webkit-scrollbar-thumb:active,
+footer::-webkit-scrollbar-thumb:active,
+ul::-webkit-scrollbar-thumb:active,
+ol::-webkit-scrollbar-thumb:active,
+li::-webkit-scrollbar-thumb:active,
+table::-webkit-scrollbar-thumb:active,
+tbody::-webkit-scrollbar-thumb:active,
+thead::-webkit-scrollbar-thumb:active,
+tr::-webkit-scrollbar-thumb:active,
+td::-webkit-scrollbar-thumb:active,
+th::-webkit-scrollbar-thumb:active,
+textarea::-webkit-scrollbar-thumb:active,
+pre::-webkit-scrollbar-thumb:active,
+code::-webkit-scrollbar-thumb:active,
+[class*="scroll"]::-webkit-scrollbar-thumb:active,
+[class*="overflow"]::-webkit-scrollbar-thumb:active,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb:active,
+.overflow-auto::-webkit-scrollbar-thumb:active,
+.overflow-y-auto::-webkit-scrollbar-thumb:active,
+.overflow-x-auto::-webkit-scrollbar-thumb:active,
+.overflow-scroll::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(135deg, #1a202c 0%, #171923 100%) !important;
+  box-shadow: 
+    inset 0 2px 4px rgba(0,0,0,0.3),
+    0 2px 4px rgba(0,0,0,0.2) !important;
+}
+
+/* Corner de la scrollbar */
+*::-webkit-scrollbar-corner,
+html::-webkit-scrollbar-corner,
+body::-webkit-scrollbar-corner,
+div::-webkit-scrollbar-corner,
+section::-webkit-scrollbar-corner,
+main::-webkit-scrollbar-corner,
+article::-webkit-scrollbar-corner,
+aside::-webkit-scrollbar-corner,
+nav::-webkit-scrollbar-corner,
+header::-webkit-scrollbar-corner,
+footer::-webkit-scrollbar-corner,
+ul::-webkit-scrollbar-corner,
+ol::-webkit-scrollbar-corner,
+li::-webkit-scrollbar-corner,
+table::-webkit-scrollbar-corner,
+tbody::-webkit-scrollbar-corner,
+thead::-webkit-scrollbar-corner,
+tr::-webkit-scrollbar-corner,
+td::-webkit-scrollbar-corner,
+th::-webkit-scrollbar-corner,
+textarea::-webkit-scrollbar-corner,
+pre::-webkit-scrollbar-corner,
+code::-webkit-scrollbar-corner,
+[class*="scroll"]::-webkit-scrollbar-corner,
+[class*="overflow"]::-webkit-scrollbar-corner,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-corner,
+.overflow-auto::-webkit-scrollbar-corner,
+.overflow-y-auto::-webkit-scrollbar-corner,
+.overflow-x-auto::-webkit-scrollbar-corner,
+.overflow-scroll::-webkit-scrollbar-corner {
+  background-color: #f1f5f9 !important;
+  border: 2px solid #cbd5e0 !important;
+}
+
+/* Force l'affichage des scrollbars même quand le contenu est court */
+html {
+  overflow-y: scroll !important;
+}
+
+body {
+  overflow-y: auto !important;
+}
+
+/* Styles spécifiques pour les composants Radix UI */
+[data-radix-scroll-area-root] {
+  position: relative !important;
+}
+
 [data-radix-scroll-area-viewport] {
-  scrollbar-width: thin !important;
-  scrollbar-color: #4a5568 #e2e8f0 !important;
+  scrollbar-width: auto !important;
+  scrollbar-color: #4a5568 #f1f5f9 !important;
+  overflow: auto !important;
+}
+
+/* Reset des styles Tailwind qui pourraient interférer */
+.scrollbar-none::-webkit-scrollbar {
+  width: 16px !important;
+  height: 16px !important;
+  display: block !important;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 16px !important;
+  height: 16px !important;
+  display: block !important;
+}
+
+/* Force pour les éléments avec des classes spécifiques */
+.overflow-hidden {
+  overflow: auto !important;
+}
+
+/* Compatibilité navigateurs */
+@supports not (scrollbar-width: auto) {
+  /* Fallback pour les navigateurs qui ne supportent pas scrollbar-width */
+  * {
+    scrollbar-face-color: #4a5568 !important;
+    scrollbar-track-color: #f1f5f9 !important;
+    scrollbar-arrow-color: #2d3748 !important;
+    scrollbar-shadow-color: #cbd5e0 !important;
+  }
 }

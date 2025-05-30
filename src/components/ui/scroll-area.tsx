@@ -14,15 +14,15 @@ const ScrollArea = React.forwardRef<
     {...props}
   >
     <ScrollAreaPrimitive.Viewport 
-      className="h-full w-full rounded-[inherit] [&>div]:!block"
+      className="h-full w-full rounded-[inherit]"
       style={{
-        scrollbarWidth: 'thin',
-        scrollbarColor: '#4a5568 #e2e8f0'
+        overflow: 'auto',
+        scrollbarWidth: 'auto',
+        scrollbarColor: '#4a5568 #f1f5f9'
       }}
     >
       {children}
     </ScrollAreaPrimitive.Viewport>
-    <ScrollBar />
     <ScrollAreaPrimitive.Corner />
   </ScrollAreaPrimitive.Root>
 ))
@@ -36,27 +36,16 @@ const ScrollBar = React.forwardRef<
     ref={ref}
     orientation={orientation}
     className={cn(
-      "flex touch-none select-none transition-colors !z-50",
+      "flex touch-none select-none transition-colors",
       orientation === "vertical" &&
-        "h-full w-3 border-l border-l-slate-400 p-[1px] !bg-slate-300",
+        "h-full w-4 border-l border-l-transparent p-[1px]",
       orientation === "horizontal" &&
-        "h-3 flex-col border-t border-t-slate-400 p-[1px] !bg-slate-300",
+        "h-4 flex-col border-t border-t-transparent p-[1px]",
       className
     )}
-    style={{
-      backgroundColor: '#e2e8f0 !important',
-      borderColor: '#cbd5e0 !important',
-      zIndex: 50
-    }}
     {...props}
   >
-    <ScrollAreaPrimitive.ScrollAreaThumb 
-      className="relative flex-1 rounded-full !bg-slate-600 hover:!bg-slate-700 transition-colors min-h-[20px]"
-      style={{
-        backgroundColor: '#4a5568 !important',
-        borderRadius: '6px !important'
-      }}
-    />
+    <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-border" />
   </ScrollAreaPrimitive.ScrollAreaScrollbar>
 ))
 ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName
