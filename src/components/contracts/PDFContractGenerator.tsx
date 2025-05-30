@@ -22,6 +22,7 @@ interface PDFContractGeneratorProps {
 }
 
 export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => {
+  // All hooks must be called at the top level, before any conditional logic
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -41,29 +42,14 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
     getTemplate
   } = usePDFTemplates();
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileDown className="w-5 h-5" />
-              Générateur de Contrats PDF
-            </CardTitle>
-            <CardDescription>
-              Gérez vos templates, configurez les champs et générez des contrats personnalisés
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <p className="ml-3 text-slate-600">Chargement des templates...</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Cleanup effect should be at the top level too
+  React.useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const handleTemplateUploaded = async (file: File, fileName: string) => {
     try {
@@ -155,9 +141,9 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
     }
   };
 
-  const canGenerate = selectedTemplateId && selectedClient && fieldMappings.length > 0;
-
   const handleGenerateContract = async () => {
+    const canGenerate = selectedTemplateId && selectedClient && fieldMappings.length > 0;
+    
     if (!canGenerate || !selectedTemplateId) {
       toast({
         title: "Configuration incomplète",
@@ -219,6 +205,8 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
   };
 
   const handlePreviewContract = async () => {
+    const canGenerate = selectedTemplateId && selectedClient && fieldMappings.length > 0;
+    
     if (!canGenerate || !selectedTemplateId) {
       toast({
         title: "Configuration incomplète",
@@ -262,14 +250,30 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
     }
   };
 
-  // Nettoyer l'URL de prévisualisation au démontage du composant
-  React.useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
+  // Now we can safely handle the loading state after all hooks have been called
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileDown className="w-5 h-5" />
+              Générateur de Contrats PDF
+            </CardTitle>
+            <CardDescription>
+              Gérez vos templates, configurez les champs et générez des contrats personnalisés
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="ml-3 text-slate-600">Chargement des templates...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
 
