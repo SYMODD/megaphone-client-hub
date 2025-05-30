@@ -9,8 +9,10 @@ export interface SharedTemplate {
   created_at: string;
 }
 
+type AppRole = 'agent' | 'superviseur' | 'admin';
+
 export class SharedTemplateOperations {
-  static async shareTemplate(templateId: string, role: string | null = null): Promise<void> {
+  static async shareTemplate(templateId: string, role: AppRole | null = null): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('User not authenticated');

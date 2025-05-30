@@ -8,6 +8,8 @@ import { SharedTemplateOperations } from './pdf/sharedTemplateOperations';
 // Re-export types for backward compatibility
 export type { PDFTemplate, FieldMapping };
 
+type AppRole = 'agent' | 'superviseur' | 'admin';
+
 export class SupabasePDFStorage {
   static async ensureBucket(): Promise<boolean> {
     return BucketManager.ensureBucket();
@@ -46,7 +48,7 @@ export class SupabasePDFStorage {
   }
 
   // Nouvelles méthodes pour le partage
-  static async shareTemplate(templateId: string, role: string | null = null): Promise<void> {
+  static async shareTemplate(templateId: string, role: AppRole | null = null): Promise<void> {
     return SharedTemplateOperations.shareTemplate(templateId, role);
   }
 

@@ -22,6 +22,8 @@ interface PDFTemplateSelectorProps {
   onUploadNew: () => void;
 }
 
+type AppRole = 'agent' | 'superviseur' | 'admin';
+
 export const PDFTemplateSelector = ({
   templates,
   selectedTemplateId,
@@ -60,10 +62,8 @@ export const PDFTemplateSelector = ({
     if (!sharingTemplateId) return;
 
     try {
-      await SharedTemplateOperations.shareTemplate(
-        sharingTemplateId, 
-        shareRole === 'all' ? null : shareRole
-      );
+      const roleToShare: AppRole | null = shareRole === 'all' ? null : shareRole as AppRole;
+      await SharedTemplateOperations.shareTemplate(sharingTemplateId, roleToShare);
       
       toast({
         title: "Template partagé",
