@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { PDFTemplateStorage, PDFTemplate, FieldMapping } from '@/services/pdfTemplateStorage';
 
-export { PDFTemplate, FieldMapping } from '@/services/pdfTemplateStorage';
+export type { PDFTemplate, FieldMapping } from '@/services/pdfTemplateStorage';
 
 export const usePDFTemplates = () => {
   const [templates, setTemplates] = useState<PDFTemplate[]>([]);
