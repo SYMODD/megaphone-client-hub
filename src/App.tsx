@@ -8,8 +8,6 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
 import { SmartRedirect } from "./components/auth/SmartRedirect";
-import { forceScrollbars, observeAndForceScrollbars } from "./utils/forceScrollbars";
-import { useEffect } from "react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -29,23 +27,6 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => {
-  useEffect(() => {
-    // Forcer les scrollbars dès le chargement
-    console.log('🚀 DÉMARRAGE - Forçage des scrollbars');
-    forceScrollbars();
-    observeAndForceScrollbars();
-    
-    // Répéter toutes les 100ms pendant 3 secondes pour être sûr
-    const interval = setInterval(() => {
-      forceScrollbars();
-    }, 100);
-    
-    setTimeout(() => {
-      clearInterval(interval);
-      console.log('✅ Forçage des scrollbars terminé');
-    }, 3000);
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

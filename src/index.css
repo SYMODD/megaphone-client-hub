@@ -13,24 +13,99 @@
 @import './styles/dropdowns.css';
 @import './styles/utilities.css';
 
-/* SCROLLBARS - APPROCHE SIMPLIFIÉE */
-* {
+/* SOLUTION FINALE SCROLLBARS - SURCHARGE TOTALE */
+html {
+  overflow-y: scroll !important;
   scrollbar-width: auto !important;
   scrollbar-color: #b6002c #e0e0e0 !important;
 }
 
+body {
+  overflow-y: scroll !important;
+  scrollbar-width: auto !important;
+  scrollbar-color: #b6002c #e0e0e0 !important;
+}
+
+/* FORCE GLOBALE - TOUS LES ÉLÉMENTS */
+*,
+*::before,
+*::after {
+  scrollbar-width: auto !important;
+  scrollbar-color: #b6002c #e0e0e0 !important;
+}
+
+/* WEBKIT - TOUS LES ÉLÉMENTS */
 *::-webkit-scrollbar {
   width: 12px !important;
   height: 12px !important;
   background: #e0e0e0 !important;
   display: block !important;
+  -webkit-appearance: auto !important;
 }
 
 *::-webkit-scrollbar-thumb {
   background: #b6002c !important;
   border-radius: 6px !important;
+  -webkit-appearance: auto !important;
 }
 
 *::-webkit-scrollbar-track {
   background: #e0e0e0 !important;
+  -webkit-appearance: auto !important;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #8e0021 !important;
+}
+
+/* SURCHARGE SPÉCIFIQUE RADIX/TAILWIND */
+[data-radix-scroll-area-viewport],
+.overflow-hidden,
+.overflow-auto,
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-scroll,
+.scrollbar-none,
+.scrollbar-thin {
+  overflow: auto !important;
+  scrollbar-width: auto !important;
+  scrollbar-color: #b6002c #e0e0e0 !important;
+}
+
+[data-radix-scroll-area-viewport]::-webkit-scrollbar,
+.overflow-hidden::-webkit-scrollbar,
+.overflow-auto::-webkit-scrollbar,
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-x-auto::-webkit-scrollbar,
+.overflow-scroll::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar,
+.scrollbar-thin::-webkit-scrollbar {
+  width: 12px !important;
+  height: 12px !important;
+  background: #e0e0e0 !important;
+  display: block !important;
+  -webkit-appearance: auto !important;
+}
+
+/* ROOT ET CONTENEURS PRINCIPAUX */
+#root,
+.container,
+.mx-auto,
+.max-w-7xl,
+.space-y-6,
+.space-y-4 {
+  scrollbar-width: auto !important;
+  scrollbar-color: #b6002c #e0e0e0 !important;
+}
+
+#root::-webkit-scrollbar,
+.container::-webkit-scrollbar,
+.mx-auto::-webkit-scrollbar,
+.max-w-7xl::-webkit-scrollbar,
+.space-y-6::-webkit-scrollbar,
+.space-y-4::-webkit-scrollbar {
+  width: 12px !important;
+  height: 12px !important;
+  background: #e0e0e0 !important;
+  display: block !important;
 }
