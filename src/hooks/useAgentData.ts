@@ -1,6 +1,6 @@
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect } from "react";
 
 // Types pour les données simulées
 interface ClientData {
@@ -57,65 +57,76 @@ const categoryPrefixes: Record<string, string[]> = {
 export const useAgentData = (filters?: AdminFilters) => {
   const { profile } = useAuth();
 
+  // Force re-render when filters change
+  useEffect(() => {
+    console.log("🔄 FILTERS CHANGED - Force re-render", filters);
+  }, [filters?.selectedCategory, filters?.selectedPoint]);
+
   // Clients filtrés avec logs de debug améliorés
   const filteredClients = useMemo(() => {
-    console.log("=== DEBUT FILTRAGE ===");
-    console.log("Profile:", { role: profile?.role, point: profile?.point_operation });
-    console.log("Filters:", filters);
-    console.log("Total mockClients:", mockClients.length);
+    console.log("=== DEBUT FILTRAGE DÉTAILLÉ ===");
+    console.log("🔍 Profile:", { role: profile?.role, point: profile?.point_operation });
+    console.log("🔍 Filters reçus:", filters);
+    console.log("🔍 Total mockClients:", mockClients.length);
 
-    let result = [...mockClients]; // Créer une copie pour éviter les mutations
+    let result = [...mockClients];
 
     // Si c'est un admin ou superviseur avec des filtres
     if (profile && (profile.role === "admin" || profile.role === "superviseur") && filters) {
-      console.log("Applying admin/superviseur filters...");
+      console.log("👑 Mode Admin/Superviseur - Application des filtres...");
       
       // Filtrer par catégorie
       if (filters.selectedCategory && filters.selectedCategory !== "all") {
         const prefixes = categoryPrefixes[filters.selectedCategory] || [];
-        console.log("Category filter applied:", filters.selectedCategory, "prefixes:", prefixes);
+        console.log("📂 Filtre catégorie:", filters.selectedCategory, "prefixes:", prefixes);
         if (prefixes.length > 0) {
+          const beforeLength = result.length;
           result = result.filter(client => 
             prefixes.some(prefix => client.pointOperation.startsWith(prefix))
           );
-          console.log("After category filter:", result.length, "clients");
+          console.log(`📊 Après filtre catégorie: ${beforeLength} → ${result.length} clients`);
         }
       }
 
       // Filtrer par point d'opération spécifique
       if (filters.selectedPoint && filters.selectedPoint !== "all") {
-        console.log("Point filter applied:", filters.selectedPoint);
+        console.log("📍 Filtre point appliqué:", filters.selectedPoint);
+        const beforeLength = result.length;
         result = result.filter(
           client => client.pointOperation === filters.selectedPoint
         );
-        console.log("After point filter:", result.length, "clients");
+        console.log(`📊 Après filtre point: ${beforeLength} → ${result.length} clients`);
       }
     } 
     // Si c'est un agent, filtrer par son point d'opération
     else if (profile && profile.role === "agent" && profile.point_operation) {
-      console.log("Agent filter applied for point:", profile.point_operation);
+      console.log("👤 Mode Agent - Filtre pour point:", profile.point_operation);
+      const beforeLength = result.length;
       result = mockClients.filter(
         client => client.pointOperation === profile.point_operation
       );
-      console.log("After agent filter:", result.length, "clients");
+      console.log(`📊 Après filtre agent: ${beforeLength} → ${result.length} clients`);
     }
 
-    console.log("=== FIN FILTRAGE ===");
-    console.log("Final result:", result.length, "clients");
+    console.log("=== RÉSULTAT FINAL ===");
+    console.log("✅ Clients filtrés:", result.length);
+    console.log("📋 Points représentés:", [...new Set(result.map(c => c.pointOperation))]);
+    console.log("🌍 Nationalités:", [...new Set(result.map(c => c.nationalite))]);
+    
     return result;
   }, [profile?.role, profile?.point_operation, filters?.selectedCategory, filters?.selectedPoint]);
 
-  // Statistiques calculées
+  // Statistiques calculées - Force re-calculation
   const statistics = useMemo(() => {
     const totalClients = filteredClients.length;
-    const newThisMonth = Math.ceil(totalClients * 0.25); // 25% des clients
-    const contractsGenerated = Math.ceil(totalClients * 0.76); // 76% des clients
+    const newThisMonth = Math.ceil(totalClients * 0.25);
+    const contractsGenerated = Math.ceil(totalClients * 0.76);
 
-    console.log("Statistics:", { totalClients, newThisMonth, contractsGenerated });
+    console.log("📈 STATISTIQUES CALCULÉES:", { totalClients, newThisMonth, contractsGenerated });
     return { totalClients, newThisMonth, contractsGenerated };
-  }, [filteredClients.length]);
+  }, [filteredClients]);
 
-  // Données de nationalités
+  // Données de nationalités - Force re-calculation
   const nationalityData = useMemo(() => {
     const nationalityCounts = filteredClients.reduce((acc, client) => {
       acc[client.nationalite] = (acc[client.nationalite] || 0) + 1;
@@ -128,7 +139,7 @@ export const useAgentData = (filters?: AdminFilters) => {
       color: baseColors[index % baseColors.length]
     }));
 
-    console.log("Nationality data:", data);
+    console.log("🎨 DONNÉES NATIONALITÉS:", data);
     return data;
   }, [filteredClients]);
 
@@ -167,8 +178,17 @@ export const useAgentData = (filters?: AdminFilters) => {
 
   // Nombre de nationalités
   const nationalitiesCount = useMemo(() => {
-    return new Set(filteredClients.map(client => client.nationalite)).size;
+    const count = new Set(filteredClients.map(client => client.nationalite)).size;
+    console.log("🌍 NOMBRE DE NATIONALITÉS:", count);
+    return count;
   }, [filteredClients]);
+
+  // Debug final
+  console.log("🚀 RETOUR useAgentData:", {
+    clientsCount: filteredClients.length,
+    totalClients: statistics.totalClients,
+    nationalitiesCount
+  });
 
   return {
     clients: filteredClients,

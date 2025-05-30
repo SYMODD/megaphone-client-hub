@@ -1,33 +1,60 @@
 
 /* =============================================================================
-   AMÉLIORATION DES BOUTONS
+   BOUTONS RECTANGULAIRES FORCÉS
    ============================================================================= */
 
-/* Boutons plus définis */
-.bg-primary,
-button[class*="bg-primary"] {
-  background-color: #3b82f6 !important;
-  border: 1px solid #2563eb !important;
-  border-radius: 6px !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+/* Force tous les boutons à être rectangulaires */
+button,
+[role="button"],
+.btn,
+button[class*="bg-"],
+button[class*="border-"],
+[data-testid*="button"] {
+  border-radius: 4px !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  font-weight: 500 !important;
 }
 
-.bg-primary:hover,
-button[class*="bg-primary"]:hover {
+/* Boutons primaires */
+button[class*="bg-primary"],
+button[class*="bg-blue"] {
   background-color: #2563eb !important;
   border-color: #1d4ed8 !important;
+  color: white !important;
+}
+
+button[class*="bg-primary"]:hover,
+button[class*="bg-blue"]:hover {
+  background-color: #1d4ed8 !important;
+  border-color: #1e40af !important;
 }
 
 /* Boutons outline */
-.border-input,
-button[class*="border-input"] {
-  border: 1px solid #d1d5db !important;
+button[class*="border-input"],
+button[class*="border-slate"],
+button[class*="variant-outline"] {
   background-color: white !important;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+  border-color: #cbd5e0 !important;
+  color: #374151 !important;
 }
 
-.border-input:hover,
-button[class*="border-input"]:hover {
-  border-color: #9ca3af !important;
-  background-color: #f9fafb !important;
+button[class*="border-input"]:hover,
+button[class*="border-slate"]:hover,
+button[class*="variant-outline"]:hover {
+  background-color: #f7fafc !important;
+  border-color: #a0aec0 !important;
+}
+
+/* Boutons secondaires */
+button[class*="bg-secondary"] {
+  background-color: #e2e8f0 !important;
+  border-color: #cbd5e0 !important;
+  color: #2d3748 !important;
+}
+
+button[class*="bg-secondary"]:hover {
+  background-color: #cbd5e0 !important;
+  border-color: #a0aec0 !important;
 }
