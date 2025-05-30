@@ -232,6 +232,38 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_pdf_templates: {
+        Row: {
+          created_at: string
+          id: string
+          shared_by: string
+          shared_with_role: Database["public"]["Enums"]["app_role"] | null
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          shared_by: string
+          shared_with_role?: Database["public"]["Enums"]["app_role"] | null
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          shared_by?: string
+          shared_with_role?: Database["public"]["Enums"]["app_role"] | null
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_pdf_templates_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

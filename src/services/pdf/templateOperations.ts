@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { PDFTemplate } from './types';
 import { BucketManager } from './bucketManager';
+import { SharedTemplateOperations } from './sharedTemplateOperations';
 
 export class TemplateOperations {
   static async loadTemplates(): Promise<PDFTemplate[]> {
@@ -39,28 +40,67 @@ export class TemplateOperations {
 
       console.log('Profil utilisateur:', profile);
 
-      let query = supabase
+      let templateIds: string[] = [];
+
+      if (profile?.role === 'admin' || profile?.role === 'superviseur') {
+        // Les admins et superviseurs peuvent voir tous les templates
+        console.log('Utilisateur admin/superviseur - chargement de tous les templates');
+        
+        const { data, error } = await supabase
+          .from('pdf_templates')
+          .select('id')
+          .order('upload_date', { ascending: false });
+
+        if (error) {
+          console.error('Erreur lors du chargement des IDs de templates:', error);
+          throw new Error(`Impossible de charger les templates: ${error.message}`);
+        }
+
+        templateIds = data?.map(t => t.id) || [];
+      } else {
+        // Les agents peuvent voir leurs propres templates + les templates partagés
+        console.log('Utilisateur agent - chargement des templates personnels et partagés');
+        
+        // Charger les templates personnels
+        const { data: ownTemplates, error: ownError } = await supabase
+          .from('pdf_templates')
+          .select('id')
+          .eq('user_id', user.id)
+          .order('upload_date', { ascending: false });
+
+        if (ownError) {
+          console.error('Erreur lors du chargement des templates personnels:', ownError);
+          throw new Error(`Impossible de charger les templates personnels: ${ownError.message}`);
+        }
+
+        // Charger les templates partagés
+        const sharedTemplateIds = await SharedTemplateOperations.getSharedTemplateIds();
+        
+        // Combiner les deux listes en évitant les doublons
+        const ownTemplateIds = ownTemplates?.map(t => t.id) || [];
+        templateIds = [...new Set([...ownTemplateIds, ...sharedTemplateIds])];
+        
+        console.log('Templates personnels:', ownTemplateIds.length);
+        console.log('Templates partagés:', sharedTemplateIds.length);
+        console.log('Total templates accessibles:', templateIds.length);
+      }
+
+      // Récupérer les détails complets des templates
+      if (templateIds.length === 0) {
+        console.log('Aucun template accessible pour cet utilisateur');
+        return [];
+      }
+
+      const { data, error } = await supabase
         .from('pdf_templates')
         .select('*')
+        .in('id', templateIds)
         .order('upload_date', { ascending: false });
 
-      // Si l'utilisateur n'est pas admin, filtrer par ses propres templates
-      // Les admins et superviseurs peuvent voir tous les templates
-      if (profile?.role !== 'admin' && profile?.role !== 'superviseur') {
-        console.log('Utilisateur agent - chargement des templates personnels uniquement');
-        query = query.eq('user_id', user.id);
-      } else {
-        console.log('Utilisateur admin/superviseur - chargement de tous les templates');
-      }
-
-      const { data, error } = await query;
-
       if (error) {
-        console.error('Erreur lors du chargement des templates depuis la base de données:', error);
-        throw new Error(`Impossible de charger les templates: ${error.message}`);
+        console.error('Erreur lors du chargement des détails des templates:', error);
+        throw new Error(`Impossible de charger les détails des templates: ${error.message}`);
       }
-
-      console.log('Templates chargés depuis la base de données:', data);
 
       const templates = data?.map(template => ({
         id: template.id,
