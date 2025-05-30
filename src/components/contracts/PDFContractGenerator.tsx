@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,8 +8,7 @@ import { PDFTemplateUpload } from "./PDFTemplateUpload";
 import { PDFTemplateSelector } from "./PDFTemplateSelector";
 import { PDFFieldMapping } from "./PDFFieldMapping";
 import { ClientSelector } from "./ClientSelector";
-import { ContractNaming } from "./ContractNaming";
-import { FileDown, Eye, Settings, FileText, Upload, Edit } from "lucide-react";
+import { FileDown, Eye, Settings, FileText, Upload } from "lucide-react";
 import { generatePDFContract, downloadPDFContract, previewPDFContract } from "@/utils/pdfContractGenerator";
 import { usePDFTemplates } from "@/hooks/usePDFTemplates";
 
@@ -40,7 +40,6 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [contractName, setContractName] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [showUpload, setShowUpload] = useState(false);
@@ -50,6 +49,7 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
     templates,
     templateMappings,
     saveTemplate,
+    renameTemplate,
     deleteTemplate,
     saveMappings,
     getTemplate
@@ -101,12 +101,6 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
 
   const handleClientSelect = (client: Client) => {
     setSelectedClient(client);
-    
-    // Générer automatiquement un nom par défaut quand un client est sélectionné
-    if (!contractName && client) {
-      const defaultName = `contrat_${client.prenom}_${client.nom}_${new Date().toISOString().split('T')[0]}`;
-      setContractName(defaultName);
-    }
   };
 
   const handleDeleteTemplate = (templateId: string) => {
@@ -118,8 +112,8 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
     }
   };
 
-  const handleContractNameChange = (name: string) => {
-    setContractName(name);
+  const handleRenameTemplate = (templateId: string, newName: string) => {
+    renameTemplate(templateId, newName);
   };
 
   const canGenerate = selectedTemplateId && selectedClient && fieldMappings.length > 0;
@@ -144,9 +138,10 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
 
       const pdfBytes = await generatePDFContract(templateFile, selectedClient!, fieldMappings);
       
-      // Utiliser le nom personnalisé ou un nom par défaut
-      const finalFileName = contractName.trim() || 
-        `contrat_${selectedClient!.prenom}_${selectedClient!.nom}_${new Date().toISOString().split('T')[0]}`;
+      // Utiliser le nom du template et les infos client pour générer le nom du fichier
+      const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
+      const templateName = selectedTemplate?.name || 'contrat';
+      const finalFileName = `${templateName}_${selectedClient!.prenom}_${selectedClient!.nom}_${new Date().toISOString().split('T')[0]}`;
       
       const filename = `${finalFileName}.pdf`;
       
@@ -215,13 +210,13 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
             Générateur de Contrats PDF
           </CardTitle>
           <CardDescription>
-            Sélectionnez un template PDF, configurez les champs et générez des contrats personnalisés
+            Gérez vos templates, configurez les champs et générez des contrats personnalisés
           </CardDescription>
         </CardHeader>
       </Card>
 
       <Tabs defaultValue="templates" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="templates" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
             Templates
@@ -233,10 +228,6 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
           <TabsTrigger value="client" className="flex items-center gap-2">
             <span className="w-4 h-4 rounded-full bg-current flex items-center justify-center text-xs">👤</span>
             Client
-          </TabsTrigger>
-          <TabsTrigger value="naming" className="flex items-center gap-2">
-            <Edit className="w-4 h-4" />
-            Nom
           </TabsTrigger>
           <TabsTrigger value="generate" className="flex items-center gap-2">
             <FileDown className="w-4 h-4" />
@@ -256,16 +247,27 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
               selectedTemplateId={selectedTemplateId}
               onTemplateSelect={handleTemplateSelect}
               onDeleteTemplate={handleDeleteTemplate}
+              onRenameTemplate={handleRenameTemplate}
               onUploadNew={() => setShowUpload(true)}
             />
           )}
         </TabsContent>
 
         <TabsContent value="fields">
-          <PDFFieldMapping 
-            onFieldMappingsChange={handleFieldMappingsChange}
-            initialMappings={fieldMappings}
-          />
+          {selectedTemplateId ? (
+            <PDFFieldMapping 
+              onFieldMappingsChange={handleFieldMappingsChange}
+              initialMappings={fieldMappings}
+            />
+          ) : (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Sélectionnez d'abord un template</h3>
+                <p className="text-gray-500">Vous devez sélectionner un template PDF avant de pouvoir configurer ses champs.</p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="client">
@@ -276,14 +278,6 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
           />
         </TabsContent>
 
-        <TabsContent value="naming">
-          <ContractNaming
-            contractName={contractName}
-            onContractNameChange={handleContractNameChange}
-            selectedClient={selectedClient}
-          />
-        </TabsContent>
-
         <TabsContent value="generate">
           <Card>
             <CardHeader>
@@ -291,7 +285,6 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
               <CardDescription>
                 {selectedTemplate && `Template: ${selectedTemplate.name}`}
                 {selectedClient && ` • Client: ${selectedClient.prenom} ${selectedClient.nom}`}
-                {contractName && ` • Nom: ${contractName}.pdf`}
                 {fieldMappings.length > 0 && ` • ${fieldMappings.length} champ(s) configuré(s)`}
               </CardDescription>
             </CardHeader>

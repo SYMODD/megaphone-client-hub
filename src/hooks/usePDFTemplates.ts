@@ -120,6 +120,37 @@ export const usePDFTemplates = () => {
     }
   };
 
+  const renameTemplate = async (templateId: string, newName: string) => {
+    try {
+      const updatedTemplates = templates.map(t => 
+        t.id === templateId ? { ...t, name: newName } : t
+      );
+      
+      // Convertir tous les templates en base64 pour le stockage
+      const templatesForStorage = await Promise.all(
+        updatedTemplates.map(async (t) => ({
+          ...t,
+          file: t.file instanceof File ? await fileToBase64(t.file) : t.file
+        }))
+      );
+      
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(templatesForStorage));
+      setTemplates(updatedTemplates);
+
+      toast({
+        title: "Template renommé",
+        description: `Le template a été renommé en "${newName}".`,
+      });
+    } catch (error) {
+      console.error('Erreur renommage template:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de renommer le template.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const deleteTemplate = async (templateId: string) => {
     const updatedTemplates = templates.filter(t => t.id !== templateId);
     
@@ -181,6 +212,7 @@ export const usePDFTemplates = () => {
     templates,
     templateMappings,
     saveTemplate,
+    renameTemplate,
     deleteTemplate,
     saveMappings,
     getTemplate,
