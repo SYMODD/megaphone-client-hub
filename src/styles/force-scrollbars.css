@@ -164,4 +164,13 @@ section::-webkit-scrollbar-track, section *::-webkit-scrollbar-track, section *:
 .select-content::-webkit-scrollbar-thumb, .command::-webkit-scrollbar-thumb, .scroll-area::-webkit-scrollbar-thumb {
   background: #b6002c !important;
   border-radius: 6px !important;
+  /* Scrollbar globale (sécurité) */
+html, body {
+scrollbar-width: auto !important;
+scrollbar-color: #b6082c #ebe0e0 !important;
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+width: 12px !important;
+background: #ebe0e0 !important;
+}
 }
