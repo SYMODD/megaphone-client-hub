@@ -1,0 +1,19 @@
+
+/* =============================================================================
+   MODAL ET DIALOG FIXES
+   ============================================================================= */
+
+/* Modal transparency fix */
+[data-radix-dialog-overlay],
+.DialogOverlay {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+[data-radix-dialog-content],
+.DialogContent,
+[role="dialog"] {
+  background-color: white !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
