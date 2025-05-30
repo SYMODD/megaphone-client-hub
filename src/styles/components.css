@@ -1,8 +1,11 @@
 
-/* Modal transparency fix - très haute priorité */
+/* =============================================================================
+   MODAL ET DIALOG FIXES
+   ============================================================================= */
+
+/* Modal transparency fix */
 [data-radix-dialog-overlay],
-.DialogOverlay,
-[role="dialog"] ~ [data-radix-dialog-overlay] {
+.DialogOverlay {
   background-color: rgba(0, 0, 0, 0.8) !important;
   backdrop-filter: blur(4px) !important;
 }
@@ -11,181 +14,68 @@
 .DialogContent,
 [role="dialog"] {
   background-color: white !important;
-  background: white !important;
   border: 1px solid #e2e8f0 !important;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
 }
 
-/* Spécifique pour les dialogs d'édition d'utilisateur */
-[data-state="open"][role="dialog"],
-[data-state="open"] [role="dialog"],
-div[role="dialog"][data-state="open"] {
-  background-color: white !important;
-  background: white !important;
-  opacity: 1 !important;
-}
+/* =============================================================================
+   BARRES DE DÉFILEMENT GLOBALES
+   ============================================================================= */
 
-/* Force le background pour tous les contenus de dialog */
-.dialog-content,
-[data-radix-popper-content-wrapper],
-[data-radix-dialog-content] > div,
-[role="dialog"] > div {
-  background-color: white !important;
-  background: white !important;
-}
-
-/* Classes spécifiques Shadcn */
-.fixed.inset-0.z-50,
-.data-\[state\=open\]\:animate-in,
-.data-\[state\=closed\]\:animate-out {
-  background-color: rgba(0, 0, 0, 0.8) !important;
-}
-
-.relative.mx-auto.w-full,
-.grid.gap-4.py-4,
-.space-y-2 {
-  background-color: white !important;
-  background: white !important;
-}
-
-/* Anti-transparence globale pour tous les dialogs */
-* [role="dialog"] {
-  background-color: white !important;
-  opacity: 1 !important;
-}
-
-* [role="dialog"] * {
-  background-color: inherit !important;
-}
-
-/* FIX BARRES DE DÉFILEMENT - Priorité maximale */
-/* Scrollbars globales pour webkit (Chrome, Safari, Edge) */
+/* Webkit scrollbars (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
-  width: 12px !important;
-  height: 12px !important;
-  background-color: #f1f5f9 !important;
-  border-radius: 6px !important;
+  width: 14px !important;
+  height: 14px !important;
 }
 
 ::-webkit-scrollbar-track {
   background-color: #f1f5f9 !important;
-  border-radius: 6px !important;
+  border-radius: 8px !important;
   border: 1px solid #e2e8f0 !important;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #94a3b8 !important;
-  border-radius: 6px !important;
+  background-color: #64748b !important;
+  border-radius: 8px !important;
   border: 2px solid #f1f5f9 !important;
   min-height: 20px !important;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #64748b !important;
+  background-color: #475569 !important;
 }
 
 ::-webkit-scrollbar-corner {
   background-color: #f1f5f9 !important;
 }
 
-/* Scrollbars pour Firefox */
+/* Firefox scrollbars */
 * {
   scrollbar-width: auto !important;
-  scrollbar-color: #94a3b8 #f1f5f9 !important;
+  scrollbar-color: #64748b #f1f5f9 !important;
 }
 
-/* Force scrollbars sur tous les contenants avec overflow */
+/* Force sur les contenants avec overflow */
 .overflow-auto,
 .overflow-y-auto,
 .overflow-x-auto,
-.overflow-scroll {
-  scrollbar-width: auto !important;
-  scrollbar-color: #94a3b8 #f1f5f9 !important;
-}
-
-.overflow-auto::-webkit-scrollbar,
-.overflow-y-auto::-webkit-scrollbar,
-.overflow-x-auto::-webkit-scrollbar,
-.overflow-scroll::-webkit-scrollbar {
-  width: 12px !important;
-  height: 12px !important;
-  background-color: #f1f5f9 !important;
-}
-
-.overflow-auto::-webkit-scrollbar-thumb,
-.overflow-y-auto::-webkit-scrollbar-thumb,
-.overflow-x-auto::-webkit-scrollbar-thumb,
-.overflow-scroll::-webkit-scrollbar-thumb {
-  background-color: #94a3b8 !important;
-  border-radius: 6px !important;
-  border: 2px solid #f1f5f9 !important;
-}
-
-/* Barres de défilement spécifiques aux composants Radix UI */
+.overflow-scroll,
 [data-radix-scroll-area-viewport] {
   scrollbar-width: auto !important;
-  scrollbar-color: #94a3b8 #f1f5f9 !important;
+  scrollbar-color: #64748b #f1f5f9 !important;
 }
 
-[data-radix-scroll-area-viewport]::-webkit-scrollbar {
-  width: 12px !important;
-  height: 12px !important;
-  background-color: #f1f5f9 !important;
-}
+/* =============================================================================
+   AMÉLIORATION DES COMPOSANTS UI
+   ============================================================================= */
 
-[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
-  background-color: #94a3b8 !important;
-  border-radius: 6px !important;
-  border: 2px solid #f1f5f9 !important;
-}
-
-/* Tables avec scroll */
-.table-container,
-.max-h-80,
-.max-h-96 {
-  scrollbar-width: auto !important;
-  scrollbar-color: #94a3b8 #f1f5f9 !important;
-}
-
-.table-container::-webkit-scrollbar,
-.max-h-80::-webkit-scrollbar,
-.max-h-96::-webkit-scrollbar {
-  width: 12px !important;
-  height: 12px !important;
-  background-color: #f1f5f9 !important;
-}
-
-.table-container::-webkit-scrollbar-thumb,
-.max-h-80::-webkit-scrollbar-thumb,
-.max-h-96::-webkit-scrollbar-thumb {
-  background-color: #94a3b8 !important;
-  border-radius: 6px !important;
-  border: 2px solid #f1f5f9 !important;
-}
-
-/* Dropdown menus scrollbars */
-[data-radix-popper-content-wrapper] [data-radix-scroll-area-viewport] {
-  scrollbar-width: auto !important;
-  scrollbar-color: #94a3b8 #f1f5f9 !important;
-}
-
-[data-radix-popper-content-wrapper] [data-radix-scroll-area-viewport]::-webkit-scrollbar {
-  width: 8px !important;
-  background-color: #f1f5f9 !important;
-}
-
-[data-radix-popper-content-wrapper] [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
-  background-color: #94a3b8 !important;
-  border-radius: 4px !important;
-}
-
-/* FIX BOUTONS - Rectangle plus clair */
+/* Boutons plus définis */
 .bg-primary,
 button[class*="bg-primary"] {
   background-color: #3b82f6 !important;
   border: 1px solid #2563eb !important;
   border-radius: 6px !important;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
 }
 
 .bg-primary:hover,
@@ -194,7 +84,7 @@ button[class*="bg-primary"]:hover {
   border-color: #1d4ed8 !important;
 }
 
-/* Boutons outline plus définis */
+/* Boutons outline */
 .border-input,
 button[class*="border-input"] {
   border: 1px solid #d1d5db !important;
@@ -208,24 +98,28 @@ button[class*="border-input"]:hover {
   background-color: #f9fafb !important;
 }
 
-/* Select et Input plus définis */
-select, input[type="text"], input[type="email"], input[type="password"] {
+/* Inputs et selects */
+select, 
+input[type="text"], 
+input[type="email"], 
+input[type="password"] {
   border: 1px solid #d1d5db !important;
   border-radius: 6px !important;
   background-color: white !important;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
 }
 
-select:focus, input:focus {
+select:focus, 
+input:focus {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 1px #3b82f6 !important;
 }
 
-/* Amélioration des dropdown backgrounds */
+/* Dropdowns */
 [data-radix-popper-content-wrapper] {
   background-color: white !important;
   border: 1px solid #e5e7eb !important;
-  border-radius: 6px !important;
+  border-radius: 8px !important;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
   z-index: 50 !important;
 }

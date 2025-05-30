@@ -29,7 +29,7 @@ interface AdminFilters {
   selectedCategory?: string | null;
 }
 
-// Données simulées avec points d'opération - mémorisées pour éviter les recréations
+// Données simulées avec points d'opération
 const mockClients: ClientData[] = [
   { id: 1, nom: "Dubois", prenom: "Marie", nationalite: "France", dateEnregistrement: "2024-01-15", photo: "https://images.unsplash.com/photo-1494790108755-2616b332c8a5?w=100&h=100&fit=crop&crop=face", pointOperation: "aeroport_marrakech" },
   { id: 2, nom: "Benali", prenom: "Ahmed", nationalite: "Algérie", dateEnregistrement: "2024-01-14", pointOperation: "aeroport_casablanca" },
@@ -47,7 +47,7 @@ const mockClients: ClientData[] = [
 
 const baseColors = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#6B7280", "#EC4899", "#14B8A6", "#F97316", "#84CC16"];
 
-// Mappings préfixe catégorie mis en cache
+// Mappings préfixe catégorie
 const categoryPrefixes: Record<string, string[]> = {
   "aeroport": ["aeroport"],
   "navire": ["navire"],
@@ -57,19 +57,23 @@ const categoryPrefixes: Record<string, string[]> = {
 export const useAgentData = (filters?: AdminFilters) => {
   const { profile } = useAuth();
 
-  // Mémorisation des clients filtrés avec optimisation des dépendances
+  // Clients filtrés avec logs de debug améliorés
   const filteredClients = useMemo(() => {
-    let result = mockClients;
+    console.log("=== DEBUT FILTRAGE ===");
+    console.log("Profile:", { role: profile?.role, point: profile?.point_operation });
+    console.log("Filters:", filters);
+    console.log("Total mockClients:", mockClients.length);
 
-    console.log("Filtering clients with:", { filters, profile: profile?.role });
+    let result = [...mockClients]; // Créer une copie pour éviter les mutations
 
     // Si c'est un admin ou superviseur avec des filtres
     if (profile && (profile.role === "admin" || profile.role === "superviseur") && filters) {
-      console.log("Admin/Superviseur filters applied:", filters);
+      console.log("Applying admin/superviseur filters...");
       
       // Filtrer par catégorie
-      if (filters.selectedCategory) {
+      if (filters.selectedCategory && filters.selectedCategory !== "all") {
         const prefixes = categoryPrefixes[filters.selectedCategory] || [];
+        console.log("Category filter applied:", filters.selectedCategory, "prefixes:", prefixes);
         if (prefixes.length > 0) {
           result = result.filter(client => 
             prefixes.some(prefix => client.pointOperation.startsWith(prefix))
@@ -79,7 +83,8 @@ export const useAgentData = (filters?: AdminFilters) => {
       }
 
       // Filtrer par point d'opération spécifique
-      if (filters.selectedPoint) {
+      if (filters.selectedPoint && filters.selectedPoint !== "all") {
+        console.log("Point filter applied:", filters.selectedPoint);
         result = result.filter(
           client => client.pointOperation === filters.selectedPoint
         );
@@ -87,28 +92,30 @@ export const useAgentData = (filters?: AdminFilters) => {
       }
     } 
     // Si c'est un agent, filtrer par son point d'opération
-    else if (profile && profile.role === "agent") {
+    else if (profile && profile.role === "agent" && profile.point_operation) {
+      console.log("Agent filter applied for point:", profile.point_operation);
       result = mockClients.filter(
         client => client.pointOperation === profile.point_operation
       );
-      console.log("Agent filter applied:", result.length, "clients");
+      console.log("After agent filter:", result.length, "clients");
     }
 
+    console.log("=== FIN FILTRAGE ===");
+    console.log("Final result:", result.length, "clients");
     return result;
   }, [profile?.role, profile?.point_operation, filters?.selectedCategory, filters?.selectedPoint]);
 
-  // Mémorisation des statistiques calculées
+  // Statistiques calculées
   const statistics = useMemo(() => {
     const totalClients = filteredClients.length;
-    const newThisMonth = Math.ceil(totalClients * 0.2);
-    const contractsGenerated = Math.ceil(totalClients * 0.76);
+    const newThisMonth = Math.ceil(totalClients * 0.25); // 25% des clients
+    const contractsGenerated = Math.ceil(totalClients * 0.76); // 76% des clients
 
-    console.log("Statistics calculated:", { totalClients, newThisMonth, contractsGenerated });
-
+    console.log("Statistics:", { totalClients, newThisMonth, contractsGenerated });
     return { totalClients, newThisMonth, contractsGenerated };
   }, [filteredClients.length]);
 
-  // Mémorisation des données de nationalités
+  // Données de nationalités
   const nationalityData = useMemo(() => {
     const nationalityCounts = filteredClients.reduce((acc, client) => {
       acc[client.nationalite] = (acc[client.nationalite] || 0) + 1;
@@ -121,11 +128,11 @@ export const useAgentData = (filters?: AdminFilters) => {
       color: baseColors[index % baseColors.length]
     }));
 
-    console.log("Nationality data calculated:", data);
+    console.log("Nationality data:", data);
     return data;
   }, [filteredClients]);
 
-  // Mémorisation des données d'enregistrement
+  // Données d'enregistrement
   const registrationData = useMemo(() => {
     const baseRegistrationData: RegistrationData[] = [
       { month: "Jan", clients: 12 },
@@ -142,34 +149,28 @@ export const useAgentData = (filters?: AdminFilters) => {
       { month: "Déc", clients: 23 },
     ];
 
-    const registrationMultiplier = Math.max(0.1, statistics.totalClients / 247);
+    const registrationMultiplier = Math.max(0.1, statistics.totalClients / 300);
     const data = baseRegistrationData.map(item => ({
       ...item,
       clients: Math.round(item.clients * registrationMultiplier)
     }));
 
-    console.log("Registration data calculated:", data);
     return data;
   }, [statistics.totalClients]);
 
-  // Mémorisation des clients récents
+  // Clients récents
   const recentClients = useMemo(() => {
-    const recent = filteredClients
+    return filteredClients
       .sort((a, b) => new Date(b.dateEnregistrement).getTime() - new Date(a.dateEnregistrement).getTime())
       .slice(0, 5);
-    
-    console.log("Recent clients calculated:", recent);
-    return recent;
   }, [filteredClients]);
 
-  // Mémorisation du nombre de nationalités
+  // Nombre de nationalités
   const nationalitiesCount = useMemo(() => {
-    const count = new Set(filteredClients.map(client => client.nationalite)).size;
-    console.log("Nationalities count:", count);
-    return count;
+    return new Set(filteredClients.map(client => client.nationalite)).size;
   }, [filteredClients]);
 
-  return useMemo(() => ({
+  return {
     clients: filteredClients,
     totalClients: statistics.totalClients,
     newThisMonth: statistics.newThisMonth,
@@ -178,5 +179,5 @@ export const useAgentData = (filters?: AdminFilters) => {
     nationalityData,
     registrationData,
     recentClients
-  }), [filteredClients, statistics, nationalitiesCount, nationalityData, registrationData, recentClients]);
+  };
 };
