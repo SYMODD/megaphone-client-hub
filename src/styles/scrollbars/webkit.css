@@ -1,0 +1,46 @@
+
+/* =============================================================================
+   WEBKIT SCROLLBAR STYLES (Chrome, Edge, Safari)
+   ============================================================================= */
+
+/* Base webkit scrollbar configuration */
+::-webkit-scrollbar {
+  width: 12px !important;
+  height: 12px !important;
+  background: #e0e0e0 !important;
+  display: block !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #b6002c !important;
+  border-radius: 6px !important;
+}
+
+::-webkit-scrollbar-track {
+  background: #e0e0e0 !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8e0021 !important;
+}
+
+/* Universal webkit scrollbar application */
+*::-webkit-scrollbar {
+  width: 12px !important;
+  height: 12px !important;
+  background: #e0e0e0 !important;
+  display: block !important;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #b6002c !important;
+  border-radius: 6px !important;
+}
+
+*::-webkit-scrollbar-track {
+  background: #e0e0e0 !important;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #8e0021 !important;
+}

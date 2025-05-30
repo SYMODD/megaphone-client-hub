@@ -1,0 +1,10 @@
+
+/* =============================================================================
+   FIREFOX SCROLLBAR STYLES
+   ============================================================================= */
+
+/* Firefox scrollbar configuration */
+* {
+  scrollbar-width: auto !important;
+  scrollbar-color: #b6002c #e0e0e0 !important;
+}

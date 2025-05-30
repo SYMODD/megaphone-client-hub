@@ -1,0 +1,43 @@
+
+/* =============================================================================
+   GLOBAL SCROLLBAR CONFIGURATION
+   ============================================================================= */
+
+/* Force scrollbar visibility on HTML */
+html {
+  overflow-y: scroll !important;
+}
+
+/* Universal scrollbar application to all scrollable elements */
+html,
+body,
+div,
+section,
+main,
+article,
+aside,
+nav,
+header,
+footer,
+ul,
+ol,
+li,
+table,
+tbody,
+thead,
+tr,
+td,
+th,
+textarea,
+pre,
+code,
+[class*="scroll"],
+[class*="overflow"],
+[data-radix-scroll-area-viewport],
+.overflow-auto,
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-scroll {
+  scrollbar-width: auto !important;
+  scrollbar-color: #b6002c #e0e0e0 !important;
+}
