@@ -94,27 +94,33 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
   };
 
   const handleTemplateSelect = async (templateId: string) => {
+    console.log('🔄 Sélection du template:', templateId);
     setSelectedTemplateId(templateId);
     setPreviewUrl('');
 
     // Charger les mappings sauvegardés pour ce template
     if (templateMappings[templateId]) {
+      console.log('✅ Mappings trouvés pour ce template:', templateMappings[templateId]);
       setFieldMappings(templateMappings[templateId]);
     } else {
+      console.log('⚠️ Aucun mapping trouvé pour ce template, utilisation des mappings par défaut');
       setFieldMappings([]);
     }
   };
 
   const handleFieldMappingsChange = (mappings: FieldMapping[]) => {
+    console.log('🔄 Mise à jour des mappings:', mappings);
     setFieldMappings(mappings);
     
     // Sauvegarder automatiquement les mappings pour le template sélectionné
     if (selectedTemplateId) {
+      console.log('💾 Sauvegarde automatique des mappings pour le template:', selectedTemplateId);
       saveMappings(selectedTemplateId, mappings);
     }
   };
 
   const handleClientSelect = (client: Client) => {
+    console.log('🔄 Sélection du client:', client);
     setSelectedClient(client);
   };
 
@@ -161,13 +167,26 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
       return;
     }
 
+    console.log('🚀 Début de la génération du contrat...');
+    console.log('Template sélectionné:', selectedTemplateId);
+    console.log('Client sélectionné:', selectedClient);
+    console.log('Mappings configurés:', fieldMappings);
+
     setIsGenerating(true);
     
     try {
+      // Nettoyer l'ancienne prévisualisation
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        setPreviewUrl('');
+      }
+
       const templateFile = await getTemplate(selectedTemplateId);
       if (!templateFile) {
         throw new Error('Template non trouvé');
       }
+
+      console.log('📄 Template récupéré:', templateFile.name, templateFile.size, 'bytes');
 
       const pdfBytes = await generatePDFContract(templateFile, selectedClient!, fieldMappings);
       
@@ -178,6 +197,8 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
       
       const filename = `${finalFileName}.pdf`;
       
+      console.log('📁 Nom du fichier final:', filename);
+      
       downloadPDFContract(pdfBytes, filename);
       
       toast({
@@ -186,10 +207,10 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
       });
       
     } catch (error) {
-      console.error('Erreur génération PDF:', error);
+      console.error('❌ Erreur génération PDF:', error);
       toast({
         title: "Erreur de génération",
-        description: "Impossible de générer le contrat PDF. Vérifiez votre template.",
+        description: error instanceof Error ? error.message : "Impossible de générer le contrat PDF. Vérifiez votre template.",
         variant: "destructive",
       });
     } finally {
@@ -207,7 +228,14 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
       return;
     }
 
+    console.log('👁️ Génération de la prévisualisation...');
+
     try {
+      // Nettoyer l'ancienne prévisualisation
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+
       const templateFile = await getTemplate(selectedTemplateId);
       if (!templateFile) {
         throw new Error('Template non trouvé');
@@ -217,20 +245,31 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
       const url = previewPDFContract(pdfBytes);
       setPreviewUrl(url);
       
+      console.log('✅ Prévisualisation créée:', url);
+      
       toast({
         title: "Prévisualisation générée",
         description: "Le contrat est prêt à être prévisualisé.",
       });
       
     } catch (error) {
-      console.error('Erreur prévisualisation PDF:', error);
+      console.error('❌ Erreur prévisualisation PDF:', error);
       toast({
         title: "Erreur de prévisualisation",
-        description: "Impossible de prévisualiser le contrat PDF.",
+        description: error instanceof Error ? error.message : "Impossible de prévisualiser le contrat PDF.",
         variant: "destructive",
       });
     }
   };
+
+  // Nettoyer l'URL de prévisualisation au démontage du composant
+  React.useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
 

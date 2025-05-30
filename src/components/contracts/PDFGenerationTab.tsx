@@ -69,13 +69,20 @@ export const PDFGenerationTab = ({
           </div>
 
           {previewUrl && (
-            <div className="border rounded-lg p-4">
-              <h4 className="font-medium mb-2">Prévisualisation :</h4>
-              <iframe
-                src={previewUrl}
-                className="w-full h-96 border rounded"
-                title="Prévisualisation du contrat"
-              />
+            <div className="border rounded-lg overflow-hidden">
+              <div className="bg-gray-50 px-4 py-2 border-b">
+                <h4 className="font-medium text-sm">Prévisualisation du contrat</h4>
+              </div>
+              <div className="p-4">
+                <iframe
+                  src={previewUrl}
+                  className="w-full h-[600px] border rounded"
+                  title="Prévisualisation du contrat"
+                  onError={(e) => {
+                    console.error('Erreur lors du chargement de la prévisualisation:', e);
+                  }}
+                />
+              </div>
             </div>
           )}
 
@@ -86,6 +93,17 @@ export const PDFGenerationTab = ({
                 {!selectedTemplate && <li>• Sélectionnez ou uploadez un template PDF</li>}
                 {!selectedClient && <li>• Sélectionnez un client</li>}
                 {fieldMappings.length === 0 && <li>• Configurez au moins un champ</li>}
+              </ul>
+            </div>
+          )}
+
+          {canGenerate && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h4 className="font-medium text-green-900 mb-2">Configuration prête :</h4>
+              <ul className="text-sm text-green-700 space-y-1">
+                <li>✅ Template: {selectedTemplate?.name}</li>
+                <li>✅ Client: {selectedClient?.prenom} {selectedClient?.nom}</li>
+                <li>✅ {fieldMappings.length} champ(s) configuré(s)</li>
               </ul>
             </div>
           )}
