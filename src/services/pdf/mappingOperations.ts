@@ -50,7 +50,7 @@ export class MappingOperations {
         }
         
         mappingsByTemplate[mapping.template_id].push({
-          fieldId: mapping.field_id,
+          id: mapping.field_id,
           placeholder: mapping.placeholder,
           clientField: mapping.client_field,
           x: mapping.x || 0,
@@ -89,7 +89,7 @@ export class MappingOperations {
         const mappingsToInsert = mappings.map(mapping => ({
           template_id: templateId,
           user_id: user.id,
-          field_id: mapping.fieldId,
+          field_id: mapping.id,
           placeholder: mapping.placeholder,
           client_field: mapping.clientField,
           x: mapping.x,
