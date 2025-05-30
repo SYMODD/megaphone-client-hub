@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { PDFTemplate } from './types';
 import { BucketManager } from './bucketManager';
@@ -29,12 +30,30 @@ export class TemplateOperations {
         console.warn('Erreur lors de la synchronisation, mais continuons avec les données en base:', syncError);
       }
 
-      // Charger les templates depuis la base de données
-      const { data, error } = await supabase
+      // Récupérer le profil de l'utilisateur pour déterminer son rôle
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      console.log('Profil utilisateur:', profile);
+
+      let query = supabase
         .from('pdf_templates')
         .select('*')
-        .eq('user_id', user.id)
         .order('upload_date', { ascending: false });
+
+      // Si l'utilisateur n'est pas admin, filtrer par ses propres templates
+      // Les admins et superviseurs peuvent voir tous les templates
+      if (profile?.role !== 'admin' && profile?.role !== 'superviseur') {
+        console.log('Utilisateur agent - chargement des templates personnels uniquement');
+        query = query.eq('user_id', user.id);
+      } else {
+        console.log('Utilisateur admin/superviseur - chargement de tous les templates');
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Erreur lors du chargement des templates depuis la base de données:', error);

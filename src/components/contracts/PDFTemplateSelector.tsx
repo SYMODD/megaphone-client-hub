@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Trash2, Calendar, Plus, Edit2, Save, X } from "lucide-react";
+import { FileText, Trash2, Calendar, Plus, Edit2, Save, X, Info } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PDFTemplate } from "@/hooks/usePDFTemplates";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PDFTemplateSelectorProps {
   templates: PDFTemplate[];
@@ -29,6 +30,7 @@ export const PDFTemplateSelector = ({
 }: PDFTemplateSelectorProps) => {
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string>('');
+  const { profile } = useAuth();
   const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
 
   const handleStartEdit = (template: PDFTemplate) => {
@@ -62,6 +64,16 @@ export const PDFTemplateSelector = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          {profile?.role === 'agent' && (
+            <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-blue-700">
+                <p className="font-medium">Information pour les agents</p>
+                <p>Vous ne voyez que vos propres templates. Pour utiliser des templates partagés, contactez votre administrateur.</p>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <div className="flex-1">
               <Select value={selectedTemplateId || ''} onValueChange={onTemplateSelect}>
@@ -151,7 +163,11 @@ export const PDFTemplateSelector = ({
             <div className="text-center py-8 text-gray-500">
               <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
               <p>Aucun template sauvegardé</p>
-              <p className="text-sm">Cliquez sur "Nouveau Template" pour commencer</p>
+              {profile?.role === 'agent' ? (
+                <p className="text-sm">Uploadez votre premier template ou demandez l'accès à des templates partagés</p>
+              ) : (
+                <p className="text-sm">Cliquez sur "Nouveau Template" pour commencer</p>
+              )}
             </div>
           )}
         </div>
