@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,8 @@ import { PDFTemplateUpload } from "./PDFTemplateUpload";
 import { PDFTemplateSelector } from "./PDFTemplateSelector";
 import { PDFFieldMapping } from "./PDFFieldMapping";
 import { ClientSelector } from "./ClientSelector";
-import { FileDown, Eye, Settings, FileText, Upload } from "lucide-react";
+import { ContractNaming } from "./ContractNaming";
+import { FileDown, Eye, Settings, FileText, Upload, Edit } from "lucide-react";
 import { generatePDFContract, downloadPDFContract, previewPDFContract } from "@/utils/pdfContractGenerator";
 import { usePDFTemplates } from "@/hooks/usePDFTemplates";
 
@@ -40,6 +40,7 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [contractName, setContractName] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [showUpload, setShowUpload] = useState(false);
@@ -100,6 +101,12 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
 
   const handleClientSelect = (client: Client) => {
     setSelectedClient(client);
+    
+    // Générer automatiquement un nom par défaut quand un client est sélectionné
+    if (!contractName && client) {
+      const defaultName = `contrat_${client.prenom}_${client.nom}_${new Date().toISOString().split('T')[0]}`;
+      setContractName(defaultName);
+    }
   };
 
   const handleDeleteTemplate = (templateId: string) => {
@@ -109,6 +116,10 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
       setFieldMappings([]);
       setPreviewUrl('');
     }
+  };
+
+  const handleContractNameChange = (name: string) => {
+    setContractName(name);
   };
 
   const canGenerate = selectedTemplateId && selectedClient && fieldMappings.length > 0;
@@ -132,13 +143,18 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
       }
 
       const pdfBytes = await generatePDFContract(templateFile, selectedClient!, fieldMappings);
-      const filename = `contrat_${selectedClient!.prenom}_${selectedClient!.nom}_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Utiliser le nom personnalisé ou un nom par défaut
+      const finalFileName = contractName.trim() || 
+        `contrat_${selectedClient!.prenom}_${selectedClient!.nom}_${new Date().toISOString().split('T')[0]}`;
+      
+      const filename = `${finalFileName}.pdf`;
       
       downloadPDFContract(pdfBytes, filename);
       
       toast({
         title: "Contrat généré avec succès",
-        description: `Le contrat pour ${selectedClient!.prenom} ${selectedClient!.nom} a été téléchargé.`,
+        description: `Le contrat "${filename}" pour ${selectedClient!.prenom} ${selectedClient!.nom} a été téléchargé.`,
       });
       
     } catch (error) {
@@ -205,7 +221,7 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
       </Card>
 
       <Tabs defaultValue="templates" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="templates" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
             Templates
@@ -217,6 +233,10 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
           <TabsTrigger value="client" className="flex items-center gap-2">
             <span className="w-4 h-4 rounded-full bg-current flex items-center justify-center text-xs">👤</span>
             Client
+          </TabsTrigger>
+          <TabsTrigger value="naming" className="flex items-center gap-2">
+            <Edit className="w-4 h-4" />
+            Nom
           </TabsTrigger>
           <TabsTrigger value="generate" className="flex items-center gap-2">
             <FileDown className="w-4 h-4" />
@@ -256,6 +276,14 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
           />
         </TabsContent>
 
+        <TabsContent value="naming">
+          <ContractNaming
+            contractName={contractName}
+            onContractNameChange={handleContractNameChange}
+            selectedClient={selectedClient}
+          />
+        </TabsContent>
+
         <TabsContent value="generate">
           <Card>
             <CardHeader>
@@ -263,6 +291,7 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
               <CardDescription>
                 {selectedTemplate && `Template: ${selectedTemplate.name}`}
                 {selectedClient && ` • Client: ${selectedClient.prenom} ${selectedClient.nom}`}
+                {contractName && ` • Nom: ${contractName}.pdf`}
                 {fieldMappings.length > 0 && ` • ${fieldMappings.length} champ(s) configuré(s)`}
               </CardDescription>
             </CardHeader>
