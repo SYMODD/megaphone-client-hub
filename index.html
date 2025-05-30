@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -15,6 +16,25 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    
+    <!-- FORCE SCROLLBARS - STYLES INLINE POUR PRIORITÉ MAXIMALE -->
+    <style>
+      /* Force scrollbars avec spécificité maximale */
+      * { scrollbar-width: auto !important; scrollbar-color: #b6002c #e0e0e0 !important; }
+      *::-webkit-scrollbar { width: 12px !important; background: #e0e0e0 !important; display: block !important; }
+      *::-webkit-scrollbar-thumb { background: #b6002c !important; border-radius: 6px !important; }
+      *::-webkit-scrollbar-track { background: #e0e0e0 !important; }
+      
+      /* Override de toutes les classes qui pourraient cacher les scrollbars */
+      .overflow-hidden { overflow: auto !important; }
+      .scrollbar-none { scrollbar-width: auto !important; }
+      .scrollbar-none::-webkit-scrollbar { display: block !important; width: 12px !important; background: #e0e0e0 !important; }
+      
+      /* Force sur body et html */
+      html, body, #root { scrollbar-width: auto !important; scrollbar-color: #b6002c #e0e0e0 !important; }
+      html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar { width: 12px !important; background: #e0e0e0 !important; display: block !important; }
+      html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb, #root::-webkit-scrollbar-thumb { background: #b6002c !important; border-radius: 6px !important; }
+    </style>
   </head>
 
   <body>
