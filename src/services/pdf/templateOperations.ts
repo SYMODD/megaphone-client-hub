@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { PDFTemplate } from './types';
 import { BucketManager } from './bucketManager';
@@ -7,13 +6,33 @@ export class TemplateOperations {
   static async loadTemplates(): Promise<PDFTemplate[]> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!user) {
+        console.log('Utilisateur non connecté, aucun template à charger');
+        return [];
+      }
 
-      console.log('Loading templates for user:', user.id);
+      console.log('Chargement des templates pour l\'utilisateur:', user.id);
 
-      // D'abord synchroniser le bucket avec la base de données
+      // Vérifier l'accès au bucket avant de continuer
+      const bucketAccessible = await BucketManager.ensureBucket();
+      if (!bucketAccessible) {
+        console.error('❌ Le bucket pdf-templates n\'est pas accessible');
+        throw new Error('Le bucket de stockage des templates n\'est pas disponible. Vérifiez la configuration Supabase.');
+      }
+
+      // Test d'accès au bucket
+      const accessTest = await BucketManager.testBucketAccess();
+      if (!accessTest.success) {
+        console.error('❌ Test d\'accès au bucket échoué:', accessTest.message);
+        throw new Error(`Accès au stockage impossible: ${accessTest.message}`);
+      }
+
+      console.log('✅ Bucket accessible, synchronisation en cours...');
+
+      // Synchroniser le bucket avec la base de données
       await BucketManager.syncBucketWithDatabase();
 
+      // Charger les templates depuis la base de données
       const { data, error } = await supabase
         .from('pdf_templates')
         .select('*')
@@ -21,11 +40,11 @@ export class TemplateOperations {
         .order('upload_date', { ascending: false });
 
       if (error) {
-        console.error('Error loading templates from database:', error);
-        return [];
+        console.error('Erreur lors du chargement des templates depuis la base de données:', error);
+        throw new Error(`Impossible de charger les templates: ${error.message}`);
       }
 
-      console.log('Templates loaded from database:', data);
+      console.log('Templates chargés depuis la base de données:', data);
 
       const templates = data?.map(template => ({
         id: template.id,
@@ -35,36 +54,41 @@ export class TemplateOperations {
         filePath: template.file_path
       })) || [];
 
-      console.log('Processed templates:', templates);
+      console.log(`✅ ${templates.length} template(s) chargé(s) avec succès`);
       return templates;
     } catch (error) {
-      console.error('Error loading templates:', error);
-      return [];
+      console.error('Erreur lors du chargement des templates:', error);
+      // Retourner l'erreur avec un message plus explicite
+      if (error instanceof Error) {
+        throw error;
+      } else {
+        throw new Error('Erreur inconnue lors du chargement des templates');
+      }
     }
   }
 
   static async saveTemplate(file: File, fileName: string): Promise<PDFTemplate> {
-    // Check bucket availability and permissions
+    // Vérifier la disponibilité du bucket et les permissions
     const bucketExists = await BucketManager.ensureBucket();
     if (!bucketExists) {
-      throw new Error('Storage bucket not available. Please verify your Supabase configuration.');
+      throw new Error('Le bucket de stockage n\'est pas disponible. Vérifiez la configuration Supabase.');
     }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      throw new Error('You must be logged in to upload templates.');
+      throw new Error('Vous devez être connecté pour uploader des templates.');
     }
 
     const templateId = Date.now().toString();
     const filePath = `${user.id}/${templateId}_${fileName}`;
 
-    console.log('Starting upload process...');
-    console.log('Upload path:', filePath);
-    console.log('File size:', file.size, 'bytes');
-    console.log('File type:', file.type);
-    console.log('User ID:', user.id);
+    console.log('Début du processus d\'upload...');
+    console.log('Chemin d\'upload:', filePath);
+    console.log('Taille du fichier:', file.size, 'bytes');
+    console.log('Type de fichier:', file.type);
+    console.log('ID utilisateur:', user.id);
 
-    // Upload file to Supabase Storage with detailed error handling
+    // Upload du fichier vers Supabase Storage avec gestion d'erreur détaillée
     const { data, error: uploadError } = await supabase.storage
       .from(BucketManager.getBucketName())
       .upload(filePath, file, {
@@ -73,28 +97,28 @@ export class TemplateOperations {
       });
 
     if (uploadError) {
-      console.error('Upload error details:', uploadError);
-      console.error('Error message:', uploadError.message);
+      console.error('Détails de l\'erreur d\'upload:', uploadError);
+      console.error('Message d\'erreur:', uploadError.message);
       
-      // Provide more specific error messages based on the error type
+      // Messages d'erreur plus explicites
       if (uploadError.message.toLowerCase().includes('duplicate') || uploadError.message.includes('already exists')) {
-        throw new Error('A file with this name already exists. Please rename the file and try again.');
+        throw new Error('Un fichier avec ce nom existe déjà. Veuillez renommer le fichier et réessayer.');
       } else if (uploadError.message.toLowerCase().includes('permission') || uploadError.message.toLowerCase().includes('policy')) {
-        throw new Error('Permission denied. Please ensure you are logged in and have the necessary permissions.');
+        throw new Error('Permission refusée. Vérifiez que vous êtes connecté et que vous avez les permissions nécessaires.');
       } else if (uploadError.message.toLowerCase().includes('size') || uploadError.message.toLowerCase().includes('limit')) {
-        throw new Error('File size exceeds the allowed limit. Please use a smaller file.');
+        throw new Error('Le fichier est trop volumineux. Utilisez un fichier plus petit.');
       } else if (uploadError.message.toLowerCase().includes('unauthorized') || uploadError.message.toLowerCase().includes('authentication')) {
-        throw new Error('Authentication failed. Please log out and log back in.');
+        throw new Error('Authentification échouée. Reconnectez-vous et réessayez.');
       } else if (uploadError.message.toLowerCase().includes('forbidden') || uploadError.message.toLowerCase().includes('access')) {
-        throw new Error('Access forbidden. Please check your account permissions.');
+        throw new Error('Accès interdit. Vérifiez les permissions de votre compte.');
       } else {
-        throw new Error(`Upload failed: ${uploadError.message}. Please try again or contact support.`);
+        throw new Error(`Échec de l'upload: ${uploadError.message}. Essayez à nouveau ou contactez le support.`);
       }
     }
 
-    console.log('File uploaded successfully to:', data?.path);
+    console.log('✅ Fichier uploadé avec succès vers:', data?.path);
 
-    // Save template metadata to database
+    // Sauvegarde des métadonnées du template en base de données
     const { data: templateData, error: dbError } = await supabase
       .from('pdf_templates')
       .insert({
@@ -109,13 +133,13 @@ export class TemplateOperations {
       .single();
 
     if (dbError) {
-      console.error('Database insert error:', dbError);
-      // Clean up uploaded file if database insert fails
+      console.error('Erreur lors de l\'insertion en base de données:', dbError);
+      // Nettoyer le fichier uploadé si l'insertion en base échoue
       await supabase.storage.from(BucketManager.getBucketName()).remove([filePath]);
-      throw new Error(`Failed to save template information: ${dbError.message}`);
+      throw new Error(`Échec de la sauvegarde des informations du template: ${dbError.message}`);
     }
 
-    console.log('Template saved successfully:', templateData);
+    console.log('✅ Template sauvegardé avec succès:', templateData);
 
     return {
       id: templateData.id,
@@ -128,18 +152,21 @@ export class TemplateOperations {
 
   static async getTemplateFile(template: PDFTemplate): Promise<File | null> {
     try {
+      console.log('Téléchargement du template:', template.filePath);
+      
       const { data, error } = await supabase.storage
         .from(BucketManager.getBucketName())
         .download(template.filePath);
 
       if (error) {
-        console.error('Error downloading template:', error);
-        return null;
+        console.error('Erreur lors du téléchargement du template:', error);
+        throw new Error(`Impossible de télécharger le template: ${error.message}`);
       }
 
+      console.log('✅ Template téléchargé avec succès');
       return new File([data], template.fileName, { type: 'application/pdf' });
     } catch (error) {
-      console.error('Error getting template file:', error);
+      console.error('Erreur lors de la récupération du fichier template:', error);
       return null;
     }
   }
