@@ -13,7 +13,7 @@
 @import './styles/dropdowns.css';
 @import './styles/utilities.css';
 
-/* FORCE SCROLLBARS - NUCLEAR APPROACH */
+/* SCROLLBARS - APPROCHE SIMPLIFIÉE */
 * {
   scrollbar-width: auto !important;
   scrollbar-color: #b6002c #e0e0e0 !important;
@@ -33,36 +33,4 @@
 
 *::-webkit-scrollbar-track {
   background: #e0e0e0 !important;
-}
-
-/* Override ANY utility class that might hide scrollbars */
-.overflow-hidden {
-  overflow: auto !important;
-}
-
-.scrollbar-none {
-  scrollbar-width: auto !important;
-}
-
-.scrollbar-none::-webkit-scrollbar {
-  display: block !important;
-  width: 12px !important;
-  background: #e0e0e0 !important;
-}
-
-/* Force on specific containers */
-body, html, #root, .container, .mx-auto {
-  scrollbar-width: auto !important;
-  scrollbar-color: #b6002c #e0e0e0 !important;
-}
-
-body::-webkit-scrollbar, html::-webkit-scrollbar, #root::-webkit-scrollbar {
-  width: 12px !important;
-  background: #e0e0e0 !important;
-  display: block !important;
-}
-
-body::-webkit-scrollbar-thumb, html::-webkit-scrollbar-thumb, #root::-webkit-scrollbar-thumb {
-  background: #b6002c !important;
-  border-radius: 6px !important;
 }
