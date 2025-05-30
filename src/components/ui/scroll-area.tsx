@@ -18,7 +18,7 @@ const ScrollArea = React.forwardRef<
       style={{
         overflow: 'auto',
         scrollbarWidth: 'auto',
-        scrollbarColor: '#4a5568 #f1f5f9'
+        scrollbarColor: '#b6002c #e0e0e0'
       }}
     >
       {children}
