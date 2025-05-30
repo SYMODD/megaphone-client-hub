@@ -39,7 +39,18 @@ export const usePDFTemplates = () => {
       if (savedTemplates) {
         const parsedTemplates = JSON.parse(savedTemplates);
         console.log('Templates chargés:', parsedTemplates);
-        setTemplates(parsedTemplates);
+        
+        // Convertir les templates sauvegardés en objets avec des fichiers File
+        const templatesWithFiles = await Promise.all(
+          parsedTemplates.map(async (template: any) => ({
+            ...template,
+            file: typeof template.file === 'string' 
+              ? base64ToFile(template.file, template.fileName)
+              : template.file
+          }))
+        );
+        
+        setTemplates(templatesWithFiles);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des templates:', error);
@@ -61,28 +72,32 @@ export const usePDFTemplates = () => {
 
   const saveTemplate = async (file: File, fileName: string): Promise<string> => {
     try {
-      // Convertir le fichier en base64 pour le stockage
-      const base64 = await fileToBase64(file);
-      
       const newTemplate: PDFTemplate = {
         id: Date.now().toString(),
         name: fileName.replace('.pdf', ''),
         fileName: fileName,
         uploadDate: new Date().toISOString(),
-        file: file // On garde le fichier original en mémoire
+        file: file
       };
 
-      // Sauvegarder sans le fichier pour le localStorage
+      // Convertir le fichier en base64 pour le stockage
+      const base64 = await fileToBase64(file);
+      
+      // Sauvegarder avec le fichier en base64 pour le localStorage
       const templateForStorage = {
         ...newTemplate,
-        file: base64 // Stocker en base64
+        file: base64
       };
 
       const updatedTemplates = [...templates, newTemplate];
-      const templatesForStorage = templates.map(t => ({
-        ...t,
-        file: t.file instanceof File ? fileToBase64(t.file) : t.file
-      }));
+      
+      // Convertir tous les templates existants en base64 pour le stockage
+      const templatesForStorage = await Promise.all(
+        templates.map(async (t) => ({
+          ...t,
+          file: t.file instanceof File ? await fileToBase64(t.file) : t.file
+        }))
+      );
       templatesForStorage.push(templateForStorage);
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(templatesForStorage));
@@ -105,12 +120,16 @@ export const usePDFTemplates = () => {
     }
   };
 
-  const deleteTemplate = (templateId: string) => {
+  const deleteTemplate = async (templateId: string) => {
     const updatedTemplates = templates.filter(t => t.id !== templateId);
-    const templatesForStorage = updatedTemplates.map(t => ({
-      ...t,
-      file: t.file instanceof File ? fileToBase64(t.file) : t.file
-    }));
+    
+    // Convertir tous les templates en base64 pour le stockage
+    const templatesForStorage = await Promise.all(
+      updatedTemplates.map(async (t) => ({
+        ...t,
+        file: t.file instanceof File ? await fileToBase64(t.file) : t.file
+      }))
+    );
     
     localStorage.setItem(STORAGE_KEY, JSON.stringify(templatesForStorage));
     setTemplates(updatedTemplates);
