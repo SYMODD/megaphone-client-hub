@@ -8,26 +8,38 @@ export class BucketManager {
     try {
       console.log(`Vérification du bucket: ${BUCKET_NAME}`);
       
-      const { data: buckets, error } = await supabase.storage.listBuckets();
-      
-      if (error) {
-        console.error('Erreur lors de la récupération des buckets:', error);
-        console.error('Message d\'erreur détaillé:', error.message);
+      // Test direct d'accès au bucket en listant les fichiers
+      const { data: files, error: listError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .list('', { limit: 1 });
+
+      if (listError) {
+        console.error('Erreur lors du test d\'accès au bucket:', listError);
+        console.error('Message d\'erreur détaillé:', listError.message);
+        
+        // Si le bucket n'existe pas, essayer de le créer
+        if (listError.message.includes('Bucket not found') || listError.message.includes('does not exist')) {
+          console.log(`Tentative de création du bucket: ${BUCKET_NAME}`);
+          
+          const { error: createError } = await supabase.storage.createBucket(BUCKET_NAME, {
+            public: true,
+            allowedMimeTypes: ['application/pdf'],
+            fileSizeLimit: 10485760 // 10MB
+          });
+
+          if (createError) {
+            console.error('Erreur lors de la création du bucket:', createError);
+            return false;
+          }
+
+          console.log(`✅ Bucket "${BUCKET_NAME}" créé avec succès`);
+          return true;
+        }
+        
         return false;
       }
 
-      console.log('Buckets disponibles:', buckets?.map(b => b.name));
-
-      const templatesBucket = buckets?.find(bucket => bucket.name === BUCKET_NAME);
-      
-      if (!templatesBucket) {
-        console.error(`❌ Le bucket "${BUCKET_NAME}" n'a pas été trouvé dans la liste des buckets disponibles`);
-        console.error(`Buckets existants: ${buckets?.map(b => b.name).join(', ') || 'aucun'}`);
-        return false;
-      }
-
-      console.log(`✅ Bucket "${BUCKET_NAME}" trouvé et accessible`);
-      console.log('Détails du bucket:', templatesBucket);
+      console.log(`✅ Bucket "${BUCKET_NAME}" accessible. Fichiers trouvés:`, files?.length || 0);
       return true;
     } catch (error) {
       console.error('Erreur inattendue lors de la vérification du bucket:', error);

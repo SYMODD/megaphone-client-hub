@@ -20,17 +20,14 @@ export class TemplateOperations {
         throw new Error('Le bucket de stockage des templates n\'est pas disponible. Vérifiez la configuration Supabase.');
       }
 
-      // Test d'accès au bucket
-      const accessTest = await BucketManager.testBucketAccess();
-      if (!accessTest.success) {
-        console.error('❌ Test d\'accès au bucket échoué:', accessTest.message);
-        throw new Error(`Accès au stockage impossible: ${accessTest.message}`);
-      }
-
       console.log('✅ Bucket accessible, synchronisation en cours...');
 
       // Synchroniser le bucket avec la base de données
-      await BucketManager.syncBucketWithDatabase();
+      try {
+        await BucketManager.syncBucketWithDatabase();
+      } catch (syncError) {
+        console.warn('Erreur lors de la synchronisation, mais continuons avec les données en base:', syncError);
+      }
 
       // Charger les templates depuis la base de données
       const { data, error } = await supabase
