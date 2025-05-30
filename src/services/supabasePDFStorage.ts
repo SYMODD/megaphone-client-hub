@@ -113,9 +113,10 @@ export class SupabasePDFStorage {
   }
 
   static async saveTemplate(file: File, fileName: string): Promise<PDFTemplate> {
+    // Check bucket availability first
     const bucketExists = await this.ensureBucket();
     if (!bucketExists) {
-      throw new Error('Storage bucket not available');
+      throw new Error('Storage bucket not available. Please contact support.');
     }
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -127,6 +128,8 @@ export class SupabasePDFStorage {
     const filePath = `${user.id}/${templateId}_${fileName}`;
 
     console.log('Uploading file to path:', filePath);
+    console.log('File size:', file.size, 'bytes');
+    console.log('File type:', file.type);
 
     // Upload file to Supabase Storage
     const { error: uploadError } = await supabase.storage

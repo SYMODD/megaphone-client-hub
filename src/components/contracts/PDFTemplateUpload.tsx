@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, FileText, AlertCircle, X } from "lucide-react";
+import { Upload, FileText, AlertCircle, X, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface PDFTemplateUploadProps {
@@ -15,6 +15,7 @@ interface PDFTemplateUploadProps {
 export const PDFTemplateUpload = ({ onTemplateUploaded, onCancel }: PDFTemplateUploadProps) => {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
   const handleDrag = (e: React.DragEvent) => {
@@ -41,7 +42,7 @@ export const PDFTemplateUpload = ({ onTemplateUploaded, onCancel }: PDFTemplateU
     handleFiles(files);
   };
 
-  const handleFiles = (files: File[]) => {
+  const handleFiles = async (files: File[]) => {
     const pdfFile = files.find(file => file.type === 'application/pdf');
     
     if (!pdfFile) {
@@ -63,7 +64,25 @@ export const PDFTemplateUpload = ({ onTemplateUploaded, onCancel }: PDFTemplateU
     }
 
     setUploadedFile(pdfFile);
-    onTemplateUploaded(pdfFile, pdfFile.name);
+    setIsUploading(true);
+
+    try {
+      await onTemplateUploaded(pdfFile, pdfFile.name);
+      toast({
+        title: "Succès",
+        description: "Template uploadé avec succès !",
+      });
+    } catch (error) {
+      console.error('Erreur upload:', error);
+      toast({
+        title: "Erreur d'upload",
+        description: error instanceof Error ? error.message : "Impossible d'uploader le template.",
+        variant: "destructive",
+      });
+      setUploadedFile(null);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -90,6 +109,8 @@ export const PDFTemplateUpload = ({ onTemplateUploaded, onCancel }: PDFTemplateU
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
               dragActive 
                 ? 'border-blue-500 bg-blue-50' 
+                : uploadedFile 
+                ? 'border-green-500 bg-green-50'
                 : 'border-gray-300 hover:border-gray-400'
             }`}
             onDragEnter={handleDrag}
@@ -97,9 +118,16 @@ export const PDFTemplateUpload = ({ onTemplateUploaded, onCancel }: PDFTemplateU
             onDragOver={handleDrag}
             onDrop={handleDrop}
           >
-            {uploadedFile ? (
+            {isUploading ? (
               <div className="space-y-2">
-                <FileText className="w-12 h-12 text-green-500 mx-auto" />
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="text-sm font-medium text-blue-700">
+                  Upload en cours...
+                </p>
+              </div>
+            ) : uploadedFile ? (
+              <div className="space-y-2">
+                <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
                 <p className="text-sm font-medium text-green-700">
                   {uploadedFile.name}
                 </p>
@@ -128,20 +156,22 @@ export const PDFTemplateUpload = ({ onTemplateUploaded, onCancel }: PDFTemplateU
               accept=".pdf"
               onChange={handleFileInput}
               className="flex-1"
+              disabled={isUploading}
             />
             <Button 
               variant="outline" 
               onClick={() => document.getElementById('pdf-upload')?.click()}
+              disabled={isUploading}
             >
               Choisir un fichier
             </Button>
           </div>
 
-          {uploadedFile && (
+          {uploadedFile && !isUploading && (
             <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded">
-              <AlertCircle className="w-4 h-4 text-green-600" />
+              <CheckCircle className="w-4 h-4 text-green-600" />
               <p className="text-sm text-green-700">
-                Template prêt ! Il sera sauvegardé automatiquement.
+                Template uploadé avec succès !
               </p>
             </div>
           )}
