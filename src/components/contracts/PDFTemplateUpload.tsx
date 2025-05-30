@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, FileText, AlertCircle, X, CheckCircle } from "lucide-react";
+import { Upload, FileText, AlertCircle, X, CheckCircle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface PDFTemplateUploadProps {
@@ -16,6 +16,7 @@ export const PDFTemplateUpload = ({ onTemplateUploaded, onCancel }: PDFTemplateU
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
 
   const handleDrag = (e: React.DragEvent) => {
@@ -47,7 +48,7 @@ export const PDFTemplateUpload = ({ onTemplateUploaded, onCancel }: PDFTemplateU
     
     if (!pdfFile) {
       toast({
-        title: "Erreur",
+        title: "Fichier invalide",
         description: "Veuillez sélectionner un fichier PDF valide.",
         variant: "destructive",
       });
@@ -56,8 +57,8 @@ export const PDFTemplateUpload = ({ onTemplateUploaded, onCancel }: PDFTemplateU
 
     if (pdfFile.size > 10 * 1024 * 1024) { // 10MB limit
       toast({
-        title: "Erreur",
-        description: "Le fichier est trop volumineux (max 10MB).",
+        title: "Fichier trop volumineux",
+        description: "Le fichier est trop volumineux (maximum 10MB).",
         variant: "destructive",
       });
       return;
@@ -65,24 +66,49 @@ export const PDFTemplateUpload = ({ onTemplateUploaded, onCancel }: PDFTemplateU
 
     setUploadedFile(pdfFile);
     setIsUploading(true);
+    setUploadProgress(0);
 
     try {
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
       await onTemplateUploaded(pdfFile, pdfFile.name);
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      
       toast({
-        title: "Succès",
-        description: "Template uploadé avec succès !",
+        title: "Upload réussi",
+        description: `Template "${pdfFile.name}" uploadé avec succès !`,
       });
     } catch (error) {
       console.error('Erreur upload:', error);
+      const errorMessage = error instanceof Error ? error.message : "Impossible d'uploader le template.";
+      
       toast({
         title: "Erreur d'upload",
-        description: error instanceof Error ? error.message : "Impossible d'uploader le template.",
+        description: errorMessage,
         variant: "destructive",
       });
       setUploadedFile(null);
+      setUploadProgress(0);
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const resetUpload = () => {
+    setUploadedFile(null);
+    setUploadProgress(0);
+    setIsUploading(false);
   };
 
   return (
@@ -109,8 +135,10 @@ export const PDFTemplateUpload = ({ onTemplateUploaded, onCancel }: PDFTemplateU
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
               dragActive 
                 ? 'border-blue-500 bg-blue-50' 
-                : uploadedFile 
+                : uploadedFile && uploadProgress === 100
                 ? 'border-green-500 bg-green-50'
+                : isUploading
+                ? 'border-orange-500 bg-orange-50'
                 : 'border-gray-300 hover:border-gray-400'
             }`}
             onDragEnter={handleDrag}
@@ -119,21 +147,38 @@ export const PDFTemplateUpload = ({ onTemplateUploaded, onCancel }: PDFTemplateU
             onDrop={handleDrop}
           >
             {isUploading ? (
-              <div className="space-y-2">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="text-sm font-medium text-blue-700">
+              <div className="space-y-3">
+                <RefreshCw className="w-12 h-12 text-orange-500 mx-auto animate-spin" />
+                <p className="text-sm font-medium text-orange-700">
                   Upload en cours...
                 </p>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-orange-500 h-2 rounded-full transition-all duration-300" 
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500">
+                  {uploadProgress}% terminé
+                </p>
               </div>
-            ) : uploadedFile ? (
+            ) : uploadedFile && uploadProgress === 100 ? (
               <div className="space-y-2">
                 <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
                 <p className="text-sm font-medium text-green-700">
                   {uploadedFile.name}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
+                  {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB • Upload terminé
                 </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={resetUpload}
+                  className="mt-2"
+                >
+                  Uploader un autre fichier
+                </Button>
               </div>
             ) : (
               <div className="space-y-2">
@@ -148,31 +193,22 @@ export const PDFTemplateUpload = ({ onTemplateUploaded, onCancel }: PDFTemplateU
             )}
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="pdf-upload" className="sr-only">Upload PDF</Label>
-            <Input
-              id="pdf-upload"
-              type="file"
-              accept=".pdf"
-              onChange={handleFileInput}
-              className="flex-1"
-              disabled={isUploading}
-            />
-            <Button 
-              variant="outline" 
-              onClick={() => document.getElementById('pdf-upload')?.click()}
-              disabled={isUploading}
-            >
-              Choisir un fichier
-            </Button>
-          </div>
-
-          {uploadedFile && !isUploading && (
-            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <p className="text-sm text-green-700">
-                Template uploadé avec succès !
-              </p>
+          {!uploadedFile && !isUploading && (
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="pdf-upload" className="sr-only">Upload PDF</Label>
+              <Input
+                id="pdf-upload"
+                type="file"
+                accept=".pdf"
+                onChange={handleFileInput}
+                className="flex-1"
+              />
+              <Button 
+                variant="outline" 
+                onClick={() => document.getElementById('pdf-upload')?.click()}
+              >
+                Choisir un fichier
+              </Button>
             </div>
           )}
         </div>

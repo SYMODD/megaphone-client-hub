@@ -33,7 +33,7 @@ export class SupabasePDFStorage {
       const templatesBucket = buckets.find(bucket => bucket.name === BUCKET_NAME);
       
       if (!templatesBucket) {
-        console.error(`Bucket ${BUCKET_NAME} not found. Storage policies may not be configured correctly.`);
+        console.error(`Bucket ${BUCKET_NAME} not found. Please verify Supabase configuration.`);
         return false;
       }
 
@@ -116,22 +116,24 @@ export class SupabasePDFStorage {
     // Check bucket availability and permissions
     const bucketExists = await this.ensureBucket();
     if (!bucketExists) {
-      throw new Error('Storage bucket not available. Please check your configuration.');
+      throw new Error('Storage bucket not available. Please verify your Supabase configuration.');
     }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      throw new Error('User not authenticated. Please log in to upload templates.');
+      throw new Error('You must be logged in to upload templates.');
     }
 
     const templateId = Date.now().toString();
     const filePath = `${user.id}/${templateId}_${fileName}`;
 
-    console.log('Uploading file to path:', filePath);
+    console.log('Starting upload process...');
+    console.log('Upload path:', filePath);
     console.log('File size:', file.size, 'bytes');
     console.log('File type:', file.type);
+    console.log('User ID:', user.id);
 
-    // Upload file to Supabase Storage with proper error handling
+    // Upload file to Supabase Storage with detailed error handling
     const { data, error: uploadError } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(filePath, file, {
@@ -141,14 +143,22 @@ export class SupabasePDFStorage {
 
     if (uploadError) {
       console.error('Upload error details:', uploadError);
+      console.error('Error code:', uploadError.statusCode);
+      console.error('Error message:', uploadError.message);
       
-      // Provide more specific error messages
-      if (uploadError.message.includes('row-level security')) {
-        throw new Error('Storage permissions error. Please contact support if this persists.');
-      } else if (uploadError.message.includes('duplicate')) {
-        throw new Error('A file with this name already exists. Please try again.');
+      // Provide more specific error messages based on the error type
+      if (uploadError.message.toLowerCase().includes('duplicate') || uploadError.message.includes('already exists')) {
+        throw new Error('A file with this name already exists. Please rename the file and try again.');
+      } else if (uploadError.message.toLowerCase().includes('permission') || uploadError.message.toLowerCase().includes('policy')) {
+        throw new Error('Permission denied. Please ensure you are logged in and have the necessary permissions.');
+      } else if (uploadError.message.toLowerCase().includes('size') || uploadError.message.toLowerCase().includes('limit')) {
+        throw new Error('File size exceeds the allowed limit. Please use a smaller file.');
+      } else if (uploadError.statusCode === 401) {
+        throw new Error('Authentication failed. Please log out and log back in.');
+      } else if (uploadError.statusCode === 403) {
+        throw new Error('Access forbidden. Please check your account permissions.');
       } else {
-        throw new Error(`Failed to upload file: ${uploadError.message}`);
+        throw new Error(`Upload failed: ${uploadError.message}. Please try again or contact support.`);
       }
     }
 
@@ -172,7 +182,7 @@ export class SupabasePDFStorage {
       console.error('Database insert error:', dbError);
       // Clean up uploaded file if database insert fails
       await supabase.storage.from(BUCKET_NAME).remove([filePath]);
-      throw new Error(`Failed to save template metadata: ${dbError.message}`);
+      throw new Error(`Failed to save template information: ${dbError.message}`);
     }
 
     console.log('Template saved successfully:', templateData);
