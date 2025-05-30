@@ -6,6 +6,9 @@ import { useContractManagement } from "@/hooks/useContractManagement";
 import { AgentContractInterface } from "@/components/contracts/AgentContractInterface";
 import { AdminContractInterface } from "@/components/contracts/AdminContractInterface";
 import { ContractDebugInfo } from "@/components/contracts/ContractDebugInfo";
+import { PDFContractGenerator } from "@/components/contracts/PDFContractGenerator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileText, FileDown } from "lucide-react";
 
 const Contracts = () => {
   const { profile } = useAuth();
@@ -40,7 +43,6 @@ const Contracts = () => {
     );
   }
 
-  // Pour les agents, ne montrer que l'onglet de génération
   const isAgent = profile?.role === "agent";
 
   return (
@@ -62,34 +64,53 @@ const Contracts = () => {
             <ContractDebugInfo customTemplates={customTemplates} />
           )}
 
-          {isAgent ? (
-            <AgentContractInterface
-              clients={clients}
-              selectedClient={selectedClient}
-              selectedTemplate={selectedTemplate}
-              customTemplates={customTemplates}
-              showPreview={showPreview}
-              onClientSelect={handleClientSelect}
-              onTemplateSelect={setSelectedTemplate}
-              onGenerateContract={handleGenerateContract}
-              onDownloadHTML={handleDownloadHTML}
-            />
-          ) : (
-            <AdminContractInterface
-              clients={clients}
-              selectedClient={selectedClient}
-              selectedTemplate={selectedTemplate}
-              customTemplates={customTemplates}
-              showPreview={showPreview}
-              onClientSelect={handleClientSelect}
-              onTemplateSelect={setSelectedTemplate}
-              onGenerateContract={handleGenerateContract}
-              onDownloadHTML={handleDownloadHTML}
-              onAddTemplate={handleAddTemplate}
-              onUpdateTemplate={handleUpdateTemplate}
-              onDeleteTemplate={handleDeleteTemplate}
-            />
-          )}
+          <Tabs defaultValue="html" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="html" className="flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Contrats HTML
+              </TabsTrigger>
+              <TabsTrigger value="pdf" className="flex items-center gap-2">
+                <FileDown className="w-4 h-4" />
+                Contrats PDF
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="html">
+              {isAgent ? (
+                <AgentContractInterface
+                  clients={clients}
+                  selectedClient={selectedClient}
+                  selectedTemplate={selectedTemplate}
+                  customTemplates={customTemplates}
+                  showPreview={showPreview}
+                  onClientSelect={handleClientSelect}
+                  onTemplateSelect={setSelectedTemplate}
+                  onGenerateContract={handleGenerateContract}
+                  onDownloadHTML={handleDownloadHTML}
+                />
+              ) : (
+                <AdminContractInterface
+                  clients={clients}
+                  selectedClient={selectedClient}
+                  selectedTemplate={selectedTemplate}
+                  customTemplates={customTemplates}
+                  showPreview={showPreview}
+                  onClientSelect={handleClientSelect}
+                  onTemplateSelect={setSelectedTemplate}
+                  onGenerateContract={handleGenerateContract}
+                  onDownloadHTML={handleDownloadHTML}
+                  onAddTemplate={handleAddTemplate}
+                  onUpdateTemplate={handleUpdateTemplate}
+                  onDeleteTemplate={handleDeleteTemplate}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="pdf">
+              <PDFContractGenerator clients={clients} />
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>
