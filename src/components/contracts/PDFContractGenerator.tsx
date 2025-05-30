@@ -1,14 +1,9 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { PDFTemplateUpload } from "./PDFTemplateUpload";
-import { PDFTemplateSelector } from "./PDFTemplateSelector";
-import { PDFFieldMapping } from "./PDFFieldMapping";
-import { ClientSelector } from "./ClientSelector";
-import { FileDown, Eye, Settings, FileText, Upload } from "lucide-react";
+import { PDFContractTabs } from "./PDFContractTabs";
 import { generatePDFContract, downloadPDFContract, previewPDFContract } from "@/utils/pdfContractGenerator";
 import { usePDFTemplates } from "@/hooks/usePDFTemplates";
 
@@ -215,127 +210,27 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
         </CardHeader>
       </Card>
 
-      <Tabs defaultValue="templates" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="templates" className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            Templates
-          </TabsTrigger>
-          <TabsTrigger value="fields" className="flex items-center gap-2">
-            <Settings className="w-4 h-4" />
-            Champs
-          </TabsTrigger>
-          <TabsTrigger value="client" className="flex items-center gap-2">
-            <span className="w-4 h-4 rounded-full bg-current flex items-center justify-center text-xs">👤</span>
-            Client
-          </TabsTrigger>
-          <TabsTrigger value="generate" className="flex items-center gap-2">
-            <FileDown className="w-4 h-4" />
-            Générer
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="templates">
-          {showUpload ? (
-            <PDFTemplateUpload 
-              onTemplateUploaded={handleTemplateUploaded}
-              onCancel={() => setShowUpload(false)}
-            />
-          ) : (
-            <PDFTemplateSelector
-              templates={templates}
-              selectedTemplateId={selectedTemplateId}
-              onTemplateSelect={handleTemplateSelect}
-              onDeleteTemplate={handleDeleteTemplate}
-              onRenameTemplate={handleRenameTemplate}
-              onUploadNew={() => setShowUpload(true)}
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="fields">
-          {selectedTemplateId ? (
-            <PDFFieldMapping 
-              onFieldMappingsChange={handleFieldMappingsChange}
-              initialMappings={fieldMappings}
-            />
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Sélectionnez d'abord un template</h3>
-                <p className="text-gray-500">Vous devez sélectionner un template PDF avant de pouvoir configurer ses champs.</p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="client">
-          <ClientSelector
-            clients={clients}
-            selectedClient={selectedClient}
-            onClientSelect={handleClientSelect}
-          />
-        </TabsContent>
-
-        <TabsContent value="generate">
-          <Card>
-            <CardHeader>
-              <CardTitle>Génération du contrat</CardTitle>
-              <CardDescription>
-                {selectedTemplate && `Template: ${selectedTemplate.name}`}
-                {selectedClient && ` • Client: ${selectedClient.prenom} ${selectedClient.nom}`}
-                {fieldMappings.length > 0 && ` • ${fieldMappings.length} champ(s) configuré(s)`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button 
-                    onClick={handlePreviewContract}
-                    disabled={!canGenerate}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    Prévisualiser
-                  </Button>
-                  <Button 
-                    onClick={handleGenerateContract}
-                    disabled={!canGenerate || isGenerating}
-                    className="flex-1"
-                  >
-                    <FileDown className="w-4 h-4 mr-2" />
-                    {isGenerating ? 'Génération...' : 'Télécharger PDF'}
-                  </Button>
-                </div>
-
-                {previewUrl && (
-                  <div className="border rounded-lg p-4">
-                    <h4 className="font-medium mb-2">Prévisualisation :</h4>
-                    <iframe
-                      src={previewUrl}
-                      className="w-full h-96 border rounded"
-                      title="Prévisualisation du contrat"
-                    />
-                  </div>
-                )}
-
-                {!canGenerate && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                    <h4 className="font-medium text-amber-900 mb-2">Configuration requise :</h4>
-                    <ul className="text-sm text-amber-700 space-y-1">
-                      {!selectedTemplateId && <li>• Sélectionnez ou uploadez un template PDF</li>}
-                      {!selectedClient && <li>• Sélectionnez un client</li>}
-                      {fieldMappings.length === 0 && <li>• Configurez au moins un champ</li>}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <PDFContractTabs
+        clients={clients}
+        templates={templates}
+        selectedTemplateId={selectedTemplateId}
+        selectedTemplate={selectedTemplate}
+        selectedClient={selectedClient}
+        fieldMappings={fieldMappings}
+        isGenerating={isGenerating}
+        previewUrl={previewUrl}
+        showUpload={showUpload}
+        onTemplateUploaded={handleTemplateUploaded}
+        onTemplateSelect={handleTemplateSelect}
+        onDeleteTemplate={handleDeleteTemplate}
+        onRenameTemplate={handleRenameTemplate}
+        onFieldMappingsChange={handleFieldMappingsChange}
+        onClientSelect={handleClientSelect}
+        onGenerateContract={handleGenerateContract}
+        onPreviewContract={handlePreviewContract}
+        onUploadNew={() => setShowUpload(true)}
+        onCancelUpload={() => setShowUpload(false)}
+      />
     </div>
   );
 };
