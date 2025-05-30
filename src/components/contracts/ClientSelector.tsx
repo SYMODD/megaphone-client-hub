@@ -70,22 +70,46 @@ export const ClientSelector = ({ clients, selectedClient, onClientSelect }: Clie
                 {filteredClients.map((client) => (
                   <TableRow 
                     key={client.id} 
-                    className={`hover:bg-slate-50 cursor-pointer ${
-                      selectedClient?.id === client.id ? 'bg-blue-50' : ''
+                    className={`hover:bg-slate-50 cursor-pointer transition-colors ${
+                      selectedClient?.id === client.id 
+                        ? 'bg-blue-100 border-l-4 border-l-blue-500 shadow-sm' 
+                        : 'hover:bg-slate-50'
                     }`}
                     onClick={() => onClientSelect(client)}
                   >
                     <TableCell className="py-2 sm:py-3">
                       <div className="min-w-0">
-                        <p className="font-medium text-sm truncate">{client.prenom} {client.nom}</p>
-                        <p className="text-xs text-slate-500 truncate">{client.numero_passeport}</p>
+                        <p className={`font-medium text-sm truncate ${
+                          selectedClient?.id === client.id 
+                            ? 'text-blue-800' 
+                            : 'text-slate-900'
+                        }`}>
+                          {client.prenom} {client.nom}
+                        </p>
+                        <p className={`text-xs truncate ${
+                          selectedClient?.id === client.id 
+                            ? 'text-blue-600' 
+                            : 'text-slate-500'
+                        }`}>
+                          {client.numero_passeport}
+                        </p>
                         <div className="sm:hidden mt-1">
-                          <Badge variant="outline" className="text-xs">{client.nationalite}</Badge>
+                          <Badge 
+                            variant={selectedClient?.id === client.id ? "default" : "outline"} 
+                            className="text-xs"
+                          >
+                            {client.nationalite}
+                          </Badge>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell py-2 sm:py-3">
-                      <Badge variant="outline" className="text-xs">{client.nationalite}</Badge>
+                      <Badge 
+                        variant={selectedClient?.id === client.id ? "default" : "outline"} 
+                        className="text-xs"
+                      >
+                        {client.nationalite}
+                      </Badge>
                     </TableCell>
                     <TableCell className="py-2 sm:py-3">
                       <Button 

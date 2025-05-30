@@ -39,31 +39,13 @@ const mockClients: ClientData[] = [
   { id: 6, nom: "Martin", prenom: "Pierre", nationalite: "France", dateEnregistrement: "2024-01-10", pointOperation: "aeroport_marrakech" },
   { id: 7, nom: "Kone", prenom: "Mamadou", nationalite: "Sénégal", dateEnregistrement: "2024-01-09", pointOperation: "aeroport_casablanca" },
   { id: 8, nom: "Bouchard", prenom: "Sophie", nationalite: "France", dateEnregistrement: "2024-01-08", pointOperation: "agence_centrale" },
+  { id: 9, nom: "Hassan", prenom: "Omar", nationalite: "Maroc", dateEnregistrement: "2024-01-07", pointOperation: "aeroport_agadir" },
+  { id: 10, nom: "Ngozi", prenom: "Amara", nationalite: "Nigeria", dateEnregistrement: "2024-01-06", pointOperation: "navire_meridien" },
+  { id: 11, nom: "Laurent", prenom: "Jean", nationalite: "France", dateEnregistrement: "2024-01-05", pointOperation: "aeroport_marrakech" },
+  { id: 12, nom: "Abdellah", prenom: "Karim", nationalite: "Algérie", dateEnregistrement: "2024-01-04", pointOperation: "aeroport_casablanca" },
 ];
 
-const baseNationalityData: NationalityData[] = [
-  { name: "France", value: 85, color: "#3B82F6" },
-  { name: "Algérie", value: 45, color: "#10B981" },
-  { name: "Maroc", value: 38, color: "#F59E0B" },
-  { name: "Tunisie", value: 25, color: "#EF4444" },
-  { name: "Sénégal", value: 20, color: "#8B5CF6" },
-  { name: "Autres", value: 34, color: "#6B7280" },
-];
-
-const baseRegistrationData: RegistrationData[] = [
-  { month: "Jan", clients: 12 },
-  { month: "Fév", clients: 19 },
-  { month: "Mar", clients: 15 },
-  { month: "Avr", clients: 25 },
-  { month: "Mai", clients: 22 },
-  { month: "Jun", clients: 30 },
-  { month: "Jul", clients: 28 },
-  { month: "Aoû", clients: 35 },
-  { month: "Sep", clients: 31 },
-  { month: "Oct", clients: 40 },
-  { month: "Nov", clients: 38 },
-  { month: "Déc", clients: 23 },
-];
+const baseColors = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#6B7280", "#EC4899", "#14B8A6", "#F97316", "#84CC16"];
 
 // Mappings préfixe catégorie mis en cache
 const categoryPrefixes: Record<string, string[]> = {
@@ -79,8 +61,12 @@ export const useAgentData = (filters?: AdminFilters) => {
   const filteredClients = useMemo(() => {
     let result = mockClients;
 
+    console.log("Filtering clients with:", { filters, profile: profile?.role });
+
     // Si c'est un admin ou superviseur avec des filtres
     if (profile && (profile.role === "admin" || profile.role === "superviseur") && filters) {
+      console.log("Admin/Superviseur filters applied:", filters);
+      
       // Filtrer par catégorie
       if (filters.selectedCategory) {
         const prefixes = categoryPrefixes[filters.selectedCategory] || [];
@@ -88,6 +74,7 @@ export const useAgentData = (filters?: AdminFilters) => {
           result = result.filter(client => 
             prefixes.some(prefix => client.pointOperation.startsWith(prefix))
           );
+          console.log("After category filter:", result.length, "clients");
         }
       }
 
@@ -96,6 +83,7 @@ export const useAgentData = (filters?: AdminFilters) => {
         result = result.filter(
           client => client.pointOperation === filters.selectedPoint
         );
+        console.log("After point filter:", result.length, "clients");
       }
     } 
     // Si c'est un agent, filtrer par son point d'opération
@@ -103,6 +91,7 @@ export const useAgentData = (filters?: AdminFilters) => {
       result = mockClients.filter(
         client => client.pointOperation === profile.point_operation
       );
+      console.log("Agent filter applied:", result.length, "clients");
     }
 
     return result;
@@ -114,6 +103,8 @@ export const useAgentData = (filters?: AdminFilters) => {
     const newThisMonth = Math.ceil(totalClients * 0.2);
     const contractsGenerated = Math.ceil(totalClients * 0.76);
 
+    console.log("Statistics calculated:", { totalClients, newThisMonth, contractsGenerated });
+
     return { totalClients, newThisMonth, contractsGenerated };
   }, [filteredClients.length]);
 
@@ -124,30 +115,58 @@ export const useAgentData = (filters?: AdminFilters) => {
       return acc;
     }, {} as Record<string, number>);
 
-    return Object.entries(nationalityCounts).map(([name, value], index) => ({
+    const data = Object.entries(nationalityCounts).map(([name, value], index) => ({
       name,
       value,
-      color: baseNationalityData[index % baseNationalityData.length]?.color || "#6B7280"
+      color: baseColors[index % baseColors.length]
     }));
+
+    console.log("Nationality data calculated:", data);
+    return data;
   }, [filteredClients]);
 
   // Mémorisation des données d'enregistrement
   const registrationData = useMemo(() => {
-    const registrationMultiplier = statistics.totalClients / 247;
-    return baseRegistrationData.map(item => ({
+    const baseRegistrationData: RegistrationData[] = [
+      { month: "Jan", clients: 12 },
+      { month: "Fév", clients: 19 },
+      { month: "Mar", clients: 15 },
+      { month: "Avr", clients: 25 },
+      { month: "Mai", clients: 22 },
+      { month: "Jun", clients: 30 },
+      { month: "Jul", clients: 28 },
+      { month: "Aoû", clients: 35 },
+      { month: "Sep", clients: 31 },
+      { month: "Oct", clients: 40 },
+      { month: "Nov", clients: 38 },
+      { month: "Déc", clients: 23 },
+    ];
+
+    const registrationMultiplier = Math.max(0.1, statistics.totalClients / 247);
+    const data = baseRegistrationData.map(item => ({
       ...item,
       clients: Math.round(item.clients * registrationMultiplier)
     }));
+
+    console.log("Registration data calculated:", data);
+    return data;
   }, [statistics.totalClients]);
 
   // Mémorisation des clients récents
   const recentClients = useMemo(() => {
-    return filteredClients.slice(0, 5);
+    const recent = filteredClients
+      .sort((a, b) => new Date(b.dateEnregistrement).getTime() - new Date(a.dateEnregistrement).getTime())
+      .slice(0, 5);
+    
+    console.log("Recent clients calculated:", recent);
+    return recent;
   }, [filteredClients]);
 
   // Mémorisation du nombre de nationalités
   const nationalitiesCount = useMemo(() => {
-    return new Set(filteredClients.map(client => client.nationalite)).size;
+    const count = new Set(filteredClients.map(client => client.nationalite)).size;
+    console.log("Nationalities count:", count);
+    return count;
   }, [filteredClients]);
 
   return useMemo(() => ({

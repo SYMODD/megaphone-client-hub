@@ -15,6 +15,8 @@ interface NationalityChartProps {
 export const NationalityChart = ({ data }: NationalityChartProps) => {
   const { nationalityData } = data;
 
+  console.log("NationalityChart rendering with data:", nationalityData);
+
   return (
     <Card>
       <CardHeader>
@@ -23,7 +25,7 @@ export const NationalityChart = ({ data }: NationalityChartProps) => {
           Répartition par nationalité
         </CardTitle>
         <CardDescription>
-          Distribution des clients par pays d'origine
+          Distribution des clients par pays d'origine ({nationalityData.reduce((sum, item) => sum + item.value, 0)} clients)
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -41,10 +43,10 @@ export const NationalityChart = ({ data }: NationalityChartProps) => {
                   label={({ name, value }) => `${name}: ${value}`}
                 >
                   {nationalityData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell key={`cell-${index}-${entry.name}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value, name) => [value, name]} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -58,4 +60,3 @@ export const NationalityChart = ({ data }: NationalityChartProps) => {
     </Card>
   );
 };
-
