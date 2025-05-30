@@ -143,7 +143,6 @@ export class SupabasePDFStorage {
 
     if (uploadError) {
       console.error('Upload error details:', uploadError);
-      console.error('Error code:', uploadError.statusCode);
       console.error('Error message:', uploadError.message);
       
       // Provide more specific error messages based on the error type
@@ -153,9 +152,9 @@ export class SupabasePDFStorage {
         throw new Error('Permission denied. Please ensure you are logged in and have the necessary permissions.');
       } else if (uploadError.message.toLowerCase().includes('size') || uploadError.message.toLowerCase().includes('limit')) {
         throw new Error('File size exceeds the allowed limit. Please use a smaller file.');
-      } else if (uploadError.statusCode === 401) {
+      } else if (uploadError.message.toLowerCase().includes('unauthorized') || uploadError.message.toLowerCase().includes('authentication')) {
         throw new Error('Authentication failed. Please log out and log back in.');
-      } else if (uploadError.statusCode === 403) {
+      } else if (uploadError.message.toLowerCase().includes('forbidden') || uploadError.message.toLowerCase().includes('access')) {
         throw new Error('Access forbidden. Please check your account permissions.');
       } else {
         throw new Error(`Upload failed: ${uploadError.message}. Please try again or contact support.`);
