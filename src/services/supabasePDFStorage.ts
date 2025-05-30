@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface PDFTemplate {
@@ -34,10 +33,11 @@ export class SupabasePDFStorage {
       const templatesBucket = buckets.find(bucket => bucket.name === BUCKET_NAME);
       
       if (!templatesBucket) {
-        console.warn(`Bucket ${BUCKET_NAME} not found but should exist. Please check Supabase configuration.`);
+        console.error(`Bucket ${BUCKET_NAME} not found. Please check Supabase configuration.`);
         return false;
       }
 
+      console.log(`Bucket ${BUCKET_NAME} found and ready`);
       return true;
     } catch (error) {
       console.error('Error checking storage bucket:', error);
@@ -126,6 +126,8 @@ export class SupabasePDFStorage {
     const templateId = Date.now().toString();
     const filePath = `${user.id}/${templateId}_${fileName}`;
 
+    console.log('Uploading file to path:', filePath);
+
     // Upload file to Supabase Storage
     const { error: uploadError } = await supabase.storage
       .from(BUCKET_NAME)
@@ -135,8 +137,11 @@ export class SupabasePDFStorage {
       });
 
     if (uploadError) {
+      console.error('Upload error:', uploadError);
       throw new Error(`Failed to upload file: ${uploadError.message}`);
     }
+
+    console.log('File uploaded successfully, saving metadata...');
 
     // Save template metadata to database
     const { data, error } = await supabase
@@ -153,10 +158,13 @@ export class SupabasePDFStorage {
       .single();
 
     if (error) {
+      console.error('Database insert error:', error);
       // Clean up uploaded file if database insert fails
       await supabase.storage.from(BUCKET_NAME).remove([filePath]);
       throw new Error(`Failed to save template metadata: ${error.message}`);
     }
+
+    console.log('Template saved successfully:', data);
 
     return {
       id: data.id,
