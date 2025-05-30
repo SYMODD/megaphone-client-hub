@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileDown } from "lucide-react";
@@ -43,12 +42,37 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
   const {
     templates,
     templateMappings,
+    loading,
     saveTemplate,
     renameTemplate,
     deleteTemplate,
     saveMappings,
     getTemplate
   } = usePDFTemplates();
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileDown className="w-5 h-5" />
+              Générateur de Contrats PDF
+            </CardTitle>
+            <CardDescription>
+              Gérez vos templates, configurez les champs et générez des contrats personnalisés
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="ml-3 text-slate-600">Chargement des templates...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const handleTemplateUploaded = async (file: File, fileName: string) => {
     try {

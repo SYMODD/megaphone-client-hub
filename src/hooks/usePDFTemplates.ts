@@ -1,13 +1,14 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { PDFTemplateStorage, PDFTemplate, FieldMapping } from '@/services/pdfTemplateStorage';
+import { SupabasePDFStorage, PDFTemplate, FieldMapping } from '@/services/supabasePDFStorage';
 
-export type { PDFTemplate, FieldMapping } from '@/services/pdfTemplateStorage';
+export type { PDFTemplate, FieldMapping } from '@/services/supabasePDFStorage';
 
 export const usePDFTemplates = () => {
   const [templates, setTemplates] = useState<PDFTemplate[]>([]);
   const [templateMappings, setTemplateMappings] = useState<Record<string, FieldMapping[]>>({});
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -16,22 +17,35 @@ export const usePDFTemplates = () => {
   }, []);
 
   const loadTemplates = async () => {
-    const loadedTemplates = await PDFTemplateStorage.loadTemplates();
-    setTemplates(loadedTemplates);
+    try {
+      setLoading(true);
+      const loadedTemplates = await SupabasePDFStorage.loadTemplates();
+      setTemplates(loadedTemplates);
+    } catch (error) {
+      console.error('Error loading templates:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les templates.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const loadMappings = () => {
-    const loadedMappings = PDFTemplateStorage.loadMappings();
-    setTemplateMappings(loadedMappings);
+  const loadMappings = async () => {
+    try {
+      const loadedMappings = await SupabasePDFStorage.loadMappings();
+      setTemplateMappings(loadedMappings);
+    } catch (error) {
+      console.error('Error loading mappings:', error);
+    }
   };
 
   const saveTemplate = async (file: File, fileName: string): Promise<string> => {
     try {
-      const newTemplate = await PDFTemplateStorage.createTemplate(file, fileName);
-      const updatedTemplates = [...templates, newTemplate];
-      
-      await PDFTemplateStorage.saveTemplates(updatedTemplates);
-      setTemplates(updatedTemplates);
+      const newTemplate = await SupabasePDFStorage.saveTemplate(file, fileName);
+      setTemplates(prev => [newTemplate, ...prev]);
 
       toast({
         title: "Template sauvegardé",
@@ -43,7 +57,7 @@ export const usePDFTemplates = () => {
       console.error('Erreur sauvegarde template:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de sauvegarder le template.",
+        description: error instanceof Error ? error.message : "Impossible de sauvegarder le template.",
         variant: "destructive",
       });
       throw error;
@@ -52,12 +66,10 @@ export const usePDFTemplates = () => {
 
   const renameTemplate = async (templateId: string, newName: string) => {
     try {
-      const updatedTemplates = templates.map(t => 
+      await SupabasePDFStorage.renameTemplate(templateId, newName);
+      setTemplates(prev => prev.map(t => 
         t.id === templateId ? { ...t, name: newName } : t
-      );
-      
-      await PDFTemplateStorage.saveTemplates(updatedTemplates);
-      setTemplates(updatedTemplates);
+      ));
 
       toast({
         title: "Template renommé",
@@ -67,50 +79,66 @@ export const usePDFTemplates = () => {
       console.error('Erreur renommage template:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de renommer le template.",
+        description: error instanceof Error ? error.message : "Impossible de renommer le template.",
         variant: "destructive",
       });
     }
   };
 
   const deleteTemplate = async (templateId: string) => {
-    const updatedTemplates = templates.filter(t => t.id !== templateId);
-    
-    await PDFTemplateStorage.saveTemplates(updatedTemplates);
-    setTemplates(updatedTemplates);
+    try {
+      await SupabasePDFStorage.deleteTemplate(templateId);
+      setTemplates(prev => prev.filter(t => t.id !== templateId));
 
-    // Remove associated mappings
-    const updatedMappings = { ...templateMappings };
-    delete updatedMappings[templateId];
-    PDFTemplateStorage.saveMappings(updatedMappings);
-    setTemplateMappings(updatedMappings);
+      // Remove associated mappings
+      setTemplateMappings(prev => {
+        const updated = { ...prev };
+        delete updated[templateId];
+        return updated;
+      });
 
-    toast({
-      title: "Template supprimé",
-      description: "Le template a été supprimé avec succès.",
-    });
+      toast({
+        title: "Template supprimé",
+        description: "Le template a été supprimé avec succès.",
+      });
+    } catch (error) {
+      console.error('Erreur suppression template:', error);
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Impossible de supprimer le template.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const saveMappings = (templateId: string, mappings: FieldMapping[]) => {
-    const updatedMappings = {
-      ...templateMappings,
-      [templateId]: mappings
-    };
-    
-    PDFTemplateStorage.saveMappings(updatedMappings);
-    setTemplateMappings(updatedMappings);
+  const saveMappings = async (templateId: string, mappings: FieldMapping[]) => {
+    try {
+      await SupabasePDFStorage.saveMappings(templateId, mappings);
+      setTemplateMappings(prev => ({
+        ...prev,
+        [templateId]: mappings
+      }));
+    } catch (error) {
+      console.error('Error saving mappings:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder les mappings.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getTemplate = async (templateId: string): Promise<File | null> => {
     const template = templates.find(t => t.id === templateId);
     if (!template) return null;
 
-    return PDFTemplateStorage.getTemplateFile(template);
+    return SupabasePDFStorage.getTemplateFile(template);
   };
 
   return {
     templates,
     templateMappings,
+    loading,
     saveTemplate,
     renameTemplate,
     deleteTemplate,
