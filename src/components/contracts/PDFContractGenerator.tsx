@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PDFContractTabs } from "./PDFContractTabs";
 import { generatePDFContract, downloadPDFContract, previewPDFContract } from "@/utils/pdfContractGenerator";
-import { usePDFTemplates } from "@/hooks/usePDFTemplates";
+import { usePDFTemplates, PDFTemplate, FieldMapping } from "@/hooks/usePDFTemplates";
 
 interface Client {
   id: string;
@@ -14,16 +15,6 @@ interface Client {
   numero_passeport: string;
   date_enregistrement: string;
   observations?: string;
-}
-
-interface FieldMapping {
-  id: string;
-  placeholder: string;
-  clientField: string;
-  description?: string;
-  x?: number;
-  y?: number;
-  fontSize?: number;
 }
 
 interface PDFContractGeneratorProps {

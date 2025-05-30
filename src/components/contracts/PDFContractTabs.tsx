@@ -8,6 +8,7 @@ import { PDFTemplateSelector } from "./PDFTemplateSelector";
 import { PDFFieldMapping } from "./PDFFieldMapping";
 import { ClientSelector } from "./ClientSelector";
 import { PDFGenerationTab } from "./PDFGenerationTab";
+import { PDFTemplate, FieldMapping } from "@/hooks/usePDFTemplates";
 
 interface Client {
   id: string;
@@ -17,24 +18,6 @@ interface Client {
   numero_passeport: string;
   date_enregistrement: string;
   observations?: string;
-}
-
-interface FieldMapping {
-  id: string;
-  placeholder: string;
-  clientField: string;
-  description?: string;
-  x?: number;
-  y?: number;
-  fontSize?: number;
-}
-
-interface PDFTemplate {
-  id: string;
-  name: string;
-  fileName: string;
-  uploadDate: string;
-  file: File;
 }
 
 interface PDFContractTabsProps {

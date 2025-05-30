@@ -75,6 +75,92 @@ export type Database = {
         }
         Relationships: []
       }
+      pdf_template_mappings: {
+        Row: {
+          client_field: string
+          created_at: string
+          description: string | null
+          field_id: string
+          font_size: number | null
+          id: string
+          placeholder: string
+          template_id: string
+          updated_at: string
+          user_id: string
+          x: number | null
+          y: number | null
+        }
+        Insert: {
+          client_field: string
+          created_at?: string
+          description?: string | null
+          field_id: string
+          font_size?: number | null
+          id?: string
+          placeholder: string
+          template_id: string
+          updated_at?: string
+          user_id: string
+          x?: number | null
+          y?: number | null
+        }
+        Update: {
+          client_field?: string
+          created_at?: string
+          description?: string | null
+          field_id?: string
+          font_size?: number | null
+          id?: string
+          placeholder?: string
+          template_id?: string
+          updated_at?: string
+          user_id?: string
+          x?: number | null
+          y?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_template_id"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdf_templates: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          id: string
+          name: string
+          updated_at: string
+          upload_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          id: string
+          name: string
+          updated_at?: string
+          upload_date?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          upload_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       points_operation: {
         Row: {
           actif: boolean | null

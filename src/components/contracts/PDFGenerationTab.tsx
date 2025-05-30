@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileDown, Eye } from "lucide-react";
+import { PDFTemplate, FieldMapping } from "@/hooks/usePDFTemplates";
 
 interface Client {
   id: string;
@@ -12,24 +13,6 @@ interface Client {
   numero_passeport: string;
   date_enregistrement: string;
   observations?: string;
-}
-
-interface FieldMapping {
-  id: string;
-  placeholder: string;
-  clientField: string;
-  description?: string;
-  x?: number;
-  y?: number;
-  fontSize?: number;
-}
-
-interface PDFTemplate {
-  id: string;
-  name: string;
-  fileName: string;
-  uploadDate: string;
-  file: File;
 }
 
 interface PDFGenerationTabProps {
