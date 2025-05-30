@@ -1,42 +1,94 @@
 
 /* =============================================================================
-   BARRES DE DÉFILEMENT GLOBALES - FORCE MAXIMUM
+   BARRES DE DÉFILEMENT GLOBALES - FORCE MAXIMALE ABSOLUE
    ============================================================================= */
 
-/* Webkit scrollbars - Spécificité maximale */
+/* Webkit scrollbars - Force absolue avec sélecteurs multiples */
+html,
+body,
+*,
+div,
+section,
+main,
+article,
+aside,
+nav,
+[data-radix-scroll-area-viewport],
+.overflow-auto,
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-scroll {
+  scrollbar-width: thin !important;
+  scrollbar-color: #4a5568 #e2e8f0 !important;
+}
+
 html ::-webkit-scrollbar,
 body ::-webkit-scrollbar,
-* ::-webkit-scrollbar {
+* ::-webkit-scrollbar,
+div ::-webkit-scrollbar,
+section ::-webkit-scrollbar,
+main ::-webkit-scrollbar,
+[data-radix-scroll-area-viewport] ::-webkit-scrollbar,
+.overflow-auto ::-webkit-scrollbar,
+.overflow-y-auto ::-webkit-scrollbar,
+.overflow-x-auto ::-webkit-scrollbar,
+.overflow-scroll ::-webkit-scrollbar {
   width: 12px !important;
   height: 12px !important;
+  background: transparent !important;
 }
 
 html ::-webkit-scrollbar-track,
 body ::-webkit-scrollbar-track,
-* ::-webkit-scrollbar-track {
+* ::-webkit-scrollbar-track,
+div ::-webkit-scrollbar-track,
+section ::-webkit-scrollbar-track,
+main ::-webkit-scrollbar-track,
+[data-radix-scroll-area-viewport] ::-webkit-scrollbar-track,
+.overflow-auto ::-webkit-scrollbar-track,
+.overflow-y-auto ::-webkit-scrollbar-track,
+.overflow-x-auto ::-webkit-scrollbar-track,
+.overflow-scroll ::-webkit-scrollbar-track {
   background-color: #e2e8f0 !important;
   border-radius: 6px !important;
   border: 1px solid #cbd5e0 !important;
+  box-shadow: inset 0 0 3px rgba(0,0,0,0.1) !important;
 }
 
 html ::-webkit-scrollbar-thumb,
 body ::-webkit-scrollbar-thumb,
-* ::-webkit-scrollbar-thumb {
+* ::-webkit-scrollbar-thumb,
+div ::-webkit-scrollbar-thumb,
+section ::-webkit-scrollbar-thumb,
+main ::-webkit-scrollbar-thumb,
+[data-radix-scroll-area-viewport] ::-webkit-scrollbar-thumb,
+.overflow-auto ::-webkit-scrollbar-thumb,
+.overflow-y-auto ::-webkit-scrollbar-thumb,
+.overflow-x-auto ::-webkit-scrollbar-thumb,
+.overflow-scroll ::-webkit-scrollbar-thumb {
   background-color: #4a5568 !important;
   border-radius: 6px !important;
   border: 1px solid #e2e8f0 !important;
   min-height: 30px !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
 }
 
 html ::-webkit-scrollbar-thumb:hover,
 body ::-webkit-scrollbar-thumb:hover,
-* ::-webkit-scrollbar-thumb:hover {
+* ::-webkit-scrollbar-thumb:hover,
+div ::-webkit-scrollbar-thumb:hover,
+section ::-webkit-scrollbar-thumb:hover,
+main ::-webkit-scrollbar-thumb:hover,
+[data-radix-scroll-area-viewport] ::-webkit-scrollbar-thumb:hover,
+.overflow-auto ::-webkit-scrollbar-thumb:hover,
+.overflow-y-auto ::-webkit-scrollbar-thumb:hover,
+.overflow-x-auto ::-webkit-scrollbar-thumb:hover,
+.overflow-scroll ::-webkit-scrollbar-thumb:hover {
   background-color: #2d3748 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
 }
 
-/* Firefox - Force sur tous les éléments */
-html, body, *, 
-.overflow-auto, .overflow-y-auto, .overflow-x-auto, .overflow-scroll,
+/* Force sur le viewport de scroll-area */
 [data-radix-scroll-area-viewport] {
   scrollbar-width: thin !important;
   scrollbar-color: #4a5568 #e2e8f0 !important;

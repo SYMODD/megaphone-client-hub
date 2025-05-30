@@ -1,6 +1,5 @@
-
 import { useAuth } from "@/contexts/AuthContext";
-import { useMemo, useCallback, useEffect } from "react";
+import { useMemo, useCallback, useEffect, useState } from "react";
 
 // Types pour les données simulées
 interface ClientData {
@@ -56,15 +55,17 @@ const categoryPrefixes: Record<string, string[]> = {
 
 export const useAgentData = (filters?: AdminFilters) => {
   const { profile } = useAuth();
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // Force re-render when filters change
+  // Force un re-render quand les filtres changent avec un état de rafraîchissement
   useEffect(() => {
-    console.log("🔄 FILTERS CHANGED - Force re-render", filters);
+    console.log("🔄 FILTERS CHANGED - Force refresh", filters);
+    setRefreshKey(prev => prev + 1);
   }, [filters?.selectedCategory, filters?.selectedPoint]);
 
   // Clients filtrés avec logs de debug améliorés
   const filteredClients = useMemo(() => {
-    console.log("=== DEBUT FILTRAGE DÉTAILLÉ ===");
+    console.log("=== FILTRAGE - REFRESHKEY:", refreshKey);
     console.log("🔍 Profile:", { role: profile?.role, point: profile?.point_operation });
     console.log("🔍 Filters reçus:", filters);
     console.log("🔍 Total mockClients:", mockClients.length);
@@ -114,7 +115,7 @@ export const useAgentData = (filters?: AdminFilters) => {
     console.log("🌍 Nationalités:", [...new Set(result.map(c => c.nationalite))]);
     
     return result;
-  }, [profile?.role, profile?.point_operation, filters?.selectedCategory, filters?.selectedPoint]);
+  }, [profile?.role, profile?.point_operation, filters?.selectedCategory, filters?.selectedPoint, refreshKey]);
 
   // Statistiques calculées - Force re-calculation
   const statistics = useMemo(() => {
@@ -124,7 +125,7 @@ export const useAgentData = (filters?: AdminFilters) => {
 
     console.log("📈 STATISTIQUES CALCULÉES:", { totalClients, newThisMonth, contractsGenerated });
     return { totalClients, newThisMonth, contractsGenerated };
-  }, [filteredClients]);
+  }, [filteredClients, refreshKey]);
 
   // Données de nationalités - Force re-calculation
   const nationalityData = useMemo(() => {
@@ -141,7 +142,7 @@ export const useAgentData = (filters?: AdminFilters) => {
 
     console.log("🎨 DONNÉES NATIONALITÉS:", data);
     return data;
-  }, [filteredClients]);
+  }, [filteredClients, refreshKey]);
 
   // Données d'enregistrement
   const registrationData = useMemo(() => {
@@ -167,27 +168,28 @@ export const useAgentData = (filters?: AdminFilters) => {
     }));
 
     return data;
-  }, [statistics.totalClients]);
+  }, [statistics.totalClients, refreshKey]);
 
   // Clients récents
   const recentClients = useMemo(() => {
     return filteredClients
       .sort((a, b) => new Date(b.dateEnregistrement).getTime() - new Date(a.dateEnregistrement).getTime())
       .slice(0, 5);
-  }, [filteredClients]);
+  }, [filteredClients, refreshKey]);
 
   // Nombre de nationalités
   const nationalitiesCount = useMemo(() => {
     const count = new Set(filteredClients.map(client => client.nationalite)).size;
     console.log("🌍 NOMBRE DE NATIONALITÉS:", count);
     return count;
-  }, [filteredClients]);
+  }, [filteredClients, refreshKey]);
 
   // Debug final
   console.log("🚀 RETOUR useAgentData:", {
     clientsCount: filteredClients.length,
     totalClients: statistics.totalClients,
-    nationalitiesCount
+    nationalitiesCount,
+    refreshKey
   });
 
   return {
