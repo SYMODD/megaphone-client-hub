@@ -13,17 +13,17 @@
 @import './styles/dropdowns.css';
 @import './styles/utilities.css';
 
-/* SOLUTION FINALE SCROLLBARS - SURCHARGE TOTALE */
+/* SOLUTION FINALE SCROLLBARS - SURCHARGE TOTALE - COULEUR BLANCHE */
 html {
   overflow-y: scroll !important;
   scrollbar-width: auto !important;
-  scrollbar-color: #b6002c #e0e0e0 !important;
+  scrollbar-color: #ffffff #f0f0f0 !important;
 }
 
 body {
   overflow-y: scroll !important;
   scrollbar-width: auto !important;
-  scrollbar-color: #b6002c #e0e0e0 !important;
+  scrollbar-color: #ffffff #f0f0f0 !important;
 }
 
 /* FORCE GLOBALE - TOUS LES ÉLÉMENTS */
@@ -31,31 +31,33 @@ body {
 *::before,
 *::after {
   scrollbar-width: auto !important;
-  scrollbar-color: #b6002c #e0e0e0 !important;
+  scrollbar-color: #ffffff #f0f0f0 !important;
 }
 
 /* WEBKIT - TOUS LES ÉLÉMENTS */
 *::-webkit-scrollbar {
   width: 12px !important;
   height: 12px !important;
-  background: #e0e0e0 !important;
+  background: #f0f0f0 !important;
   display: block !important;
   -webkit-appearance: auto !important;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: #b6002c !important;
+  background: #ffffff !important;
   border-radius: 6px !important;
+  border: 1px solid #e0e0e0 !important;
   -webkit-appearance: auto !important;
 }
 
 *::-webkit-scrollbar-track {
-  background: #e0e0e0 !important;
+  background: #f0f0f0 !important;
   -webkit-appearance: auto !important;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: #8e0021 !important;
+  background: #f5f5f5 !important;
+  border: 1px solid #d0d0d0 !important;
 }
 
 /* SURCHARGE SPÉCIFIQUE RADIX/TAILWIND */
@@ -69,7 +71,7 @@ body {
 .scrollbar-thin {
   overflow: auto !important;
   scrollbar-width: auto !important;
-  scrollbar-color: #b6002c #e0e0e0 !important;
+  scrollbar-color: #ffffff #f0f0f0 !important;
 }
 
 [data-radix-scroll-area-viewport]::-webkit-scrollbar,
@@ -82,9 +84,22 @@ body {
 .scrollbar-thin::-webkit-scrollbar {
   width: 12px !important;
   height: 12px !important;
-  background: #e0e0e0 !important;
+  background: #f0f0f0 !important;
   display: block !important;
   -webkit-appearance: auto !important;
+}
+
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb,
+.overflow-hidden::-webkit-scrollbar-thumb,
+.overflow-auto::-webkit-scrollbar-thumb,
+.overflow-y-auto::-webkit-scrollbar-thumb,
+.overflow-x-auto::-webkit-scrollbar-thumb,
+.overflow-scroll::-webkit-scrollbar-thumb,
+.scrollbar-none::-webkit-scrollbar-thumb,
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #ffffff !important;
+  border-radius: 6px !important;
+  border: 1px solid #e0e0e0 !important;
 }
 
 /* ROOT ET CONTENEURS PRINCIPAUX */
@@ -95,7 +110,7 @@ body {
 .space-y-6,
 .space-y-4 {
   scrollbar-width: auto !important;
-  scrollbar-color: #b6002c #e0e0e0 !important;
+  scrollbar-color: #ffffff #f0f0f0 !important;
 }
 
 #root::-webkit-scrollbar,
@@ -106,6 +121,17 @@ body {
 .space-y-4::-webkit-scrollbar {
   width: 12px !important;
   height: 12px !important;
-  background: #e0e0e0 !important;
+  background: #f0f0f0 !important;
   display: block !important;
+}
+
+#root::-webkit-scrollbar-thumb,
+.container::-webkit-scrollbar-thumb,
+.mx-auto::-webkit-scrollbar-thumb,
+.max-w-7xl::-webkit-scrollbar-thumb,
+.space-y-6::-webkit-scrollbar-thumb,
+.space-y-4::-webkit-scrollbar-thumb {
+  background: #ffffff !important;
+  border-radius: 6px !important;
+  border: 1px solid #e0e0e0 !important;
 }
