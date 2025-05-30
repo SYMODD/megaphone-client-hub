@@ -1,0 +1,55 @@
+
+/* =============================================================================
+   FORCE SCROLLBAR OVERRIDE - NUCLEAR OPTION
+   ============================================================================= */
+
+/* Force scrollbars with the highest possible specificity */
+html, html *, html *::before, html *::after,
+body, body *, body *::before, body *::after {
+  scrollbar-width: auto !important;
+  scrollbar-color: #b6002c #e0e0e0 !important;
+}
+
+/* Webkit with maximum specificity */
+html *::-webkit-scrollbar,
+body *::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  width: 12px !important;
+  height: 12px !important;
+  background: #e0e0e0 !important;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+html *::-webkit-scrollbar-thumb,
+body *::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-thumb {
+  background: #b6002c !important;
+  border-radius: 6px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+html *::-webkit-scrollbar-track,
+body *::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track {
+  background: #e0e0e0 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Override ANY class that might hide scrollbars */
+.overflow-hidden {
+  overflow: auto !important;
+}
+
+.scrollbar-none {
+  scrollbar-width: auto !important;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: block !important;
+  width: 12px !important;
+  background: #e0e0e0 !important;
+}

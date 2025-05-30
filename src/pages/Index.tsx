@@ -77,6 +77,15 @@ const Index = () => {
   const isAdminOrSuperviseur = profile.role === "admin" || profile.role === "superviseur";
   const agentData = useAgentData(isAdminOrSuperviseur ? adminFilters.filters : undefined);
 
+  // Debug pour vérifier que les données arrivent bien
+  console.log("🎯 DASHBOARD - Données reçues:", {
+    totalClients: agentData.totalClients,
+    nationalityData: agentData.nationalityData.length,
+    registrationData: agentData.registrationData.length,
+    recentClients: agentData.recentClients.length,
+    filters: adminFilters.filters
+  });
+
   const getPointLabel = (point: string) => {
     const labels: Record<string, string> = {
       "aeroport_marrakech": "Aéroport Marrakech",

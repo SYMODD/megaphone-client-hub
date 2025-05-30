@@ -15,7 +15,7 @@ export const useAgentData = (filters?: AdminFilters): AgentDataResult => {
   const { profile } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Force un re-render quand les filtres changent avec un état de rafraîchissement
+  // Force un re-render quand les filtres changent
   useEffect(() => {
     console.log("🔄 FILTERS CHANGED - Force refresh", filters);
     setRefreshKey(prev => prev + 1);
@@ -24,38 +24,50 @@ export const useAgentData = (filters?: AdminFilters): AgentDataResult => {
   // Clients filtrés avec logs de debug améliorés
   const filteredClients = useMemo(() => {
     console.log("=== FILTRAGE - REFRESHKEY:", refreshKey);
-    return filterClientsByRole(profile?.role, profile?.point_operation, filters);
+    const result = filterClientsByRole(profile?.role, profile?.point_operation, filters);
+    console.log("📊 Clients filtrés résultat:", result.length);
+    return result;
   }, [profile?.role, profile?.point_operation, filters?.selectedCategory, filters?.selectedPoint, refreshKey]);
 
-  // Statistiques calculées - Force re-calculation
+  // Statistiques calculées - Force re-calculation avec refreshKey
   const statistics = useMemo(() => {
-    return calculateStatistics(filteredClients);
+    const stats = calculateStatistics(filteredClients);
+    console.log("📈 Statistiques recalculées:", stats);
+    return stats;
   }, [filteredClients, refreshKey]);
 
-  // Données de nationalités - Force re-calculation
+  // Données de nationalités - Force re-calculation avec refreshKey
   const nationalityData = useMemo(() => {
-    return generateNationalityData(filteredClients);
+    const natData = generateNationalityData(filteredClients);
+    console.log("🌍 Données nationalités recalculées:", natData);
+    return natData;
   }, [filteredClients, refreshKey]);
 
-  // Données d'enregistrement
+  // Données d'enregistrement avec refreshKey
   const registrationData = useRegistrationData(statistics.totalClients, refreshKey);
 
-  // Clients récents
+  // Clients récents avec refreshKey
   const recentClients = useMemo(() => {
-    return getRecentClients(filteredClients);
+    const recent = getRecentClients(filteredClients);
+    console.log("🕒 Clients récents recalculés:", recent.length);
+    return recent;
   }, [filteredClients, refreshKey]);
 
-  // Nombre de nationalités
+  // Nombre de nationalités avec refreshKey
   const nationalitiesCount = useMemo(() => {
-    return getNationalitiesCount(filteredClients);
+    const count = getNationalitiesCount(filteredClients);
+    console.log("🌍 Nombre nationalités recalculé:", count);
+    return count;
   }, [filteredClients, refreshKey]);
 
-  // Debug final
-  console.log("🚀 RETOUR useAgentData:", {
+  // Debug final avec plus de détails
+  console.log("🚀 RETOUR useAgentData FINAL:", {
     clientsCount: filteredClients.length,
     totalClients: statistics.totalClients,
     nationalitiesCount,
-    refreshKey
+    refreshKey,
+    hasFilters: !!filters,
+    filterDetails: filters
   });
 
   return {

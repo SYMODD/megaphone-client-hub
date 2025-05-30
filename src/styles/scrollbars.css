@@ -7,3 +7,4 @@
 @import './scrollbars/webkit.css';
 @import './scrollbars/firefox.css';
 @import './scrollbars/components.css';
+@import './scrollbars/force-override.css';
