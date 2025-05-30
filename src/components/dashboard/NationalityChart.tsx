@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { useEffect } from "react";
 
 interface NationalityChartProps {
   data: {
@@ -14,6 +15,10 @@ interface NationalityChartProps {
 
 export const NationalityChart = ({ data }: NationalityChartProps) => {
   const { nationalityData } = data;
+
+  useEffect(() => {
+    console.log("🔄 NationalityChart RE-RENDER avec nouvelles données:", nationalityData);
+  }, [nationalityData]);
 
   console.log("NationalityChart rendering with data:", nationalityData);
 
@@ -32,7 +37,7 @@ export const NationalityChart = ({ data }: NationalityChartProps) => {
         <div className="h-80">
           {nationalityData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart key={JSON.stringify(nationalityData)}>
                 <Pie
                   data={nationalityData}
                   cx="50%"

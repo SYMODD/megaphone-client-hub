@@ -1,7 +1,7 @@
 
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, TrendingUp, Calendar, Globe } from "lucide-react";
+import { useEffect } from "react";
 
 interface ClientStatsProps {
   data: {
@@ -14,6 +14,10 @@ interface ClientStatsProps {
 
 export const ClientStats = ({ data }: ClientStatsProps) => {
   const { totalClients, newThisMonth, contractsGenerated, nationalities } = data;
+
+  useEffect(() => {
+    console.log("🔄 ClientStats RE-RENDER avec nouvelles données:", data);
+  }, [data]);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -63,4 +67,3 @@ export const ClientStats = ({ data }: ClientStatsProps) => {
     </div>
   );
 };
-

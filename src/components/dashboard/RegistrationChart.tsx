@@ -1,7 +1,7 @@
 
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useEffect } from "react";
 
 interface RegistrationChartProps {
   data: {
@@ -14,6 +14,10 @@ interface RegistrationChartProps {
 
 export const RegistrationChart = ({ data }: RegistrationChartProps) => {
   const { registrationData } = data;
+
+  useEffect(() => {
+    console.log("🔄 RegistrationChart RE-RENDER avec nouvelles données:", registrationData);
+  }, [registrationData]);
 
   return (
     <Card>
@@ -29,7 +33,7 @@ export const RegistrationChart = ({ data }: RegistrationChartProps) => {
       <CardContent>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={registrationData}>
+            <LineChart data={registrationData} key={JSON.stringify(registrationData)}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
@@ -49,4 +53,3 @@ export const RegistrationChart = ({ data }: RegistrationChartProps) => {
     </Card>
   );
 };
-

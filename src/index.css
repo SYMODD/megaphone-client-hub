@@ -1,16 +1,68 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Import all style modules */
 @import './styles/variables.css';
 @import './styles/base.css';
-@import './styles/modals.css';
-@import './styles/scrollbars.css';
-@import './styles/buttons.css';
+@import './styles/animations.css';
 @import './styles/inputs.css';
+@import './styles/buttons.css';
+@import './styles/modals.css';
 @import './styles/dropdowns.css';
 @import './styles/utilities.css';
-@import './styles/animations.css';
+
+/* FORCE SCROLLBARS - NUCLEAR APPROACH */
+* {
+  scrollbar-width: auto !important;
+  scrollbar-color: #b6002c #e0e0e0 !important;
+}
+
+*::-webkit-scrollbar {
+  width: 12px !important;
+  height: 12px !important;
+  background: #e0e0e0 !important;
+  display: block !important;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #b6002c !important;
+  border-radius: 6px !important;
+}
+
+*::-webkit-scrollbar-track {
+  background: #e0e0e0 !important;
+}
+
+/* Override ANY utility class that might hide scrollbars */
+.overflow-hidden {
+  overflow: auto !important;
+}
+
+.scrollbar-none {
+  scrollbar-width: auto !important;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: block !important;
+  width: 12px !important;
+  background: #e0e0e0 !important;
+}
+
+/* Force on specific containers */
+body, html, #root, .container, .mx-auto {
+  scrollbar-width: auto !important;
+  scrollbar-color: #b6002c #e0e0e0 !important;
+}
+
+body::-webkit-scrollbar, html::-webkit-scrollbar, #root::-webkit-scrollbar {
+  width: 12px !important;
+  background: #e0e0e0 !important;
+  display: block !important;
+}
+
+body::-webkit-scrollbar-thumb, html::-webkit-scrollbar-thumb, #root::-webkit-scrollbar-thumb {
+  background: #b6002c !important;
+  border-radius: 6px !important;
+}

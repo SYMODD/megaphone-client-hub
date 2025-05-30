@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, Edit, FileText } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 interface RecentClientsProps {
   data: {
@@ -23,6 +24,10 @@ interface RecentClientsProps {
 export const RecentClients = ({ data }: RecentClientsProps) => {
   const { recentClients } = data;
   const { toast } = useToast();
+
+  useEffect(() => {
+    console.log("🔄 RecentClients RE-RENDER avec nouvelles données:", recentClients);
+  }, [recentClients]);
 
   // Action handlers for client operations
   const handleViewClient = (client: any) => {
@@ -64,7 +69,7 @@ export const RecentClients = ({ data }: RecentClientsProps) => {
         <div className="space-y-4">
           {recentClients.length > 0 ? (
             recentClients.map((client) => (
-              <div key={client.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+              <div key={`${client.id}-${client.pointOperation}`} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
                 <div className="flex items-center space-x-4">
                   <Avatar>
                     <AvatarImage src={client.photo || undefined} />
