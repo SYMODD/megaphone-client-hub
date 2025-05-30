@@ -85,6 +85,11 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
       });
     } catch (error) {
       console.error('Erreur upload template:', error);
+      toast({
+        title: "Erreur d'upload",
+        description: error instanceof Error ? error.message : "Impossible d'uploader le template.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -113,17 +118,35 @@ export const PDFContractGenerator = ({ clients }: PDFContractGeneratorProps) => 
     setSelectedClient(client);
   };
 
-  const handleDeleteTemplate = (templateId: string) => {
-    deleteTemplate(templateId);
-    if (selectedTemplateId === templateId) {
-      setSelectedTemplateId(null);
-      setFieldMappings([]);
-      setPreviewUrl('');
+  const handleDeleteTemplate = async (templateId: string) => {
+    try {
+      await deleteTemplate(templateId);
+      if (selectedTemplateId === templateId) {
+        setSelectedTemplateId(null);
+        setFieldMappings([]);
+        setPreviewUrl('');
+      }
+    } catch (error) {
+      console.error('Erreur suppression template:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le template.",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleRenameTemplate = (templateId: string, newName: string) => {
-    renameTemplate(templateId, newName);
+  const handleRenameTemplate = async (templateId: string, newName: string) => {
+    try {
+      await renameTemplate(templateId, newName);
+    } catch (error) {
+      console.error('Erreur renommage template:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de renommer le template.",
+        variant: "destructive",
+      });
+    }
   };
 
   const canGenerate = selectedTemplateId && selectedClient && fieldMappings.length > 0;

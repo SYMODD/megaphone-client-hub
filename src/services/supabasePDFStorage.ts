@@ -34,17 +34,8 @@ export class SupabasePDFStorage {
       const templatesBucket = buckets.find(bucket => bucket.name === BUCKET_NAME);
       
       if (!templatesBucket) {
-        console.warn(`Bucket ${BUCKET_NAME} not found. Creating it...`);
-        const { error: createError } = await supabase.storage.createBucket(BUCKET_NAME, {
-          public: false,
-          allowedMimeTypes: ['application/pdf'],
-          fileSizeLimit: 50 * 1024 * 1024, // 50MB limit
-        });
-        
-        if (createError) {
-          console.error('Error creating bucket:', createError);
-          return false;
-        }
+        console.warn(`Bucket ${BUCKET_NAME} not found but should exist. Please check Supabase configuration.`);
+        return false;
       }
 
       return true;
