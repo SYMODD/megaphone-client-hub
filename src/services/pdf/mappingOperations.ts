@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { FieldMapping } from './types';
 
@@ -11,24 +10,56 @@ export class MappingOperations {
         return {};
       }
 
-      console.log('Chargement des mappings pour l\'utilisateur:', user.id);
+      console.log('🔍 DEBUG: Chargement des mappings pour l\'utilisateur:', user.id);
 
-      // Récupérer tous les mappings accessibles (les nouvelles politiques RLS s'occupent du filtrage)
-      const { data, error } = await supabase
+      // Récupérer le profil utilisateur pour debug
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      console.log('🔍 DEBUG: Rôle de l\'utilisateur actuel (mappings):', profile?.role);
+
+      // NOUVELLE APPROCHE: récupération manuelle des mappings avec jointure
+      const { data: allMappings, error } = await supabase
         .from('pdf_template_mappings')
-        .select('*');
+        .select(`
+          *,
+          pdf_templates!inner(user_id, profiles!pdf_templates_user_id_fkey(role))
+        `);
 
       if (error) {
-        console.error('Erreur lors du chargement des mappings:', error);
+        console.error('❌ Erreur lors du chargement des mappings:', error);
         return {};
       }
 
-      console.log('Mappings chargés depuis la base de données:', data);
+      console.log('🔍 DEBUG: Tous les mappings récupérés:', allMappings?.length);
+
+      // Filtrer manuellement selon notre logique
+      const accessibleMappings = allMappings?.filter(mapping => {
+        // L'utilisateur peut voir ses propres mappings
+        if (mapping.user_id === user.id) {
+          console.log('✅ Mapping accessible (propriétaire):', mapping.template_id);
+          return true;
+        }
+
+        // Si l'utilisateur est agent, il peut voir les mappings des templates d'admins
+        if (profile?.role === 'agent' && mapping.pdf_templates?.profiles?.role === 'admin') {
+          console.log('✅ Mapping accessible (agent -> admin template):', mapping.template_id);
+          return true;
+        }
+
+        console.log('❌ Mapping non accessible:', mapping.template_id);
+        return false;
+      }) || [];
+
+      console.log('🔍 DEBUG: Mappings accessibles après filtrage:', accessibleMappings.length);
 
       // Grouper les mappings par template_id
       const mappingsByTemplate: Record<string, FieldMapping[]> = {};
       
-      data?.forEach(mapping => {
+      accessibleMappings.forEach(mapping => {
         if (!mappingsByTemplate[mapping.template_id]) {
           mappingsByTemplate[mapping.template_id] = [];
         }

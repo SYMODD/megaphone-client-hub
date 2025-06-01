@@ -11,7 +11,16 @@ export class TemplateOperations {
         return [];
       }
 
-      console.log('Chargement des templates pour l\'utilisateur:', user.id);
+      console.log('🔍 DEBUG: Chargement des templates pour l\'utilisateur:', user.id);
+
+      // Récupérer le profil utilisateur pour debug
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      console.log('🔍 DEBUG: Rôle de l\'utilisateur actuel:', profile?.role);
 
       // Vérifier l'accès au bucket avant de continuer
       const bucketAccessible = await BucketManager.ensureBucket();
@@ -29,26 +38,57 @@ export class TemplateOperations {
         console.warn('Erreur lors de la synchronisation, mais continuons avec les données en base:', syncError);
       }
 
-      // Récupérer tous les templates accessibles (les nouvelles politiques RLS s'occupent du filtrage)
-      const { data, error } = await supabase
+      // NOUVELLE APPROCHE: récupération manuelle des templates avec logique métier
+      console.log('🔍 DEBUG: Récupération des templates avec logique spécifique');
+      
+      // D'abord, récupérer TOUS les templates
+      const { data: allTemplates, error: allError } = await supabase
         .from('pdf_templates')
-        .select('*')
+        .select('*, profiles!pdf_templates_user_id_fkey(role)')
         .order('upload_date', { ascending: false });
 
-      if (error) {
-        console.error('Erreur lors du chargement des templates:', error);
-        throw new Error(`Impossible de charger les templates: ${error.message}`);
+      if (allError) {
+        console.error('❌ Erreur lors de la récupération de tous les templates:', allError);
+        throw new Error(`Impossible de charger les templates: ${allError.message}`);
       }
 
-      const templates = data?.map(template => ({
+      console.log('🔍 DEBUG: Tous les templates récupérés:', allTemplates?.length);
+      console.log('🔍 DEBUG: Détails des templates:', allTemplates?.map(t => ({
+        id: t.id,
+        name: t.name,
+        user_id: t.user_id,
+        creator_role: t.profiles?.role
+      })));
+
+      // Filtrer manuellement selon notre logique
+      const accessibleTemplates = allTemplates?.filter(template => {
+        // L'utilisateur peut voir ses propres templates
+        if (template.user_id === user.id) {
+          console.log('✅ Template accessible (propriétaire):', template.name);
+          return true;
+        }
+
+        // Si l'utilisateur est agent, il peut voir les templates des admins
+        if (profile?.role === 'agent' && template.profiles?.role === 'admin') {
+          console.log('✅ Template accessible (agent -> admin):', template.name);
+          return true;
+        }
+
+        console.log('❌ Template non accessible:', template.name, 'user_role:', profile?.role, 'creator_role:', template.profiles?.role);
+        return false;
+      }) || [];
+
+      const templates = accessibleTemplates.map(template => ({
         id: template.id,
         name: template.name,
         fileName: template.file_name,
         uploadDate: template.upload_date,
         filePath: template.file_path
-      })) || [];
+      }));
 
-      console.log(`✅ ${templates.length} template(s) chargé(s) avec succès`);
+      console.log(`✅ ${templates.length} template(s) accessible(s) après filtrage manuel`);
+      console.log('🔍 DEBUG: Templates finaux:', templates.map(t => t.name));
+      
       return templates;
     } catch (error) {
       console.error('Erreur lors du chargement des templates:', error);
