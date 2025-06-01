@@ -1,4 +1,3 @@
-
 import { PDFTemplate } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { BucketManager } from './bucketManager';
@@ -15,11 +14,16 @@ export class TemplateOperations {
       console.log('🔍 DEBUG: Chargement des templates pour l\'utilisateur:', user.id);
 
       // Récupérer le profil utilisateur pour debug
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single();
+
+      if (profileError) {
+        console.error('❌ Erreur récupération profil utilisateur:', profileError);
+        throw new Error(`Impossible de récupérer le profil utilisateur: ${profileError.message}`);
+      }
 
       console.log('🔍 DEBUG: Rôle de l\'utilisateur actuel:', profile?.role);
 
@@ -39,7 +43,7 @@ export class TemplateOperations {
         console.warn('Erreur lors de la synchronisation, mais continuons avec les données en base:', syncError);
       }
 
-      // Récupérer tous les templates
+      // Récupérer tous les templates avec plus de détails
       const { data: allTemplates, error: allError } = await supabase
         .from('pdf_templates')
         .select('*')
@@ -51,25 +55,42 @@ export class TemplateOperations {
       }
 
       console.log('🔍 DEBUG: Tous les templates récupérés:', allTemplates?.length);
+      console.log('🔍 DEBUG: Détails de tous les templates bruts:', allTemplates);
 
-      // Récupérer les profils des créateurs de templates
-      const creatorIds = [...new Set(allTemplates?.map(t => t.user_id).filter(Boolean))];
-      const { data: creatorProfiles } = await supabase
+      if (!allTemplates || allTemplates.length === 0) {
+        console.log('⚠️ Aucun template trouvé en base de données');
+        return [];
+      }
+
+      // Récupérer TOUS les profils (pas seulement les créateurs de templates)
+      const { data: allProfiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, role')
-        .in('id', creatorIds);
+        .select('id, role');
 
-      const creatorRoleMap = new Map(creatorProfiles?.map(p => [p.id, p.role]) || []);
+      if (profilesError) {
+        console.error('❌ Erreur récupération profils:', profilesError);
+        throw new Error(`Impossible de récupérer les profils: ${profilesError.message}`);
+      }
 
-      console.log('🔍 DEBUG: Détails des templates:', allTemplates?.map(t => ({
-        id: t.id,
-        name: t.name,
-        user_id: t.user_id,
-        creator_role: creatorRoleMap.get(t.user_id)
-      })));
+      console.log('🔍 DEBUG: Tous les profils récupérés:', allProfiles?.length);
+      console.log('🔍 DEBUG: Détails des profils:', allProfiles);
 
-      // Filtrer manuellement selon notre logique
+      const profileRoleMap = new Map(allProfiles?.map(p => [p.id, p.role]) || []);
+      console.log('🔍 DEBUG: Map des rôles:', Array.from(profileRoleMap.entries()));
+
+      // Analyser chaque template en détail
       const accessibleTemplates = allTemplates?.filter(template => {
+        const creatorRole = profileRoleMap.get(template.user_id);
+        console.log(`🔍 DEBUG: Analyse template "${template.name}":`, {
+          templateId: template.id,
+          templateUserId: template.user_id,
+          creatorRole: creatorRole,
+          currentUserId: user.id,
+          currentUserRole: profile?.role,
+          isOwner: template.user_id === user.id,
+          isAgentViewingAdmin: profile?.role === 'agent' && creatorRole === 'admin'
+        });
+
         // L'utilisateur peut voir ses propres templates
         if (template.user_id === user.id) {
           console.log('✅ Template accessible (propriétaire):', template.name);
@@ -77,14 +98,20 @@ export class TemplateOperations {
         }
 
         // Si l'utilisateur est agent, il peut voir les templates des admins
-        if (profile?.role === 'agent' && creatorRoleMap.get(template.user_id) === 'admin') {
+        if (profile?.role === 'agent' && creatorRole === 'admin') {
           console.log('✅ Template accessible (agent -> admin):', template.name);
           return true;
         }
 
-        console.log('❌ Template non accessible:', template.name, 'user_role:', profile?.role, 'creator_role:', creatorRoleMap.get(template.user_id));
+        console.log('❌ Template non accessible:', template.name, {
+          userRole: profile?.role,
+          creatorRole: creatorRole,
+          reason: profile?.role !== 'agent' ? 'Utilisateur pas agent' : 'Créateur pas admin'
+        });
         return false;
       }) || [];
+
+      console.log(`✅ ${accessibleTemplates.length} template(s) accessible(s) après filtrage`);
 
       const templates = accessibleTemplates.map(template => ({
         id: template.id,
@@ -94,13 +121,11 @@ export class TemplateOperations {
         filePath: template.file_path
       }));
 
-      console.log(`✅ ${templates.length} template(s) accessible(s) après filtrage manuel`);
-      console.log('🔍 DEBUG: Templates finaux:', templates.map(t => t.name));
+      console.log('🔍 DEBUG: Templates finaux retournés:', templates);
       
       return templates;
     } catch (error) {
-      console.error('Erreur lors du chargement des templates:', error);
-      // Retourner l'erreur avec un message plus explicite
+      console.error('❌ Erreur complète lors du chargement des templates:', error);
       if (error instanceof Error) {
         throw error;
       } else {
