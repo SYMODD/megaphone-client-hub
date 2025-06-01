@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { FieldMapping } from './types';
-import { SharedTemplateOperations } from './sharedTemplateOperations';
 
 export class MappingOperations {
   static async loadMappings(): Promise<Record<string, FieldMapping[]>> {
@@ -14,36 +13,10 @@ export class MappingOperations {
 
       console.log('Chargement des mappings pour l\'utilisateur:', user.id);
 
-      // Récupérer le profil de l'utilisateur pour déterminer son rôle
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-      let query = supabase
+      // Récupérer tous les mappings accessibles (les nouvelles politiques RLS s'occupent du filtrage)
+      const { data, error } = await supabase
         .from('pdf_template_mappings')
         .select('*');
-
-      if (profile?.role === 'admin' || profile?.role === 'superviseur') {
-        // Les admins et superviseurs peuvent voir tous les mappings
-        console.log('Utilisateur admin/superviseur - chargement de tous les mappings');
-      } else {
-        // Les agents peuvent voir leurs propres mappings + les mappings des templates partagés
-        console.log('Utilisateur agent - chargement des mappings personnels et partagés');
-        
-        // Récupérer les IDs des templates partagés
-        const sharedTemplateIds = await SharedTemplateOperations.getSharedTemplateIds();
-        
-        // Filtrer par templates personnels OU templates partagés
-        if (sharedTemplateIds.length > 0) {
-          query = query.or(`user_id.eq.${user.id},template_id.in.(${sharedTemplateIds.join(',')})`);
-        } else {
-          query = query.eq('user_id', user.id);
-        }
-      }
-
-      const { data, error } = await query;
 
       if (error) {
         console.error('Erreur lors du chargement des mappings:', error);
