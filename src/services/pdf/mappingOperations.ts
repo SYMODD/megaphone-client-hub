@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { FieldMapping } from './types';
 
@@ -21,12 +22,14 @@ export class MappingOperations {
 
       console.log('🔍 DEBUG: Rôle de l\'utilisateur actuel (mappings):', profile?.role);
 
-      // NOUVELLE APPROCHE: récupération manuelle des mappings avec jointure
+      // Récupérer tous les mappings avec les informations des templates
       const { data: allMappings, error } = await supabase
         .from('pdf_template_mappings')
         .select(`
           *,
-          pdf_templates!inner(user_id, profiles!pdf_templates_user_id_fkey(role))
+          pdf_templates!fk_template_id (
+            user_id
+          )
         `);
 
       if (error) {
@@ -36,8 +39,19 @@ export class MappingOperations {
 
       console.log('🔍 DEBUG: Tous les mappings récupérés:', allMappings?.length);
 
+      // Récupérer les profils des créateurs de templates
+      const creatorIds = [...new Set(allMappings?.map(m => m.pdf_templates?.user_id).filter(Boolean))];
+      const { data: creatorProfiles } = await supabase
+        .from('profiles')
+        .select('id, role')
+        .in('id', creatorIds);
+
+      const creatorRoleMap = new Map(creatorProfiles?.map(p => [p.id, p.role]) || []);
+
       // Filtrer manuellement selon notre logique
       const accessibleMappings = allMappings?.filter(mapping => {
+        const templateUserId = mapping.pdf_templates?.user_id;
+        
         // L'utilisateur peut voir ses propres mappings
         if (mapping.user_id === user.id) {
           console.log('✅ Mapping accessible (propriétaire):', mapping.template_id);
@@ -45,7 +59,7 @@ export class MappingOperations {
         }
 
         // Si l'utilisateur est agent, il peut voir les mappings des templates d'admins
-        if (profile?.role === 'agent' && mapping.pdf_templates?.profiles?.role === 'admin') {
+        if (profile?.role === 'agent' && templateUserId && creatorRoleMap.get(templateUserId) === 'admin') {
           console.log('✅ Mapping accessible (agent -> admin template):', mapping.template_id);
           return true;
         }
