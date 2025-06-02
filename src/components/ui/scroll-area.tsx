@@ -12,18 +12,8 @@ const ScrollArea = React.forwardRef<
     ref={ref}
     className={cn("relative", className)}
     {...props}
-    style={{
-      overflow: 'auto',
-      scrollbarColor: '#475569 #e2e8f0'
-    }}
   >
-    <ScrollAreaPrimitive.Viewport 
-      className="h-full w-full rounded-[inherit]"
-      style={{
-        overflow: 'auto',
-        scrollbarColor: '#475569 #e2e8f0'
-      }}
-    >
+    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
       {children}
     </ScrollAreaPrimitive.Viewport>
     <ScrollBar />
@@ -47,22 +37,9 @@ const ScrollBar = React.forwardRef<
         "h-4 flex-col border-t border-t-transparent p-[1px]",
       className
     )}
-    style={{
-      background: '#e2e8f0',
-      display: 'block',
-      opacity: 1
-    }}
     {...props}
   >
-    <ScrollAreaPrimitive.ScrollAreaThumb 
-      className="relative flex-1 rounded-full"
-      style={{
-        background: '#475569',
-        border: '2px solid #e2e8f0',
-        minHeight: '40px',
-        opacity: 1
-      }}
-    />
+    <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-slate-400 hover:bg-slate-500" />
   </ScrollAreaPrimitive.ScrollAreaScrollbar>
 ))
 ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName

@@ -6,6 +6,7 @@ import { Eye, Edit, FileText } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface RecentClientsProps {
   data: {
@@ -24,6 +25,7 @@ interface RecentClientsProps {
 export const RecentClients = ({ data }: RecentClientsProps) => {
   const { recentClients } = data;
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log("🔄 RecentClients RE-RENDER avec nouvelles données:", recentClients);
@@ -51,6 +53,15 @@ export const RecentClients = ({ data }: RecentClientsProps) => {
     toast({
       title: "Générer un document",
       description: `Génération d'un document pour ${client.prenom} ${client.nom}`,
+    });
+  };
+
+  const handleViewAllClients = () => {
+    console.log('Navigation vers Base Clients');
+    navigate('/base-clients');
+    toast({
+      title: "Navigation",
+      description: "Redirection vers la base de données complète des clients.",
     });
   };
 
@@ -126,7 +137,11 @@ export const RecentClients = ({ data }: RecentClientsProps) => {
           )}
         </div>
         <div className="mt-6 text-center">
-          <Button variant="outline" className="w-full">
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={handleViewAllClients}
+          >
             Voir tous les clients
           </Button>
         </div>
