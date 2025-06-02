@@ -2,17 +2,8 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { PDFContractTabs } from "./PDFContractTabs";
-import { usePDFContract } from "./PDFContractProvider";
-
-interface Client {
-  id: string;
-  nom: string;
-  prenom: string;
-  nationalite: string;
-  numero_passeport: string;
-  date_enregistrement: string;
-  observations?: string;
-}
+import { usePDFContract } from "./provider/PDFContractContext";
+import { Client } from "./provider/types";
 
 interface PDFContractContentProps {
   clients: Client[];

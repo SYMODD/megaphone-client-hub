@@ -1,18 +1,9 @@
 
 import React from 'react';
 import { PDFContractHeader } from "./PDFContractHeader";
-import { PDFContractProvider } from "./PDFContractProvider";
+import { PDFContractProvider } from "./provider/PDFContractProvider";
 import { PDFContractContent } from "./PDFContractContent";
-
-interface Client {
-  id: string;
-  nom: string;
-  prenom: string;
-  nationalite: string;
-  numero_passeport: string;
-  date_enregistrement: string;
-  observations?: string;
-}
+import { Client } from "./provider/types";
 
 interface PDFContractGeneratorProps {
   clients: Client[];
