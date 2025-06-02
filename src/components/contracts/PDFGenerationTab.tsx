@@ -9,8 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 export const PDFGenerationTab = () => {
   const {
     selectedClient,
-    selectedTemplate,
+    selectedTemplateId,
     selectedTemplateName,
+    templates,
     fieldMappings,
     isGenerating,
     previewUrl,
@@ -20,6 +21,8 @@ export const PDFGenerationTab = () => {
 
   const { toast } = useToast();
 
+  // Get the selected template from the templates array
+  const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
   const canGenerate = selectedClient && selectedTemplate && fieldMappings.length > 0;
 
   const handleDownloadPDF = async () => {
