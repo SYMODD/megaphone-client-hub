@@ -53,16 +53,16 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
     }
   };
 
-  const retryLoad = () => {
+  const retryLoad = async () => {
     console.log('🔄 Rechargement des templates demandé...');
-    loadTemplatesAndMappings();
+    await loadTemplatesAndMappings();
   };
 
-  // Handle template deletion with mapping cleanup
+  // Handle template deletion with mapping cleanup and reload
   const deleteTemplate = async (templateId: string) => {
     console.log('🔄 Suppression complète du template:', templateId);
     
-    // Supprimer le template
+    // Supprimer le template (qui inclut maintenant un rechargement automatique)
     await templateOps.deleteTemplate(templateId);
     
     // Supprimer les mappings associés

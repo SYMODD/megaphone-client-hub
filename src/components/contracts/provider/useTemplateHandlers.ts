@@ -97,15 +97,16 @@ export const useTemplateHandlers = ({
     try {
       console.log('🗑️ Début suppression template depuis handler:', templateId);
       
-      await deleteTemplate(templateId);
-      
-      // Si le template supprimé était sélectionné, désélectionner
+      // Si le template supprimé était sélectionné, désélectionner AVANT la suppression
       if (selectedTemplateId === templateId) {
-        console.log('🔄 Désélection du template supprimé');
+        console.log('🔄 Désélection du template avant suppression');
         setSelectedTemplateId(null);
         setFieldMappings([]);
         setPreviewUrl('');
       }
+      
+      // Supprimer le template (qui inclut maintenant un rechargement automatique)
+      await deleteTemplate(templateId);
       
       console.log('✅ Suppression template terminée depuis handler');
       
@@ -151,7 +152,7 @@ export const useTemplateHandlers = ({
     try {
       await reloadTemplates();
       
-      // Réinitialiser les états si nécessaire
+      // Réinitialiser les états si le template sélectionné n'existe plus
       if (selectedTemplateId && !templates.find(t => t.id === selectedTemplateId)) {
         console.log('⚠️ Template sélectionné n\'existe plus, réinitialisation...');
         setSelectedTemplateId(null);
