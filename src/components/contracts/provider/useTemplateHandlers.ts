@@ -64,12 +64,11 @@ export const useTemplateHandlers = ({
     console.log('🔄 Sélection du template:', templateId);
     setSelectedTemplateId(templateId);
     
-    // Charger les mappings existants pour ce template
-    const existingMappings = templateMappings[templateId] || [];
-    setFieldMappings(existingMappings);
-    
-    // Reset preview URL
+    // Reset preview URL lors de la sélection d'un nouveau template
     setPreviewUrl('');
+    
+    // NOTE: Ne pas charger les mappings ici car c'est géré par l'effet dans PDFContractProvider
+    console.log('✅ Template sélectionné, les mappings seront chargés automatiquement');
   };
 
   const handleDeleteTemplate = async (templateId: string) => {
