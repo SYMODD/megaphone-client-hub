@@ -25,6 +25,7 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
   // Référence pour éviter les rechargements en boucle
   const isReloadingRef = useRef(false);
   const initialLoadCompleted = useRef(false);
+  const lastSavedMappings = useRef<string>('');
 
   const {
     templates,
@@ -42,7 +43,8 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     selectedTemplateId,
     selectedClient: !!selectedClient,
     userRole: profile?.role,
-    initialLoadCompleted: initialLoadCompleted.current
+    initialLoadCompleted: initialLoadCompleted.current,
+    fieldMappingsCount: fieldMappings.length
   });
 
   // Effet pour marquer la fin du chargement initial
@@ -96,13 +98,22 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     previewUrl
   });
 
+  // CORRECTION: Éviter la sauvegarde en boucle des mappings
   const handleFieldMappingsChange = (mappings: FieldMapping[]) => {
-    console.log('🔄 Mise à jour des mappings:', mappings);
+    console.log('🔄 Mise à jour des mappings:', mappings.length, 'champs');
     setFieldMappings(mappings);
     
-    if (selectedTemplateId) {
-      console.log('💾 Sauvegarde automatique des mappings pour le template:', selectedTemplateId);
-      saveMappings(selectedTemplateId, mappings);
+    // Sauvegarder seulement si les mappings ont vraiment changé
+    const mappingsString = JSON.stringify(mappings);
+    
+    if (selectedTemplateId && mappingsString !== lastSavedMappings.current) {
+      console.log('💾 Sauvegarde des mappings pour le template:', selectedTemplateId);
+      lastSavedMappings.current = mappingsString;
+      
+      // Sauvegarder avec un délai pour éviter les appels multiples
+      setTimeout(() => {
+        saveMappings(selectedTemplateId, mappings);
+      }, 500);
     }
   };
 

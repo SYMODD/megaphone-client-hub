@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { FieldMappingInstructions } from './field-mapping/FieldMappingInstructions';
@@ -10,6 +10,7 @@ import { DEFAULT_MAPPINGS, PRESET_FIELDS } from './field-mapping/constants';
 
 export const PDFFieldMapping = ({ onFieldMappingsChange, onAnalyzePDF, initialMappings = [] }: FieldMappingProps) => {
   const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([]);
+  const lastNotifiedMappings = useRef<string>('');
 
   // Charger les mappings initiaux
   useEffect(() => {
@@ -21,9 +22,16 @@ export const PDFFieldMapping = ({ onFieldMappingsChange, onAnalyzePDF, initialMa
     }
   }, [initialMappings]);
 
-  // Notifier les changements
+  // Notifier les changements SEULEMENT si ils ont vraiment changé
   useEffect(() => {
-    onFieldMappingsChange(fieldMappings);
+    const currentMappingsString = JSON.stringify(fieldMappings);
+    
+    // Éviter les notifications en boucle
+    if (currentMappingsString !== lastNotifiedMappings.current) {
+      console.log('🔄 Notification changement mappings:', fieldMappings.length, 'champs');
+      lastNotifiedMappings.current = currentMappingsString;
+      onFieldMappingsChange(fieldMappings);
+    }
   }, [fieldMappings, onFieldMappingsChange]);
 
   const addFieldMapping = () => {

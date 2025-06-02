@@ -33,7 +33,26 @@ export const generatePDFContract = async (
     console.log('Client sélectionné:', client);
     console.log('Mappings des champs:', fieldMappings);
     
+    if (!templateFile) {
+      throw new Error('Aucun fichier template fourni');
+    }
+    
+    if (!client) {
+      throw new Error('Aucun client sélectionné');
+    }
+    
+    if (!fieldMappings || fieldMappings.length === 0) {
+      console.warn('⚠️ Aucun mapping de champ fourni, génération du PDF sans remplacement');
+    }
+    
     const templateArrayBuffer = await templateFile.arrayBuffer();
+    
+    if (templateArrayBuffer.byteLength === 0) {
+      throw new Error('Le fichier template est vide');
+    }
+    
+    console.log('📄 Chargement du template PDF, taille:', templateArrayBuffer.byteLength, 'bytes');
+    
     const pdfDoc = await PDFDocument.load(templateArrayBuffer);
     
     // Préparer les données de remplacement
@@ -60,6 +79,16 @@ export const generatePDFContract = async (
     
   } catch (error) {
     console.error('❌ Erreur lors de la génération du PDF:', error);
+    
+    // Messages d'erreur plus détaillés
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid PDF')) {
+        throw new Error('Le fichier template n\'est pas un PDF valide');
+      } else if (error.message.includes('Encrypted')) {
+        throw new Error('Le PDF template est protégé par mot de passe');
+      }
+    }
+    
     throw new Error(`Impossible de générer le contrat PDF: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
   }
 };
@@ -98,13 +127,17 @@ const processPageContent = async (
   
   let fieldsProcessed = 0;
   
-  // Traiter chaque mapping de champ
-  fieldMappings.forEach((mapping) => {
-    if (!mapping.placeholder || !mapping.clientField) {
-      console.warn('⚠️ Mapping invalide ignoré:', mapping);
-      return;
-    }
-
+  // Filtrer les mappings valides
+  const validMappings = fieldMappings.filter(mapping => 
+    mapping.placeholder && 
+    mapping.clientField && 
+    replacementData[mapping.clientField]
+  );
+  
+  console.log(`📊 ${validMappings.length}/${fieldMappings.length} mappings valides trouvés`);
+  
+  // Traiter chaque mapping de champ valide
+  validMappings.forEach((mapping, index) => {
     const value = replacementData[mapping.clientField];
     
     if (!value) {
@@ -114,12 +147,12 @@ const processPageContent = async (
     
     // Utiliser les coordonnées spécifiées ou des positions par défaut
     const x = mapping.x || 100;
-    const y = mapping.y || (height - 100 - (fieldsProcessed * 30));
+    const y = mapping.y || (height - 100 - (index * 30));
     const fontSize = mapping.fontSize || 12;
     
     try {
       // Dessiner le texte à la position spécifiée
-      page.drawText(value, {
+      page.drawText(String(value), {
         x: x,
         y: y,
         size: fontSize,
@@ -135,11 +168,11 @@ const processPageContent = async (
     }
   });
   
-  console.log(`📊 ${fieldsProcessed}/${fieldMappings.length} champs traités avec succès`);
+  console.log(`📊 ${fieldsProcessed}/${validMappings.length} champs traités avec succès`);
   
   // Ajouter des bordures de débogage en mode développement
   if (process.env.NODE_ENV === 'development') {
-    fieldMappings.forEach((mapping) => {
+    validMappings.forEach((mapping) => {
       if (mapping.x && mapping.y) {
         try {
           page.drawRectangle({
