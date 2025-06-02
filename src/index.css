@@ -13,125 +13,124 @@
 @import './styles/dropdowns.css';
 @import './styles/utilities.css';
 
-/* SOLUTION FINALE SCROLLBARS - COULEURS CONTRASTÉES ET VISIBLES */
-html {
-  overflow-y: scroll !important;
+/* STYLE UNIFORME DES SCROLLBARS POUR TOUTE L'APPLICATION */
+
+/* Configuration globale - Firefox */
+html, body, * {
   scrollbar-width: auto !important;
-  scrollbar-color: #64748b #e2e8f0 !important;
+  scrollbar-color: #64748b #f1f5f9 !important;
 }
 
-body {
-  overflow-y: scroll !important;
-  scrollbar-width: auto !important;
-  scrollbar-color: #64748b #e2e8f0 !important;
-}
-
-/* FORCE GLOBALE - TOUS LES ÉLÉMENTS */
-*,
-*::before,
-*::after {
-  scrollbar-width: auto !important;
-  scrollbar-color: #64748b #e2e8f0 !important;
-}
-
-/* WEBKIT - TOUS LES ÉLÉMENTS AVEC COULEURS CONTRASTÉES */
+/* Configuration globale - Webkit (Chrome, Safari, Edge) */
 *::-webkit-scrollbar {
-  width: 12px !important;
-  height: 12px !important;
-  background: #e2e8f0 !important;
+  width: 14px !important;
+  height: 14px !important;
+  background: #f1f5f9 !important;
   display: block !important;
-  -webkit-appearance: auto !important;
 }
 
 *::-webkit-scrollbar-thumb {
   background: #64748b !important;
-  border-radius: 6px !important;
-  border: 1px solid #475569 !important;
-  -webkit-appearance: auto !important;
+  border-radius: 7px !important;
+  border: 2px solid #f1f5f9 !important;
 }
 
 *::-webkit-scrollbar-track {
-  background: #e2e8f0 !important;
-  -webkit-appearance: auto !important;
+  background: #f1f5f9 !important;
+  border-radius: 7px !important;
 }
 
 *::-webkit-scrollbar-thumb:hover {
   background: #475569 !important;
-  border: 1px solid #334155 !important;
 }
 
-/* SURCHARGE SPÉCIFIQUE RADIX/TAILWIND */
-[data-radix-scroll-area-viewport],
-.overflow-hidden,
+*::-webkit-scrollbar-thumb:active {
+  background: #334155 !important;
+}
+
+/* Coins des scrollbars */
+*::-webkit-scrollbar-corner {
+  background: #f1f5f9 !important;
+}
+
+/* Surcharge spécifique pour les éléments avec overflow */
 .overflow-auto,
 .overflow-y-auto,
 .overflow-x-auto,
 .overflow-scroll,
-.scrollbar-none,
-.scrollbar-thin {
-  overflow: auto !important;
+[data-radix-scroll-area-viewport] {
   scrollbar-width: auto !important;
-  scrollbar-color: #64748b #e2e8f0 !important;
+  scrollbar-color: #64748b #f1f5f9 !important;
 }
 
-[data-radix-scroll-area-viewport]::-webkit-scrollbar,
-.overflow-hidden::-webkit-scrollbar,
 .overflow-auto::-webkit-scrollbar,
 .overflow-y-auto::-webkit-scrollbar,
 .overflow-x-auto::-webkit-scrollbar,
 .overflow-scroll::-webkit-scrollbar,
-.scrollbar-none::-webkit-scrollbar,
-.scrollbar-thin::-webkit-scrollbar {
-  width: 12px !important;
-  height: 12px !important;
-  background: #e2e8f0 !important;
+[data-radix-scroll-area-viewport]::-webkit-scrollbar {
+  width: 14px !important;
+  height: 14px !important;
+  background: #f1f5f9 !important;
   display: block !important;
-  -webkit-appearance: auto !important;
 }
 
-[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb,
-.overflow-hidden::-webkit-scrollbar-thumb,
 .overflow-auto::-webkit-scrollbar-thumb,
 .overflow-y-auto::-webkit-scrollbar-thumb,
 .overflow-x-auto::-webkit-scrollbar-thumb,
 .overflow-scroll::-webkit-scrollbar-thumb,
-.scrollbar-none::-webkit-scrollbar-thumb,
-.scrollbar-thin::-webkit-scrollbar-thumb {
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
   background: #64748b !important;
-  border-radius: 6px !important;
-  border: 1px solid #475569 !important;
+  border-radius: 7px !important;
+  border: 2px solid #f1f5f9 !important;
 }
 
-/* ROOT ET CONTENEURS PRINCIPAUX */
+.overflow-auto::-webkit-scrollbar-track,
+.overflow-y-auto::-webkit-scrollbar-track,
+.overflow-x-auto::-webkit-scrollbar-track,
+.overflow-scroll::-webkit-scrollbar-track,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-track {
+  background: #f1f5f9 !important;
+  border-radius: 7px !important;
+}
+
+/* Style spécial pour les conteneurs principaux */
 #root,
 .container,
-.mx-auto,
-.max-w-7xl,
-.space-y-6,
-.space-y-4 {
+main,
+.sidebar {
   scrollbar-width: auto !important;
-  scrollbar-color: #64748b #e2e8f0 !important;
+  scrollbar-color: #64748b #f1f5f9 !important;
 }
 
 #root::-webkit-scrollbar,
 .container::-webkit-scrollbar,
-.mx-auto::-webkit-scrollbar,
-.max-w-7xl::-webkit-scrollbar,
-.space-y-6::-webkit-scrollbar,
-.space-y-4::-webkit-scrollbar {
-  width: 12px !important;
-  height: 12px !important;
-  background: #e2e8f0 !important;
-  display: block !important;
+main::-webkit-scrollbar,
+.sidebar::-webkit-scrollbar {
+  width: 14px !important;
+  height: 14px !important;
+  background: #f1f5f9 !important;
 }
 
 #root::-webkit-scrollbar-thumb,
 .container::-webkit-scrollbar-thumb,
-.mx-auto::-webkit-scrollbar-thumb,
-.max-w-7xl::-webkit-scrollbar-thumb,
-.space-y-6::-webkit-scrollbar-thumb,
-.space-y-4::-webkit-scrollbar-thumb {
+main::-webkit-scrollbar-thumb,
+.sidebar::-webkit-scrollbar-thumb {
   background: #64748b !important;
-  border-radius: 6px !important;
-  border: 1px solid #475569 !important;
+  border-radius: 7px !important;
+  border: 2px solid #f1f5f9 !important;
+}
+
+/* Désactiver les styles de scrollbar cachés */
+.scrollbar-none::-webkit-scrollbar {
+  width: 14px !important;
+  height: 14px !important;
+  background: #f1f5f9 !important;
+  display: block !important;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 14px !important;
+  height: 14px !important;
+  background: #f1f5f9 !important;
+  display: block !important;
 }
