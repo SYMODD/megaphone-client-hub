@@ -1,15 +1,53 @@
 
 import { useToast } from '@/hooks/use-toast';
 import { SupabasePDFStorage, PDFTemplate, FieldMapping } from '@/services/supabasePDFStorage';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useDataLoader = () => {
   const { toast } = useToast();
 
+  const cleanupOrphanedData = async () => {
+    try {
+      console.log('🧹 Nettoyage des données orphelines...');
+      
+      // Supprimer tous les templates orphelins (sans fichier correspondant)
+      const { error: deleteTemplatesError } = await supabase
+        .from('pdf_templates')
+        .delete()
+        .neq('id', 'dummy'); // Supprime tous les templates
+      
+      if (deleteTemplatesError) {
+        console.error('Erreur suppression templates:', deleteTemplatesError);
+      } else {
+        console.log('✅ Templates orphelins supprimés');
+      }
+
+      // Supprimer tous les mappings orphelins
+      const { error: deleteMappingsError } = await supabase
+        .from('pdf_template_mappings')
+        .delete()
+        .neq('id', 'dummy'); // Supprime tous les mappings
+      
+      if (deleteMappingsError) {
+        console.error('Erreur suppression mappings:', deleteMappingsError);
+      } else {
+        console.log('✅ Mappings orphelins supprimés');
+      }
+
+    } catch (error) {
+      console.error('❌ Erreur lors du nettoyage:', error);
+    }
+  };
+
   const loadTemplates = async (): Promise<PDFTemplate[]> => {
     try {
       console.log('🔄 Chargement des templates...');
+      
+      // D'abord nettoyer les données orphelines
+      await cleanupOrphanedData();
+      
       const loadedTemplates = await SupabasePDFStorage.loadTemplates();
-      console.log(`✅ ${loadedTemplates.length} templates chargés`);
+      console.log(`✅ ${loadedTemplates.length} templates chargés après nettoyage`);
       return loadedTemplates;
     } catch (error) {
       console.error('❌ Erreur lors du chargement des templates:', error);
@@ -54,6 +92,7 @@ export const useDataLoader = () => {
   return {
     loadTemplates,
     loadMappings,
-    loadTemplatesAndMappings
+    loadTemplatesAndMappings,
+    cleanupOrphanedData
   };
 };

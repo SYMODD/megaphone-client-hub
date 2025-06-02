@@ -14,20 +14,6 @@ export class TemplateLoader {
 
       console.log('🔍 DEBUG: Chargement des templates pour l\'utilisateur:', user.id);
 
-      // Récupérer le profil utilisateur pour debug
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) {
-        console.error('❌ Erreur récupération profil utilisateur:', profileError);
-        throw new Error(`Impossible de récupérer le profil utilisateur: ${profileError.message}`);
-      }
-
-      console.log('🔍 DEBUG: Rôle de l\'utilisateur actuel:', profile?.role);
-
       // Vérifier l'accès au bucket avant de continuer
       const bucketAccessible = await BucketManager.ensureBucket();
       if (!bucketAccessible) {
@@ -35,25 +21,20 @@ export class TemplateLoader {
         throw new Error('Le bucket de stockage des templates n\'est pas disponible. Vérifiez la configuration Supabase.');
       }
 
-      console.log('✅ Bucket accessible, synchronisation en cours...');
+      console.log('✅ Bucket accessible, vérification des fichiers...');
 
-      // Synchroniser le bucket avec la base de données
-      try {
-        await BucketManager.syncBucketWithDatabase();
-      } catch (syncError) {
-        console.warn('⚠️ Erreur lors de la synchronisation, mais continuons avec les données en base:', syncError);
-      }
+      // Lister les fichiers dans le bucket pour vérifier leur existence
+      const { data: files, error: listError } = await supabase.storage
+        .from(BucketManager.getBucketName())
+        .list(user.id);
 
-      // Test direct de la fonction RLS
-      console.log('🔍 DEBUG: Test direct de la fonction get_current_user_role()...');
-      const { data: roleTest, error: roleError } = await supabase.rpc('get_current_user_role');
-      if (roleError) {
-        console.error('❌ Erreur lors du test de la fonction get_current_user_role:', roleError);
+      if (listError) {
+        console.error('❌ Erreur listage fichiers:', listError);
       } else {
-        console.log('🔍 DEBUG: Fonction get_current_user_role() retourne:', roleTest);
+        console.log('📁 Fichiers dans le bucket:', files?.length || 0);
       }
 
-      // Récupérer les templates avec requête simplifiée (sans join)
+      // Récupérer les templates avec requête simplifiée
       console.log('🔍 DEBUG: Requête SELECT sur pdf_templates...');
       const { data: templates, error, count } = await supabase
         .from('pdf_templates')
@@ -62,9 +43,6 @@ export class TemplateLoader {
 
       if (error) {
         console.error('❌ Erreur lors de la récupération des templates:', error);
-        console.error('❌ Code d\'erreur:', error.code);
-        console.error('❌ Message d\'erreur:', error.message);
-        console.error('❌ Détails:', error.details);
         throw new Error(`Impossible de charger les templates: ${error.message}`);
       }
 
@@ -72,33 +50,50 @@ export class TemplateLoader {
       console.log('🔍 DEBUG: Templates récupérés (bruts):', templates);
 
       if (!templates || templates.length === 0) {
-        console.log('⚠️ Aucun template accessible pour cet utilisateur selon les politiques RLS');
+        console.log('⚠️ Aucun template accessible pour cet utilisateur');
         return [];
       }
 
-      // Analyser chaque template en détail
-      templates.forEach((template, index) => {
-        console.log(`🔍 DEBUG: Template ${index + 1}:`, {
-          id: template.id,
-          name: template.name,
-          user_id: template.user_id,
-          current_user: user.id,
-          is_owner: template.user_id === user.id
-        });
-      });
-
-      const accessibleTemplates = templates.map(template => ({
-        id: template.id,
-        name: template.name,
-        fileName: template.file_name,
-        uploadDate: template.upload_date,
-        filePath: template.file_path
-      }));
-
-      console.log(`✅ ${accessibleTemplates.length} template(s) accessible(s) après traitement`);
-      console.log('🔍 DEBUG: Templates finaux retournés:', accessibleTemplates);
+      // Filtrer les templates qui ont des fichiers correspondants
+      const validTemplates: PDFTemplate[] = [];
       
-      return accessibleTemplates;
+      for (const template of templates) {
+        // Vérifier si le fichier existe vraiment dans le storage
+        const { data: fileExists, error: checkError } = await supabase.storage
+          .from(BucketManager.getBucketName())
+          .download(template.file_path);
+
+        if (!checkError && fileExists) {
+          validTemplates.push({
+            id: template.id,
+            name: template.name,
+            fileName: template.file_name,
+            uploadDate: template.upload_date,
+            filePath: template.file_path
+          });
+          console.log(`✅ Template valide: ${template.name}`);
+        } else {
+          console.log(`🗑️ Template orphelin détecté: ${template.name} (fichier inexistant)`);
+          
+          // Supprimer le template orphelin de la base de données
+          await supabase
+            .from('pdf_templates')
+            .delete()
+            .eq('id', template.id);
+          
+          // Supprimer les mappings associés
+          await supabase
+            .from('pdf_template_mappings')
+            .delete()
+            .eq('template_id', template.id);
+          
+          console.log(`🗑️ Template orphelin supprimé: ${template.name}`);
+        }
+      }
+
+      console.log(`✅ ${validTemplates.length} template(s) valide(s) après vérification`);
+      return validTemplates;
+      
     } catch (error) {
       console.error('❌ Erreur complète lors du chargement des templates:', error);
       if (error instanceof Error) {

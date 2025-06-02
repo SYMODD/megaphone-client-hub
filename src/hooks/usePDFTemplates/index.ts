@@ -32,6 +32,10 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
       mappingOps.setError(null);
       
       console.log('🔄 Chargement des templates et mappings...');
+      
+      // Forcer un nettoyage complet à chaque chargement
+      await dataLoader.cleanupOrphanedData();
+      
       const { loadedTemplates, loadedMappings } = await dataLoader.loadTemplatesAndMappings();
       
       templateOps.setTemplates(loadedTemplates);
@@ -63,6 +67,9 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
     console.log('🔄 Synchronisation forcée avec le backend...');
     try {
       setLoading(true);
+      
+      // Nettoyer d'abord les données orphelines
+      await dataLoader.cleanupOrphanedData();
       
       // Recharger TOUT depuis la base de données
       const { loadedTemplates, loadedMappings } = await dataLoader.loadTemplatesAndMappings();
@@ -110,15 +117,7 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
     // Supprimer le template côté backend
     await templateOps.deleteTemplate(templateId);
     
-    // Supprimer les mappings locaux immédiatement
-    mappingOps.setTemplateMappings(prev => {
-      const updated = { ...prev };
-      delete updated[templateId];
-      console.log('🗑️ Mappings locaux supprimés pour:', templateId);
-      return updated;
-    });
-    
-    // Forcer la synchronisation complète pour être sûr
+    // Forcer une synchronisation complète immédiatement après
     await forceSyncWithBackend();
     
     console.log('✅ Suppression et synchronisation terminées pour:', templateId);
