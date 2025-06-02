@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Trash2, Calendar, Plus, Edit2, Save, X, Info } from "lucide-react";
+import { FileText, Trash2, Calendar, Plus, Edit2, Save, X, Info, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PDFTemplate } from "@/hooks/usePDFTemplates";
@@ -18,6 +18,7 @@ interface PDFTemplateSelectorProps {
   onDeleteTemplate: (templateId: string) => void;
   onRenameTemplate: (templateId: string, newName: string) => void;
   onUploadNew: () => void;
+  onForceReload?: () => void;
 }
 
 export const PDFTemplateSelector = ({
@@ -26,10 +27,12 @@ export const PDFTemplateSelector = ({
   onTemplateSelect,
   onDeleteTemplate,
   onRenameTemplate,
-  onUploadNew
+  onUploadNew,
+  onForceReload
 }: PDFTemplateSelectorProps) => {
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string>('');
+  const [isReloading, setIsReloading] = useState(false);
   const { profile } = useAuth();
   const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
 
@@ -54,12 +57,39 @@ export const PDFTemplateSelector = ({
     setEditingName('');
   };
 
+  const handleForceReload = async () => {
+    if (!onForceReload) return;
+    
+    setIsReloading(true);
+    console.log('🔄 Rechargement forcé des templates...');
+    
+    try {
+      await onForceReload();
+    } finally {
+      setIsReloading(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="w-5 h-5" />
-          Gestion des Templates PDF
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Gestion des Templates PDF
+          </div>
+          {onForceReload && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleForceReload}
+              disabled={isReloading}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${isReloading ? 'animate-spin' : ''}`} />
+              {isReloading ? 'Rechargement...' : 'Actualiser'}
+            </Button>
+          )}
         </CardTitle>
         <CardDescription>
           {isAdmin 
@@ -76,6 +106,7 @@ export const PDFTemplateSelector = ({
               <div className="text-sm text-blue-700">
                 <p className="font-medium">Information pour les agents</p>
                 <p>Vous voyez les templates créés par les administrateurs et pouvez les utiliser pour générer des contrats.</p>
+                <p className="text-xs mt-1">Si vous voyez des templates qui ne devraient plus être là, cliquez sur "Actualiser".</p>
               </div>
             </div>
           )}

@@ -42,7 +42,8 @@ export const PDFContractContent = ({ clients }: PDFContractContentProps) => {
     handleFieldMappingsChange,
     handleClientSelect,
     handleGenerateContract,
-    handlePreviewContract
+    handlePreviewContract,
+    handleForceReload
   } = context;
 
   if (loading) {
@@ -81,6 +82,7 @@ export const PDFContractContent = ({ clients }: PDFContractContentProps) => {
       onPreviewContract={handlePreviewContract}
       onUploadNew={() => setShowUpload(true)}
       onCancelUpload={() => setShowUpload(false)}
+      onForceReload={handleForceReload}
     />
   );
 };

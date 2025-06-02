@@ -41,6 +41,7 @@ interface PDFContractContextType {
   handleRenameTemplate: (templateId: string, newName: string) => Promise<void>;
   handleGenerateContract: () => Promise<void>;
   handlePreviewContract: () => Promise<void>;
+  handleForceReload: () => Promise<void>;
 }
 
 const PDFContractContext = createContext<PDFContractContextType | undefined>(undefined);
@@ -79,7 +80,8 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     renameTemplate,
     deleteTemplate,
     saveMappings,
-    getTemplate
+    getTemplate,
+    loadTemplates: reloadTemplates
   } = usePDFTemplates();
 
   console.log('📊 PDFContractProvider state:', {
@@ -183,6 +185,11 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
         setFieldMappings([]);
         setPreviewUrl('');
       }
+      
+      toast({
+        title: "Template supprimé",
+        description: "Le template a été supprimé avec succès.",
+      });
     } catch (error) {
       console.error('Erreur suppression template:', error);
       toast({
@@ -211,6 +218,33 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
       toast({
         title: "Erreur",
         description: "Impossible de renommer le template.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleForceReload = async () => {
+    console.log('🔄 Rechargement forcé des templates demandé...');
+    try {
+      await reloadTemplates();
+      
+      // Réinitialiser les états si nécessaire
+      if (selectedTemplateId && !templates.find(t => t.id === selectedTemplateId)) {
+        console.log('⚠️ Template sélectionné n\'existe plus, réinitialisation...');
+        setSelectedTemplateId(null);
+        setFieldMappings([]);
+        setPreviewUrl('');
+      }
+      
+      toast({
+        title: "Templates actualisés",
+        description: "La liste des templates a été rechargée.",
+      });
+    } catch (error) {
+      console.error('Erreur lors du rechargement forcé:', error);
+      toast({
+        title: "Erreur de rechargement",
+        description: "Impossible de recharger les templates.",
         variant: "destructive",
       });
     }
@@ -348,7 +382,8 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     handleDeleteTemplate,
     handleRenameTemplate,
     handleGenerateContract,
-    handlePreviewContract
+    handlePreviewContract,
+    handleForceReload
   };
 
   console.log('✅ PDFContractProvider rendering with context value');

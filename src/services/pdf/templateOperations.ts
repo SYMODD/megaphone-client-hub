@@ -1,4 +1,3 @@
-
 import { PDFTemplate } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { BucketManager } from './bucketManager';
@@ -8,7 +7,7 @@ export class TemplateOperations {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.log('Utilisateur non connecté, aucun template à charger');
+        console.log('🚫 DEBUG: Utilisateur non connecté, aucun template à charger');
         return [];
       }
 
@@ -41,28 +40,52 @@ export class TemplateOperations {
       try {
         await BucketManager.syncBucketWithDatabase();
       } catch (syncError) {
-        console.warn('Erreur lors de la synchronisation, mais continuons avec les données en base:', syncError);
+        console.warn('⚠️ Erreur lors de la synchronisation, mais continuons avec les données en base:', syncError);
       }
 
-      // Récupérer les templates avec les nouvelles politiques RLS
-      // Les politiques RLS s'occupent maintenant du filtrage automatiquement
-      const { data: templates, error } = await supabase
+      // Test direct de la fonction RLS
+      console.log('🔍 DEBUG: Test direct de la fonction get_current_user_role()...');
+      const { data: roleTest, error: roleError } = await supabase.rpc('get_current_user_role');
+      if (roleError) {
+        console.error('❌ Erreur lors du test de la fonction get_current_user_role:', roleError);
+      } else {
+        console.log('🔍 DEBUG: Fonction get_current_user_role() retourne:', roleTest);
+      }
+
+      // Récupérer les templates avec requête détaillée pour debug
+      console.log('🔍 DEBUG: Requête SELECT sur pdf_templates...');
+      const { data: templates, error, count } = await supabase
         .from('pdf_templates')
-        .select('*')
+        .select('*, profiles!pdf_templates_user_id_fkey(role)', { count: 'exact' })
         .order('upload_date', { ascending: false });
 
       if (error) {
         console.error('❌ Erreur lors de la récupération des templates:', error);
+        console.error('❌ Code d\'erreur:', error.code);
+        console.error('❌ Message d\'erreur:', error.message);
+        console.error('❌ Détails:', error.details);
         throw new Error(`Impossible de charger les templates: ${error.message}`);
       }
 
-      console.log('🔍 DEBUG: Templates récupérés:', templates?.length);
-      console.log('🔍 DEBUG: Détails des templates:', templates);
+      console.log('🔍 DEBUG: Nombre total de templates dans la requête:', count);
+      console.log('🔍 DEBUG: Templates récupérés (bruts):', templates);
 
       if (!templates || templates.length === 0) {
-        console.log('⚠️ Aucun template accessible pour cet utilisateur');
+        console.log('⚠️ Aucun template accessible pour cet utilisateur selon les politiques RLS');
         return [];
       }
+
+      // Analyser chaque template en détail
+      templates.forEach((template, index) => {
+        console.log(`🔍 DEBUG: Template ${index + 1}:`, {
+          id: template.id,
+          name: template.name,
+          user_id: template.user_id,
+          owner_role: template.profiles?.role,
+          current_user: user.id,
+          is_owner: template.user_id === user.id
+        });
+      });
 
       const accessibleTemplates = templates.map(template => ({
         id: template.id,
@@ -72,7 +95,7 @@ export class TemplateOperations {
         filePath: template.file_path
       }));
 
-      console.log(`✅ ${accessibleTemplates.length} template(s) accessible(s)`);
+      console.log(`✅ ${accessibleTemplates.length} template(s) accessible(s) après traitement`);
       console.log('🔍 DEBUG: Templates finaux retournés:', accessibleTemplates);
       
       return accessibleTemplates;
@@ -218,6 +241,8 @@ export class TemplateOperations {
       throw new Error('Seuls les administrateurs peuvent supprimer des templates.');
     }
 
+    console.log('🗑️ DEBUG: Début suppression template:', templateId);
+
     // Get template to find file path
     const { data: template, error: getError } = await supabase
       .from('pdf_templates')
@@ -226,13 +251,22 @@ export class TemplateOperations {
       .single();
 
     if (getError || !template) {
+      console.error('❌ Template non trouvé pour suppression:', getError);
       throw new Error('Template not found');
     }
 
+    console.log('🔍 DEBUG: Template trouvé, chemin fichier:', template.file_path);
+
     // Delete file from storage
-    await supabase.storage
+    const { error: storageError } = await supabase.storage
       .from(BucketManager.getBucketName())
       .remove([template.file_path]);
+
+    if (storageError) {
+      console.error('⚠️ Erreur suppression fichier storage (continuons):', storageError);
+    } else {
+      console.log('✅ Fichier supprimé du storage');
+    }
 
     // Delete template metadata
     const { error: deleteError } = await supabase
@@ -241,14 +275,25 @@ export class TemplateOperations {
       .eq('id', templateId);
 
     if (deleteError) {
+      console.error('❌ Erreur suppression métadonnées:', deleteError);
       throw new Error(`Failed to delete template: ${deleteError.message}`);
     }
 
+    console.log('✅ Métadonnées template supprimées');
+
     // Delete associated mappings
-    await supabase
+    const { error: mappingError } = await supabase
       .from('pdf_template_mappings')
       .delete()
       .eq('template_id', templateId);
+
+    if (mappingError) {
+      console.error('⚠️ Erreur suppression mappings (non critique):', mappingError);
+    } else {
+      console.log('✅ Mappings associés supprimés');
+    }
+
+    console.log('🗑️ DEBUG: Suppression template terminée:', templateId);
   }
 
   static async renameTemplate(templateId: string, newName: string): Promise<void> {

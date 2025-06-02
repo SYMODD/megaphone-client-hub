@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -41,6 +40,7 @@ interface PDFContractTabsProps {
   onPreviewContract: () => void;
   onUploadNew: () => void;
   onCancelUpload: () => void;
+  onForceReload?: () => void;
 }
 
 export const PDFContractTabs = ({
@@ -62,7 +62,8 @@ export const PDFContractTabs = ({
   onGenerateContract,
   onPreviewContract,
   onUploadNew,
-  onCancelUpload
+  onCancelUpload,
+  onForceReload
 }: PDFContractTabsProps) => {
   const { profile } = useAuth();
   const isAdmin = profile?.role === 'admin';
@@ -113,6 +114,7 @@ export const PDFContractTabs = ({
             onDeleteTemplate={onDeleteTemplate}
             onRenameTemplate={onRenameTemplate}
             onUploadNew={onUploadNew}
+            onForceReload={onForceReload}
           />
         )}
       </TabsContent>
