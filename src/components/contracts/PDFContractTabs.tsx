@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Settings, FileDown, Lock } from "lucide-react";
+import { FileText, Settings, FileDown, Lock, Info } from "lucide-react";
 import { PDFTemplateUpload } from "./PDFTemplateUpload";
 import { PDFTemplateSelector } from "./PDFTemplateSelector";
 import { PDFFieldMapping } from "./PDFFieldMapping";
@@ -69,15 +69,17 @@ export const PDFContractTabs = ({
 
   return (
     <Tabs defaultValue="templates" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
         <TabsTrigger value="templates" className="flex items-center gap-2">
           <FileText className="w-4 h-4" />
           Templates
         </TabsTrigger>
-        <TabsTrigger value="fields" className="flex items-center gap-2">
-          <Settings className="w-4 h-4" />
-          Champs
-        </TabsTrigger>
+        {isAdmin && (
+          <TabsTrigger value="fields" className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Champs
+          </TabsTrigger>
+        )}
         <TabsTrigger value="client" className="flex items-center gap-2">
           <span className="w-4 h-4 rounded-full bg-current flex items-center justify-center text-xs">👤</span>
           Client
@@ -115,22 +117,24 @@ export const PDFContractTabs = ({
         )}
       </TabsContent>
 
-      <TabsContent value="fields">
-        {selectedTemplateId ? (
-          <PDFFieldMapping 
-            onFieldMappingsChange={onFieldMappingsChange}
-            initialMappings={fieldMappings}
-          />
-        ) : (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Sélectionnez d'abord un template</h3>
-              <p className="text-gray-500">Vous devez sélectionner un template PDF avant de pouvoir configurer ses champs.</p>
-            </CardContent>
-          </Card>
-        )}
-      </TabsContent>
+      {isAdmin && (
+        <TabsContent value="fields">
+          {selectedTemplateId ? (
+            <PDFFieldMapping 
+              onFieldMappingsChange={onFieldMappingsChange}
+              initialMappings={fieldMappings}
+            />
+          ) : (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Sélectionnez d'abord un template</h3>
+                <p className="text-gray-500">Vous devez sélectionner un template PDF avant de pouvoir configurer ses champs.</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      )}
 
       <TabsContent value="client">
         <ClientSelector
@@ -141,6 +145,17 @@ export const PDFContractTabs = ({
       </TabsContent>
 
       <TabsContent value="generate">
+        {!isAdmin && (
+          <div className="mb-4">
+            <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-blue-700">
+                <p className="font-medium">Information pour les agents</p>
+                <p>Les champs des templates sont préconfigurés par les administrateurs. Vous pouvez directement générer des contrats avec les templates disponibles.</p>
+              </div>
+            </div>
+          </div>
+        )}
         <PDFGenerationTab
           selectedTemplate={selectedTemplate}
           selectedClient={selectedClient}
