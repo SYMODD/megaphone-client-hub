@@ -46,8 +46,9 @@ export const processPageContent = async (
           break;
       }
       
-      value = shouldCheck ? '☑' : '☐';
-      console.log(`📋 Checkbox ${documentType}: ${shouldCheck ? 'cochée' : 'non cochée'} (type client: ${clientDocumentType})`);
+      // Utiliser des symboles plus visibles pour les cases à cocher
+      value = shouldCheck ? '✓' : '☐';
+      console.log(`📋 Checkbox ${documentType}: ${shouldCheck ? 'cochée (✓)' : 'non cochée (☐)'} (type client: ${clientDocumentType})`);
     }
     
     if (!value && !mapping.clientField.startsWith('checkbox_')) {
@@ -64,7 +65,6 @@ export const processPageContent = async (
     if (y > height || y < 0) {
       console.warn(`⚠️ Position Y (${y}) hors limites pour le champ "${mapping.placeholder}" (hauteur page: ${height})`);
       console.log(`🔧 Ajustement de la position Y de ${y} à ${height - 50 - (index * 30)}`);
-      // Ajuster la position Y si elle est hors limites
       y = height - 50 - (index * 30);
     }
     
