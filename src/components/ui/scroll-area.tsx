@@ -12,7 +12,7 @@ const ScrollArea = React.forwardRef<
     ref={ref}
     className={cn("relative", className)}
     style={{
-      scrollbarWidth: 'thick',
+      scrollbarWidth: 'auto',
       scrollbarColor: '#475569 #e2e8f0'
     }}
     {...props}
@@ -20,8 +20,8 @@ const ScrollArea = React.forwardRef<
     <ScrollAreaPrimitive.Viewport 
       className="h-full w-full rounded-[inherit]"
       style={{
-        scrollbarWidth: 'thick !important',
-        scrollbarColor: '#475569 #e2e8f0 !important'
+        scrollbarWidth: 'auto',
+        scrollbarColor: '#475569 #e2e8f0'
       }}
     >
       {children}
