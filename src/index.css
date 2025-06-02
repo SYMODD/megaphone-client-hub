@@ -19,7 +19,7 @@
 *,
 *::before,
 *::after {
-  scrollbar-width: thick !important;
+  scrollbar-width: auto !important;
   scrollbar-color: #475569 #e2e8f0 !important;
 }
 
@@ -63,7 +63,7 @@
 
 /* Force spéciale pour le body et html */
 html, body {
-  scrollbar-width: thick !important;
+  scrollbar-width: auto !important;
   scrollbar-color: #475569 #e2e8f0 !important;
 }
 
@@ -92,7 +92,7 @@ body::-webkit-scrollbar-thumb {
 .overflow-x-auto,
 .overflow-scroll,
 div[style*="overflow"] {
-  scrollbar-width: thick !important;
+  scrollbar-width: auto !important;
   scrollbar-color: #475569 #e2e8f0 !important;
 }
 
@@ -126,7 +126,7 @@ div[style*="overflow"]::-webkit-scrollbar-thumb {
 .scrollbar-thin,
 .scrollbar-hide,
 .scroll-smooth {
-  scrollbar-width: thick !important;
+  scrollbar-width: auto !important;
   scrollbar-color: #475569 #e2e8f0 !important;
 }
 
@@ -153,15 +153,40 @@ div[style*="overflow"]::-webkit-scrollbar-thumb {
   visibility: visible !important;
 }
 
-/* Force pour TOUS les composants Radix */
+/* CIBLAGE SPÉCIFIQUE POUR TOUS LES COMPOSANTS RADIX/SHADCN */
+
+/* Portails Radix - cibler tous les conteneurs de portal */
+[data-radix-portal] *,
+[data-radix-portal] *::-webkit-scrollbar {
+  scrollbar-width: auto !important;
+  scrollbar-color: #475569 #e2e8f0 !important;
+  width: 16px !important;
+  height: 16px !important;
+  background-color: #e2e8f0 !important;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+[data-radix-portal] *::-webkit-scrollbar-thumb {
+  background-color: #475569 !important;
+  border-radius: 8px !important;
+  border: 2px solid #e2e8f0 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Tous les composants de contenu Radix */
 [data-radix-scroll-area-viewport],
 [data-radix-scroll-area-scrollbar],
 [data-radix-popper-content-wrapper],
 [data-radix-select-content],
+[data-radix-select-viewport],
 [data-radix-dropdown-menu-content],
 [data-radix-dialog-content],
-[data-radix-popover-content] {
-  scrollbar-width: thick !important;
+[data-radix-popover-content],
+[data-radix-combobox-content] {
+  scrollbar-width: auto !important;
   scrollbar-color: #475569 #e2e8f0 !important;
 }
 
@@ -169,9 +194,11 @@ div[style*="overflow"]::-webkit-scrollbar-thumb {
 [data-radix-scroll-area-scrollbar]::-webkit-scrollbar,
 [data-radix-popper-content-wrapper]::-webkit-scrollbar,
 [data-radix-select-content]::-webkit-scrollbar,
+[data-radix-select-viewport]::-webkit-scrollbar,
 [data-radix-dropdown-menu-content]::-webkit-scrollbar,
 [data-radix-dialog-content]::-webkit-scrollbar,
-[data-radix-popover-content]::-webkit-scrollbar {
+[data-radix-popover-content]::-webkit-scrollbar,
+[data-radix-combobox-content]::-webkit-scrollbar {
   width: 16px !important;
   height: 16px !important;
   background-color: #e2e8f0 !important;
@@ -184,9 +211,78 @@ div[style*="overflow"]::-webkit-scrollbar-thumb {
 [data-radix-scroll-area-scrollbar]::-webkit-scrollbar-thumb,
 [data-radix-popper-content-wrapper]::-webkit-scrollbar-thumb,
 [data-radix-select-content]::-webkit-scrollbar-thumb,
+[data-radix-select-viewport]::-webkit-scrollbar-thumb,
 [data-radix-dropdown-menu-content]::-webkit-scrollbar-thumb,
 [data-radix-dialog-content]::-webkit-scrollbar-thumb,
-[data-radix-popover-content]::-webkit-scrollbar-thumb {
+[data-radix-popover-content]::-webkit-scrollbar-thumb,
+[data-radix-combobox-content]::-webkit-scrollbar-thumb {
+  background-color: #475569 !important;
+  border-radius: 8px !important;
+  border: 2px solid #e2e8f0 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ciblage par classes CSS communes de shadcn/ui */
+.select-content,
+.dropdown-content,
+.popover-content,
+.dialog-content,
+.combobox-content,
+.command-list {
+  scrollbar-width: auto !important;
+  scrollbar-color: #475569 #e2e8f0 !important;
+}
+
+.select-content::-webkit-scrollbar,
+.dropdown-content::-webkit-scrollbar,
+.popover-content::-webkit-scrollbar,
+.dialog-content::-webkit-scrollbar,
+.combobox-content::-webkit-scrollbar,
+.command-list::-webkit-scrollbar {
+  width: 16px !important;
+  height: 16px !important;
+  background-color: #e2e8f0 !important;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.select-content::-webkit-scrollbar-thumb,
+.dropdown-content::-webkit-scrollbar-thumb,
+.popover-content::-webkit-scrollbar-thumb,
+.dialog-content::-webkit-scrollbar-thumb,
+.combobox-content::-webkit-scrollbar-thumb,
+.command-list::-webkit-scrollbar-thumb {
+  background-color: #475569 !important;
+  border-radius: 8px !important;
+  border: 2px solid #e2e8f0 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ciblage avec max-height pour les listes déroulantes */
+div[style*="max-height"],
+ul[style*="max-height"],
+ol[style*="max-height"] {
+  scrollbar-width: auto !important;
+  scrollbar-color: #475569 #e2e8f0 !important;
+}
+
+div[style*="max-height"]::-webkit-scrollbar,
+ul[style*="max-height"]::-webkit-scrollbar,
+ol[style*="max-height"]::-webkit-scrollbar {
+  width: 16px !important;
+  height: 16px !important;
+  background-color: #e2e8f0 !important;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+div[style*="max-height"]::-webkit-scrollbar-thumb,
+ul[style*="max-height"]::-webkit-scrollbar-thumb,
+ol[style*="max-height"]::-webkit-scrollbar-thumb {
   background-color: #475569 !important;
   border-radius: 8px !important;
   border: 2px solid #e2e8f0 !important;
