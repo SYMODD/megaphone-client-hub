@@ -17,7 +17,7 @@ export const processPageContent = async (
   const validMappings = fieldMappings.filter(mapping => 
     mapping.placeholder && 
     mapping.clientField && 
-    replacementData[mapping.clientField]
+    (replacementData[mapping.clientField] || mapping.clientField.startsWith('checkbox_'))
   );
   
   console.log(`📊 ${validMappings.length}/${fieldMappings.length} mappings valides trouvés`);
@@ -25,9 +25,32 @@ export const processPageContent = async (
   
   // Traiter chaque mapping de champ valide
   validMappings.forEach((mapping, index) => {
-    const value = replacementData[mapping.clientField];
+    let value = replacementData[mapping.clientField];
     
-    if (!value) {
+    // Gestion spéciale des cases à cocher pour les types de documents
+    if (mapping.clientField.startsWith('checkbox_')) {
+      const documentType = mapping.clientField.replace('checkbox_', '');
+      const clientDocumentType = replacementData['document_type'] || '';
+      
+      // Déterminer si la case doit être cochée
+      let shouldCheck = false;
+      switch (documentType) {
+        case 'cin':
+          shouldCheck = clientDocumentType === 'cin';
+          break;
+        case 'passeport':
+          shouldCheck = clientDocumentType === 'passeport_marocain' || clientDocumentType === 'passeport_etranger';
+          break;
+        case 'titre_sejour':
+          shouldCheck = clientDocumentType === 'carte_sejour';
+          break;
+      }
+      
+      value = shouldCheck ? '☑' : '☐';
+      console.log(`📋 Checkbox ${documentType}: ${shouldCheck ? 'cochée' : 'non cochée'} (type client: ${clientDocumentType})`);
+    }
+    
+    if (!value && !mapping.clientField.startsWith('checkbox_')) {
       console.warn(`⚠️ Aucune valeur trouvée pour le champ "${mapping.clientField}"`);
       return;
     }
@@ -83,6 +106,4 @@ export const processPageContent = async (
   });
   
   console.log(`📊 ${fieldsProcessed}/${validMappings.length} champs traités avec succès`);
-  
-  // Les bordures de débogage ont été supprimées - plus d'encadrés rouges dans les PDFs générés
 };

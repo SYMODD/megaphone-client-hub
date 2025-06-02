@@ -25,6 +25,7 @@ export const prepareReplacementData = (client: Client, fieldMappings: FieldMappi
     'date_aujourdhui': currentDate,
     'entreprise': 'Sud Megaphone',
     'annee_courante': new Date().getFullYear().toString(),
+    'document_type': (client as any).document_type || '', // Type de document pour les checkboxes
   };
 
   // Ajouter les valeurs par défaut des champs personnalisés
