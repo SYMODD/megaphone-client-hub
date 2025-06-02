@@ -10,6 +10,7 @@ import { ClientSelector } from "./ClientSelector";
 import { PDFGenerationTab } from "./PDFGenerationTab";
 import { PDFTemplate, FieldMapping } from "@/hooks/usePDFTemplates";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePDFContract } from "./provider/PDFContractContext";
 
 interface Client {
   id: string;
@@ -69,6 +70,16 @@ export const PDFContractTabs = ({
   const { profile } = useAuth();
   const isAdmin = profile?.role === 'admin';
 
+  // Récupérer les données du contexte pour l'onglet Champs
+  const { 
+    templateMappings, 
+    hasUnsavedChanges,
+    handleSaveMappings 
+  } = usePDFContract();
+
+  // Obtenir les mappings initiaux pour le template sélectionné
+  const initialMappings = selectedTemplateId ? templateMappings[selectedTemplateId] || [] : [];
+
   return (
     <Tabs defaultValue="templates" className="space-y-6">
       <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
@@ -122,20 +133,13 @@ export const PDFContractTabs = ({
 
       {isAdmin && (
         <TabsContent value="fields">
-          {selectedTemplateId ? (
-            <PDFFieldMapping 
-              onFieldMappingsChange={onFieldMappingsChange}
-              initialMappings={fieldMappings}
-            />
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Sélectionnez d'abord un template</h3>
-                <p className="text-gray-500">Vous devez sélectionner un template PDF avant de pouvoir configurer ses champs.</p>
-              </CardContent>
-            </Card>
-          )}
+          <PDFFieldMapping 
+            onFieldMappingsChange={onFieldMappingsChange}
+            initialMappings={initialMappings}
+            onSaveMappings={handleSaveMappings}
+            selectedTemplateName={selectedTemplate?.name}
+            hasUnsavedChanges={hasUnsavedChanges}
+          />
         </TabsContent>
       )}
 
