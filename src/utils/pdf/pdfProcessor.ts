@@ -21,6 +21,7 @@ export const processPageContent = async (
   );
   
   console.log(`📊 ${validMappings.length}/${fieldMappings.length} mappings valides trouvés`);
+  console.log(`📋 Données de remplacement disponibles:`, Object.keys(replacementData));
   
   // Traiter chaque mapping de champ valide
   validMappings.forEach((mapping, index) => {
@@ -35,6 +36,19 @@ export const processPageContent = async (
     const x = mapping.x || 100;
     const y = mapping.y || (height - 100 - (index * 30));
     const fontSize = mapping.fontSize || 12;
+    
+    // Vérifier si les coordonnées sont dans les limites de la page
+    if (y > height || y < 0) {
+      console.warn(`⚠️ Position Y (${y}) hors limites pour le champ "${mapping.placeholder}" (hauteur page: ${height})`);
+      console.log(`🔧 Ajustement de la position Y de ${y} à ${height - 50 - (index * 30)}`);
+      // Ajuster la position Y si elle est hors limites
+      const adjustedY = height - 50 - (index * 30);
+      y = adjustedY;
+    }
+    
+    if (x > width || x < 0) {
+      console.warn(`⚠️ Position X (${x}) hors limites pour le champ "${mapping.placeholder}" (largeur page: ${width})`);
+    }
     
     try {
       // Dessiner le texte à la position spécifiée
@@ -51,6 +65,21 @@ export const processPageContent = async (
       
     } catch (error) {
       console.error(`❌ Erreur lors de l'ajout du champ "${mapping.placeholder}":`, error);
+    }
+  });
+  
+  // Aussi traiter les mappings avec des valeurs manquantes mais afficher pourquoi ils sont ignorés
+  fieldMappings.forEach((mapping) => {
+    if (!validMappings.includes(mapping)) {
+      const value = replacementData[mapping.clientField];
+      console.warn(`🚫 Mapping ignoré:`, {
+        placeholder: mapping.placeholder,
+        clientField: mapping.clientField,
+        hasPlaceholder: !!mapping.placeholder,
+        hasClientField: !!mapping.clientField,
+        hasValue: !!value,
+        value: value
+      });
     }
   });
   
