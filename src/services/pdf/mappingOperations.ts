@@ -50,7 +50,7 @@ export class MappingOperations {
           y: mapping.y || 0,
           fontSize: mapping.font_size || 12,
           description: mapping.description || '',
-          defaultValue: mapping.default_value || '' // Access the correct database column name
+          defaultValue: (mapping as any).default_value || '' // Use type assertion to access the new column
         });
       });
 

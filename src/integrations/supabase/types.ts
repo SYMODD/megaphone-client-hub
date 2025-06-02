@@ -79,6 +79,7 @@ export type Database = {
         Row: {
           client_field: string
           created_at: string
+          default_value: string | null
           description: string | null
           field_id: string
           font_size: number | null
@@ -93,6 +94,7 @@ export type Database = {
         Insert: {
           client_field: string
           created_at?: string
+          default_value?: string | null
           description?: string | null
           field_id: string
           font_size?: number | null
@@ -107,6 +109,7 @@ export type Database = {
         Update: {
           client_field?: string
           created_at?: string
+          default_value?: string | null
           description?: string | null
           field_id?: string
           font_size?: number | null
