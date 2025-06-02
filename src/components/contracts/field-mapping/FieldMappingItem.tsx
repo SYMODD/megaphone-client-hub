@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,24 @@ interface FieldMappingItemProps {
 }
 
 export const FieldMappingItem = ({ mapping, onUpdate, onRemove }: FieldMappingItemProps) => {
+  // Générer automatiquement le placeholder basé sur le clientField
+  useEffect(() => {
+    if (mapping.clientField && !mapping.placeholder) {
+      let generatedPlaceholder = '';
+      
+      if (mapping.clientField.startsWith('checkbox_')) {
+        const checkboxType = mapping.clientField.replace('checkbox_', '');
+        generatedPlaceholder = `{{checkbox.${checkboxType}}}`;
+      } else {
+        generatedPlaceholder = `{{client.${mapping.clientField}}}`;
+      }
+      
+      if (generatedPlaceholder !== mapping.placeholder) {
+        onUpdate(mapping.id, 'placeholder', generatedPlaceholder);
+      }
+    }
+  }, [mapping.clientField, mapping.placeholder, mapping.id, onUpdate]);
+
   return (
     <div className="border rounded-lg p-4 space-y-4 bg-white">
       <div className="flex items-start justify-between">

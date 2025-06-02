@@ -50,7 +50,7 @@ export class MappingOperations {
           y: mapping.y || 0,
           fontSize: mapping.font_size || 12,
           description: mapping.description || '',
-          defaultValue: (mapping as any).default_value || '' // Use type assertion to access the new column
+          defaultValue: mapping.default_value || ''
         });
       });
 
@@ -69,41 +69,61 @@ export class MappingOperations {
         throw new Error('User not authenticated');
       }
 
-      console.log('Sauvegarde des mappings pour le template:', templateId);
+      console.log('💾 Sauvegarde des mappings pour le template:', templateId);
+      console.log('📋 Mappings à sauvegarder:', mappings.length);
 
       // Supprimer les anciens mappings pour ce template
-      await supabase
+      const { error: deleteError } = await supabase
         .from('pdf_template_mappings')
         .delete()
         .eq('template_id', templateId);
 
+      if (deleteError) {
+        console.error('❌ Erreur lors de la suppression des anciens mappings:', deleteError);
+        throw new Error(`Failed to delete old mappings: ${deleteError.message}`);
+      }
+
       // Insérer les nouveaux mappings
       if (mappings.length > 0) {
-        const mappingsToInsert = mappings.map(mapping => ({
-          template_id: templateId,
-          user_id: user.id,
-          field_id: mapping.id,
-          placeholder: mapping.placeholder,
-          client_field: mapping.clientField,
-          x: mapping.x,
-          y: mapping.y,
-          font_size: mapping.fontSize,
-          description: mapping.description,
-          default_value: mapping.defaultValue || '' // Map to the correct database column name
-        }));
+        const mappingsToInsert = mappings.map(mapping => {
+          const mappingData = {
+            template_id: templateId,
+            user_id: user.id,
+            field_id: mapping.id,
+            placeholder: mapping.placeholder,
+            client_field: mapping.clientField,
+            x: mapping.x || 0,
+            y: mapping.y || 0,
+            font_size: mapping.fontSize || 12,
+            description: mapping.description || '',
+            default_value: mapping.defaultValue || ''
+          };
+          
+          console.log('📝 Mapping à insérer:', {
+            field_id: mappingData.field_id,
+            client_field: mappingData.client_field,
+            placeholder: mappingData.placeholder,
+            isCheckbox: mappingData.client_field.startsWith('checkbox_')
+          });
+          
+          return mappingData;
+        });
 
-        const { error } = await supabase
+        const { error: insertError } = await supabase
           .from('pdf_template_mappings')
           .insert(mappingsToInsert);
 
-        if (error) {
-          throw new Error(`Failed to save mappings: ${error.message}`);
+        if (insertError) {
+          console.error('❌ Erreur lors de l\'insertion des nouveaux mappings:', insertError);
+          throw new Error(`Failed to save mappings: ${insertError.message}`);
         }
+
+        console.log('✅ Tous les mappings sauvegardés avec succès:', mappingsToInsert.length);
       }
 
-      console.log('✅ Mappings sauvegardés avec succès');
+      console.log('✅ Sauvegarde terminée avec succès');
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde des mappings:', error);
+      console.error('❌ Erreur lors de la sauvegarde des mappings:', error);
       throw error;
     }
   }
