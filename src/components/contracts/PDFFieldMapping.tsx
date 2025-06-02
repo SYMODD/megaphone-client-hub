@@ -26,25 +26,43 @@ export const PDFFieldMapping = ({
 }: ExtendedFieldMappingProps) => {
   const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const lastNotifiedMappings = useRef<string>('');
   const { toast } = useToast();
 
-  // Charger les mappings initiaux
+  // Charger les mappings initiaux avec une logique améliorée
   useEffect(() => {
-    if (initialMappings.length > 0) {
-      setFieldMappings(initialMappings);
+    console.log('🔄 Chargement des mappings initiaux:', {
+      selectedTemplateName,
+      initialMappingsLength: initialMappings.length,
+      isInitialized
+    });
+
+    // Si nous avons un template sélectionné
+    if (selectedTemplateName) {
+      if (initialMappings.length > 0) {
+        // Utiliser les mappings sauvegardés
+        console.log('📋 Utilisation des mappings sauvegardés:', initialMappings.length);
+        setFieldMappings(initialMappings);
+      } else if (!isInitialized) {
+        // Seulement appliquer les mappings par défaut si c'est la première initialisation
+        console.log('📋 Application des mappings par défaut (première fois)');
+        setFieldMappings(DEFAULT_MAPPINGS);
+      }
+      setIsInitialized(true);
     } else {
-      // Mappings par défaut si aucun mapping initial
-      setFieldMappings(DEFAULT_MAPPINGS);
+      // Aucun template sélectionné, réinitialiser
+      setFieldMappings([]);
+      setIsInitialized(false);
     }
-  }, [initialMappings]);
+  }, [selectedTemplateName, initialMappings, isInitialized]);
 
   // Notifier les changements SEULEMENT si ils ont vraiment changé
   useEffect(() => {
     const currentMappingsString = JSON.stringify(fieldMappings);
     
     // Éviter les notifications en boucle
-    if (currentMappingsString !== lastNotifiedMappings.current) {
+    if (currentMappingsString !== lastNotifiedMappings.current && fieldMappings.length > 0) {
       console.log('🔄 Notification changement mappings:', fieldMappings.length, 'champs');
       lastNotifiedMappings.current = currentMappingsString;
       onFieldMappingsChange(fieldMappings);

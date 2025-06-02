@@ -31,15 +31,20 @@ export const useFieldMappingManager = ({
       const existingMappings = templateMappings[selectedTemplateId] || [];
       console.log('📋 Mappings trouvés pour ce template:', existingMappings.length, 'champs');
       
-      setFieldMappings(existingMappings);
+      // Charger les mappings seulement si on en trouve des sauvegardés
+      if (existingMappings.length > 0) {
+        setFieldMappings(existingMappings);
+        console.log('✅ Mappings sauvegardés chargés pour le template:', selectedTemplateId);
+      } else {
+        console.log('📋 Aucun mapping sauvegardé, les mappings par défaut seront utilisés');
+      }
+      
       lastLoadedTemplateId.current = selectedTemplateId;
       
       // Mettre à jour la référence des derniers mappings sauvegardés
       const mappingsString = JSON.stringify(existingMappings);
       lastSavedMappings.current = mappingsString;
       setHasUnsavedChanges(false);
-      
-      console.log('✅ Mappings chargés et appliqués pour le template:', selectedTemplateId);
     }
   }, [selectedTemplateId, templateMappings, setFieldMappings, setHasUnsavedChanges, lastLoadedTemplateId, lastSavedMappings]);
 
