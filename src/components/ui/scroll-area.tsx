@@ -14,20 +14,21 @@ const ScrollArea = React.forwardRef<
     {...props}
     style={{
       overflow: 'auto',
-      scrollbarWidth: 'auto',
-      scrollbarColor: '#64748b #f1f5f9'
+      scrollbarWidth: 'thick',
+      scrollbarColor: '#475569 #e2e8f0'
     }}
   >
     <ScrollAreaPrimitive.Viewport 
       className="h-full w-full rounded-[inherit]"
       style={{
         overflow: 'auto',
-        scrollbarWidth: 'auto',
-        scrollbarColor: '#64748b #f1f5f9'
+        scrollbarWidth: 'thick',
+        scrollbarColor: '#475569 #e2e8f0'
       }}
     >
       {children}
     </ScrollAreaPrimitive.Viewport>
+    <ScrollBar />
     <ScrollAreaPrimitive.Corner />
   </ScrollAreaPrimitive.Root>
 ))
@@ -49,15 +50,19 @@ const ScrollBar = React.forwardRef<
       className
     )}
     style={{
-      background: '#f1f5f9'
+      background: '#e2e8f0',
+      display: 'block',
+      opacity: 1
     }}
     {...props}
   >
     <ScrollAreaPrimitive.ScrollAreaThumb 
       className="relative flex-1 rounded-full"
       style={{
-        background: '#64748b',
-        border: '1px solid #475569'
+        background: '#475569',
+        border: '2px solid #e2e8f0',
+        minHeight: '40px',
+        opacity: 1
       }}
     />
   </ScrollAreaPrimitive.ScrollAreaScrollbar>

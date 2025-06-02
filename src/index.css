@@ -13,124 +13,144 @@
 @import './styles/dropdowns.css';
 @import './styles/utilities.css';
 
-/* STYLE UNIFORME DES SCROLLBARS POUR TOUTE L'APPLICATION */
+/* FORCE SCROLLBARS VISIBILITY - SOLUTION DEFINITIVE */
 
-/* Configuration globale - Firefox */
-html, body, * {
-  scrollbar-width: auto !important;
-  scrollbar-color: #64748b #f1f5f9 !important;
+/* Reset complet des scrollbars pour tous les éléments */
+* {
+  /* Firefox - Force les scrollbars visibles */
+  scrollbar-width: thick !important;
+  scrollbar-color: #475569 #e2e8f0 !important;
 }
 
-/* Configuration globale - Webkit (Chrome, Safari, Edge) */
+/* Webkit browsers (Chrome, Safari, Edge) - Force complete override */
 *::-webkit-scrollbar {
-  width: 14px !important;
-  height: 14px !important;
-  background: #f1f5f9 !important;
+  width: 16px !important;
+  height: 16px !important;
+  background-color: #e2e8f0 !important;
   display: block !important;
+  -webkit-appearance: none !important;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: #64748b !important;
-  border-radius: 7px !important;
-  border: 2px solid #f1f5f9 !important;
+  background-color: #475569 !important;
+  border-radius: 8px !important;
+  border: 2px solid #e2e8f0 !important;
+  min-height: 40px !important;
 }
 
 *::-webkit-scrollbar-track {
-  background: #f1f5f9 !important;
-  border-radius: 7px !important;
+  background-color: #e2e8f0 !important;
+  border-radius: 8px !important;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: #475569 !important;
+  background-color: #334155 !important;
 }
 
 *::-webkit-scrollbar-thumb:active {
-  background: #334155 !important;
+  background-color: #1e293b !important;
 }
 
-/* Coins des scrollbars */
 *::-webkit-scrollbar-corner {
-  background: #f1f5f9 !important;
+  background-color: #e2e8f0 !important;
 }
 
-/* Surcharge spécifique pour les éléments avec overflow */
+/* Force pour les éléments body et html */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 16px !important;
+  height: 16px !important;
+  background-color: #e2e8f0 !important;
+  display: block !important;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background-color: #475569 !important;
+  border-radius: 8px !important;
+  border: 2px solid #e2e8f0 !important;
+}
+
+/* Force pour tous les containers avec overflow */
+div[style*="overflow"],
 .overflow-auto,
 .overflow-y-auto,
 .overflow-x-auto,
 .overflow-scroll,
 [data-radix-scroll-area-viewport] {
-  scrollbar-width: auto !important;
-  scrollbar-color: #64748b #f1f5f9 !important;
+  scrollbar-width: thick !important;
+  scrollbar-color: #475569 #e2e8f0 !important;
 }
 
+div[style*="overflow"]::-webkit-scrollbar,
 .overflow-auto::-webkit-scrollbar,
 .overflow-y-auto::-webkit-scrollbar,
 .overflow-x-auto::-webkit-scrollbar,
 .overflow-scroll::-webkit-scrollbar,
 [data-radix-scroll-area-viewport]::-webkit-scrollbar {
-  width: 14px !important;
-  height: 14px !important;
-  background: #f1f5f9 !important;
+  width: 16px !important;
+  height: 16px !important;
+  background-color: #e2e8f0 !important;
   display: block !important;
 }
 
+div[style*="overflow"]::-webkit-scrollbar-thumb,
 .overflow-auto::-webkit-scrollbar-thumb,
 .overflow-y-auto::-webkit-scrollbar-thumb,
 .overflow-x-auto::-webkit-scrollbar-thumb,
 .overflow-scroll::-webkit-scrollbar-thumb,
 [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
-  background: #64748b !important;
-  border-radius: 7px !important;
-  border: 2px solid #f1f5f9 !important;
+  background-color: #475569 !important;
+  border-radius: 8px !important;
+  border: 2px solid #e2e8f0 !important;
 }
 
-.overflow-auto::-webkit-scrollbar-track,
-.overflow-y-auto::-webkit-scrollbar-track,
-.overflow-x-auto::-webkit-scrollbar-track,
-.overflow-scroll::-webkit-scrollbar-track,
-[data-radix-scroll-area-viewport]::-webkit-scrollbar-track {
-  background: #f1f5f9 !important;
-  border-radius: 7px !important;
+/* Désactiver complètement les styles qui cachent les scrollbars */
+.scrollbar-none,
+.scrollbar-thin,
+.scrollbar-hide {
+  scrollbar-width: thick !important;
+  scrollbar-color: #475569 #e2e8f0 !important;
 }
 
-/* Style spécial pour les conteneurs principaux */
-#root,
-.container,
-main,
-.sidebar {
-  scrollbar-width: auto !important;
-  scrollbar-color: #64748b #f1f5f9 !important;
-}
-
-#root::-webkit-scrollbar,
-.container::-webkit-scrollbar,
-main::-webkit-scrollbar,
-.sidebar::-webkit-scrollbar {
-  width: 14px !important;
-  height: 14px !important;
-  background: #f1f5f9 !important;
-}
-
-#root::-webkit-scrollbar-thumb,
-.container::-webkit-scrollbar-thumb,
-main::-webkit-scrollbar-thumb,
-.sidebar::-webkit-scrollbar-thumb {
-  background: #64748b !important;
-  border-radius: 7px !important;
-  border: 2px solid #f1f5f9 !important;
-}
-
-/* Désactiver les styles de scrollbar cachés */
-.scrollbar-none::-webkit-scrollbar {
-  width: 14px !important;
-  height: 14px !important;
-  background: #f1f5f9 !important;
+.scrollbar-none::-webkit-scrollbar,
+.scrollbar-thin::-webkit-scrollbar,
+.scrollbar-hide::-webkit-scrollbar {
+  width: 16px !important;
+  height: 16px !important;
+  background-color: #e2e8f0 !important;
   display: block !important;
 }
 
-.scrollbar-thin::-webkit-scrollbar {
-  width: 14px !important;
-  height: 14px !important;
-  background: #f1f5f9 !important;
+.scrollbar-none::-webkit-scrollbar-thumb,
+.scrollbar-thin::-webkit-scrollbar-thumb,
+.scrollbar-hide::-webkit-scrollbar-thumb {
+  background-color: #475569 !important;
+  border-radius: 8px !important;
+  border: 2px solid #e2e8f0 !important;
+}
+
+/* Override pour tous les éléments Radix UI */
+[data-radix-popper-content-wrapper],
+[data-radix-select-content],
+[data-radix-dropdown-menu-content] {
+  scrollbar-width: thick !important;
+  scrollbar-color: #475569 #e2e8f0 !important;
+}
+
+[data-radix-popper-content-wrapper]::-webkit-scrollbar,
+[data-radix-select-content]::-webkit-scrollbar,
+[data-radix-dropdown-menu-content]::-webkit-scrollbar {
+  width: 16px !important;
+  height: 16px !important;
+  background-color: #e2e8f0 !important;
   display: block !important;
+}
+
+[data-radix-popper-content-wrapper]::-webkit-scrollbar-thumb,
+[data-radix-select-content]::-webkit-scrollbar-thumb,
+[data-radix-dropdown-menu-content]::-webkit-scrollbar-thumb {
+  background-color: #475569 !important;
+  border-radius: 8px !important;
+  border: 2px solid #e2e8f0 !important;
 }
