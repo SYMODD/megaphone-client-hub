@@ -62,7 +62,7 @@ export const useTemplateHandlers = ({
     }
   };
 
-  const handleTemplateSelect = (templateId: string) => {
+  const handleTemplateSelect = async (templateId: string) => {
     console.log('🔄 Sélection du template:', templateId);
     setSelectedTemplateId(templateId);
     

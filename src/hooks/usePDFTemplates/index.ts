@@ -55,7 +55,7 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
     }
   };
 
-  const retryLoad = async () => {
+  const retryLoad = async (): Promise<void> => {
     console.log('🔄 Rechargement des templates demandé...');
     await loadTemplatesAndMappings();
   };

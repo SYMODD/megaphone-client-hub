@@ -13,5 +13,5 @@ export interface UsePDFTemplatesReturn {
   deleteTemplate: (templateId: string) => Promise<void>;
   saveMappings: (templateId: string, mappings: FieldMapping[]) => Promise<void>;
   getTemplate: (templateId: string) => Promise<File | null>;
-  loadTemplates: () => void;
+  loadTemplates: () => Promise<void>;
 }
