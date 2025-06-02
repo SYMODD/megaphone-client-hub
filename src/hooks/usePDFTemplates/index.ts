@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTemplateOperations } from './useTemplateOperations';
 import { useMappingOperations } from './useMappingOperations';
@@ -12,6 +12,9 @@ export type { PDFTemplate, FieldMapping } from './types';
 export const usePDFTemplates = (): UsePDFTemplatesReturn => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  
+  // Référence pour éviter les rechargements multiples
+  const isLoadingRef = useRef(false);
   
   // Use the separate operation hooks
   const templateOps = useTemplateOperations();
@@ -26,7 +29,13 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
   }, []);
 
   const loadTemplatesAndMappings = async () => {
+    if (isLoadingRef.current) {
+      console.log('⚠️ Chargement déjà en cours, ignoré');
+      return;
+    }
+
     try {
+      isLoadingRef.current = true;
       setLoading(true);
       templateOps.setError(null);
       mappingOps.setError(null);
@@ -35,11 +44,11 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
       
       const { loadedTemplates, loadedMappings } = await dataLoader.loadTemplatesAndMappings();
       
-      // CORRECTION CRITIQUE: S'assurer que les templates sont mis à jour immédiatement
+      // Mettre à jour les états immédiatement
       templateOps.setTemplates(loadedTemplates);
       mappingOps.setTemplateMappings(loadedMappings);
       
-      console.log('✅ Templates et mappings chargés et mis à jour dans l\'état:', loadedTemplates.length, 'templates');
+      console.log('✅ Templates et mappings chargés:', loadedTemplates.length, 'templates');
     } catch (error) {
       console.error('❌ Erreur lors du chargement:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue lors du chargement';
@@ -52,85 +61,62 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
       });
     } finally {
       setLoading(false);
+      isLoadingRef.current = false;
     }
   };
 
-  const retryLoad = async (): Promise<void> => {
-    console.log('🔄 Rechargement des templates demandé...');
+  // FONCTION SIMPLIFIÉE: Rechargement sécurisé
+  const safeReload = async (): Promise<void> => {
+    if (isLoadingRef.current) {
+      console.log('⚠️ Rechargement déjà en cours, ignoré');
+      return;
+    }
+
+    console.log('🔄 Rechargement sécurisé des templates...');
     await loadTemplatesAndMappings();
   };
 
-  // NOUVELLE FONCTION : Purge complète
-  const hardPurge = async (): Promise<void> => {
-    console.log('🔥 PURGE COMPLÈTE DÉCLENCHÉE');
-    
-    try {
-      setLoading(true);
-      
-      // Utiliser la fonction de purge des templates
-      await templateOps.hardPurgeAndReload();
-      
-      // Recharger aussi les mappings
-      const { loadedMappings } = await dataLoader.loadTemplatesAndMappings();
-      mappingOps.setTemplateMappings(loadedMappings);
-      
-      console.log('🔥 PURGE COMPLÈTE TERMINÉE');
-      
-    } catch (error) {
-      console.error('❌ Erreur lors de la purge complète:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Wrapper pour les opérations de template avec purge IMMÉDIATE
-  const saveTemplateWithSync = async (file: File, fileName: string): Promise<string> => {
-    console.log('🔄 Sauvegarde avec purge après...');
+  // Wrapper pour les opérations de template avec rechargement
+  const saveTemplateWithReload = async (file: File, fileName: string): Promise<string> => {
+    console.log('🔄 Sauvegarde avec rechargement...');
     
     try {
       const templateId = await templateOps.saveTemplate(file, fileName);
       
-      console.log('✅ Template sauvegardé, purge et rechargement...');
+      console.log('✅ Template sauvegardé, rechargement...');
+      await safeReload();
       
-      // Purge complète après sauvegarde
-      await hardPurge();
-      
-      console.log('✅ Sauvegarde et purge terminées');
       return templateId;
     } catch (error) {
-      console.error('❌ Erreur dans saveTemplateWithSync:', error);
+      console.error('❌ Erreur dans saveTemplateWithReload:', error);
       throw error;
     }
   };
 
-  const deleteTemplateWithPurge = async (templateId: string) => {
-    console.log('🔥 Suppression avec purge immédiate...');
+  const deleteTemplateWithReload = async (templateId: string) => {
+    console.log('🗑️ Suppression avec rechargement...');
     
     try {
       await templateOps.deleteTemplate(templateId);
+      await safeReload();
       
-      // Purge complète après suppression pour garantir la synchronisation
-      await hardPurge();
-      
-      console.log('🔥 Suppression et purge complètes terminées');
+      console.log('✅ Suppression et rechargement terminés');
     } catch (error) {
-      console.error('❌ Erreur dans deleteTemplateWithPurge:', error);
+      console.error('❌ Erreur dans deleteTemplateWithReload:', error);
       throw error;
     }
   };
 
-  const renameTemplateWithSync = async (templateId: string, newName: string) => {
-    console.log('🔄 Renommage avec purge après...');
+  const renameTemplateWithReload = async (templateId: string, newName: string) => {
+    console.log('🔄 Renommage avec rechargement...');
     
     try {
       await templateOps.renameTemplate(templateId, newName);
+      await safeReload();
       
-      // Purge complète après renommage
-      await hardPurge();
-      
-      console.log('✅ Renommage et purge terminés');
+      console.log('✅ Renommage et rechargement terminés');
     } catch (error) {
-      console.error('❌ Erreur dans renameTemplateWithSync:', error);
+      console.error('❌ Erreur dans renameTemplateWithReload:', error);
       throw error;
     }
   };
@@ -140,11 +126,11 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
     templateMappings: mappingOps.templateMappings,
     loading,
     error,
-    saveTemplate: saveTemplateWithSync,
-    renameTemplate: renameTemplateWithSync,
-    deleteTemplate: deleteTemplateWithPurge,
+    saveTemplate: saveTemplateWithReload,
+    renameTemplate: renameTemplateWithReload,
+    deleteTemplate: deleteTemplateWithReload,
     saveMappings: mappingOps.saveMappings,
     getTemplate: templateOps.getTemplate,
-    loadTemplates: hardPurge  // Utiliser la purge complète au lieu du simple rechargement
+    loadTemplates: safeReload
   };
 };

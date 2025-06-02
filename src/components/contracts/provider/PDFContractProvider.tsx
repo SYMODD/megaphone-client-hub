@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePDFTemplates, FieldMapping } from "@/hooks/usePDFTemplates";
 import { useAuth } from "@/contexts/AuthContext";
 import { PDFContractContext } from './PDFContractContext';
@@ -22,6 +22,10 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
   const [showUpload, setShowUpload] = useState(false);
   const { profile } = useAuth();
 
+  // Référence pour éviter les rechargements en boucle
+  const isReloadingRef = useRef(false);
+  const initialLoadCompleted = useRef(false);
+
   const {
     templates,
     templateMappings,
@@ -37,20 +41,20 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     loading,
     selectedTemplateId,
     selectedClient: !!selectedClient,
-    userRole: profile?.role
+    userRole: profile?.role,
+    initialLoadCompleted: initialLoadCompleted.current
   });
 
-  // CORRECTION: Forcer un rechargement si aucun template n'est visible mais qu'on n'est pas en loading
+  // Effet pour marquer la fin du chargement initial
   useEffect(() => {
-    if (!loading && templates.length === 0) {
-      console.log('⚠️ Aucun template visible, purge complète...');
-      loadTemplates();
+    if (!loading && !initialLoadCompleted.current) {
+      console.log('✅ Chargement initial terminé. Templates disponibles:', templates.length);
+      initialLoadCompleted.current = true;
     }
-  }, [loading, templates.length, loadTemplates]);
+  }, [loading, templates.length]);
 
-  // NOUVEAU: Surveillance de la synchronisation des templates
+  // CORRECTION: Surveiller les templates sélectionnés qui disparaissent
   useEffect(() => {
-    // Si le template sélectionné n'existe plus dans la liste, le désélectionner
     if (selectedTemplateId && !templates.find(t => t.id === selectedTemplateId)) {
       console.log('🗑️ Template sélectionné n\'existe plus, désélection automatique:', selectedTemplateId);
       setSelectedTemplateId(null);
@@ -79,7 +83,7 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     userRole: profile?.role,
     saveTemplate,
     loadTemplates,
-    deleteTemplate  // Passer la fonction de suppression avec purge
+    deleteTemplate
   });
 
   const contractGeneration = useContractGeneration({
@@ -107,6 +111,25 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     setSelectedClient(client);
   };
 
+  // NOUVELLE FONCTION: Rechargement manuel sécurisé
+  const handleForceReload = async () => {
+    if (isReloadingRef.current) {
+      console.log('⚠️ Rechargement déjà en cours, ignoré');
+      return;
+    }
+
+    try {
+      isReloadingRef.current = true;
+      console.log('🔄 Rechargement manuel des templates...');
+      await loadTemplates();
+      console.log('✅ Rechargement manuel terminé');
+    } catch (error) {
+      console.error('❌ Erreur lors du rechargement manuel:', error);
+    } finally {
+      isReloadingRef.current = false;
+    }
+  };
+
   const value: PDFContractContextType = {
     // State
     selectedTemplateId,
@@ -129,7 +152,8 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     handleFieldMappingsChange,
     handleClientSelect,
     ...templateHandlers,
-    ...contractGeneration
+    ...contractGeneration,
+    handleForceReload
   };
 
   console.log('✅ PDFContractProvider rendering with context value. Templates disponibles:', templates.length);

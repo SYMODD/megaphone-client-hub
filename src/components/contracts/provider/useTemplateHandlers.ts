@@ -74,20 +74,20 @@ export const useTemplateHandlers = ({
 
   const handleDeleteTemplate = async (templateId: string) => {
     try {
-      console.log('🔥 Suppression template avec purge demandée:', templateId);
+      console.log('🗑️ Suppression template demandée:', templateId);
       
-      // PURGE IMMÉDIATE: Désélectionner le template avant suppression
+      // Désélectionner le template avant suppression
       if (selectedTemplateId === templateId) {
-        console.log('🗑️ Désélection immédiate du template avant suppression');
+        console.log('🗑️ Désélection du template avant suppression');
         setSelectedTemplateId(null);
         setFieldMappings([]);
         setPreviewUrl('');
       }
       
-      // Appeler la fonction de suppression avec purge
+      // Appeler la fonction de suppression avec rechargement
       await deleteTemplate(templateId);
       
-      console.log('🔥 Suppression avec purge terminée');
+      console.log('✅ Suppression terminée');
       
       toast({
         title: "Template supprimé",
@@ -109,7 +109,7 @@ export const useTemplateHandlers = ({
     try {
       console.log('🔄 Renommage template demandé:', templateId, 'vers:', newName);
       
-      // Le renommage est déjà géré par le hook usePDFTemplates avec purge
+      // Le renommage est géré par le hook usePDFTemplates avec rechargement
       
       toast({
         title: "Template renommé",
@@ -129,7 +129,7 @@ export const useTemplateHandlers = ({
 
   const handleForceReload = async () => {
     try {
-      console.log('🔥 PURGE COMPLÈTE FORCÉE...');
+      console.log('🔄 Rechargement forcé demandé...');
       await loadTemplates();
       
       toast({
@@ -137,7 +137,7 @@ export const useTemplateHandlers = ({
         description: "Les templates ont été rechargés depuis le serveur.",
       });
     } catch (error) {
-      console.error('❌ Erreur purge complète:', error);
+      console.error('❌ Erreur rechargement forcé:', error);
       const errorMessage = error instanceof Error ? error.message : "Erreur lors de la synchronisation";
       
       toast({
