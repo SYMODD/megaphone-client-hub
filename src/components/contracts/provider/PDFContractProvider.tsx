@@ -20,6 +20,7 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [showUpload, setShowUpload] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const { profile } = useAuth();
 
   // Référence pour éviter les rechargements en boucle
@@ -44,7 +45,8 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     selectedClient: !!selectedClient,
     userRole: profile?.role,
     initialLoadCompleted: initialLoadCompleted.current,
-    fieldMappingsCount: fieldMappings.length
+    fieldMappingsCount: fieldMappings.length,
+    hasUnsavedChanges
   });
 
   // Effet pour marquer la fin du chargement initial
@@ -62,6 +64,7 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
       setSelectedTemplateId(null);
       setFieldMappings([]);
       setPreviewUrl('');
+      setHasUnsavedChanges(false);
     }
   }, [templates, selectedTemplateId]);
 
@@ -103,17 +106,44 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     console.log('🔄 Mise à jour des mappings:', mappings.length, 'champs');
     setFieldMappings(mappings);
     
-    // Sauvegarder seulement si les mappings ont vraiment changé
+    // Marquer comme ayant des changements non sauvegardés
     const mappingsString = JSON.stringify(mappings);
+    const hasChanges = mappingsString !== lastSavedMappings.current;
+    setHasUnsavedChanges(hasChanges);
     
-    if (selectedTemplateId && mappingsString !== lastSavedMappings.current) {
-      console.log('💾 Sauvegarde des mappings pour le template:', selectedTemplateId);
-      lastSavedMappings.current = mappingsString;
+    // Sauvegarder automatiquement seulement si les mappings ont vraiment changé
+    if (selectedTemplateId && hasChanges) {
+      console.log('💾 Sauvegarde automatique des mappings pour le template:', selectedTemplateId);
       
       // Sauvegarder avec un délai pour éviter les appels multiples
       setTimeout(() => {
-        saveMappings(selectedTemplateId, mappings);
+        saveMappings(selectedTemplateId, mappings).then(() => {
+          lastSavedMappings.current = mappingsString;
+          setHasUnsavedChanges(false);
+        });
       }, 500);
+    }
+  };
+
+  // NOUVELLE FONCTION: Sauvegarde manuelle des mappings
+  const handleSaveMappings = async () => {
+    if (!selectedTemplateId || !fieldMappings.length) {
+      console.warn('⚠️ Aucun template sélectionné ou aucun mapping à sauvegarder');
+      return;
+    }
+
+    try {
+      console.log('💾 Sauvegarde manuelle des mappings pour le template:', selectedTemplateId);
+      await saveMappings(selectedTemplateId, fieldMappings);
+      
+      const mappingsString = JSON.stringify(fieldMappings);
+      lastSavedMappings.current = mappingsString;
+      setHasUnsavedChanges(false);
+      
+      console.log('✅ Sauvegarde manuelle terminée');
+    } catch (error) {
+      console.error('❌ Erreur lors de la sauvegarde manuelle:', error);
+      throw error; // Re-throw pour que le composant puisse gérer l'erreur
     }
   };
 
@@ -141,6 +171,10 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     }
   };
 
+  // Obtenir le nom du template sélectionné
+  const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
+  const selectedTemplateName = selectedTemplate?.name;
+
   const value: PDFContractContextType = {
     // State
     selectedTemplateId,
@@ -149,6 +183,8 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     isGenerating,
     previewUrl,
     showUpload,
+    hasUnsavedChanges,
+    selectedTemplateName,
     
     // From hook
     templates,
@@ -162,6 +198,7 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     setShowUpload,
     handleFieldMappingsChange,
     handleClientSelect,
+    handleSaveMappings,
     ...templateHandlers,
     ...contractGeneration,
     handleForceReload

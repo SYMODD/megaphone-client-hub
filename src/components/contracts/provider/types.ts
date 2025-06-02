@@ -1,6 +1,5 @@
 
-// Import the types first before using them
-import type { PDFTemplate, FieldMapping } from "@/hooks/usePDFTemplates";
+import { PDFTemplate, FieldMapping } from "@/hooks/usePDFTemplates";
 
 export interface Client {
   id: string;
@@ -9,6 +8,7 @@ export interface Client {
   nationalite: string;
   numero_passeport: string;
   date_enregistrement: string;
+  photo_url?: string;
   observations?: string;
 }
 
@@ -20,6 +20,8 @@ export interface PDFContractContextType {
   isGenerating: boolean;
   previewUrl: string;
   showUpload: boolean;
+  hasUnsavedChanges: boolean;
+  selectedTemplateName?: string;
   
   // From hook
   templates: PDFTemplate[];
@@ -31,16 +33,18 @@ export interface PDFContractContextType {
   setFieldMappings: (mappings: FieldMapping[]) => void;
   setSelectedClient: (client: Client | null) => void;
   setShowUpload: (show: boolean) => void;
-  handleTemplateUploaded: (file: File, fileName: string) => Promise<void>;
-  handleTemplateSelect: (templateId: string) => Promise<void>;
   handleFieldMappingsChange: (mappings: FieldMapping[]) => void;
   handleClientSelect: (client: Client) => void;
+  handleSaveMappings: () => Promise<void>;
+  
+  // Template handlers
+  handleTemplateUploaded: (file: File, fileName: string) => Promise<void>;
+  handleTemplateSelect: (templateId: string) => Promise<void>;
   handleDeleteTemplate: (templateId: string) => Promise<void>;
   handleRenameTemplate: (templateId: string, newName: string) => Promise<void>;
-  handleGenerateContract: () => Promise<void>;
-  handlePreviewContract: () => Promise<void>;
   handleForceReload: () => Promise<void>;
+  
+  // Contract generation
+  handleGenerateContract: () => Promise<void>;
+  handleDownloadPDF: () => void;
 }
-
-// Re-export types for convenience
-export type { PDFTemplate, FieldMapping };
