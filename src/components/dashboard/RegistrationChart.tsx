@@ -4,24 +4,11 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useEffect, useMemo } from "react";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
-
-interface Client {
-  id: string;
-  nom: string;
-  prenom: string;
-  nationalite: string;
-  numero_passeport: string;
-  date_enregistrement: string;
-  photo_url?: string;
-  observations?: string;
-  created_at: string;
-  updated_at: string;
-  agent_id: string;
-}
+import { ClientData } from "@/types/agentDataTypes";
 
 interface RegistrationChartProps {
   data: {
-    clients: Client[];
+    clients: ClientData[];
   };
 }
 
@@ -41,7 +28,7 @@ export const RegistrationChart = ({ data }: RegistrationChartProps) => {
       
       // Compter les clients enregistrés dans ce mois
       const clientsInMonth = clients.filter(client => {
-        const registrationDate = new Date(client.date_enregistrement);
+        const registrationDate = new Date(client.dateEnregistrement);
         return registrationDate >= monthStart && registrationDate <= monthEnd;
       }).length;
       
