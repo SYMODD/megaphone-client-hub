@@ -31,10 +31,13 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
       templateOps.setError(null);
       mappingOps.setError(null);
       
+      console.log('🔄 Chargement des templates et mappings...');
       const { loadedTemplates, loadedMappings } = await dataLoader.loadTemplatesAndMappings();
       
       templateOps.setTemplates(loadedTemplates);
       mappingOps.setTemplateMappings(loadedMappings);
+      
+      console.log('✅ Templates et mappings chargés:', loadedTemplates.length, 'templates');
     } catch (error) {
       console.error('❌ Erreur lors du chargement:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue lors du chargement';
@@ -51,19 +54,26 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
   };
 
   const retryLoad = () => {
+    console.log('🔄 Rechargement des templates demandé...');
     loadTemplatesAndMappings();
   };
 
   // Handle template deletion with mapping cleanup
   const deleteTemplate = async (templateId: string) => {
+    console.log('🔄 Suppression complète du template:', templateId);
+    
+    // Supprimer le template
     await templateOps.deleteTemplate(templateId);
     
-    // Remove associated mappings
+    // Supprimer les mappings associés
     mappingOps.setTemplateMappings(prev => {
       const updated = { ...prev };
       delete updated[templateId];
+      console.log('🗑️ Mappings supprimés pour le template:', templateId);
       return updated;
     });
+    
+    console.log('✅ Suppression complète terminée pour:', templateId);
   };
 
   return {

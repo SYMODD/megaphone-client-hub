@@ -1,7 +1,8 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { SupabasePDFStorage, PDFTemplate, FieldMapping } from '@/services/supabasePDFStorage';
+import { TemplateOperations } from '@/services/pdf/templateOperations';
+import { PDFTemplate } from './types';
 
 export const useTemplateOperations = () => {
   const [templates, setTemplates] = useState<PDFTemplate[]>([]);
@@ -13,7 +14,7 @@ export const useTemplateOperations = () => {
       setError(null);
       console.log('🔄 Sauvegarde du template:', fileName);
       
-      const newTemplate = await SupabasePDFStorage.saveTemplate(file, fileName);
+      const newTemplate = await TemplateOperations.saveTemplate(file, fileName);
       setTemplates(prev => [newTemplate, ...prev]);
 
       toast({
@@ -40,7 +41,9 @@ export const useTemplateOperations = () => {
   const renameTemplate = async (templateId: string, newName: string) => {
     try {
       setError(null);
-      await SupabasePDFStorage.renameTemplate(templateId, newName);
+      console.log('🔄 Renommage du template:', templateId, 'vers:', newName);
+      
+      await TemplateOperations.renameTemplate(templateId, newName);
       setTemplates(prev => prev.map(t => 
         t.id === templateId ? { ...t, name: newName } : t
       ));
@@ -49,6 +52,8 @@ export const useTemplateOperations = () => {
         title: "Template renommé",
         description: `Le template a été renommé en "${newName}".`,
       });
+      
+      console.log('✅ Template renommé avec succès');
     } catch (error) {
       console.error('❌ Erreur renommage template:', error);
       const errorMessage = error instanceof Error ? error.message : "Impossible de renommer le template.";
@@ -59,19 +64,30 @@ export const useTemplateOperations = () => {
         description: errorMessage,
         variant: "destructive",
       });
+      throw error;
     }
   };
 
   const deleteTemplate = async (templateId: string) => {
     try {
       setError(null);
-      await SupabasePDFStorage.deleteTemplate(templateId);
-      setTemplates(prev => prev.filter(t => t.id !== templateId));
+      console.log('🔄 Suppression du template:', templateId);
+      
+      await TemplateOperations.deleteTemplate(templateId);
+      
+      // Mise à jour immédiate de l'état local
+      setTemplates(prev => {
+        const newTemplates = prev.filter(t => t.id !== templateId);
+        console.log('✅ État local mis à jour, templates restants:', newTemplates.length);
+        return newTemplates;
+      });
 
       toast({
         title: "Template supprimé",
         description: "Le template a été supprimé avec succès.",
       });
+      
+      console.log('✅ Template supprimé avec succès côté frontend');
     } catch (error) {
       console.error('❌ Erreur suppression template:', error);
       const errorMessage = error instanceof Error ? error.message : "Impossible de supprimer le template.";
@@ -82,6 +98,7 @@ export const useTemplateOperations = () => {
         description: errorMessage,
         variant: "destructive",
       });
+      throw error;
     }
   };
 
@@ -90,7 +107,7 @@ export const useTemplateOperations = () => {
     if (!template) return null;
 
     try {
-      return await SupabasePDFStorage.getTemplateFile(template);
+      return await TemplateOperations.getTemplateFile(template);
     } catch (error) {
       console.error('❌ Erreur récupération template:', error);
       const errorMessage = error instanceof Error ? error.message : "Impossible de récupérer le template.";

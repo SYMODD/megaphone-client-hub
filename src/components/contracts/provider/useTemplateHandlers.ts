@@ -95,12 +95,19 @@ export const useTemplateHandlers = ({
     }
 
     try {
+      console.log('🗑️ Début suppression template depuis handler:', templateId);
+      
       await deleteTemplate(templateId);
+      
+      // Si le template supprimé était sélectionné, désélectionner
       if (selectedTemplateId === templateId) {
+        console.log('🔄 Désélection du template supprimé');
         setSelectedTemplateId(null);
         setFieldMappings([]);
         setPreviewUrl('');
       }
+      
+      console.log('✅ Suppression template terminée depuis handler');
       
       toast({
         title: "Template supprimé",
