@@ -49,7 +49,8 @@ export class MappingOperations {
           x: mapping.x || 0,
           y: mapping.y || 0,
           fontSize: mapping.font_size || 12,
-          description: mapping.description || ''
+          description: mapping.description || '',
+          defaultValue: mapping.default_value || '' // Charger la valeur par défaut
         });
       });
 
@@ -87,7 +88,8 @@ export class MappingOperations {
           x: mapping.x,
           y: mapping.y,
           font_size: mapping.fontSize,
-          description: mapping.description
+          description: mapping.description,
+          default_value: mapping.defaultValue || '' // Sauvegarder la valeur par défaut
         }));
 
         const { error } = await supabase

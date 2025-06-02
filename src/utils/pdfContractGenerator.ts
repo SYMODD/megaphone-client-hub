@@ -32,8 +32,8 @@ export const generatePDFContract = async (
     
     const pdfDoc = await PDFDocument.load(templateArrayBuffer);
     
-    // Préparer les données de remplacement
-    const replacementData = prepareReplacementData(client);
+    // Préparer les données de remplacement avec les valeurs par défaut
+    const replacementData = prepareReplacementData(client, fieldMappings);
     
     // Obtenir toutes les pages du document
     const pages = pdfDoc.getPages();

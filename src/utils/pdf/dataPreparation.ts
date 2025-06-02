@@ -1,9 +1,9 @@
 
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import type { Client, ReplacementData } from './types';
+import type { Client, ReplacementData, FieldMapping } from './types';
 
-export const prepareReplacementData = (client: Client): ReplacementData => {
+export const prepareReplacementData = (client: Client, fieldMappings: FieldMapping[] = []): ReplacementData => {
   const currentDate = format(new Date(), "dd MMMM yyyy", { locale: fr });
   const registrationDate = client.date_enregistrement 
     ? format(new Date(client.date_enregistrement), "dd/MM/yyyy", { locale: fr })
@@ -21,6 +21,16 @@ export const prepareReplacementData = (client: Client): ReplacementData => {
     'entreprise': 'Sud Megaphone',
     'annee_courante': new Date().getFullYear().toString(),
   };
+
+  // Ajouter les valeurs par défaut des champs personnalisés
+  fieldMappings.forEach(mapping => {
+    if (mapping.defaultValue && mapping.clientField) {
+      // Si le champ n'a pas de valeur du client ou si la valeur par défaut existe, utiliser la valeur par défaut
+      if (!data[mapping.clientField] || mapping.defaultValue.trim() !== '') {
+        data[mapping.clientField] = mapping.defaultValue;
+      }
+    }
+  });
   
   console.log('📋 Données préparées pour le remplacement:', data);
   return data;

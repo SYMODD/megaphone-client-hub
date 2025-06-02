@@ -7,6 +7,7 @@ export interface FieldMapping {
   x?: number;
   y?: number;
   fontSize?: number;
+  defaultValue?: string; // Nouvelle propriété pour stocker la valeur par défaut
 }
 
 export interface FieldMappingProps {
