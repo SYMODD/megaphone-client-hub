@@ -14,7 +14,6 @@ const ScrollArea = React.forwardRef<
     {...props}
     style={{
       overflow: 'auto',
-      scrollbarWidth: 'thick',
       scrollbarColor: '#475569 #e2e8f0'
     }}
   >
@@ -22,7 +21,6 @@ const ScrollArea = React.forwardRef<
       className="h-full w-full rounded-[inherit]"
       style={{
         overflow: 'auto',
-        scrollbarWidth: 'thick',
         scrollbarColor: '#475569 #e2e8f0'
       }}
     >
