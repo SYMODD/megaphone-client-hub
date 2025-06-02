@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2 } from "lucide-react";
+import { Trash2, Info } from "lucide-react";
 import { FieldMapping } from './types';
 
 interface FieldMappingItemProps {
@@ -18,7 +18,8 @@ const CLIENT_FIELDS = [
   { value: 'nom', label: 'Nom' },
   { value: 'nom_complet', label: 'Nom complet' },
   { value: 'nationalite', label: 'Nationalité' },
-  { value: 'numero_passeport', label: 'Numéro de passeport' },
+  { value: 'numero_document', label: 'Numéro de document (Passeport/CIN/Carte séjour)', description: 'S\'adapte automatiquement selon le document du client' },
+  { value: 'numero_passeport', label: 'Numéro de passeport (spécifique)', description: 'Uniquement pour les passeports' },
   { value: 'date_enregistrement', label: 'Date d\'enregistrement' },
   { value: 'observations', label: 'Observations' },
   { value: 'date_aujourdhui', label: 'Date d\'aujourd\'hui' },
@@ -27,6 +28,8 @@ const CLIENT_FIELDS = [
 ];
 
 export const FieldMappingItem = ({ mapping, onUpdate, onRemove }: FieldMappingItemProps) => {
+  const selectedField = CLIENT_FIELDS.find(field => field.value === mapping.clientField);
+
   return (
     <div className="border rounded-lg p-4 space-y-3 bg-white">
       <div className="flex items-center justify-between">
@@ -69,11 +72,19 @@ export const FieldMappingItem = ({ mapping, onUpdate, onRemove }: FieldMappingIt
             <SelectContent>
               {CLIENT_FIELDS.map((field) => (
                 <SelectItem key={field.value} value={field.value}>
-                  {field.label}
+                  <div className="flex items-center gap-2">
+                    {field.label}
+                    {field.description && (
+                      <Info className="w-3 h-3 text-gray-400" title={field.description} />
+                    )}
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {selectedField?.description && (
+            <p className="text-xs text-gray-500 mt-1">{selectedField.description}</p>
+          )}
         </div>
 
         <div>

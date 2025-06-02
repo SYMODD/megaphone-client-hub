@@ -9,12 +9,17 @@ export const prepareReplacementData = (client: Client, fieldMappings: FieldMappi
     ? format(new Date(client.date_enregistrement), "dd/MM/yyyy", { locale: fr })
     : '';
   
+  // Déterminer le numéro de document selon le type de document du client
+  // En priorité : numero_passeport, puis autres champs de document
+  const numeroDocument = client.numero_passeport || '';
+  
   const data = {
     'prenom': client.prenom || '',
     'nom': client.nom || '',
     'nom_complet': `${client.prenom || ''} ${client.nom || ''}`.trim(),
     'nationalite': client.nationalite || '',
     'numero_passeport': client.numero_passeport || '',
+    'numero_document': numeroDocument, // Champ générique qui s'adapte
     'date_enregistrement': registrationDate,
     'observations': client.observations || '',
     'date_aujourdhui': currentDate,
