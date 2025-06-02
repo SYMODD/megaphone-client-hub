@@ -9,19 +9,6 @@ export const useTemplateOperations = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const reloadTemplates = async () => {
-    try {
-      console.log('🔄 Rechargement des templates depuis la base de données...');
-      const loadedTemplates = await TemplateOperations.loadTemplates();
-      setTemplates(loadedTemplates);
-      console.log('✅ Templates rechargés:', loadedTemplates.length, 'templates trouvés');
-      return loadedTemplates;
-    } catch (error) {
-      console.error('❌ Erreur lors du rechargement des templates:', error);
-      throw error;
-    }
-  };
-
   const saveTemplate = async (file: File, fileName: string): Promise<string> => {
     try {
       setError(null);
@@ -29,12 +16,20 @@ export const useTemplateOperations = () => {
       
       const newTemplate = await TemplateOperations.saveTemplate(file, fileName);
 
+      console.log('✅ Template sauvegardé avec succès:', newTemplate.id);
+      
+      // CORRECTION: Ajouter immédiatement le nouveau template à l'état local
+      setTemplates(prevTemplates => {
+        const updatedTemplates = [...prevTemplates, newTemplate];
+        console.log('✅ Template ajouté à l\'état local. Total:', updatedTemplates.length);
+        return updatedTemplates;
+      });
+
       toast({
         title: "Template sauvegardé",
         description: `Le template "${fileName}" a été sauvegardé avec succès.`,
       });
 
-      console.log('✅ Template sauvegardé avec succès:', newTemplate.id);
       return newTemplate.id;
     } catch (error) {
       console.error('❌ Erreur sauvegarde template:', error);
@@ -56,6 +51,15 @@ export const useTemplateOperations = () => {
       console.log('🔄 Renommage du template:', templateId, 'vers:', newName);
       
       await TemplateOperations.renameTemplate(templateId, newName);
+
+      // Mettre à jour immédiatement l'état local
+      setTemplates(prevTemplates => 
+        prevTemplates.map(template => 
+          template.id === templateId 
+            ? { ...template, name: newName }
+            : template
+        )
+      );
 
       toast({
         title: "Template renommé",
@@ -80,18 +84,23 @@ export const useTemplateOperations = () => {
   const deleteTemplate = async (templateId: string) => {
     try {
       setError(null);
-      console.log('🔄 Suppression backend du template:', templateId);
+      console.log('🔄 Suppression du template:', templateId);
       
-      // Supprimer le template côté backend uniquement
       await TemplateOperations.deleteTemplate(templateId);
-      console.log('✅ Template supprimé côté backend');
+      
+      // Mettre à jour immédiatement l'état local
+      setTemplates(prevTemplates => {
+        const updatedTemplates = prevTemplates.filter(template => template.id !== templateId);
+        console.log('✅ Template supprimé de l\'état local. Restant:', updatedTemplates.length);
+        return updatedTemplates;
+      });
 
       toast({
         title: "Template supprimé",
         description: "Le template a été supprimé avec succès.",
       });
       
-      console.log('✅ Suppression backend terminée');
+      console.log('✅ Suppression terminée');
     } catch (error) {
       console.error('❌ Erreur suppression template:', error);
       const errorMessage = error instanceof Error ? error.message : "Impossible de supprimer le template.";
@@ -134,7 +143,6 @@ export const useTemplateOperations = () => {
     saveTemplate,
     renameTemplate,
     deleteTemplate,
-    getTemplate,
-    reloadTemplates
+    getTemplate
   };
 };

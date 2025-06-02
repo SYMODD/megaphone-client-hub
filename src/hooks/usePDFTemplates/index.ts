@@ -35,10 +35,11 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
       
       const { loadedTemplates, loadedMappings } = await dataLoader.loadTemplatesAndMappings();
       
+      // CORRECTION CRITIQUE: S'assurer que les templates sont mis à jour immédiatement
       templateOps.setTemplates(loadedTemplates);
       mappingOps.setTemplateMappings(loadedMappings);
       
-      console.log('✅ Templates et mappings chargés:', loadedTemplates.length, 'templates');
+      console.log('✅ Templates et mappings chargés et mis à jour dans l\'état:', loadedTemplates.length, 'templates');
     } catch (error) {
       console.error('❌ Erreur lors du chargement:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue lors du chargement';
@@ -59,62 +60,56 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
     await loadTemplatesAndMappings();
   };
 
-  // Fonction pour forcer une synchronisation complète
-  const forceSyncWithBackend = async () => {
-    console.log('🔄 Synchronisation forcée avec le backend...');
+  // Wrapper pour les opérations de template avec recharge IMMÉDIATE
+  const saveTemplateWithSync = async (file: File, fileName: string): Promise<string> => {
+    console.log('🔄 Sauvegarde avec recharge immédiate...');
+    
     try {
-      setLoading(true);
+      const templateId = await templateOps.saveTemplate(file, fileName);
       
-      // Recharger TOUT depuis la base de données
-      const { loadedTemplates, loadedMappings } = await dataLoader.loadTemplatesAndMappings();
+      console.log('✅ Template sauvegardé, rechargement immédiat...');
       
-      // Mettre à jour l'état avec les données fraîches
-      templateOps.setTemplates(loadedTemplates);
-      mappingOps.setTemplateMappings(loadedMappings);
+      // CORRECTION: Recharger immédiatement après sauvegarde
+      await loadTemplatesAndMappings();
       
-      console.log('✅ Synchronisation complète terminée:', loadedTemplates.length, 'templates trouvés');
+      console.log('✅ Sauvegarde et rechargement terminés');
+      return templateId;
     } catch (error) {
-      console.error('❌ Erreur lors de la synchronisation:', error);
+      console.error('❌ Erreur dans saveTemplateWithSync:', error);
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Wrapper pour les opérations de template avec synchronisation automatique
-  const saveTemplateWithSync = async (file: File, fileName: string): Promise<string> => {
-    console.log('🔄 Sauvegarde avec synchronisation automatique...');
-    
-    const templateId = await templateOps.saveTemplate(file, fileName);
-    
-    // Forcer la synchronisation après la sauvegarde
-    await forceSyncWithBackend();
-    
-    console.log('✅ Sauvegarde et synchronisation terminées');
-    return templateId;
-  };
-
   const renameTemplateWithSync = async (templateId: string, newName: string) => {
-    console.log('🔄 Renommage avec synchronisation automatique...');
+    console.log('🔄 Renommage avec recharge immédiate...');
     
-    await templateOps.renameTemplate(templateId, newName);
-    
-    // Forcer la synchronisation après le renommage
-    await forceSyncWithBackend();
-    
-    console.log('✅ Renommage et synchronisation terminés');
+    try {
+      await templateOps.renameTemplate(templateId, newName);
+      
+      // Recharger immédiatement après renommage
+      await loadTemplatesAndMappings();
+      
+      console.log('✅ Renommage et rechargement terminés');
+    } catch (error) {
+      console.error('❌ Erreur dans renameTemplateWithSync:', error);
+      throw error;
+    }
   };
 
   const deleteTemplateWithSync = async (templateId: string) => {
-    console.log('🔄 Suppression avec synchronisation automatique...');
+    console.log('🔄 Suppression avec recharge immédiate...');
     
-    // Supprimer le template côté backend
-    await templateOps.deleteTemplate(templateId);
-    
-    // Forcer une synchronisation complète immédiatement après
-    await forceSyncWithBackend();
-    
-    console.log('✅ Suppression et synchronisation terminées pour:', templateId);
+    try {
+      await templateOps.deleteTemplate(templateId);
+      
+      // Recharger immédiatement après suppression
+      await loadTemplatesAndMappings();
+      
+      console.log('✅ Suppression et rechargement terminés');
+    } catch (error) {
+      console.error('❌ Erreur dans deleteTemplateWithSync:', error);
+      throw error;
+    }
   };
 
   return {

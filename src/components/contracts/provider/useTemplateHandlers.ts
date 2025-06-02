@@ -1,7 +1,7 @@
 
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { usePDFTemplates, FieldMapping, PDFTemplate } from "@/hooks/usePDFTemplates";
-import { Client } from './types';
+import { PDFTemplate, FieldMapping } from "@/hooks/usePDFTemplates";
 
 interface UseTemplateHandlersProps {
   selectedTemplateId: string | null;
@@ -12,6 +12,8 @@ interface UseTemplateHandlersProps {
   templateMappings: Record<string, FieldMapping[]>;
   templates: PDFTemplate[];
   userRole?: string;
+  saveTemplate: (file: File, fileName: string) => Promise<string>;
+  loadTemplates: () => Promise<void>;
 }
 
 export const useTemplateHandlers = ({
@@ -22,159 +24,122 @@ export const useTemplateHandlers = ({
   setShowUpload,
   templateMappings,
   templates,
-  userRole
+  userRole,
+  saveTemplate,
+  loadTemplates
 }: UseTemplateHandlersProps) => {
   const { toast } = useToast();
-  const {
-    saveTemplate,
-    renameTemplate,
-    deleteTemplate,
-    loadTemplates: reloadTemplates
-  } = usePDFTemplates();
 
   const handleTemplateUploaded = async (file: File, fileName: string) => {
-    // Vérification du rôle côté client avant même de tenter l'upload
-    if (userRole !== 'admin') {
-      toast({
-        title: "Accès refusé",
-        description: "Seuls les administrateurs peuvent uploader des templates.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      console.log('🔄 Upload de template depuis handler...');
+      console.log('🔄 Upload de template demandé:', fileName);
+      
       const templateId = await saveTemplate(file, fileName);
       
+      console.log('✅ Template uploadé avec ID:', templateId);
+      
+      // Sélectionner automatiquement le nouveau template
       setSelectedTemplateId(templateId);
       setShowUpload(false);
-      setPreviewUrl('');
-
-      if (templateMappings[templateId]) {
-        setFieldMappings(templateMappings[templateId]);
-      } else {
-        setFieldMappings([]);
-      }
-
-      console.log('✅ Upload terminé depuis handler');
+      
+      // Forcer un rechargement pour s'assurer que le template apparaît
+      console.log('🔄 Rechargement forcé après upload...');
+      await loadTemplates();
       
       toast({
-        title: "Template uploadé avec succès",
-        description: `Le template "${fileName}" est maintenant disponible.`,
+        title: "Template uploadé",
+        description: `Le template "${fileName}" a été uploadé avec succès.`,
       });
     } catch (error) {
-      console.error('Erreur upload template:', error);
+      console.error('❌ Erreur upload template:', error);
+      const errorMessage = error instanceof Error ? error.message : "Erreur lors de l'upload";
+      
       toast({
         title: "Erreur d'upload",
-        description: error instanceof Error ? error.message : "Impossible d'uploader le template.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
   };
 
-  const handleTemplateSelect = async (templateId: string) => {
+  const handleTemplateSelect = (templateId: string) => {
     console.log('🔄 Sélection du template:', templateId);
     setSelectedTemplateId(templateId);
+    
+    // Charger les mappings existants pour ce template
+    const existingMappings = templateMappings[templateId] || [];
+    setFieldMappings(existingMappings);
+    
+    // Reset preview URL
     setPreviewUrl('');
-
-    if (templateMappings[templateId]) {
-      console.log('✅ Mappings trouvés pour ce template:', templateMappings[templateId]);
-      setFieldMappings(templateMappings[templateId]);
-    } else {
-      console.log('⚠️ Aucun mapping trouvé pour ce template, utilisation des mappings par défaut');
-      setFieldMappings([]);
-    }
   };
 
   const handleDeleteTemplate = async (templateId: string) => {
-    // Vérification du rôle pour la suppression
-    if (userRole !== 'admin') {
-      toast({
-        title: "Accès refusé",
-        description: "Seuls les administrateurs peuvent supprimer des templates.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      console.log('🗑️ Début suppression template depuis handler:', templateId);
+      console.log('🔄 Suppression template demandée:', templateId);
       
-      // Si le template supprimé était sélectionné, désélectionner AVANT la suppression
+      // La suppression est déjà gérée par le hook usePDFTemplates
+      // Juste reset la sélection si c'était le template sélectionné
       if (selectedTemplateId === templateId) {
-        console.log('🔄 Désélection du template avant suppression');
         setSelectedTemplateId(null);
         setFieldMappings([]);
         setPreviewUrl('');
       }
-      
-      // Supprimer le template (avec synchronisation automatique maintenant)
-      await deleteTemplate(templateId);
-      
-      console.log('✅ Suppression template terminée depuis handler');
       
       toast({
         title: "Template supprimé",
         description: "Le template a été supprimé avec succès.",
       });
     } catch (error) {
-      console.error('Erreur suppression template:', error);
+      console.error('❌ Erreur suppression template:', error);
+      const errorMessage = error instanceof Error ? error.message : "Erreur lors de la suppression";
+      
       toast({
-        title: "Erreur",
-        description: "Impossible de supprimer le template.",
+        title: "Erreur de suppression",
+        description: errorMessage,
         variant: "destructive",
       });
     }
   };
 
   const handleRenameTemplate = async (templateId: string, newName: string) => {
-    // Vérification du rôle pour le renommage
-    if (userRole !== 'admin') {
-      toast({
-        title: "Accès refusé",
-        description: "Seuls les administrateurs peuvent renommer des templates.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      console.log('🔄 Renommage depuis handler...');
-      await renameTemplate(templateId, newName);
-      console.log('✅ Renommage terminé depuis handler');
-    } catch (error) {
-      console.error('Erreur renommage template:', error);
+      console.log('🔄 Renommage template demandé:', templateId, 'vers:', newName);
+      
+      // Le renommage est déjà géré par le hook usePDFTemplates
+      
       toast({
-        title: "Erreur",
-        description: "Impossible de renommer le template.",
+        title: "Template renommé",
+        description: `Le template a été renommé en "${newName}".`,
+      });
+    } catch (error) {
+      console.error('❌ Erreur renommage template:', error);
+      const errorMessage = error instanceof Error ? error.message : "Erreur lors du renommage";
+      
+      toast({
+        title: "Erreur de renommage",
+        description: errorMessage,
         variant: "destructive",
       });
     }
   };
 
   const handleForceReload = async () => {
-    console.log('🔄 Rechargement forcé des templates demandé...');
     try {
-      await reloadTemplates();
-      
-      // Réinitialiser les états si le template sélectionné n'existe plus
-      if (selectedTemplateId && !templates.find(t => t.id === selectedTemplateId)) {
-        console.log('⚠️ Template sélectionné n\'existe plus, réinitialisation...');
-        setSelectedTemplateId(null);
-        setFieldMappings([]);
-        setPreviewUrl('');
-      }
+      console.log('🔄 Rechargement forcé demandé...');
+      await loadTemplates();
       
       toast({
-        title: "Templates actualisés",
-        description: "La liste des templates a été rechargée.",
+        title: "Templates rechargés",
+        description: "Les templates ont été rechargés depuis le serveur.",
       });
     } catch (error) {
-      console.error('Erreur lors du rechargement forcé:', error);
+      console.error('❌ Erreur rechargement:', error);
+      const errorMessage = error instanceof Error ? error.message : "Erreur lors du rechargement";
+      
       toast({
         title: "Erreur de rechargement",
-        description: "Impossible de recharger les templates.",
+        description: errorMessage,
         variant: "destructive",
       });
     }

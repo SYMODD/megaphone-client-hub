@@ -26,7 +26,9 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     templates,
     templateMappings,
     loading,
-    saveMappings
+    saveTemplate,
+    saveMappings,
+    loadTemplates
   } = usePDFTemplates();
 
   console.log('📊 PDFContractProvider state:', {
@@ -36,6 +38,14 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     selectedClient: !!selectedClient,
     userRole: profile?.role
   });
+
+  // CORRECTION: Forcer un rechargement si aucun template n'est visible mais qu'on n'est pas en loading
+  useEffect(() => {
+    if (!loading && templates.length === 0) {
+      console.log('⚠️ Aucun template visible, rechargement forcé...');
+      loadTemplates();
+    }
+  }, [loading, templates.length, loadTemplates]);
 
   // Cleanup effect
   useEffect(() => {
@@ -54,7 +64,9 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     setShowUpload,
     templateMappings,
     templates,
-    userRole: profile?.role
+    userRole: profile?.role,
+    saveTemplate, // Passer la fonction saveTemplate
+    loadTemplates // Passer la fonction loadTemplates pour forcer le rechargement
   });
 
   const contractGeneration = useContractGeneration({
@@ -107,7 +119,7 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     ...contractGeneration
   };
 
-  console.log('✅ PDFContractProvider rendering with context value');
+  console.log('✅ PDFContractProvider rendering with context value. Templates disponibles:', templates.length);
 
   return (
     <PDFContractContext.Provider value={value}>
