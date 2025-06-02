@@ -22,58 +22,22 @@ export class MappingOperations {
 
       console.log('🔍 DEBUG: Rôle de l\'utilisateur actuel (mappings):', profile?.role);
 
-      // Récupérer tous les mappings avec les informations des templates
-      const { data: allMappings, error } = await supabase
+      // Récupérer tous les mappings accessibles via les nouvelles politiques RLS
+      const { data: mappings, error } = await supabase
         .from('pdf_template_mappings')
-        .select(`
-          *,
-          pdf_templates!fk_template_id (
-            user_id
-          )
-        `);
+        .select('*');
 
       if (error) {
         console.error('❌ Erreur lors du chargement des mappings:', error);
         return {};
       }
 
-      console.log('🔍 DEBUG: Tous les mappings récupérés:', allMappings?.length);
-
-      // Récupérer les profils des créateurs de templates
-      const creatorIds = [...new Set(allMappings?.map(m => m.pdf_templates?.user_id).filter(Boolean))];
-      const { data: creatorProfiles } = await supabase
-        .from('profiles')
-        .select('id, role')
-        .in('id', creatorIds);
-
-      const creatorRoleMap = new Map(creatorProfiles?.map(p => [p.id, p.role]) || []);
-
-      // Filtrer manuellement selon notre logique
-      const accessibleMappings = allMappings?.filter(mapping => {
-        const templateUserId = mapping.pdf_templates?.user_id;
-        
-        // L'utilisateur peut voir ses propres mappings
-        if (mapping.user_id === user.id) {
-          console.log('✅ Mapping accessible (propriétaire):', mapping.template_id);
-          return true;
-        }
-
-        // Si l'utilisateur est agent, il peut voir les mappings des templates d'admins
-        if (profile?.role === 'agent' && templateUserId && creatorRoleMap.get(templateUserId) === 'admin') {
-          console.log('✅ Mapping accessible (agent -> admin template):', mapping.template_id);
-          return true;
-        }
-
-        console.log('❌ Mapping non accessible:', mapping.template_id);
-        return false;
-      }) || [];
-
-      console.log('🔍 DEBUG: Mappings accessibles après filtrage:', accessibleMappings.length);
+      console.log('🔍 DEBUG: Mappings récupérés:', mappings?.length);
 
       // Grouper les mappings par template_id
       const mappingsByTemplate: Record<string, FieldMapping[]> = {};
       
-      accessibleMappings.forEach(mapping => {
+      mappings?.forEach(mapping => {
         if (!mappingsByTemplate[mapping.template_id]) {
           mappingsByTemplate[mapping.template_id] = [];
         }
@@ -106,12 +70,11 @@ export class MappingOperations {
 
       console.log('Sauvegarde des mappings pour le template:', templateId);
 
-      // Supprimer les anciens mappings
+      // Supprimer les anciens mappings pour ce template
       await supabase
         .from('pdf_template_mappings')
         .delete()
-        .eq('template_id', templateId)
-        .eq('user_id', user.id);
+        .eq('template_id', templateId);
 
       // Insérer les nouveaux mappings
       if (mappings.length > 0) {

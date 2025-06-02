@@ -1,3 +1,4 @@
+
 import { PDFTemplate } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { BucketManager } from './bucketManager';
@@ -43,77 +44,27 @@ export class TemplateOperations {
         console.warn('Erreur lors de la synchronisation, mais continuons avec les données en base:', syncError);
       }
 
-      // Récupérer tous les templates avec plus de détails
-      const { data: allTemplates, error: allError } = await supabase
+      // Récupérer les templates avec les nouvelles politiques RLS
+      // Les politiques RLS s'occupent maintenant du filtrage automatiquement
+      const { data: templates, error } = await supabase
         .from('pdf_templates')
         .select('*')
         .order('upload_date', { ascending: false });
 
-      if (allError) {
-        console.error('❌ Erreur lors de la récupération de tous les templates:', allError);
-        throw new Error(`Impossible de charger les templates: ${allError.message}`);
+      if (error) {
+        console.error('❌ Erreur lors de la récupération des templates:', error);
+        throw new Error(`Impossible de charger les templates: ${error.message}`);
       }
 
-      console.log('🔍 DEBUG: Tous les templates récupérés:', allTemplates?.length);
-      console.log('🔍 DEBUG: Détails de tous les templates bruts:', allTemplates);
+      console.log('🔍 DEBUG: Templates récupérés:', templates?.length);
+      console.log('🔍 DEBUG: Détails des templates:', templates);
 
-      if (!allTemplates || allTemplates.length === 0) {
-        console.log('⚠️ Aucun template trouvé en base de données');
+      if (!templates || templates.length === 0) {
+        console.log('⚠️ Aucun template accessible pour cet utilisateur');
         return [];
       }
 
-      // Récupérer TOUS les profils (pas seulement les créateurs de templates)
-      const { data: allProfiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, role');
-
-      if (profilesError) {
-        console.error('❌ Erreur récupération profils:', profilesError);
-        throw new Error(`Impossible de récupérer les profils: ${profilesError.message}`);
-      }
-
-      console.log('🔍 DEBUG: Tous les profils récupérés:', allProfiles?.length);
-      console.log('🔍 DEBUG: Détails des profils:', allProfiles);
-
-      const profileRoleMap = new Map(allProfiles?.map(p => [p.id, p.role]) || []);
-      console.log('🔍 DEBUG: Map des rôles:', Array.from(profileRoleMap.entries()));
-
-      // Analyser chaque template en détail
-      const accessibleTemplates = allTemplates?.filter(template => {
-        const creatorRole = profileRoleMap.get(template.user_id);
-        console.log(`🔍 DEBUG: Analyse template "${template.name}":`, {
-          templateId: template.id,
-          templateUserId: template.user_id,
-          creatorRole: creatorRole,
-          currentUserId: user.id,
-          currentUserRole: profile?.role,
-          isOwner: template.user_id === user.id,
-          isAgentViewingAdmin: profile?.role === 'agent' && creatorRole === 'admin'
-        });
-
-        // L'utilisateur peut voir ses propres templates
-        if (template.user_id === user.id) {
-          console.log('✅ Template accessible (propriétaire):', template.name);
-          return true;
-        }
-
-        // Si l'utilisateur est agent, il peut voir les templates des admins
-        if (profile?.role === 'agent' && creatorRole === 'admin') {
-          console.log('✅ Template accessible (agent -> admin):', template.name);
-          return true;
-        }
-
-        console.log('❌ Template non accessible:', template.name, {
-          userRole: profile?.role,
-          creatorRole: creatorRole,
-          reason: profile?.role !== 'agent' ? 'Utilisateur pas agent' : 'Créateur pas admin'
-        });
-        return false;
-      }) || [];
-
-      console.log(`✅ ${accessibleTemplates.length} template(s) accessible(s) après filtrage`);
-
-      const templates = accessibleTemplates.map(template => ({
+      const accessibleTemplates = templates.map(template => ({
         id: template.id,
         name: template.name,
         fileName: template.file_name,
@@ -121,9 +72,10 @@ export class TemplateOperations {
         filePath: template.file_path
       }));
 
-      console.log('🔍 DEBUG: Templates finaux retournés:', templates);
+      console.log(`✅ ${accessibleTemplates.length} template(s) accessible(s)`);
+      console.log('🔍 DEBUG: Templates finaux retournés:', accessibleTemplates);
       
-      return templates;
+      return accessibleTemplates;
     } catch (error) {
       console.error('❌ Erreur complète lors du chargement des templates:', error);
       if (error instanceof Error) {
@@ -144,6 +96,17 @@ export class TemplateOperations {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('Vous devez être connecté pour uploader des templates.');
+    }
+
+    // Vérifier que l'utilisateur est admin
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.role !== 'admin') {
+      throw new Error('Seuls les administrateurs peuvent uploader des templates.');
     }
 
     const templateId = Date.now().toString();
@@ -171,7 +134,7 @@ export class TemplateOperations {
       if (uploadError.message.toLowerCase().includes('duplicate') || uploadError.message.includes('already exists')) {
         throw new Error('Un fichier avec ce nom existe déjà. Veuillez renommer le fichier et réessayer.');
       } else if (uploadError.message.toLowerCase().includes('permission') || uploadError.message.toLowerCase().includes('policy')) {
-        throw new Error('Permission refusée. Vérifiez que vous êtes connecté et que vous avez les permissions nécessaires.');
+        throw new Error('Permission refusée. Seuls les administrateurs peuvent uploader des templates.');
       } else if (uploadError.message.toLowerCase().includes('size') || uploadError.message.toLowerCase().includes('limit')) {
         throw new Error('Le fichier est trop volumineux. Utilisez un fichier plus petit.');
       } else if (uploadError.message.toLowerCase().includes('unauthorized') || uploadError.message.toLowerCase().includes('authentication')) {
@@ -244,12 +207,22 @@ export class TemplateOperations {
       throw new Error('User not authenticated');
     }
 
+    // Vérifier que l'utilisateur est admin
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.role !== 'admin') {
+      throw new Error('Seuls les administrateurs peuvent supprimer des templates.');
+    }
+
     // Get template to find file path
     const { data: template, error: getError } = await supabase
       .from('pdf_templates')
       .select('file_path')
       .eq('id', templateId)
-      .eq('user_id', user.id)
       .single();
 
     if (getError || !template) {
@@ -265,8 +238,7 @@ export class TemplateOperations {
     const { error: deleteError } = await supabase
       .from('pdf_templates')
       .delete()
-      .eq('id', templateId)
-      .eq('user_id', user.id);
+      .eq('id', templateId);
 
     if (deleteError) {
       throw new Error(`Failed to delete template: ${deleteError.message}`);
@@ -276,8 +248,7 @@ export class TemplateOperations {
     await supabase
       .from('pdf_template_mappings')
       .delete()
-      .eq('template_id', templateId)
-      .eq('user_id', user.id);
+      .eq('template_id', templateId);
   }
 
   static async renameTemplate(templateId: string, newName: string): Promise<void> {
@@ -286,11 +257,21 @@ export class TemplateOperations {
       throw new Error('User not authenticated');
     }
 
+    // Vérifier que l'utilisateur est admin
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.role !== 'admin') {
+      throw new Error('Seuls les administrateurs peuvent renommer des templates.');
+    }
+
     const { error } = await supabase
       .from('pdf_templates')
       .update({ name: newName })
-      .eq('id', templateId)
-      .eq('user_id', user.id);
+      .eq('id', templateId);
 
     if (error) {
       throw new Error(`Failed to rename template: ${error.message}`);

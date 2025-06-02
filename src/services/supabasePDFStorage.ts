@@ -3,12 +3,9 @@ import { PDFTemplate, FieldMapping } from './pdf/types';
 import { BucketManager } from './pdf/bucketManager';
 import { TemplateOperations } from './pdf/templateOperations';
 import { MappingOperations } from './pdf/mappingOperations';
-import { SharedTemplateOperations } from './pdf/sharedTemplateOperations';
 
 // Re-export types for backward compatibility
 export type { PDFTemplate, FieldMapping };
-
-type AppRole = 'agent' | 'superviseur' | 'admin';
 
 export class SupabasePDFStorage {
   static async ensureBucket(): Promise<boolean> {
@@ -45,22 +42,5 @@ export class SupabasePDFStorage {
 
   static async renameTemplate(templateId: string, newName: string): Promise<void> {
     return TemplateOperations.renameTemplate(templateId, newName);
-  }
-
-  // Nouvelles méthodes pour le partage
-  static async shareTemplate(templateId: string, role: AppRole | null = null): Promise<void> {
-    return SharedTemplateOperations.shareTemplate(templateId, role);
-  }
-
-  static async unshareTemplate(templateId: string): Promise<void> {
-    return SharedTemplateOperations.unshareTemplate(templateId);
-  }
-
-  static async getSharedTemplateIds(): Promise<string[]> {
-    return SharedTemplateOperations.getSharedTemplateIds();
-  }
-
-  static async getTemplateShareInfo(templateId: string) {
-    return SharedTemplateOperations.getTemplateShareInfo(templateId);
   }
 }
