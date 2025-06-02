@@ -34,7 +34,7 @@ export const processPageContent = async (
     
     // Utiliser les coordonnées spécifiées ou des positions par défaut
     const x = mapping.x || 100;
-    const y = mapping.y || (height - 100 - (index * 30));
+    let y = mapping.y || (height - 100 - (index * 30));
     const fontSize = mapping.fontSize || 12;
     
     // Vérifier si les coordonnées sont dans les limites de la page
@@ -42,8 +42,7 @@ export const processPageContent = async (
       console.warn(`⚠️ Position Y (${y}) hors limites pour le champ "${mapping.placeholder}" (hauteur page: ${height})`);
       console.log(`🔧 Ajustement de la position Y de ${y} à ${height - 50 - (index * 30)}`);
       // Ajuster la position Y si elle est hors limites
-      const adjustedY = height - 50 - (index * 30);
-      y = adjustedY;
+      y = height - 50 - (index * 30);
     }
     
     if (x > width || x < 0) {
