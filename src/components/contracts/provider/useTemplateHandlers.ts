@@ -1,6 +1,6 @@
 
 import { useToast } from "@/hooks/use-toast";
-import { usePDFTemplates, FieldMapping } from "@/hooks/usePDFTemplates";
+import { usePDFTemplates, FieldMapping, PDFTemplate } from "@/hooks/usePDFTemplates";
 import { Client } from './types';
 
 interface UseTemplateHandlersProps {

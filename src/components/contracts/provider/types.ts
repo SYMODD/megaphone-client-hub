@@ -1,4 +1,7 @@
 
+// Import the types first before using them
+import type { PDFTemplate, FieldMapping } from "@/hooks/usePDFTemplates";
+
 export interface Client {
   id: string;
   nom: string;
@@ -39,5 +42,5 @@ export interface PDFContractContextType {
   handleForceReload: () => Promise<void>;
 }
 
-// Re-export types from hooks for convenience
-export type { PDFTemplate, FieldMapping } from "@/hooks/usePDFTemplates";
+// Re-export types for convenience
+export type { PDFTemplate, FieldMapping };
