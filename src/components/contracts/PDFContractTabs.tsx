@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -158,15 +159,7 @@ export const PDFContractTabs = ({
             </div>
           </div>
         )}
-        <PDFGenerationTab
-          selectedTemplate={selectedTemplate}
-          selectedClient={selectedClient}
-          fieldMappings={fieldMappings}
-          isGenerating={isGenerating}
-          previewUrl={previewUrl}
-          onGenerateContract={onGenerateContract}
-          onPreviewContract={onPreviewContract}
-        />
+        <PDFGenerationTab />
       </TabsContent>
     </Tabs>
   );
