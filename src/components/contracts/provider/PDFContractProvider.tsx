@@ -1,10 +1,13 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { usePDFTemplates, FieldMapping } from "@/hooks/usePDFTemplates";
+import React from 'react';
+import { usePDFTemplates } from "@/hooks/usePDFTemplates";
 import { useAuth } from "@/contexts/AuthContext";
 import { PDFContractContext } from './PDFContractContext';
 import { useTemplateHandlers } from './useTemplateHandlers';
 import { useContractGeneration } from './useContractGeneration';
+import { usePDFContractState } from './usePDFContractState';
+import { useFieldMappingManager } from './useFieldMappingManager';
+import { useProviderEffects } from './useProviderEffects';
 import { Client, PDFContractContextType } from './types';
 
 interface PDFContractProviderProps {
@@ -14,20 +17,29 @@ interface PDFContractProviderProps {
 export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
   console.log('🔄 PDFContractProvider initializing...');
   
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
-  const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([]);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string>('');
-  const [showUpload, setShowUpload] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const { profile } = useAuth();
-
-  // Référence pour éviter les rechargements en boucle
-  const isReloadingRef = useRef(false);
-  const initialLoadCompleted = useRef(false);
-  const lastSavedMappings = useRef<string>('');
-  const lastLoadedTemplateId = useRef<string | null>(null);
+  
+  // State management
+  const {
+    selectedTemplateId,
+    fieldMappings,
+    selectedClient,
+    isGenerating,
+    previewUrl,
+    showUpload,
+    hasUnsavedChanges,
+    setSelectedTemplateId,
+    setFieldMappings,
+    setSelectedClient,
+    setIsGenerating,
+    setPreviewUrl,
+    setShowUpload,
+    setHasUnsavedChanges,
+    isReloadingRef,
+    initialLoadCompleted,
+    lastSavedMappings,
+    lastLoadedTemplateId
+  } = usePDFContractState();
 
   const {
     templates,
@@ -51,54 +63,30 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     templateMappingsCount: Object.keys(templateMappings).length
   });
 
-  // Effet pour marquer la fin du chargement initial
-  useEffect(() => {
-    if (!loading && !initialLoadCompleted.current) {
-      console.log('✅ Chargement initial terminé. Templates disponibles:', templates.length);
-      initialLoadCompleted.current = true;
-    }
-  }, [loading, templates.length]);
+  // Field mapping management
+  const { handleFieldMappingsChange, handleSaveMappings } = useFieldMappingManager({
+    selectedTemplateId,
+    fieldMappings,
+    setFieldMappings,
+    setHasUnsavedChanges,
+    templateMappings,
+    lastSavedMappings,
+    lastLoadedTemplateId
+  });
 
-  // CORRECTION: Charger automatiquement les mappings quand un template est sélectionné
-  useEffect(() => {
-    if (selectedTemplateId && selectedTemplateId !== lastLoadedTemplateId.current && templateMappings) {
-      console.log('🔄 Chargement des mappings pour le template sélectionné:', selectedTemplateId);
-      
-      const existingMappings = templateMappings[selectedTemplateId] || [];
-      console.log('📋 Mappings trouvés pour ce template:', existingMappings.length, 'champs');
-      
-      setFieldMappings(existingMappings);
-      lastLoadedTemplateId.current = selectedTemplateId;
-      
-      // Mettre à jour la référence des derniers mappings sauvegardés
-      const mappingsString = JSON.stringify(existingMappings);
-      lastSavedMappings.current = mappingsString;
-      setHasUnsavedChanges(false);
-      
-      console.log('✅ Mappings chargés et appliqués pour le template:', selectedTemplateId);
-    }
-  }, [selectedTemplateId, templateMappings]);
-
-  // CORRECTION: Surveiller les templates sélectionnés qui disparaissent
-  useEffect(() => {
-    if (selectedTemplateId && !templates.find(t => t.id === selectedTemplateId)) {
-      console.log('🗑️ Template sélectionné n\'existe plus, désélection automatique:', selectedTemplateId);
-      setSelectedTemplateId(null);
-      setFieldMappings([]);
-      setPreviewUrl('');
-      setHasUnsavedChanges(false);
-      lastLoadedTemplateId.current = null;
-    }
-  }, [templates, selectedTemplateId]);
-
-  // Cleanup effect
-  useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
+  // Provider effects
+  useProviderEffects({
+    loading,
+    templates,
+    selectedTemplateId,
+    previewUrl,
+    initialLoadCompleted,
+    lastLoadedTemplateId,
+    setSelectedTemplateId,
+    setFieldMappings,
+    setPreviewUrl,
+    setHasUnsavedChanges
+  });
 
   const templateHandlers = useTemplateHandlers({
     selectedTemplateId,
@@ -124,47 +112,12 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     previewUrl
   });
 
-  // CORRECTION: Simplifier la gestion des changements de mappings
-  const handleFieldMappingsChange = (mappings: FieldMapping[]) => {
-    console.log('🔄 Mise à jour des mappings:', mappings.length, 'champs');
-    setFieldMappings(mappings);
-    
-    // Vérifier si les mappings ont vraiment changé
-    const mappingsString = JSON.stringify(mappings);
-    const hasChanges = mappingsString !== lastSavedMappings.current;
-    setHasUnsavedChanges(hasChanges);
-    
-    console.log('📊 Changements détectés:', hasChanges);
-  };
-
-  // NOUVELLE FONCTION: Sauvegarde manuelle des mappings
-  const handleSaveMappings = async () => {
-    if (!selectedTemplateId || !fieldMappings.length) {
-      console.warn('⚠️ Aucun template sélectionné ou aucun mapping à sauvegarder');
-      return;
-    }
-
-    try {
-      console.log('💾 Sauvegarde manuelle des mappings pour le template:', selectedTemplateId);
-      await saveMappings(selectedTemplateId, fieldMappings);
-      
-      const mappingsString = JSON.stringify(fieldMappings);
-      lastSavedMappings.current = mappingsString;
-      setHasUnsavedChanges(false);
-      
-      console.log('✅ Sauvegarde manuelle terminée');
-    } catch (error) {
-      console.error('❌ Erreur lors de la sauvegarde manuelle:', error);
-      throw error; // Re-throw pour que le composant puisse gérer l'erreur
-    }
-  };
-
   const handleClientSelect = (client: Client) => {
     console.log('🔄 Sélection du client:', client);
     setSelectedClient(client);
   };
 
-  // NOUVELLE FONCTION: Rechargement manuel sécurisé
+  // Rechargement manuel sécurisé
   const handleForceReload = async () => {
     if (isReloadingRef.current) {
       console.log('⚠️ Rechargement déjà en cours, ignoré');
@@ -183,7 +136,6 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     }
   };
 
-  // Add missing methods
   const handleDownloadPDF = () => {
     if (previewUrl) {
       const link = document.createElement('a');
