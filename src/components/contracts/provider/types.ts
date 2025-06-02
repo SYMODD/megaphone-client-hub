@@ -46,5 +46,6 @@ export interface PDFContractContextType {
   
   // Contract generation
   handleGenerateContract: () => Promise<void>;
+  handlePreviewContract: () => Promise<void>;
   handleDownloadPDF: () => void;
 }

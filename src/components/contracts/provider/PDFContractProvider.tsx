@@ -171,6 +171,18 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     }
   };
 
+  // Add missing methods
+  const handleDownloadPDF = () => {
+    if (previewUrl) {
+      const link = document.createElement('a');
+      link.href = previewUrl;
+      link.download = 'contract.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   // Obtenir le nom du template sélectionné
   const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
   const selectedTemplateName = selectedTemplate?.name;
@@ -199,6 +211,7 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     handleFieldMappingsChange,
     handleClientSelect,
     handleSaveMappings,
+    handleDownloadPDF,
     ...templateHandlers,
     ...contractGeneration,
     handleForceReload

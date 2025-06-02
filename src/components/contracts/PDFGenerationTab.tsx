@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { PDFFieldMapping } from './PDFFieldMapping';
-import { usePDFContractContext } from './provider/PDFContractContext';
+import { usePDFContract } from './provider/PDFContractContext';
 
 export const PDFGenerationTab = () => {
   const {
@@ -12,7 +12,7 @@ export const PDFGenerationTab = () => {
     hasUnsavedChanges,
     handleFieldMappingsChange,
     handleSaveMappings
-  } = usePDFContractContext();
+  } = usePDFContract();
 
   // Obtenir les mappings initiaux pour le template sélectionné
   const initialMappings = selectedTemplateId ? templateMappings[selectedTemplateId] || [] : [];
