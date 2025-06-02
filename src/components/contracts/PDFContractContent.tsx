@@ -19,6 +19,12 @@ interface PDFContractContentProps {
 }
 
 export const PDFContractContent = ({ clients }: PDFContractContentProps) => {
+  console.log('🔄 PDFContractContent rendering...');
+  
+  const context = usePDFContract();
+  
+  console.log('✅ Context loaded:', !!context);
+  
   const {
     templates,
     selectedTemplateId,
@@ -37,7 +43,7 @@ export const PDFContractContent = ({ clients }: PDFContractContentProps) => {
     handleClientSelect,
     handleGenerateContract,
     handlePreviewContract
-  } = usePDFContract();
+  } = context;
 
   if (loading) {
     return (

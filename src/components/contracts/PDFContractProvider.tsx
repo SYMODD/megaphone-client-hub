@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { usePDFTemplates, PDFTemplate, FieldMapping } from "@/hooks/usePDFTemplates";
@@ -47,7 +46,9 @@ const PDFContractContext = createContext<PDFContractContextType | undefined>(und
 
 export const usePDFContract = () => {
   const context = useContext(PDFContractContext);
+  console.log('🔍 usePDFContract hook called, context available:', !!context);
   if (context === undefined) {
+    console.error('❌ usePDFContract called outside of PDFContractProvider');
     throw new Error('usePDFContract must be used within a PDFContractProvider');
   }
   return context;
@@ -58,6 +59,8 @@ interface PDFContractProviderProps {
 }
 
 export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
+  console.log('🔄 PDFContractProvider initializing...');
+  
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -76,6 +79,13 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     saveMappings,
     getTemplate
   } = usePDFTemplates();
+
+  console.log('📊 PDFContractProvider state:', {
+    templatesCount: templates.length,
+    loading,
+    selectedTemplateId,
+    selectedClient: !!selectedClient
+  });
 
   // Cleanup effect
   useEffect(() => {
@@ -307,6 +317,8 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     handleGenerateContract,
     handlePreviewContract
   };
+
+  console.log('✅ PDFContractProvider rendering with context value');
 
   return (
     <PDFContractContext.Provider value={value}>
