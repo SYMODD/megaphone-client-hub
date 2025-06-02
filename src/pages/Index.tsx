@@ -188,7 +188,7 @@ const Index = () => {
         {/* Charts and Analytics - Responsive Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
           <NationalityChart data={agentData} />
-          <RegistrationChart data={agentData} />
+          <RegistrationChart data={{ clients: agentData.clients }} />
         </div>
 
         {/* Recent Activity - Full Width on Mobile */}

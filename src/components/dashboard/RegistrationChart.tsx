@@ -1,19 +1,59 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { fr } from "date-fns/locale";
+
+interface Client {
+  id: string;
+  nom: string;
+  prenom: string;
+  nationalite: string;
+  numero_passeport: string;
+  date_enregistrement: string;
+  photo_url?: string;
+  observations?: string;
+  created_at: string;
+  updated_at: string;
+  agent_id: string;
+}
 
 interface RegistrationChartProps {
   data: {
-    registrationData: Array<{
-      month: string;
-      clients: number;
-    }>;
+    clients: Client[];
   };
 }
 
 export const RegistrationChart = ({ data }: RegistrationChartProps) => {
-  const { registrationData } = data;
+  const { clients } = data;
+
+  // Générer les données d'enregistrement basées sur les clients filtrés
+  const registrationData = useMemo(() => {
+    console.log("📊 Génération des données d'enregistrement pour", clients.length, "clients");
+    
+    // Générer les 12 derniers mois
+    const months = [];
+    for (let i = 11; i >= 0; i--) {
+      const date = subMonths(new Date(), i);
+      const monthStart = startOfMonth(date);
+      const monthEnd = endOfMonth(date);
+      
+      // Compter les clients enregistrés dans ce mois
+      const clientsInMonth = clients.filter(client => {
+        const registrationDate = new Date(client.date_enregistrement);
+        return registrationDate >= monthStart && registrationDate <= monthEnd;
+      }).length;
+      
+      months.push({
+        month: format(date, "MMM", { locale: fr }),
+        clients: clientsInMonth
+      });
+    }
+    
+    console.log("📈 Données d'enregistrement générées:", months);
+    return months;
+  }, [clients]);
 
   useEffect(() => {
     console.log("🔄 RegistrationChart RE-RENDER avec nouvelles données:", registrationData);
@@ -27,7 +67,7 @@ export const RegistrationChart = ({ data }: RegistrationChartProps) => {
           Enregistrements par mois
         </CardTitle>
         <CardDescription>
-          Évolution des inscriptions sur l'année
+          Évolution des inscriptions sur l'année ({clients.length} clients total)
         </CardDescription>
       </CardHeader>
       <CardContent>

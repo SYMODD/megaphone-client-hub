@@ -9,7 +9,6 @@ import {
   getRecentClients, 
   getNationalitiesCount 
 } from "@/utils/agentDataUtils";
-import { useRegistrationData } from "./useRegistrationData";
 
 export const useAgentData = (filters?: AdminFilters): AgentDataResult => {
   const { profile } = useAuth();
@@ -45,9 +44,6 @@ export const useAgentData = (filters?: AdminFilters): AgentDataResult => {
     return natData;
   }, [filteredClients, refreshKey]);
 
-  // Données d'enregistrement avec refreshKey et totalClients
-  const registrationData = useRegistrationData(statistics.totalClients, refreshKey);
-
   // Clients récents avec refreshKey
   const recentClients = useMemo(() => {
     console.log("🕒 Recalcul clients récents, refreshKey:", refreshKey);
@@ -81,7 +77,7 @@ export const useAgentData = (filters?: AdminFilters): AgentDataResult => {
     contractsGenerated: statistics.contractsGenerated,
     nationalities: nationalitiesCount,
     nationalityData,
-    registrationData,
+    registrationData: [], // Plus utilisé, gardé pour compatibilité
     recentClients
   };
 };
