@@ -86,23 +86,36 @@ export const useTemplateOperations = () => {
       setError(null);
       console.log('🔄 Suppression du template:', templateId);
       
-      await TemplateOperations.deleteTemplate(templateId);
-      
-      // Mettre à jour immédiatement l'état local
+      // PURGE EN DUR : Supprimer immédiatement de l'état local AVANT l'appel backend
+      console.log('🗑️ PURGE EN DUR: Suppression immédiate de l\'état local');
       setTemplates(prevTemplates => {
-        const updatedTemplates = prevTemplates.filter(template => template.id !== templateId);
-        console.log('✅ Template supprimé de l\'état local. Restant:', updatedTemplates.length);
-        return updatedTemplates;
+        const filteredTemplates = prevTemplates.filter(template => template.id !== templateId);
+        console.log('🗑️ État local purgé. Templates restants:', filteredTemplates.length);
+        return filteredTemplates;
       });
+      
+      // Ensuite appeler le backend
+      await TemplateOperations.deleteTemplate(templateId);
 
       toast({
         title: "Template supprimé",
         description: "Le template a été supprimé avec succès.",
       });
       
-      console.log('✅ Suppression terminée');
+      console.log('✅ Suppression backend terminée. État local déjà purgé.');
     } catch (error) {
       console.error('❌ Erreur suppression template:', error);
+      
+      // En cas d'erreur backend, recharger les templates depuis le serveur pour resynchroniser
+      console.log('⚠️ Erreur backend détectée, rechargement depuis serveur...');
+      try {
+        const freshTemplates = await TemplateOperations.loadTemplates();
+        setTemplates(freshTemplates);
+        console.log('🔄 État resynchronisé avec le serveur après erreur');
+      } catch (loadError) {
+        console.error('❌ Impossible de resynchroniser:', loadError);
+      }
+      
       const errorMessage = error instanceof Error ? error.message : "Impossible de supprimer le template.";
       setError(errorMessage);
       
@@ -135,6 +148,40 @@ export const useTemplateOperations = () => {
     }
   };
 
+  // NOUVELLE FONCTION : Purge complète et rechargement depuis le serveur
+  const hardPurgeAndReload = async (): Promise<void> => {
+    try {
+      console.log('🔥 PURGE EN DUR DÉCLENCHÉE');
+      setError(null);
+      
+      // Vider complètement l'état local
+      setTemplates([]);
+      console.log('🗑️ État local vidé complètement');
+      
+      // Recharger depuis le serveur
+      const freshTemplates = await TemplateOperations.loadTemplates();
+      setTemplates(freshTemplates);
+      
+      console.log('✅ PURGE TERMINÉE. Templates rechargés depuis serveur:', freshTemplates.length);
+      
+      toast({
+        title: "État synchronisé",
+        description: "Les templates ont été rechargés depuis le serveur.",
+      });
+      
+    } catch (error) {
+      console.error('❌ Erreur lors de la purge complète:', error);
+      const errorMessage = error instanceof Error ? error.message : "Erreur lors de la synchronisation.";
+      setError(errorMessage);
+      
+      toast({
+        title: "Erreur de synchronisation",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     templates,
     setTemplates,
@@ -143,6 +190,7 @@ export const useTemplateOperations = () => {
     saveTemplate,
     renameTemplate,
     deleteTemplate,
-    getTemplate
+    getTemplate,
+    hardPurgeAndReload
   };
 };

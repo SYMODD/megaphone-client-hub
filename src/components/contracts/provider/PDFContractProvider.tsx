@@ -28,7 +28,8 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     loading,
     saveTemplate,
     saveMappings,
-    loadTemplates
+    loadTemplates,
+    deleteTemplate
   } = usePDFTemplates();
 
   console.log('📊 PDFContractProvider state:', {
@@ -42,10 +43,21 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
   // CORRECTION: Forcer un rechargement si aucun template n'est visible mais qu'on n'est pas en loading
   useEffect(() => {
     if (!loading && templates.length === 0) {
-      console.log('⚠️ Aucun template visible, rechargement forcé...');
+      console.log('⚠️ Aucun template visible, purge complète...');
       loadTemplates();
     }
   }, [loading, templates.length, loadTemplates]);
+
+  // NOUVEAU: Surveillance de la synchronisation des templates
+  useEffect(() => {
+    // Si le template sélectionné n'existe plus dans la liste, le désélectionner
+    if (selectedTemplateId && !templates.find(t => t.id === selectedTemplateId)) {
+      console.log('🗑️ Template sélectionné n\'existe plus, désélection automatique:', selectedTemplateId);
+      setSelectedTemplateId(null);
+      setFieldMappings([]);
+      setPreviewUrl('');
+    }
+  }, [templates, selectedTemplateId]);
 
   // Cleanup effect
   useEffect(() => {
@@ -65,8 +77,9 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     templateMappings,
     templates,
     userRole: profile?.role,
-    saveTemplate, // Passer la fonction saveTemplate
-    loadTemplates // Passer la fonction loadTemplates pour forcer le rechargement
+    saveTemplate,
+    loadTemplates,
+    deleteTemplate  // Passer la fonction de suppression avec purge
   });
 
   const contractGeneration = useContractGeneration({

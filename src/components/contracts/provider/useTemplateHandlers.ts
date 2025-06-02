@@ -14,6 +14,7 @@ interface UseTemplateHandlersProps {
   userRole?: string;
   saveTemplate: (file: File, fileName: string) => Promise<string>;
   loadTemplates: () => Promise<void>;
+  deleteTemplate: (templateId: string) => Promise<void>;
 }
 
 export const useTemplateHandlers = ({
@@ -26,7 +27,8 @@ export const useTemplateHandlers = ({
   templates,
   userRole,
   saveTemplate,
-  loadTemplates
+  loadTemplates,
+  deleteTemplate
 }: UseTemplateHandlersProps) => {
   const { toast } = useToast();
 
@@ -41,10 +43,6 @@ export const useTemplateHandlers = ({
       // Sélectionner automatiquement le nouveau template
       setSelectedTemplateId(templateId);
       setShowUpload(false);
-      
-      // Forcer un rechargement pour s'assurer que le template apparaît
-      console.log('🔄 Rechargement forcé après upload...');
-      await loadTemplates();
       
       toast({
         title: "Template uploadé",
@@ -76,15 +74,20 @@ export const useTemplateHandlers = ({
 
   const handleDeleteTemplate = async (templateId: string) => {
     try {
-      console.log('🔄 Suppression template demandée:', templateId);
+      console.log('🔥 Suppression template avec purge demandée:', templateId);
       
-      // La suppression est déjà gérée par le hook usePDFTemplates
-      // Juste reset la sélection si c'était le template sélectionné
+      // PURGE IMMÉDIATE: Désélectionner le template avant suppression
       if (selectedTemplateId === templateId) {
+        console.log('🗑️ Désélection immédiate du template avant suppression');
         setSelectedTemplateId(null);
         setFieldMappings([]);
         setPreviewUrl('');
       }
+      
+      // Appeler la fonction de suppression avec purge
+      await deleteTemplate(templateId);
+      
+      console.log('🔥 Suppression avec purge terminée');
       
       toast({
         title: "Template supprimé",
@@ -106,7 +109,7 @@ export const useTemplateHandlers = ({
     try {
       console.log('🔄 Renommage template demandé:', templateId, 'vers:', newName);
       
-      // Le renommage est déjà géré par le hook usePDFTemplates
+      // Le renommage est déjà géré par le hook usePDFTemplates avec purge
       
       toast({
         title: "Template renommé",
@@ -126,19 +129,19 @@ export const useTemplateHandlers = ({
 
   const handleForceReload = async () => {
     try {
-      console.log('🔄 Rechargement forcé demandé...');
+      console.log('🔥 PURGE COMPLÈTE FORCÉE...');
       await loadTemplates();
       
       toast({
-        title: "Templates rechargés",
+        title: "État synchronisé",
         description: "Les templates ont été rechargés depuis le serveur.",
       });
     } catch (error) {
-      console.error('❌ Erreur rechargement:', error);
-      const errorMessage = error instanceof Error ? error.message : "Erreur lors du rechargement";
+      console.error('❌ Erreur purge complète:', error);
+      const errorMessage = error instanceof Error ? error.message : "Erreur lors de la synchronisation";
       
       toast({
-        title: "Erreur de rechargement",
+        title: "Erreur de synchronisation",
         description: errorMessage,
         variant: "destructive",
       });
