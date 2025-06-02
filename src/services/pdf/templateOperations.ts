@@ -52,11 +52,11 @@ export class TemplateOperations {
         console.log('🔍 DEBUG: Fonction get_current_user_role() retourne:', roleTest);
       }
 
-      // Récupérer les templates avec requête détaillée pour debug
+      // Récupérer les templates avec requête simplifiée (sans join)
       console.log('🔍 DEBUG: Requête SELECT sur pdf_templates...');
       const { data: templates, error, count } = await supabase
         .from('pdf_templates')
-        .select('*, profiles!pdf_templates_user_id_fkey(role)', { count: 'exact' })
+        .select('*', { count: 'exact' })
         .order('upload_date', { ascending: false });
 
       if (error) {
@@ -81,7 +81,6 @@ export class TemplateOperations {
           id: template.id,
           name: template.name,
           user_id: template.user_id,
-          owner_role: template.profiles?.role,
           current_user: user.id,
           is_owner: template.user_id === user.id
         });
