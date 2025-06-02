@@ -1,20 +1,103 @@
-
 import { ClientData, RegistrationData } from "@/types/agentDataTypes";
 
 // Mock client data with operation points
 export const mockClients: ClientData[] = [
-  { id: 1, nom: "Dubois", prenom: "Marie", nationalite: "France", dateEnregistrement: "2024-01-15", photo: "https://images.unsplash.com/photo-1494790108755-2616b332c8a5?w=100&h=100&fit=crop&crop=face", pointOperation: "aeroport_marrakech" },
-  { id: 2, nom: "Benali", prenom: "Ahmed", nationalite: "Algérie", dateEnregistrement: "2024-01-14", pointOperation: "aeroport_casablanca" },
-  { id: 3, nom: "Diallo", prenom: "Fatou", nationalite: "Sénégal", dateEnregistrement: "2024-01-13", photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face", pointOperation: "agence_centrale" },
-  { id: 4, nom: "El Mansouri", prenom: "Youssef", nationalite: "Maroc", dateEnregistrement: "2024-01-12", pointOperation: "aeroport_marrakech" },
-  { id: 5, nom: "Trabelsi", prenom: "Leila", nationalite: "Tunisie", dateEnregistrement: "2024-01-11", photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face", pointOperation: "navire_atlas" },
-  { id: 6, nom: "Martin", prenom: "Pierre", nationalite: "France", dateEnregistrement: "2024-01-10", pointOperation: "aeroport_marrakech" },
-  { id: 7, nom: "Kone", prenom: "Mamadou", nationalite: "Sénégal", dateEnregistrement: "2024-01-09", pointOperation: "aeroport_casablanca" },
-  { id: 8, nom: "Bouchard", prenom: "Sophie", nationalite: "France", dateEnregistrement: "2024-01-08", pointOperation: "agence_centrale" },
-  { id: 9, nom: "Hassan", prenom: "Omar", nationalite: "Maroc", dateEnregistrement: "2024-01-07", pointOperation: "aeroport_agadir" },
-  { id: 10, nom: "Ngozi", prenom: "Amara", nationalite: "Nigeria", dateEnregistrement: "2024-01-06", pointOperation: "navire_meridien" },
-  { id: 11, nom: "Laurent", prenom: "Jean", nationalite: "France", dateEnregistrement: "2024-01-05", pointOperation: "aeroport_marrakech" },
-  { id: 12, nom: "Abdellah", prenom: "Karim", nationalite: "Algérie", dateEnregistrement: "2024-01-04", pointOperation: "aeroport_casablanca" },
+  {
+    id: 1,
+    nom: "Dubois",
+    prenom: "Marie",
+    nationalite: "France",
+    dateEnregistrement: "2024-11-15",
+    pointOperation: "aeroport_marrakech"
+  },
+  {
+    id: 2,
+    nom: "Benali",
+    prenom: "Ahmed",
+    nationalite: "Algérie",
+    dateEnregistrement: "2024-12-14",
+    pointOperation: "aeroport_casablanca"
+  },
+  {
+    id: 3,
+    nom: "Smith",
+    prenom: "John",
+    nationalite: "États-Unis",
+    dateEnregistrement: "2024-10-20",
+    pointOperation: "aeroport_agadir"
+  },
+  {
+    id: 4,
+    nom: "Garcia",
+    prenom: "Carlos",
+    nationalite: "Espagne",
+    dateEnregistrement: "2024-09-25",
+    pointOperation: "navire_atlas"
+  },
+  {
+    id: 5,
+    nom: "Müller",
+    prenom: "Hans",
+    nationalite: "Allemagne",
+    dateEnregistrement: "2025-01-10",
+    pointOperation: "navire_meridien"
+  },
+  {
+    id: 6,
+    nom: "Rossi",
+    prenom: "Giuseppe",
+    nationalite: "Italie",
+    dateEnregistrement: "2025-02-05",
+    pointOperation: "agence_centrale"
+  },
+  {
+    id: 7,
+    nom: "Kone",
+    prenom: "Mamadou",
+    nationalite: "Sénégal",
+    dateEnregistrement: "2025-03-09",
+    pointOperation: "aeroport_casablanca"
+  },
+  {
+    id: 8,
+    nom: "Johnson",
+    prenom: "Emily",
+    nationalite: "Royaume-Uni",
+    dateEnregistrement: "2025-04-15",
+    pointOperation: "aeroport_marrakech"
+  },
+  {
+    id: 9,
+    nom: "Silva",
+    prenom: "João",
+    nationalite: "Portugal",
+    dateEnregistrement: "2025-05-12",
+    pointOperation: "navire_atlas"
+  },
+  {
+    id: 10,
+    nom: "Wang",
+    prenom: "Li",
+    nationalite: "Chine",
+    dateEnregistrement: "2025-05-20",
+    pointOperation: "agence_centrale"
+  },
+  {
+    id: 11,
+    nom: "Yamamoto",
+    prenom: "Hiroshi",
+    nationalite: "Japon",
+    dateEnregistrement: "2025-05-28",
+    pointOperation: "aeroport_agadir"
+  },
+  {
+    id: 12,
+    nom: "Abdellah",
+    prenom: "Karim",
+    nationalite: "Algérie",
+    dateEnregistrement: "2025-06-01",
+    pointOperation: "aeroport_casablanca"
+  }
 ];
 
 export const baseColors = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#6B7280", "#EC4899", "#14B8A6", "#F97316", "#84CC16"];
