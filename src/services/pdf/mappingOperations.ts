@@ -50,7 +50,7 @@ export class MappingOperations {
           y: mapping.y || 0,
           fontSize: mapping.font_size || 12,
           description: mapping.description || '',
-          defaultValue: mapping.default_value || '' // Charger la valeur par défaut
+          defaultValue: mapping.default_value || '' // Access the correct database column name
         });
       });
 
@@ -89,7 +89,7 @@ export class MappingOperations {
           y: mapping.y,
           font_size: mapping.fontSize,
           description: mapping.description,
-          default_value: mapping.defaultValue || '' // Sauvegarder la valeur par défaut
+          default_value: mapping.defaultValue || '' // Map to the correct database column name
         }));
 
         const { error } = await supabase

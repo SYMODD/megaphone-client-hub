@@ -15,4 +15,5 @@ export interface FieldMapping {
   x?: number;
   y?: number;
   fontSize?: number;
+  defaultValue?: string; // Add the missing defaultValue property
 }
