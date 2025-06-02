@@ -56,24 +56,5 @@ export const processPageContent = async (
   
   console.log(`📊 ${fieldsProcessed}/${validMappings.length} champs traités avec succès`);
   
-  // Ajouter des bordures de débogage en mode développement
-  if (process.env.NODE_ENV === 'development') {
-    validMappings.forEach((mapping) => {
-      if (mapping.x && mapping.y) {
-        try {
-          page.drawRectangle({
-            x: mapping.x - 2,
-            y: mapping.y - 2,
-            width: 200,
-            height: 20,
-            borderColor: rgb(1, 0, 0),
-            borderWidth: 1,
-            opacity: 0.3,
-          });
-        } catch (error) {
-          console.warn('Erreur lors de l\'ajout de la bordure de débogage:', error);
-        }
-      }
-    });
-  }
+  // Les bordures de débogage ont été supprimées - plus d'encadrés rouges dans les PDFs générés
 };
