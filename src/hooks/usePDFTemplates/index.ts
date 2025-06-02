@@ -58,22 +58,70 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
     await loadTemplatesAndMappings();
   };
 
-  // Handle template deletion with mapping cleanup and reload
-  const deleteTemplate = async (templateId: string) => {
-    console.log('🔄 Suppression complète du template:', templateId);
+  // Nouvelle fonction pour forcer une synchronisation complète
+  const forceSyncWithBackend = async () => {
+    console.log('🔄 Synchronisation forcée avec le backend...');
+    try {
+      setLoading(true);
+      
+      // Recharger TOUT depuis la base de données
+      const { loadedTemplates, loadedMappings } = await dataLoader.loadTemplatesAndMappings();
+      
+      // Mettre à jour l'état avec les données fraîches
+      templateOps.setTemplates(loadedTemplates);
+      mappingOps.setTemplateMappings(loadedMappings);
+      
+      console.log('✅ Synchronisation complète terminée:', loadedTemplates.length, 'templates trouvés');
+    } catch (error) {
+      console.error('❌ Erreur lors de la synchronisation:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Wrapper pour les opérations de template avec synchronisation automatique
+  const saveTemplateWithSync = async (file: File, fileName: string): Promise<string> => {
+    console.log('🔄 Sauvegarde avec synchronisation automatique...');
     
-    // Supprimer le template (qui inclut maintenant un rechargement automatique)
+    const templateId = await templateOps.saveTemplate(file, fileName);
+    
+    // Forcer la synchronisation après la sauvegarde
+    await forceSyncWithBackend();
+    
+    console.log('✅ Sauvegarde et synchronisation terminées');
+    return templateId;
+  };
+
+  const renameTemplateWithSync = async (templateId: string, newName: string) => {
+    console.log('🔄 Renommage avec synchronisation automatique...');
+    
+    await templateOps.renameTemplate(templateId, newName);
+    
+    // Forcer la synchronisation après le renommage
+    await forceSyncWithBackend();
+    
+    console.log('✅ Renommage et synchronisation terminés');
+  };
+
+  const deleteTemplateWithSync = async (templateId: string) => {
+    console.log('🔄 Suppression avec synchronisation automatique...');
+    
+    // Supprimer le template côté backend
     await templateOps.deleteTemplate(templateId);
     
-    // Supprimer les mappings associés
+    // Supprimer les mappings locaux immédiatement
     mappingOps.setTemplateMappings(prev => {
       const updated = { ...prev };
       delete updated[templateId];
-      console.log('🗑️ Mappings supprimés pour le template:', templateId);
+      console.log('🗑️ Mappings locaux supprimés pour:', templateId);
       return updated;
     });
     
-    console.log('✅ Suppression complète terminée pour:', templateId);
+    // Forcer la synchronisation complète pour être sûr
+    await forceSyncWithBackend();
+    
+    console.log('✅ Suppression et synchronisation terminées pour:', templateId);
   };
 
   return {
@@ -81,9 +129,9 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
     templateMappings: mappingOps.templateMappings,
     loading,
     error,
-    saveTemplate: templateOps.saveTemplate,
-    renameTemplate: templateOps.renameTemplate,
-    deleteTemplate,
+    saveTemplate: saveTemplateWithSync,
+    renameTemplate: renameTemplateWithSync,
+    deleteTemplate: deleteTemplateWithSync,
     saveMappings: mappingOps.saveMappings,
     getTemplate: templateOps.getTemplate,
     loadTemplates: retryLoad

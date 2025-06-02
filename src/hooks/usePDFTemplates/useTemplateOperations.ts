@@ -28,9 +28,6 @@ export const useTemplateOperations = () => {
       console.log('🔄 Sauvegarde du template:', fileName);
       
       const newTemplate = await TemplateOperations.saveTemplate(file, fileName);
-      
-      // Recharger tous les templates pour être sûr de la cohérence
-      await reloadTemplates();
 
       toast({
         title: "Template sauvegardé",
@@ -59,9 +56,6 @@ export const useTemplateOperations = () => {
       console.log('🔄 Renommage du template:', templateId, 'vers:', newName);
       
       await TemplateOperations.renameTemplate(templateId, newName);
-      
-      // Recharger tous les templates pour être sûr de la cohérence
-      await reloadTemplates();
 
       toast({
         title: "Template renommé",
@@ -86,22 +80,18 @@ export const useTemplateOperations = () => {
   const deleteTemplate = async (templateId: string) => {
     try {
       setError(null);
-      console.log('🔄 Suppression du template:', templateId);
+      console.log('🔄 Suppression backend du template:', templateId);
       
-      // Supprimer le template côté backend
+      // Supprimer le template côté backend uniquement
       await TemplateOperations.deleteTemplate(templateId);
       console.log('✅ Template supprimé côté backend');
-      
-      // Recharger tous les templates depuis la base de données pour être sûr de la cohérence
-      await reloadTemplates();
-      console.log('✅ Templates rechargés après suppression');
 
       toast({
         title: "Template supprimé",
         description: "Le template a été supprimé avec succès.",
       });
       
-      console.log('✅ Suppression template terminée avec rechargement');
+      console.log('✅ Suppression backend terminée');
     } catch (error) {
       console.error('❌ Erreur suppression template:', error);
       const errorMessage = error instanceof Error ? error.message : "Impossible de supprimer le template.";

@@ -44,7 +44,9 @@ export const useTemplateHandlers = ({
     }
 
     try {
+      console.log('🔄 Upload de template depuis handler...');
       const templateId = await saveTemplate(file, fileName);
+      
       setSelectedTemplateId(templateId);
       setShowUpload(false);
       setPreviewUrl('');
@@ -55,6 +57,8 @@ export const useTemplateHandlers = ({
         setFieldMappings([]);
       }
 
+      console.log('✅ Upload terminé depuis handler');
+      
       toast({
         title: "Template uploadé avec succès",
         description: `Le template "${fileName}" est maintenant disponible.`,
@@ -105,7 +109,7 @@ export const useTemplateHandlers = ({
         setPreviewUrl('');
       }
       
-      // Supprimer le template (qui inclut maintenant un rechargement automatique)
+      // Supprimer le template (avec synchronisation automatique maintenant)
       await deleteTemplate(templateId);
       
       console.log('✅ Suppression template terminée depuis handler');
@@ -136,7 +140,9 @@ export const useTemplateHandlers = ({
     }
 
     try {
+      console.log('🔄 Renommage depuis handler...');
       await renameTemplate(templateId, newName);
+      console.log('✅ Renommage terminé depuis handler');
     } catch (error) {
       console.error('Erreur renommage template:', error);
       toast({
