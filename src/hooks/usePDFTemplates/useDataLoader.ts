@@ -10,30 +10,46 @@ export const useDataLoader = () => {
     try {
       console.log('🧹 Nettoyage des données orphelines...');
       
-      // Supprimer tous les templates orphelins (sans fichier correspondant)
-      const { error: deleteTemplatesError } = await supabase
+      // Vérifier l'utilisateur connecté
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('Aucun utilisateur connecté, nettoyage annulé');
+        return;
+      }
+
+      // Nettoyer seulement les données réellement orphelines en vérifiant l'existence des fichiers
+      const { data: templates } = await supabase
         .from('pdf_templates')
-        .delete()
-        .neq('id', 'dummy'); // Supprime tous les templates
-      
-      if (deleteTemplatesError) {
-        console.error('Erreur suppression templates:', deleteTemplatesError);
-      } else {
-        console.log('✅ Templates orphelins supprimés');
+        .select('*');
+
+      if (templates) {
+        for (const template of templates) {
+          // Vérifier si le fichier existe dans le storage
+          const { error: downloadError } = await supabase.storage
+            .from('pdf-templates')
+            .download(template.file_path);
+
+          if (downloadError) {
+            console.log(`🗑️ Template orphelin détecté: ${template.name} (fichier inexistant)`);
+            
+            // Supprimer les mappings associés d'abord
+            await supabase
+              .from('pdf_template_mappings')
+              .delete()
+              .eq('template_id', template.id);
+            
+            // Puis supprimer le template
+            await supabase
+              .from('pdf_templates')
+              .delete()
+              .eq('id', template.id);
+            
+            console.log(`🗑️ Template orphelin supprimé: ${template.name}`);
+          }
+        }
       }
 
-      // Supprimer tous les mappings orphelins
-      const { error: deleteMappingsError } = await supabase
-        .from('pdf_template_mappings')
-        .delete()
-        .neq('id', 'dummy'); // Supprime tous les mappings
-      
-      if (deleteMappingsError) {
-        console.error('Erreur suppression mappings:', deleteMappingsError);
-      } else {
-        console.log('✅ Mappings orphelins supprimés');
-      }
-
+      console.log('✅ Nettoyage terminé');
     } catch (error) {
       console.error('❌ Erreur lors du nettoyage:', error);
     }
@@ -43,17 +59,13 @@ export const useDataLoader = () => {
     try {
       console.log('🔄 Chargement des templates...');
       
-      // D'abord nettoyer les données orphelines
-      await cleanupOrphanedData();
-      
       const loadedTemplates = await SupabasePDFStorage.loadTemplates();
-      console.log(`✅ ${loadedTemplates.length} templates chargés après nettoyage`);
+      console.log(`✅ ${loadedTemplates.length} templates chargés`);
       return loadedTemplates;
     } catch (error) {
       console.error('❌ Erreur lors du chargement des templates:', error);
       const errorMessage = error instanceof Error ? error.message : "Impossible de charger les templates.";
       
-      // Afficher un toast d'erreur plus spécifique
       toast({
         title: "Erreur de connexion au stockage",
         description: errorMessage,

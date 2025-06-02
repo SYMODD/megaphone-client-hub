@@ -33,9 +33,6 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
       
       console.log('🔄 Chargement des templates et mappings...');
       
-      // Forcer un nettoyage complet à chaque chargement
-      await dataLoader.cleanupOrphanedData();
-      
       const { loadedTemplates, loadedMappings } = await dataLoader.loadTemplatesAndMappings();
       
       templateOps.setTemplates(loadedTemplates);
@@ -62,14 +59,11 @@ export const usePDFTemplates = (): UsePDFTemplatesReturn => {
     await loadTemplatesAndMappings();
   };
 
-  // Nouvelle fonction pour forcer une synchronisation complète
+  // Fonction pour forcer une synchronisation complète
   const forceSyncWithBackend = async () => {
     console.log('🔄 Synchronisation forcée avec le backend...');
     try {
       setLoading(true);
-      
-      // Nettoyer d'abord les données orphelines
-      await dataLoader.cleanupOrphanedData();
       
       // Recharger TOUT depuis la base de données
       const { loadedTemplates, loadedMappings } = await dataLoader.loadTemplatesAndMappings();

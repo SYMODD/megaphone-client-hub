@@ -118,15 +118,7 @@ export type Database = {
           x?: number | null
           y?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_template_id"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "pdf_templates"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       pdf_templates: {
         Row: {
