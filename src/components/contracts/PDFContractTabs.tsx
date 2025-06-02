@@ -2,13 +2,14 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Settings, FileDown } from "lucide-react";
+import { FileText, Settings, FileDown, Lock } from "lucide-react";
 import { PDFTemplateUpload } from "./PDFTemplateUpload";
 import { PDFTemplateSelector } from "./PDFTemplateSelector";
 import { PDFFieldMapping } from "./PDFFieldMapping";
 import { ClientSelector } from "./ClientSelector";
 import { PDFGenerationTab } from "./PDFGenerationTab";
 import { PDFTemplate, FieldMapping } from "@/hooks/usePDFTemplates";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Client {
   id: string;
@@ -63,6 +64,9 @@ export const PDFContractTabs = ({
   onUploadNew,
   onCancelUpload
 }: PDFContractTabsProps) => {
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === 'admin';
+
   return (
     <Tabs defaultValue="templates" className="space-y-6">
       <TabsList className="grid w-full grid-cols-4">
@@ -85,11 +89,20 @@ export const PDFContractTabs = ({
       </TabsList>
 
       <TabsContent value="templates">
-        {showUpload ? (
+        {showUpload && isAdmin ? (
           <PDFTemplateUpload 
             onTemplateUploaded={onTemplateUploaded}
             onCancel={onCancelUpload}
           />
+        ) : showUpload && !isAdmin ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Lock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Accès restreint</h3>
+              <p className="text-gray-500">Seuls les administrateurs peuvent uploader de nouveaux templates.</p>
+              <p className="text-sm text-gray-400 mt-2">Contactez votre administrateur si vous avez besoin d'un nouveau template.</p>
+            </CardContent>
+          </Card>
         ) : (
           <PDFTemplateSelector
             templates={templates}

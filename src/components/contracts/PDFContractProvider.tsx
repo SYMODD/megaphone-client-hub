@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { usePDFTemplates, PDFTemplate, FieldMapping } from "@/hooks/usePDFTemplates";
 import { generatePDFContract, downloadPDFContract, previewPDFContract } from "@/utils/pdfContractGenerator";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Client {
   id: string;
@@ -68,6 +69,7 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [showUpload, setShowUpload] = useState(false);
   const { toast } = useToast();
+  const { profile } = useAuth();
 
   const {
     templates,
@@ -84,7 +86,8 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
     templatesCount: templates.length,
     loading,
     selectedTemplateId,
-    selectedClient: !!selectedClient
+    selectedClient: !!selectedClient,
+    userRole: profile?.role
   });
 
   // Cleanup effect
@@ -97,6 +100,16 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
   }, [previewUrl]);
 
   const handleTemplateUploaded = async (file: File, fileName: string) => {
+    // Vérification du rôle côté client avant même de tenter l'upload
+    if (profile?.role !== 'admin') {
+      toast({
+        title: "Accès refusé",
+        description: "Seuls les administrateurs peuvent uploader des templates.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const templateId = await saveTemplate(file, fileName);
       setSelectedTemplateId(templateId);
@@ -153,6 +166,16 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
   };
 
   const handleDeleteTemplate = async (templateId: string) => {
+    // Vérification du rôle pour la suppression
+    if (profile?.role !== 'admin') {
+      toast({
+        title: "Accès refusé",
+        description: "Seuls les administrateurs peuvent supprimer des templates.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await deleteTemplate(templateId);
       if (selectedTemplateId === templateId) {
@@ -171,6 +194,16 @@ export const PDFContractProvider = ({ children }: PDFContractProviderProps) => {
   };
 
   const handleRenameTemplate = async (templateId: string, newName: string) => {
+    // Vérification du rôle pour le renommage
+    if (profile?.role !== 'admin') {
+      toast({
+        title: "Accès refusé",
+        description: "Seuls les administrateurs peuvent renommer des templates.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await renameTemplate(templateId, newName);
     } catch (error) {

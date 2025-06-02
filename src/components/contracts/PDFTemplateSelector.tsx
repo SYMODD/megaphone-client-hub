@@ -33,6 +33,9 @@ export const PDFTemplateSelector = ({
   const { profile } = useAuth();
   const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
 
+  // Vérifier si l'utilisateur est admin
+  const isAdmin = profile?.role === 'admin';
+
   const handleStartEdit = (template: PDFTemplate) => {
     setEditingTemplateId(template.id);
     setEditingName(template.name);
@@ -59,7 +62,10 @@ export const PDFTemplateSelector = ({
           Gestion des Templates PDF
         </CardTitle>
         <CardDescription>
-          Gérez vos templates : sélectionnez, renommez ou uploadez-en de nouveaux
+          {isAdmin 
+            ? "Gérez vos templates : sélectionnez, renommez ou uploadez-en de nouveaux"
+            : "Sélectionnez un template parmi ceux disponibles"
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -69,7 +75,7 @@ export const PDFTemplateSelector = ({
               <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-blue-700">
                 <p className="font-medium">Information pour les agents</p>
-                <p>Vous voyez vos templates personnels et ceux créés par les administrateurs.</p>
+                <p>Vous voyez les templates créés par les administrateurs et pouvez les utiliser pour générer des contrats.</p>
               </div>
             </div>
           )}
@@ -95,10 +101,12 @@ export const PDFTemplateSelector = ({
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={onUploadNew} variant="outline">
-              <Plus className="w-4 h-4 mr-2" />
-              Nouveau Template
-            </Button>
+            {isAdmin && (
+              <Button onClick={onUploadNew} variant="outline">
+                <Plus className="w-4 h-4 mr-2" />
+                Nouveau Template
+              </Button>
+            )}
           </div>
 
           {selectedTemplate && (
@@ -126,14 +134,16 @@ export const PDFTemplateSelector = ({
                   ) : (
                     <div className="flex items-center gap-2">
                       <h4 className="font-medium text-blue-900">{selectedTemplate.name}</h4>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleStartEdit(selectedTemplate)}
-                        className="h-6 w-6 p-0"
-                      >
-                        <Edit2 className="w-3 h-3" />
-                      </Button>
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleStartEdit(selectedTemplate)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </Button>
+                      )}
                     </div>
                   )}
                   <div className="flex items-center gap-4 text-sm text-blue-700">
@@ -147,14 +157,16 @@ export const PDFTemplateSelector = ({
                     </div>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDeleteTemplate(selectedTemplate.id)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDeleteTemplate(selectedTemplate.id)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -164,7 +176,7 @@ export const PDFTemplateSelector = ({
               <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
               <p>Aucun template accessible</p>
               {profile?.role === 'agent' ? (
-                <p className="text-sm">Uploadez votre premier template ou les templates des administrateurs apparaîtront automatiquement ici</p>
+                <p className="text-sm">Les templates des administrateurs apparaîtront automatiquement ici une fois créés</p>
               ) : (
                 <p className="text-sm">Cliquez sur "Nouveau Template" pour commencer</p>
               )}
