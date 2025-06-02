@@ -32,6 +32,8 @@ export const processPageContent = async (
       const documentType = mapping.clientField.replace('checkbox_', '');
       const clientDocumentType = replacementData['document_type'] || '';
       
+      console.log(`🔍 Vérification checkbox ${documentType} contre type client: "${clientDocumentType}"`);
+      
       // Déterminer si la case doit être cochée
       let shouldCheck = false;
       switch (documentType) {
@@ -46,13 +48,20 @@ export const processPageContent = async (
           break;
       }
       
-      // Utiliser des caractères compatibles avec WinAnsi pour les cases à cocher
-      value = shouldCheck ? 'X' : '☐';
-      console.log(`📋 Checkbox ${documentType}: ${shouldCheck ? 'cochée (X)' : 'non cochée (☐)'} (type client: ${clientDocumentType})`);
+      // Utiliser X pour coché et chaîne vide pour non coché
+      value = shouldCheck ? 'X' : '';
+      console.log(`📋 Checkbox ${documentType}: ${shouldCheck ? 'cochée (X)' : 'non cochée (vide)'} (type client: ${clientDocumentType})`);
     }
     
     if (!value && !mapping.clientField.startsWith('checkbox_')) {
       console.warn(`⚠️ Aucune valeur trouvée pour le champ "${mapping.clientField}"`);
+      return;
+    }
+    
+    // Si c'est une checkbox non cochée (valeur vide), ne pas dessiner de texte
+    if (mapping.clientField.startsWith('checkbox_') && !value) {
+      console.log(`⚪ Case non cochée ignorée: "${mapping.placeholder}"`);
+      fieldsProcessed++;
       return;
     }
     
@@ -73,20 +82,8 @@ export const processPageContent = async (
     }
     
     try {
-      // Pour les cases à cocher, utiliser un caractère simple compatible
-      let displayValue = String(value);
-      if (mapping.clientField.startsWith('checkbox_')) {
-        // Utiliser un X simple pour les cases cochées et un carré simple pour les non cochées
-        displayValue = displayValue === 'X' ? 'X' : '☐';
-        
-        // Si on a encore des problèmes avec ☐, utiliser un caractère de base
-        if (displayValue === '☐') {
-          displayValue = '[ ]';
-        }
-      }
-      
       // Dessiner le texte à la position spécifiée
-      page.drawText(displayValue, {
+      page.drawText(String(value), {
         x: x,
         y: y,
         size: fontSize,
@@ -94,29 +91,11 @@ export const processPageContent = async (
         color: rgb(0, 0, 0),
       });
       
-      console.log(`✅ Champ ajouté: "${mapping.placeholder}" = "${displayValue}" à (${x}, ${y}), taille: ${fontSize}`);
+      console.log(`✅ Champ ajouté: "${mapping.placeholder}" = "${value}" à (${x}, ${y}), taille: ${fontSize}`);
       fieldsProcessed++;
       
     } catch (error) {
       console.error(`❌ Erreur lors de l'ajout du champ "${mapping.placeholder}":`, error);
-      
-      // Fallback : essayer avec un caractère encore plus simple
-      if (mapping.clientField.startsWith('checkbox_')) {
-        try {
-          const fallbackValue = value === 'X' ? 'X' : 'O';
-          page.drawText(fallbackValue, {
-            x: x,
-            y: y,
-            size: fontSize,
-            font: font,
-            color: rgb(0, 0, 0),
-          });
-          console.log(`✅ Fallback réussi: "${mapping.placeholder}" = "${fallbackValue}" à (${x}, ${y}), taille: ${fontSize}`);
-          fieldsProcessed++;
-        } catch (fallbackError) {
-          console.error(`❌ Échec du fallback pour "${mapping.placeholder}":`, fallbackError);
-        }
-      }
     }
   });
   

@@ -13,6 +13,21 @@ export const prepareReplacementData = (client: Client, fieldMappings: FieldMappi
   // En priorité : numero_passeport, puis autres champs de document
   const numeroDocument = client.numero_passeport || '';
   
+  // Extraire le type de document depuis les observations
+  let documentType = (client as any).document_type || '';
+  
+  // Si pas de document_type direct, essayer d'extraire depuis les observations
+  if (!documentType && client.observations) {
+    const observations = client.observations.toLowerCase();
+    if (observations.includes('type de document: cin')) {
+      documentType = 'cin';
+    } else if (observations.includes('type de document: passeport')) {
+      documentType = 'passeport_marocain'; // Par défaut passeport marocain
+    } else if (observations.includes('type de document: carte')) {
+      documentType = 'carte_sejour';
+    }
+  }
+  
   const data = {
     'prenom': client.prenom || '',
     'nom': client.nom || '',
@@ -25,7 +40,7 @@ export const prepareReplacementData = (client: Client, fieldMappings: FieldMappi
     'date_aujourdhui': currentDate,
     'entreprise': 'Sud Megaphone',
     'annee_courante': new Date().getFullYear().toString(),
-    'document_type': (client as any).document_type || '', // Type de document pour les checkboxes
+    'document_type': documentType, // Type de document pour les checkboxes
   };
 
   // Ajouter les valeurs par défaut des champs personnalisés
@@ -39,5 +54,6 @@ export const prepareReplacementData = (client: Client, fieldMappings: FieldMappi
   });
   
   console.log('📋 Données préparées pour le remplacement:', data);
+  console.log('🔍 Type de document détecté:', documentType);
   return data;
 };
