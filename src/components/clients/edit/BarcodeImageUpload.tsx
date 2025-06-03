@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useImageUpload } from "@/hooks/useBarcodeScanning/useImageUpload";
+import { useImageUpload } from "@/hooks/useImageUpload";
 import { supabase } from "@/integrations/supabase/client";
 
 interface BarcodeImageUploadProps {
@@ -20,12 +20,12 @@ export const BarcodeImageUpload = ({ clientId, onImageUploaded }: BarcodeImageUp
     const file = event.target.files?.[0];
     if (!file) return;
 
-    console.log("📤 Upload d'image de code-barres pour le client:", clientId);
+    console.log("📤 Upload image barcode pour client:", clientId);
     
     try {
       setIsUploading(true);
       
-      // Upload de l'image vers barcode-images
+      // Upload vers barcode-images
       const imageUrl = await uploadBarcodeImage(file);
       
       if (!imageUrl) {
@@ -33,14 +33,9 @@ export const BarcodeImageUpload = ({ clientId, onImageUploaded }: BarcodeImageUp
         return;
       }
 
-      console.log("✅ Image uploadée vers barcode-images:", imageUrl);
+      console.log("✅ Image uploadée:", imageUrl);
 
-      // Vérifier que l'URL contient bien "barcode-images"
-      if (!imageUrl.includes('barcode-images')) {
-        console.warn("⚠️ ATTENTION: L'image n'est pas dans le bon bucket!");
-      }
-
-      // Mise à jour du client avec l'URL de l'image
+      // Mise à jour du client
       const { error } = await supabase
         .from('clients')
         .update({ code_barre_image_url: imageUrl })
@@ -52,18 +47,18 @@ export const BarcodeImageUpload = ({ clientId, onImageUploaded }: BarcodeImageUp
         return;
       }
 
-      console.log("✅ Client mis à jour avec l'image de code-barres");
+      console.log("✅ Client mis à jour avec l'image");
       toast.success("Image de code-barres ajoutée avec succès!");
       
-      // Appeler immédiatement le callback pour mettre à jour l'interface
+      // Callback immédiat
       onImageUploaded(imageUrl);
       
     } catch (error) {
-      console.error("❌ Erreur lors de l'upload:", error);
+      console.error("❌ Erreur upload:", error);
       toast.error("Erreur lors de l'upload de l'image");
     } finally {
       setIsUploading(false);
-      // Reset du input
+      // Reset input
       if (event.target) {
         event.target.value = '';
       }
@@ -101,7 +96,7 @@ export const BarcodeImageUpload = ({ clientId, onImageUploaded }: BarcodeImageUp
         </Button>
       </div>
       <p className="text-xs text-gray-500">
-        Formats acceptés: JPG, PNG, WebP. Max 10MB. L'image sera sauvegardée dans barcode-images.
+        Formats acceptés: JPG, PNG, WebP. Max 10MB. Sauvegardé dans barcode-images.
       </p>
     </div>
   );
