@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,22 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Edit, Save, X, Phone, Barcode, Image } from "lucide-react";
-
-interface Client {
-  id: string;
-  nom: string;
-  prenom: string;
-  nationalite: string;
-  numero_passeport: string;
-  numero_telephone?: string;
-  code_barre?: string;
-  date_enregistrement: string;
-  photo_url?: string;
-  observations?: string;
-  created_at: string;
-  updated_at: string;
-  agent_id: string;
-}
+import { Client } from "@/hooks/useClientData/types";
 
 interface ClientEditDialogProps {
   client: Client | null;
