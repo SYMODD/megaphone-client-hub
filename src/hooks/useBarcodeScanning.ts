@@ -13,7 +13,6 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
   const [isScanning, setIsScanning] = useState(false);
   const [scannedImage, setScannedImage] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
-  const [apiKey] = useState("K87783069388957");
 
   const extractBarcodeAndPhone = (text: string): { barcode?: string; phone?: string } => {
     console.log("Extracting barcode and phone from text:", text);
@@ -33,7 +32,7 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
       
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('apikey', apiKey);
+      formData.append('apikey', 'K87783069388957');
       formData.append('language', 'eng');
       formData.append('isOverlayRequired', 'true');
       formData.append('detectOrientation', 'true');
@@ -53,11 +52,13 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
       console.log("Barcode OCR API Response:", result);
 
       if (result.IsErroredOnProcessing || result.OCRExitCode !== 1) {
-        toast.error(result.ErrorMessage || "Erreur lors du traitement OCR");
+        const errorMessage = result.ErrorMessage || "Erreur lors du traitement OCR";
+        console.error("OCR Error:", errorMessage);
+        toast.error(errorMessage);
         return;
       }
 
-      const parsedText = result.ParsedResults[0]?.ParsedText || "";
+      const parsedText = result.ParsedResults?.[0]?.ParsedText || "";
       const extractedData = extractBarcodeAndPhone(parsedText);
 
       if (extractedData.barcode || extractedData.phone) {
@@ -75,7 +76,10 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
   };
 
   const handleImageUpload = async (file: File) => {
-    if (!file) return;
+    if (!file) {
+      console.error("No file provided");
+      return;
+    }
 
     try {
       setIsCompressing(true);
@@ -86,22 +90,28 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
 
       // Compresser l'image si nécessaire
       let processedFile = file;
-      if (originalSizeKB > 800) { // Compresser si plus de 800KB pour être sûr de rester sous 1MB
+      if (originalSizeKB > 800) {
         console.log("Compression de l'image nécessaire...");
-        processedFile = await compressImage(file, {
-          maxWidth: 1024,
-          maxHeight: 1024,
-          quality: 0.8,
-          maxSizeKB: 800
-        });
-        
-        const compressedSizeKB = processedFile.size / 1024;
-        const compressionRatio = ((file.size - processedFile.size) / file.size) * 100;
-        
-        console.log(`Image compressée: ${originalSizeKB.toFixed(1)}KB → ${compressedSizeKB.toFixed(1)}KB (-${compressionRatio.toFixed(0)}%)`);
-        
-        if (compressionRatio > 10) {
-          toast.success(`Image compressée de ${compressionRatio.toFixed(0)}%`);
+        try {
+          processedFile = await compressImage(file, {
+            maxWidth: 1024,
+            maxHeight: 1024,
+            quality: 0.8,
+            maxSizeKB: 800
+          });
+          
+          const compressedSizeKB = processedFile.size / 1024;
+          const compressionRatio = ((file.size - processedFile.size) / file.size) * 100;
+          
+          console.log(`Image compressée: ${originalSizeKB.toFixed(1)}KB → ${compressedSizeKB.toFixed(1)}KB (-${compressionRatio.toFixed(0)}%)`);
+          
+          if (compressionRatio > 10) {
+            toast.success(`Image compressée de ${compressionRatio.toFixed(0)}%`);
+          }
+        } catch (compressionError) {
+          console.error("Erreur lors de la compression:", compressionError);
+          toast.warning("Compression échouée, utilisation de l'image originale");
+          processedFile = file;
         }
       } else {
         console.log("Compression non nécessaire, taille acceptable");
@@ -113,7 +123,13 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
       const reader = new FileReader();
       reader.onload = (event) => {
         const result = event.target?.result as string;
-        setScannedImage(result);
+        if (result) {
+          setScannedImage(result);
+        }
+      };
+      reader.onerror = () => {
+        console.error("Erreur lors de la lecture du fichier");
+        toast.error("Erreur lors de la lecture du fichier");
       };
       reader.readAsDataURL(processedFile);
 
@@ -124,15 +140,21 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
       toast.error("Erreur lors du traitement de l'image");
       setIsCompressing(false);
       
-      // En cas d'erreur de compression, utiliser le fichier original
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setScannedImage(result);
-      };
-      reader.readAsDataURL(file);
-      
-      await scanForBarcodeAndPhone(file);
+      // En cas d'erreur, essayer d'afficher l'image originale
+      try {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const result = event.target?.result as string;
+          if (result) {
+            setScannedImage(result);
+          }
+        };
+        reader.readAsDataURL(file);
+        
+        await scanForBarcodeAndPhone(file);
+      } catch (fallbackError) {
+        console.error("Erreur lors du fallback:", fallbackError);
+      }
     }
   };
 
