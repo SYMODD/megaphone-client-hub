@@ -10,7 +10,7 @@ export const useOCRScanning = () => {
   const [apiKey] = useState("K82173618788957");
 
   const scanForBarcodeAndPhone = async (file: File, onBarcodeScanned: (barcode: string, phone?: string, barcodeImageUrl?: string) => void) => {
-    console.log("=== DÉBUT TEST SCAN BARCODE ===");
+    console.log("=== DÉBUT SCAN OCR DEPUIS PAGE SCAN ===");
     console.log("🔍 Fichier à scanner:", {
       name: file.name,
       type: file.type,
@@ -25,7 +25,7 @@ export const useOCRScanning = () => {
       barcodeImageUrl = await uploadBarcodeImage(file);
       
       if (barcodeImageUrl) {
-        console.log("✅ Image sauvegardée avec succès:", barcodeImageUrl);
+        console.log("✅ Image sauvegardée avec succès dans barcode-images:", barcodeImageUrl);
         // Vérifier que l'URL contient bien "barcode-images"
         if (barcodeImageUrl.includes('barcode-images')) {
           console.log("✅ CORRECT: L'image est bien dans le bucket barcode-images");
@@ -77,13 +77,14 @@ export const useOCRScanning = () => {
       if (result.IsErroredOnProcessing || result.OCRExitCode !== 1) {
         const errorMsg = result.ErrorMessage || "Erreur lors du traitement OCR";
         console.error("❌ Erreur traitement OCR:", errorMsg);
-        toast.error(errorMsg);
         
         // Même en cas d'erreur OCR, on retourne l'image sauvegardée
         if (barcodeImageUrl) {
           console.log("💾 Retour de l'image sauvegardée malgré l'erreur OCR");
           onBarcodeScanned("", undefined, barcodeImageUrl);
           toast.info("Image sauvegardée, mais aucun texte détecté");
+        } else {
+          toast.error(errorMsg);
         }
         return;
       }
@@ -103,9 +104,10 @@ export const useOCRScanning = () => {
         phone: extractedData.phone,
         imageUrl: barcodeImageUrl
       };
-      console.log("🏆 Résultat final:", finalResult);
+      console.log("🏆 Résultat final depuis page scan:", finalResult);
 
-      // Callback avec toutes les données
+      // IMPORTANT: Appeler le callback avec toutes les données, y compris l'image
+      console.log("📞 APPEL DU CALLBACK avec image URL:", finalResult.imageUrl);
       onBarcodeScanned(finalResult.barcode, finalResult.phone, finalResult.imageUrl || undefined);
 
       // Messages de succès
@@ -115,14 +117,12 @@ export const useOCRScanning = () => {
       if (finalResult.imageUrl) successItems.push("image sauvegardée");
       
       if (successItems.length > 0) {
-        toast.success(`✅ ${successItems.join(" et ")} extraits avec succès!`);
-      } else {
-        toast.info("Image sauvegardée, mais aucune donnée textuelle détectée");
+        console.log(`✅ Succès: ${successItems.join(" et ")}`);
       }
       
-      console.log("=== FIN TEST SCAN BARCODE (SUCCÈS) ===");
+      console.log("=== FIN SCAN OCR DEPUIS PAGE SCAN (SUCCÈS) ===");
     } catch (error) {
-      console.error("=== ERREUR SCAN BARCODE ===");
+      console.error("=== ERREUR SCAN OCR DEPUIS PAGE SCAN ===");
       console.error("Détails de l'erreur:", error);
       
       if (error.name === 'AbortError') {
