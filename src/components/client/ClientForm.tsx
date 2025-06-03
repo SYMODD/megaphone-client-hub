@@ -5,7 +5,7 @@ import { PassportSection } from "./PassportSection";
 import { RegistrationSection } from "./RegistrationSection";
 import { FormActions } from "./FormActions";
 import { BarcodeScanner } from "./BarcodeScanner";
-import { useClientFormLogic } from "./ClientFormLogic";
+import { useClientFormLogic } from "@/hooks/useClientForm";
 
 export const ClientForm = () => {
   const { 
