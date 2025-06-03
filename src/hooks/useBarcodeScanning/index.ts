@@ -1,9 +1,9 @@
 
 import { useState, useCallback } from "react";
 import { useOCRScanning } from "./useOCRScanning";
-import { useImageProcessing } from "./useImageProcessing";
 import { useDataExtraction } from "./useDataExtraction";
 import { useImageUpload } from "./useImageUpload";
+import { compressImage } from "@/utils/imageCompression";
 
 interface UseBarcodeScanning {
   onBarcodeScanned: (barcode: string, phone?: string, barcodeImageUrl?: string) => void;
@@ -14,8 +14,7 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
   const [isCompressing, setIsCompressing] = useState(false);
   const [scannedImage, setScannedImage] = useState<string | null>(null);
 
-  const { scanWithOCR } = useOCRScanning();
-  const { compressImage } = useImageProcessing();
+  const { scanForBarcodeAndPhone } = useOCRScanning();
   const { extractBarcodeAndPhone } = useDataExtraction();
   const { uploadBarcodeImage } = useImageUpload();
 
@@ -50,36 +49,20 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
       
       console.log("✅ Image uploadée avec succès:", barcodeImageUrl);
 
-      // Analyse OCR
-      const ocrResult = await scanWithOCR(compressedFile);
-      
-      if (ocrResult?.text) {
-        console.log("📄 Texte OCR extrait:", ocrResult.text);
-        
-        // Extraction des données
-        const { barcode, phone } = extractBarcodeAndPhone(ocrResult.text);
-        
+      // Analyse OCR avec le callback approprié
+      await scanForBarcodeAndPhone(compressedFile, (barcode: string, phone?: string, imageUrl?: string) => {
         console.log("📊 Données extraites:", { barcode, phone, barcodeImageUrl });
         
-        // Transmission des données avec l'URL de l'image
-        if (barcode || phone) {
-          onBarcodeScanned(barcode || "", phone, barcodeImageUrl);
-        } else {
-          console.warn("⚠️ Aucune donnée extraite, mais image sauvegardée");
-          // Même si aucune donnée n'est extraite, on transmet l'URL de l'image
-          onBarcodeScanned("", "", barcodeImageUrl);
-        }
-      } else {
-        console.warn("⚠️ Aucun texte détecté par OCR, mais image sauvegardée");
-        // Même en cas d'échec OCR, on transmet l'URL de l'image
-        onBarcodeScanned("", "", barcodeImageUrl);
-      }
+        // Transmission des données avec l'URL de l'image uploadée
+        onBarcodeScanned(barcode || "", phone, barcodeImageUrl);
+      });
+
     } catch (error) {
       console.error("❌ Erreur lors du traitement:", error);
     } finally {
       setIsScanning(false);
     }
-  }, [scanWithOCR, compressImage, extractBarcodeAndPhone, uploadBarcodeImage, onBarcodeScanned]);
+  }, [scanForBarcodeAndPhone, extractBarcodeAndPhone, uploadBarcodeImage, onBarcodeScanned]);
 
   const resetScan = useCallback(() => {
     setScannedImage(null);
