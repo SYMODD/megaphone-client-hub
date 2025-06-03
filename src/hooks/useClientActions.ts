@@ -1,22 +1,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-
-interface Client {
-  id: string;
-  nom: string;
-  prenom: string;
-  nationalite: string;
-  numero_passeport: string;
-  numero_telephone?: string;
-  code_barre?: string;
-  date_enregistrement: string;
-  photo_url?: string;
-  observations?: string;
-  created_at: string;
-  updated_at: string;
-  agent_id: string;
-}
+import { Client } from "./useClientData/types";
 
 export const useClientActions = () => {
   const { toast } = useToast();
