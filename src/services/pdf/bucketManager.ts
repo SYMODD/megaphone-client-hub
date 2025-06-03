@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-const BUCKET_NAME = 'client-assets';
+const BUCKET_NAME = 'pdf-templates';
 
 export class BucketManager {
   static async ensureBucket(): Promise<boolean> {
@@ -11,24 +11,27 @@ export class BucketManager {
       // Test direct d'accès au bucket en listant les fichiers
       const { data: files, error: listError } = await supabase.storage
         .from(BUCKET_NAME)
-        .list('pdf-templates', { limit: 1 });
+        .list('', { limit: 1 });
 
       if (listError) {
         console.error('Erreur lors du test d\'accès au bucket:', listError);
+        console.error('Message d\'erreur détaillé:', listError.message);
         
         // Si le bucket n'existe pas, essayer de le créer
         if (listError.message.includes('Bucket not found') || listError.message.includes('does not exist')) {
-          console.log(`Tentative de création du bucket "${BUCKET_NAME}"`);
+          console.log(`Tentative de création du bucket: ${BUCKET_NAME}`);
+          
           const { error: createError } = await supabase.storage.createBucket(BUCKET_NAME, {
             public: true,
-            allowedMimeTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
+            allowedMimeTypes: ['application/pdf'],
+            fileSizeLimit: 10485760 // 10MB
           });
-          
-          if (createError && !createError.message.includes('already exists')) {
+
+          if (createError) {
             console.error('Erreur lors de la création du bucket:', createError);
             return false;
           }
-          
+
           console.log(`✅ Bucket "${BUCKET_NAME}" créé avec succès`);
           return true;
         }
@@ -36,7 +39,7 @@ export class BucketManager {
         return false;
       }
 
-      console.log(`✅ Bucket "${BUCKET_NAME}" accessible. Fichiers PDF trouvés:`, files?.length || 0);
+      console.log(`✅ Bucket "${BUCKET_NAME}" accessible. Fichiers trouvés:`, files?.length || 0);
       return true;
     } catch (error) {
       console.error('Erreur inattendue lors de la vérification du bucket:', error);
@@ -48,10 +51,10 @@ export class BucketManager {
     try {
       console.log(`Test d'accès au bucket: ${BUCKET_NAME}`);
 
-      // Test de listage des fichiers dans le dossier pdf-templates
+      // Test de listage des fichiers
       const { data: files, error: listError } = await supabase.storage
         .from(BUCKET_NAME)
-        .list('pdf-templates', { limit: 1 });
+        .list('', { limit: 1 });
 
       if (listError) {
         console.error('Erreur lors du test de listage:', listError);
@@ -61,10 +64,10 @@ export class BucketManager {
         };
       }
 
-      console.log(`✅ Test d'accès au bucket réussi. Fichiers PDF trouvés:`, files?.length || 0);
+      console.log(`✅ Test d'accès au bucket réussi. Fichiers trouvés:`, files?.length || 0);
       return {
         success: true,
-        message: `Bucket "${BUCKET_NAME}" accessible. ${files?.length || 0} fichier(s) PDF dans le répertoire.`
+        message: `Bucket "${BUCKET_NAME}" accessible. ${files?.length || 0} fichier(s) dans le répertoire racine.`
       };
     } catch (error) {
       console.error('Erreur lors du test d\'accès:', error);
@@ -83,7 +86,7 @@ export class BucketManager {
         return;
       }
 
-      console.log(`Synchronisation du bucket "${BUCKET_NAME}/pdf-templates" avec la base de données pour l'utilisateur:`, user.id);
+      console.log(`Synchronisation du bucket "${BUCKET_NAME}" avec la base de données pour l'utilisateur:`, user.id);
 
       // Test d'accès avant synchronisation
       const accessTest = await this.testBucketAccess();
@@ -92,10 +95,10 @@ export class BucketManager {
         throw new Error(accessTest.message);
       }
 
-      // Lister tous les fichiers PDF du bucket pour cet utilisateur
+      // Lister tous les fichiers du bucket pour cet utilisateur
       const { data: files, error: listError } = await supabase.storage
         .from(BUCKET_NAME)
-        .list(`pdf-templates/${user.id}`);
+        .list(user.id);
 
       if (listError) {
         console.error('Erreur lors du listage des fichiers du bucket:', listError);
@@ -103,10 +106,10 @@ export class BucketManager {
         throw new Error(`Impossible de lister les fichiers: ${listError.message}`);
       }
 
-      console.log(`Fichiers PDF trouvés dans le bucket pour l'utilisateur ${user.id}:`, files);
+      console.log(`Fichiers trouvés dans le bucket pour l'utilisateur ${user.id}:`, files);
 
       if (!files || files.length === 0) {
-        console.log('Aucun fichier PDF trouvé dans le bucket pour cet utilisateur');
+        console.log('Aucun fichier trouvé dans le bucket pour cet utilisateur');
         return;
       }
 
@@ -122,7 +125,7 @@ export class BucketManager {
       // Créer les entrées manquantes en base de données
       for (const file of files) {
         if (file.name.toLowerCase().endsWith('.pdf')) {
-          const filePath = `pdf-templates/${user.id}/${file.name}`;
+          const filePath = `${user.id}/${file.name}`;
           
           if (!existingPaths.has(filePath)) {
             console.log('Ajout du template manquant en base de données:', file.name);

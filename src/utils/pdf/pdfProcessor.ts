@@ -1,3 +1,4 @@
+
 import { rgb } from 'pdf-lib';
 import type { FieldMapping, ReplacementData } from './types';
 
@@ -13,14 +14,6 @@ export const processPageContent = async (
   
   let fieldsProcessed = 0;
   
-  // CORRECTION: Debugging complet pour l'image du code-barres
-  console.log(`🔍 Traitement image code-barres:`, {
-    barcodeImageUrl,
-    type: typeof barcodeImageUrl,
-    length: barcodeImageUrl?.length,
-    isValid: barcodeImageUrl && barcodeImageUrl !== 'undefined' && barcodeImageUrl.trim() !== ''
-  });
-  
   // Filtrer les mappings valides
   const validMappings = fieldMappings.filter(mapping => 
     mapping.placeholder && 
@@ -33,58 +26,20 @@ export const processPageContent = async (
   
   // Traiter chaque mapping de champ valide
   for (const mapping of validMappings) {
-    // CORRECTION: Gestion spéciale et améliorée pour l'image du code-barres
-    if (mapping.clientField === 'code_barre_image') {
-      console.log(`🖼️ Traitement mapping image code-barres:`, {
-        placeholder: mapping.placeholder,
-        barcodeImageUrl,
-        hasUrl: !!barcodeImageUrl,
-        isValidUrl: barcodeImageUrl && barcodeImageUrl !== 'undefined' && barcodeImageUrl.trim() !== ''
-      });
-      
-      // CORRECTION: Vérifications strictes pour éviter "undefined"
-      if (!barcodeImageUrl || barcodeImageUrl === 'undefined' || barcodeImageUrl.trim() === '') {
-        console.warn(`⚠️ Image code-barres invalide ou manquante pour le mapping "${mapping.placeholder}"`);
-        continue;
-      }
-      
+    // Gestion spéciale pour l'image du code-barres
+    if (mapping.clientField === 'code_barre_image' && barcodeImageUrl) {
       try {
-        console.log(`🖼️ Téléchargement de l'image code-barres: ${barcodeImageUrl}`);
+        console.log(`🖼️ Traitement de l'image code-barres: ${barcodeImageUrl}`);
         
-        // Télécharger l'image avec timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes max
-        
-        const imageResponse = await fetch(barcodeImageUrl, {
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
+        // Télécharger l'image
+        const imageResponse = await fetch(barcodeImageUrl);
         if (!imageResponse.ok) {
-          console.error(`❌ Erreur HTTP lors du téléchargement: ${imageResponse.status} ${imageResponse.statusText}`);
+          console.error(`❌ Impossible de télécharger l'image: ${imageResponse.status}`);
           continue;
         }
         
         const imageBytes = await imageResponse.arrayBuffer();
-        console.log(`📥 Image téléchargée, taille: ${imageBytes.byteLength} bytes`);
-        
-        if (imageBytes.byteLength === 0) {
-          console.error(`❌ Image vide téléchargée`);
-          continue;
-        }
-        
-        // Déterminer le type d'image et l'intégrer
-        let image;
-        const contentType = imageResponse.headers.get('content-type') || '';
-        
-        if (contentType.includes('png') || barcodeImageUrl.toLowerCase().includes('.png')) {
-          image = await page.doc.embedPng(imageBytes);
-          console.log(`✅ Image PNG intégrée`);
-        } else {
-          image = await page.doc.embedJpg(imageBytes);
-          console.log(`✅ Image JPG intégrée`);
-        }
+        const image = await page.doc.embedJpg(imageBytes);
         
         // Utiliser les coordonnées spécifiées ou des positions par défaut
         const x = mapping.x || 100;
@@ -103,29 +58,8 @@ export const processPageContent = async (
         console.log(`✅ Image code-barres ajoutée à (${x}, ${y}), taille: ${imageWidth}x${imageHeight}`);
         fieldsProcessed++;
         continue;
-        
       } catch (error) {
         console.error(`❌ Erreur lors de l'ajout de l'image code-barres:`, error);
-        console.error(`URL problématique: "${barcodeImageUrl}"`);
-        
-        // Ajouter un texte de remplacement en cas d'erreur
-        try {
-          const x = mapping.x || 100;
-          const y = mapping.y || (height - 200);
-          
-          page.drawText('[Image code-barres non disponible]', {
-            x: x,
-            y: y,
-            size: 10,
-            font: font,
-            color: rgb(0.7, 0.7, 0.7),
-          });
-          
-          console.log(`⚠️ Texte de remplacement ajouté pour l'image manquante`);
-        } catch (textError) {
-          console.error(`❌ Impossible d'ajouter le texte de remplacement:`, textError);
-        }
-        
         continue;
       }
     }
