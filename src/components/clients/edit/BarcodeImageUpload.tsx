@@ -25,7 +25,7 @@ export const BarcodeImageUpload = ({ clientId, onImageUploaded }: BarcodeImageUp
     try {
       setIsUploading(true);
       
-      // Upload de l'image
+      // Upload de l'image vers barcode-images
       const imageUrl = await uploadBarcodeImage(file);
       
       if (!imageUrl) {
@@ -33,7 +33,12 @@ export const BarcodeImageUpload = ({ clientId, onImageUploaded }: BarcodeImageUp
         return;
       }
 
-      console.log("✅ Image uploadée:", imageUrl);
+      console.log("✅ Image uploadée vers barcode-images:", imageUrl);
+
+      // Vérifier que l'URL contient bien "barcode-images"
+      if (!imageUrl.includes('barcode-images')) {
+        console.warn("⚠️ ATTENTION: L'image n'est pas dans le bon bucket!");
+      }
 
       // Mise à jour du client avec l'URL de l'image
       const { error } = await supabase
@@ -96,7 +101,7 @@ export const BarcodeImageUpload = ({ clientId, onImageUploaded }: BarcodeImageUp
         </Button>
       </div>
       <p className="text-xs text-gray-500">
-        Formats acceptés: JPG, PNG, WebP. Max 10MB.
+        Formats acceptés: JPG, PNG, WebP. Max 10MB. L'image sera sauvegardée dans barcode-images.
       </p>
     </div>
   );

@@ -34,6 +34,8 @@ export const useOCRScanning = () => {
         }
       } else {
         console.error("❌ Échec de la sauvegarde de l'image");
+        toast.error("Erreur lors de la sauvegarde de l'image");
+        return;
       }
       
       // ÉTAPE 2: Analyse OCR
@@ -79,13 +81,9 @@ export const useOCRScanning = () => {
         console.error("❌ Erreur traitement OCR:", errorMsg);
         
         // Même en cas d'erreur OCR, on retourne l'image sauvegardée
-        if (barcodeImageUrl) {
-          console.log("💾 Retour de l'image sauvegardée malgré l'erreur OCR");
-          onBarcodeScanned("", undefined, barcodeImageUrl);
-          toast.info("Image sauvegardée, mais aucun texte détecté");
-        } else {
-          toast.error(errorMsg);
-        }
+        console.log("💾 Retour de l'image sauvegardée malgré l'erreur OCR");
+        onBarcodeScanned("", undefined, barcodeImageUrl);
+        toast.info("Image sauvegardée, mais aucun texte détecté");
         return;
       }
 
@@ -108,17 +106,16 @@ export const useOCRScanning = () => {
 
       // IMPORTANT: Appeler le callback avec toutes les données, y compris l'image
       console.log("📞 APPEL DU CALLBACK avec image URL:", finalResult.imageUrl);
-      onBarcodeScanned(finalResult.barcode, finalResult.phone, finalResult.imageUrl || undefined);
+      onBarcodeScanned(finalResult.barcode, finalResult.phone, finalResult.imageUrl);
 
       // Messages de succès
       const successItems = [];
       if (finalResult.barcode) successItems.push("code-barres");
       if (finalResult.phone) successItems.push("numéro de téléphone");
-      if (finalResult.imageUrl) successItems.push("image sauvegardée");
+      successItems.push("image sauvegardée");
       
-      if (successItems.length > 0) {
-        console.log(`✅ Succès: ${successItems.join(" et ")}`);
-      }
+      console.log(`✅ Succès: ${successItems.join(" et ")}`);
+      toast.success(`✅ ${successItems.join(" et ")} extraits avec succès!`);
       
       console.log("=== FIN SCAN OCR DEPUIS PAGE SCAN (SUCCÈS) ===");
     } catch (error) {

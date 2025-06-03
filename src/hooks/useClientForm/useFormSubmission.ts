@@ -92,7 +92,7 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         : "Client enregistré avec succès!";
       
       toast.success(successMessage);
-      navigate("/");
+      navigate("/base-clients");
     } catch (error) {
       console.error('❌ Erreur:', error);
       toast.error("Une erreur inattendue s'est produite");

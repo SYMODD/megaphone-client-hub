@@ -53,9 +53,13 @@ export const ClientTable = ({
                 client.code_barre_image_url !== 'undefined'
               );
 
+              // Vérifier si l'image est dans le bon bucket barcode-images
+              const isFromScan = hasBarcodeImage && client.code_barre_image_url?.includes('barcode-images');
+
               console.log(`🔍 Client ${client.nom} ${client.prenom}:`, {
                 code_barre_image_url: client.code_barre_image_url,
                 hasBarcodeImage,
+                isFromScan,
                 code_barre: client.code_barre
               });
 
@@ -92,10 +96,19 @@ export const ClientTable = ({
                       {hasBarcodeImage && (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Image className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                            <Image 
+                              className={`w-4 h-4 flex-shrink-0 ${
+                                isFromScan ? 'text-blue-600' : 'text-gray-500'
+                              }`} 
+                            />
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Image de code-barres disponible</p>
+                            <p>
+                              {isFromScan 
+                                ? 'Image de code-barres scannée' 
+                                : 'Image de code-barres uploadée'
+                              }
+                            </p>
                           </TooltipContent>
                         </Tooltip>
                       )}
