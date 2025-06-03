@@ -8,13 +8,18 @@ interface BarcodeImageSectionProps {
 }
 
 export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
-  console.log('BarcodeImageSection - client data:', {
+  console.log('BarcodeImageSection - données client:', {
     id: client.id,
     code_barre: client.code_barre,
-    code_barre_image_url: client.code_barre_image_url
+    code_barre_image_url: client.code_barre_image_url,
+    photo_url: client.photo_url
   });
 
-  if (!client.code_barre_image_url) {
+  // CORRECTION: Vérification améliorée de l'image du code-barres
+  const hasBarcode = client.code_barre && client.code_barre.trim() !== '';
+  const hasBarcodeImage = client.code_barre_image_url && client.code_barre_image_url.trim() !== '';
+
+  if (!hasBarcode && !hasBarcodeImage) {
     return (
       <Card>
         <CardHeader>
@@ -23,21 +28,32 @@ export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
             Image du code-barres
           </CardTitle>
           <CardDescription>
-            {client.code_barre 
-              ? "Code-barres présent mais aucune image sauvegardée" 
-              : "Aucun code-barres ni image disponible pour ce client"
-            }
+            Aucun code-barres ni image disponible pour ce client
           </CardDescription>
         </CardHeader>
-        {client.code_barre && (
-          <CardContent>
-            <div className="p-3 bg-gray-50 border rounded-lg">
-              <p className="text-sm text-gray-600">
-                <strong>Code-barres (texte) :</strong> {client.code_barre}
-              </p>
-            </div>
-          </CardContent>
-        )}
+      </Card>
+    );
+  }
+
+  if (hasBarcode && !hasBarcodeImage) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Barcode className="w-4 h-4" />
+            Image du code-barres
+          </CardTitle>
+          <CardDescription>
+            Code-barres présent mais aucune image sauvegardée
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="p-3 bg-gray-50 border rounded-lg">
+            <p className="text-sm text-gray-600">
+              <strong>Code-barres (texte) :</strong> {client.code_barre}
+            </p>
+          </div>
+        </CardContent>
       </Card>
     );
   }
@@ -61,20 +77,20 @@ export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
               alt="Code-barres scanné" 
               className="max-w-full max-h-32 object-contain"
               onError={(e) => {
-                console.error('Erreur lors du chargement de l\'image:', client.code_barre_image_url);
+                console.error('ERREUR chargement image code-barres:', client.code_barre_image_url);
                 e.currentTarget.style.display = 'none';
                 const parent = e.currentTarget.parentElement;
                 if (parent) {
-                  parent.innerHTML = '<p class="text-red-600 text-sm">Erreur de chargement de l\'image</p>';
+                  parent.innerHTML = '<p class="text-red-600 text-sm">❌ Erreur de chargement de l\'image</p>';
                 }
               }}
               onLoad={() => {
-                console.log('Image du code-barres chargée avec succès:', client.code_barre_image_url);
+                console.log('✅ Image du code-barres chargée avec succès:', client.code_barre_image_url);
               }}
             />
           </div>
           
-          {client.code_barre && (
+          {hasBarcode && (
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800">
                 <strong>Code-barres (texte) :</strong> {client.code_barre}

@@ -45,15 +45,35 @@ export const useBaseClientsLogic = () => {
   };
 
   const handleClientUpdated = () => {
+    console.log("Client updated, reloading data...");
     fetchClients();
   };
 
-  // Fonction de suppression qui recharge les données
-  const handleConfirmDeleteClient = () => {
-    confirmDeleteClient(() => {
-      // Recharger les données après suppression réussie
-      fetchClients();
-    });
+  // CORRECTION: Fonction de suppression améliorée avec rechargement forcé
+  const handleConfirmDeleteClient = async () => {
+    if (!selectedClient) return;
+
+    try {
+      console.log('Début suppression client:', selectedClient.id);
+      
+      // Appeler la fonction de suppression
+      await confirmDeleteClient();
+      
+      console.log('Suppression réussie, rechargement des données...');
+      
+      // Forcer le rechargement immédiat des données
+      await fetchClients();
+      
+      console.log('Données rechargées après suppression');
+      
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      toast({
+        title: "Erreur de suppression",
+        description: "Impossible de supprimer le client. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Fonction optimisée pour l'export avec gestion de gros volumes
@@ -68,7 +88,6 @@ export const useBaseClientsLogic = () => {
     }
 
     try {
-      // Pour de gros volumes, on exporte par chunks
       const EXPORT_CHUNK_SIZE = 1000;
       let allClients: Client[] = [];
       let currentChunk = 0;
@@ -93,7 +112,6 @@ export const useBaseClientsLogic = () => {
         allClients.push(...(data || []));
         currentChunk++;
         
-        // Toast de progression pour gros volumes
         if (totalCount > 5000) {
           toast({
             title: "Export en cours...",

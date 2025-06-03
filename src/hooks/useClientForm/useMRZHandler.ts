@@ -12,7 +12,8 @@ export const useMRZHandler = ({ formData, setFormData }: UseMRZHandlerProps) => 
   const handleMRZDataExtracted = (mrzData: MRZData, documentType: DocumentType) => {
     console.log("Applying MRZ data to form:", mrzData, "Document type:", documentType);
     
-    // CORRECTION IMPORTANTE: Ne jamais mettre le numéro de document dans le champ code_barre
+    // CORRECTION CRITIQUE: NE JAMAIS mettre le numéro de document dans le champ code_barre
+    // Le code_barre reste vide sauf si spécifiquement scanné via le scanner de code-barres
     setFormData(prev => ({
       ...prev,
       nom: mrzData.nom || prev.nom,
@@ -20,10 +21,11 @@ export const useMRZHandler = ({ formData, setFormData }: UseMRZHandlerProps) => 
       nationalite: mrzData.nationalite || prev.nationalite,
       numero_passeport: mrzData.numero_passeport || prev.numero_passeport,
       numero_telephone: mrzData.numero_telephone || prev.numero_telephone,
+      // IMPORTANT: Ne PAS toucher au code_barre ici
+      // code_barre: prev.code_barre, // Garder la valeur existante
       document_type: documentType
     }));
 
-    // Add extraction info to observations with document type
     const documentTypeLabels = {
       'cin': 'CIN',
       'passeport_marocain': 'Passeport Marocain',
@@ -31,14 +33,13 @@ export const useMRZHandler = ({ formData, setFormData }: UseMRZHandlerProps) => 
       'carte_sejour': 'Carte de Séjour'
     };
 
-    // Détailler les données extraites
     const extractedItems = [];
     if (mrzData.nom) extractedItems.push("nom");
     if (mrzData.prenom) extractedItems.push("prénom");
     if (mrzData.numero_passeport) extractedItems.push("numéro de document");
     if (mrzData.numero_telephone) extractedItems.push("numéro de téléphone");
 
-    const mrzInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: ${documentTypeLabels[documentType]} - Données: ${extractedItems.join(", ")}`;
+    const mrzInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: ${documentTypeLabels[documentType]} - Données: ${extractedItems.join(", ")} - IMPORTANT: Le champ code-barres n'a PAS été modifié par cette extraction`;
     setFormData(prev => ({
       ...prev,
       observations: prev.observations ? `${prev.observations}\n\n${mrzInfo}` : mrzInfo
