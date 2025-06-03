@@ -25,7 +25,7 @@ export const useOCRScanning = () => {
       
       try {
         barcodeImageUrl = await uploadBarcodeImage(file);
-        console.log("✅ Image uploadée:", barcodeImageUrl);
+        console.log("✅ Image uploadée vers barcode-images:", barcodeImageUrl);
       } catch (uploadError) {
         console.error("❌ Erreur upload image:", uploadError);
         toast.error("Erreur lors de la sauvegarde de l'image");
@@ -89,7 +89,7 @@ export const useOCRScanning = () => {
         imageUrl: barcodeImageUrl
       };
       
-      console.log("🎯 Résultat final:", finalResult);
+      console.log("🎯 Résultat final du scan:", finalResult);
       onBarcodeScanned(finalResult.barcode, finalResult.phone, finalResult.imageUrl);
 
       // Messages de succès

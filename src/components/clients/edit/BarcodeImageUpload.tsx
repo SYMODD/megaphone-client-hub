@@ -20,12 +20,12 @@ export const BarcodeImageUpload = ({ clientId, onImageUploaded }: BarcodeImageUp
     const file = event.target.files?.[0];
     if (!file) return;
 
-    console.log("📤 Upload image barcode pour client:", clientId);
+    console.log("📤 BarcodeImageUpload - Upload image pour client:", clientId);
     
     try {
       setIsUploading(true);
       
-      // Upload vers barcode-images
+      // Upload vers barcode-images avec la fonction unifiée
       const imageUrl = await uploadBarcodeImage(file);
       
       if (!imageUrl) {
@@ -33,28 +33,32 @@ export const BarcodeImageUpload = ({ clientId, onImageUploaded }: BarcodeImageUp
         return;
       }
 
-      console.log("✅ Image uploadée:", imageUrl);
+      console.log("✅ BarcodeImageUpload - Image uploadée:", {
+        url: imageUrl,
+        bucket: imageUrl.includes('barcode-images') ? 'barcode-images' : 'autre',
+        clientId
+      });
 
-      // Mise à jour du client
+      // Mise à jour du client avec la nouvelle URL
       const { error } = await supabase
         .from('clients')
         .update({ code_barre_image_url: imageUrl })
         .eq('id', clientId);
 
       if (error) {
-        console.error("❌ Erreur mise à jour client:", error);
+        console.error("❌ BarcodeImageUpload - Erreur mise à jour client:", error);
         toast.error("Erreur lors de la sauvegarde");
         return;
       }
 
-      console.log("✅ Client mis à jour avec l'image");
+      console.log("✅ BarcodeImageUpload - Client mis à jour avec l'image");
       toast.success("Image de code-barres ajoutée avec succès!");
       
-      // Callback immédiat
+      // Callback immédiat pour mettre à jour l'interface
       onImageUploaded(imageUrl);
       
     } catch (error) {
-      console.error("❌ Erreur upload:", error);
+      console.error("❌ BarcodeImageUpload - Erreur upload:", error);
       toast.error("Erreur lors de l'upload de l'image");
     } finally {
       setIsUploading(false);

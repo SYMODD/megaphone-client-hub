@@ -11,7 +11,8 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
     console.log("🔍 BARCODE HANDLER - Données reçues:", {
       barcode,
       phone,
-      barcodeImageUrl
+      barcodeImageUrl,
+      barcodeImageUrl_bucket: barcodeImageUrl?.includes('barcode-images') ? 'barcode-images' : 'autre'
     });
 
     setFormData(prev => {
@@ -20,7 +21,8 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         code_barre: barcode || prev.code_barre,
         numero_telephone: phone || prev.numero_telephone,
         code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url,
-        // NE PAS mettre l'image dans scannedImage si on a déjà l'URL de l'image de code-barres
+        // Important: ne pas mettre l'image dans scannedImage si on a déjà l'URL de l'image de code-barres
+        // Cela évite la duplication d'images
         scannedImage: barcodeImageUrl ? null : prev.scannedImage
       };
       
@@ -31,7 +33,8 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         nouveau_telephone: newData.numero_telephone,
         ancienne_image_url: prev.code_barre_image_url,
         nouvelle_image_url: newData.code_barre_image_url,
-        scannedImage_reset: barcodeImageUrl ? "OUI" : "NON"
+        scannedImage_reset: barcodeImageUrl ? "OUI (évite duplication)" : "NON",
+        bucket_correct: newData.code_barre_image_url?.includes('barcode-images') ? "OUI" : "NON"
       });
       
       return newData;

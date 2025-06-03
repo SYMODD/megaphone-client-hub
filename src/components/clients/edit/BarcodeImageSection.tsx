@@ -29,10 +29,10 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
   const hasBarcode = Boolean(client.code_barre?.trim());
   const hasBarcodeImage = Boolean(currentImageUrl?.trim());
   
-  // Vérifier si l'image est dans le bon bucket
+  // Vérifier si l'image est dans le bon bucket barcode-images
   const isCorrectBucket = currentImageUrl?.includes('barcode-images') || false;
 
-  console.log('📊 État des données barcode:', { 
+  console.log('📊 BarcodeImageSection - État des données barcode:', { 
     hasBarcode, 
     hasBarcodeImage, 
     isCorrectBucket,
@@ -40,13 +40,17 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
   });
 
   const handleImageUploaded = (newImageUrl: string) => {
-    console.log("🔄 Nouvelle image uploadée:", newImageUrl);
+    console.log("🔄 BarcodeImageSection - Nouvelle image uploadée:", {
+      url: newImageUrl,
+      bucket: newImageUrl.includes('barcode-images') ? 'barcode-images' : 'autre'
+    });
+    
     // Mise à jour immédiate de l'état local
     setCurrentImageUrl(newImageUrl);
     
     // Appeler le callback pour rafraîchir les données du client parent
     if (onClientUpdated) {
-      console.log("📞 Appel du callback onClientUpdated");
+      console.log("📞 BarcodeImageSection - Appel du callback onClientUpdated");
       onClientUpdated();
     }
   };
@@ -130,7 +134,7 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
                     }
                   }}
                   onLoad={() => {
-                    console.log('✅ Image du code-barres chargée avec succès:', currentImageUrl);
+                    console.log('✅ BarcodeImageSection - Image du code-barres chargée avec succès:', currentImageUrl);
                     console.log(`📁 Bucket utilisé: ${isCorrectBucket ? 'barcode-images (correct)' : 'autre bucket'}`);
                   }}
                   // Ajouter une clé pour forcer le rechargement de l'image

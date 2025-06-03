@@ -37,7 +37,8 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
     try {
       let photoUrl = null;
       
-      // Upload de la photo du client seulement si on a une image scannée ET pas d'image de code-barres
+      // Upload de la photo du client seulement si on a une image scannée ET pas déjà d'URL d'image de code-barres
+      // Cela évite de dupliquer l'image
       if (formData.scannedImage && !formData.code_barre_image_url) {
         console.log("📤 Upload de l'image scannée comme photo client...");
         photoUrl = await uploadClientPhoto(formData.scannedImage);
