@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Download, FileImage, FileSpreadsheet } from "lucide-react";
+import { useClientOperations } from "@/hooks/useClientOperations";
 import jsPDF from 'jspdf';
 
 interface Client {
@@ -30,6 +31,7 @@ interface ClientDocumentDialogProps {
 export const ClientDocumentDialog = ({ client, open, onOpenChange }: ClientDocumentDialogProps) => {
   const { toast } = useToast();
   const [generating, setGenerating] = useState(false);
+  const { deleteClient } = useClientOperations();
 
   const generateClientCard = async () => {
     if (!client) return;

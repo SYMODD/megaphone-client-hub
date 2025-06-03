@@ -15,12 +15,22 @@ export class BucketManager {
 
       if (listError) {
         console.error('Erreur lors du test d\'accès au bucket:', listError);
-        console.error('Message d\'erreur détaillé:', listError.message);
         
-        // Si le bucket n'existe pas, le signaler (il devrait être créé via SQL)
+        // Si le bucket n'existe pas, essayer de le créer
         if (listError.message.includes('Bucket not found') || listError.message.includes('does not exist')) {
-          console.error(`Bucket "${BUCKET_NAME}" n'existe pas. Veuillez le créer via les migrations SQL.`);
-          return false;
+          console.log(`Tentative de création du bucket "${BUCKET_NAME}"`);
+          const { error: createError } = await supabase.storage.createBucket(BUCKET_NAME, {
+            public: true,
+            allowedMimeTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
+          });
+          
+          if (createError && !createError.message.includes('already exists')) {
+            console.error('Erreur lors de la création du bucket:', createError);
+            return false;
+          }
+          
+          console.log(`✅ Bucket "${BUCKET_NAME}" créé avec succès`);
+          return true;
         }
         
         return false;
