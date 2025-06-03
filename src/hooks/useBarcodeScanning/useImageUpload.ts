@@ -12,9 +12,9 @@ export const useImageUpload = () => {
       const fileExtension = file.name.split('.').pop() || 'jpg';
       const fileName = `barcode_${timestamp}_${randomId}.${fileExtension}`;
       
-      // Upload vers le bucket barcode-images (créé spécialement pour les codes-barres)
+      // Upload vers Supabase Storage
       const { data, error } = await supabase.storage
-        .from('barcode-images')
+        .from('client-photos')
         .upload(fileName, file, {
           contentType: file.type || 'image/jpeg',
           upsert: false
@@ -27,7 +27,7 @@ export const useImageUpload = () => {
 
       // Obtenir l'URL publique
       const { data: publicUrl } = supabase.storage
-        .from('barcode-images')
+        .from('client-photos')
         .getPublicUrl(data.path);
 
       console.log("✅ Image code-barres uploadée:", publicUrl.publicUrl);

@@ -33,7 +33,7 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         photoUrl = await uploadImage(formData.scannedImage);
       }
 
-      // Insert client data
+      // Insert client data with barcode and barcode image URL
       const { error } = await supabase
         .from('clients')
         .insert({

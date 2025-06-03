@@ -37,7 +37,6 @@ export const uploadClientPhoto = async (imageBase64: string, documentType: strin
     const blob = await response.blob();
     const filename = `${documentType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.jpg`;
     
-    // Upload vers le bucket client-photos pour les photos de documents
     const { data, error } = await supabase.storage
       .from('client-photos')
       .upload(filename, blob, { 

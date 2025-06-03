@@ -7,43 +7,21 @@ interface UseBarcodeHandlerProps {
 
 export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
   const handleBarcodeScanned = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
-    console.log("=== BARCODE HANDLER ===");
-    console.log("Données reçues:", { barcode, phone, barcodeImageUrl });
+    console.log("Barcode scanned:", { barcode, phone, barcodeImageUrl });
     
-    setFormData(prev => {
-      const newData = {
-        ...prev,
-        code_barre: barcode || prev.code_barre,
-        numero_telephone: phone || prev.numero_telephone,
-        // CORRECTION: Toujours sauvegarder l'URL de l'image si elle existe
-        code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url
-      };
-      
-      console.log("✅ Données du formulaire mises à jour:", {
-        code_barre: newData.code_barre,
-        numero_telephone: newData.numero_telephone,
-        code_barre_image_url: newData.code_barre_image_url
-      });
-      
-      return newData;
-    });
+    setFormData(prev => ({
+      ...prev,
+      code_barre: barcode,
+      numero_telephone: phone || prev.numero_telephone,
+      code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url
+    }));
 
-    // Ajouter une note détaillée dans les observations
-    const scanDetails = [];
-    if (barcode) scanDetails.push(`Code: ${barcode}`);
-    if (phone) scanDetails.push(`Tel: ${phone}`);
-    if (barcodeImageUrl) scanDetails.push(`Image: sauvegardée`);
-    
-    if (scanDetails.length > 0) {
-      const scanInfo = `Scan automatique du ${new Date().toLocaleString('fr-FR')} - ${scanDetails.join(' - ')}`;
-      
-      setFormData(prev => ({
-        ...prev,
-        observations: prev.observations ? `${prev.observations}\n\n${scanInfo}` : scanInfo
-      }));
-    }
-
-    console.log("✅ Gestionnaire de code-barres terminé");
+    // Ajouter une note dans les observations
+    const scanInfo = `Code-barres scanné automatiquement le ${new Date().toLocaleString('fr-FR')} - Code: ${barcode}${phone ? ` - Téléphone: ${phone}` : ''}${barcodeImageUrl ? ' - Image sauvegardée' : ''}`;
+    setFormData(prev => ({
+      ...prev,
+      observations: prev.observations ? `${prev.observations}\n\n${scanInfo}` : scanInfo
+    }));
   };
 
   return {
