@@ -21,9 +21,8 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         code_barre: barcode || prev.code_barre,
         numero_telephone: phone || prev.numero_telephone,
         code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url,
-        // Important: ne pas mettre l'image dans scannedImage si on a déjà l'URL de l'image de code-barres
-        // Cela évite la duplication d'images
-        scannedImage: barcodeImageUrl ? null : prev.scannedImage
+        // IMPORTANT: NE PAS toucher à scannedImage ici - c'est pour la photo du client
+        // La séparation est cruciale pour éviter les conflits
       };
       
       console.log("📝 BARCODE HANDLER - Mise à jour du formulaire:", {
@@ -33,7 +32,7 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         nouveau_telephone: newData.numero_telephone,
         ancienne_image_url: prev.code_barre_image_url,
         nouvelle_image_url: newData.code_barre_image_url,
-        scannedImage_reset: barcodeImageUrl ? "OUI (évite duplication)" : "NON",
+        scannedImage_preserved: prev.scannedImage ? "OUI (photo client préservée)" : "NON",
         bucket_correct: newData.code_barre_image_url?.includes('barcode-images') ? "OUI" : "NON"
       });
       
@@ -44,7 +43,7 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
     const messages = [];
     if (barcode) messages.push("code-barres");
     if (phone) messages.push("numéro de téléphone");
-    if (barcodeImageUrl) messages.push("image sauvegardée");
+    if (barcodeImageUrl) messages.push("image de code-barres sauvegardée");
 
     if (messages.length > 0) {
       toast.success(`✅ ${messages.join(" et ")} extraits avec succès!`);

@@ -29,7 +29,8 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
       code_barre: formData.code_barre,
       code_barre_image_url: formData.code_barre_image_url,
       numero_telephone: formData.numero_telephone,
-      scannedImage: formData.scannedImage ? "présent" : "absent"
+      scannedImage: formData.scannedImage ? "présent (photo client)" : "absent",
+      separation_images: "scannedImage = photo client, code_barre_image_url = image code-barres"
     });
 
     setIsLoading(true);
@@ -37,15 +38,15 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
     try {
       let photoUrl = null;
       
-      // Upload de la photo du client seulement si on a une image scannée ET pas déjà d'URL d'image de code-barres
-      // Cela évite de dupliquer l'image
-      if (formData.scannedImage && !formData.code_barre_image_url) {
-        console.log("📤 Upload de l'image scannée comme photo client...");
+      // Upload de la photo du client SEULEMENT si on a une image scannée
+      // Cette image va dans client-photos et devient la photo_url du client
+      if (formData.scannedImage) {
+        console.log("📤 Upload photo client vers client-photos...");
         photoUrl = await uploadClientPhoto(formData.scannedImage);
         console.log("✅ Photo client uploadée:", photoUrl);
       }
 
-      // Préparer les données client
+      // Préparer les données client avec les DEUX images séparées
       const clientData = {
         nom: formData.nom,
         prenom: formData.prenom,
@@ -53,7 +54,9 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         numero_passeport: formData.numero_passeport,
         numero_telephone: formData.numero_telephone,
         code_barre: formData.code_barre,
+        // Image du code-barres (barcode-images bucket)
         code_barre_image_url: formData.code_barre_image_url || null,
+        // Photo du client (client-photos bucket)
         photo_url: photoUrl,
         observations: formData.observations,
         date_enregistrement: formData.date_enregistrement,
@@ -61,10 +64,11 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         document_type: formData.document_type
       };
 
-      console.log("💾 INSERTION CLIENT - Données complètes:", {
+      console.log("💾 INSERTION CLIENT - Données complètes avec DEUX images séparées:", {
         ...clientData,
-        code_barre_image_url: clientData.code_barre_image_url ? "PRÉSENT" : "ABSENT",
-        photo_url: clientData.photo_url ? "PRÉSENT" : "ABSENT"
+        code_barre_image_url: clientData.code_barre_image_url ? "PRÉSENT (barcode-images)" : "ABSENT",
+        photo_url: clientData.photo_url ? "PRÉSENT (client-photos)" : "ABSENT",
+        images_separees: "OUI - deux buckets différents"
       });
 
       const { error } = await supabase
@@ -81,11 +85,15 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         return;
       }
 
-      console.log("✅ Client enregistré avec succès!");
+      console.log("✅ Client enregistré avec succès avec séparation des images!");
       
-      const successMessage = formData.code_barre_image_url 
-        ? "Client enregistré avec succès avec image de code-barres!"
-        : "Client enregistré avec succès!";
+      const successMessage = formData.code_barre_image_url && photoUrl
+        ? "Client enregistré avec photo et image de code-barres!"
+        : formData.code_barre_image_url 
+          ? "Client enregistré avec image de code-barres!"
+          : photoUrl
+            ? "Client enregistré avec photo!"
+            : "Client enregistré avec succès!";
       
       toast.success(successMessage);
       navigate("/base-clients");
