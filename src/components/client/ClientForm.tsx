@@ -3,7 +3,6 @@ import { PersonalInfoSection } from "./PersonalInfoSection";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { PassportSection } from "./PassportSection";
 import { RegistrationSection } from "./RegistrationSection";
-import { FormActions } from "./FormActions";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { useClientFormLogic } from "@/hooks/useClientForm";
 
@@ -50,16 +49,13 @@ export const ClientForm = () => {
             <ContactInfoSection 
               formData={formData}
               onInputChange={handleInputChange}
+              isLoading={isLoading}
+              onSubmit={handleSubmit}
             />
 
             <RegistrationSection 
               formData={formData}
               onInputChange={handleInputChange}
-            />
-
-            <FormActions 
-              isLoading={isLoading}
-              onSubmit={handleSubmit}
             />
           </>
         )}

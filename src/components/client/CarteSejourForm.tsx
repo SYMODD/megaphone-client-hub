@@ -150,16 +150,13 @@ export const CarteSejourForm = () => {
       <ContactInfoSection 
         formData={formData}
         onInputChange={handleInputChange}
+        isLoading={isLoading}
+        onSubmit={handleSubmit}
       />
 
       <RegistrationSection 
         formData={formData}
         onInputChange={handleInputChange}
-      />
-
-      <FormActions 
-        isLoading={isLoading}
-        onSubmit={handleSubmit}
       />
     </form>
   );

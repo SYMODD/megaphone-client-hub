@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -163,16 +162,13 @@ export const AutoDocumentForm = () => {
           <ContactInfoSection 
             formData={formData}
             onInputChange={handleInputChange}
+            isLoading={isLoading}
+            onSubmit={handleSubmit}
           />
 
           <RegistrationSection 
             formData={formData}
             onInputChange={handleInputChange}
-          />
-
-          <FormActions 
-            isLoading={isLoading}
-            onSubmit={handleSubmit}
           />
         </>
       )}
