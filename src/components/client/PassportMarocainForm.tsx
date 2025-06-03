@@ -3,7 +3,6 @@ import { PassportOCRScanner } from "./PassportOCRScanner";
 import { PersonalInfoSection } from "./PersonalInfoSection";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { RegistrationSection } from "./RegistrationSection";
-import { FormActions } from "./FormActions";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { usePassportMarocainForm } from "@/hooks/usePassportMarocainForm";
 import { usePassportMarocainMRZHandler } from "./PassportMarocainMRZHandler";
@@ -81,16 +80,13 @@ export const PassportMarocainForm = () => {
       <ContactInfoSection 
         formData={formData}
         onInputChange={handleInputChange}
+        isLoading={isLoading}
+        onSubmit={handleSubmit}
       />
 
       <RegistrationSection 
         formData={formData}
         onInputChange={handleInputChange}
-      />
-
-      <FormActions 
-        isLoading={isLoading}
-        onSubmit={handleSubmit}
       />
     </form>
   );

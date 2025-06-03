@@ -6,13 +6,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useImageUpload } from "./useClientForm/useImageUpload";
 
+export interface PassportMarocainFormData {
+  nom: string;
+  prenom: string;
+  nationalite: string;
+  numero_passeport: string;
+  numero_telephone: string;
+  code_barre: string;
+  code_barre_image_url: string;
+  scannedImage: string | null;
+  observations: string;
+  date_enregistrement: string;
+}
+
 export const usePassportMarocainForm = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const { uploadImage } = useImageUpload();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<PassportMarocainFormData>({
     nom: "",
     prenom: "",
     nationalite: "Marocaine",
@@ -20,12 +33,12 @@ export const usePassportMarocainForm = () => {
     numero_telephone: "",
     code_barre: "",
     code_barre_image_url: "",
-    scannedImage: null as string | null,
+    scannedImage: null,
     observations: "",
     date_enregistrement: new Date().toISOString().split('T')[0]
   });
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: keyof PassportMarocainFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
