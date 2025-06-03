@@ -5,21 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Eye, Edit, FileText, Barcode } from "lucide-react";
-
-interface Client {
-  id: string;
-  nom: string;
-  prenom: string;
-  nationalite: string;
-  numero_passeport: string;
-  code_barre: string | null;
-  date_enregistrement: string;
-  photo_url?: string;
-  observations?: string;
-  created_at: string;
-  updated_at: string;
-  agent_id: string;
-}
+import { Client } from "@/hooks/useClientData/types";
 
 interface ClientTableProps {
   clients: Client[];
