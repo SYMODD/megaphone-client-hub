@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -187,8 +186,6 @@ export const PassportMarocainForm = () => {
         scannedImage={formData.scannedImage}
         onImageScanned={(image) => handleInputChange("scannedImage", image)}
         onDataExtracted={handleMRZDataExtracted}
-        onConfirmData={handleConfirmMRZData}
-        isDataConfirmed={isConfirmed}
       />
 
       <PersonalInfoSection 
