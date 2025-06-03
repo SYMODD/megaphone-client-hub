@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -68,12 +67,10 @@ export const useClientData = () => {
         query = query.or(`nom.ilike.%${searchTerm}%,prenom.ilike.%${searchTerm}%,numero_passeport.ilike.%${searchTerm}%,code_barre.ilike.%${searchTerm}%`);
       }
 
-      // Filtre par nationalité côté serveur
       if (currentFilters.nationality) {
         query = query.eq('nationalite', currentFilters.nationality);
       }
 
-      // Filtre par date côté serveur
       if (currentFilters.dateFrom) {
         query = query.gte('date_enregistrement', currentFilters.dateFrom.toISOString().split('T')[0]);
       }
@@ -81,7 +78,6 @@ export const useClientData = () => {
         query = query.lte('date_enregistrement', currentFilters.dateTo.toISOString().split('T')[0]);
       }
 
-      // Tri et pagination
       const from = (page - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
       
@@ -124,7 +120,6 @@ export const useClientData = () => {
     }
   }, [user, currentPage, serverFilters, toast]);
 
-  // Fonction pour appliquer les filtres côté serveur
   const applyServerFilters = useCallback((
     searchTerm: string,
     nationality: string,
@@ -140,33 +135,28 @@ export const useClientData = () => {
     };
 
     setServerFilters(newFilters);
-    setCurrentPage(1); // Reset à la première page lors du filtrage
+    setCurrentPage(1);
     
-    // Fetch immédiat avec les nouveaux filtres
     fetchClients({ ...newFilters, page: 1 });
   }, [fetchClients]);
 
-  // Effet pour le chargement initial
   useEffect(() => {
     if (user) {
       fetchClients();
     }
   }, [user]);
 
-  // Effet pour recharger quand la page change
   useEffect(() => {
     if (user && currentPage > 1) {
       fetchClients({ page: currentPage });
     }
   }, [currentPage, user]);
 
-  // Fonction de filtrage locale (garde la compatibilité)
   const filterClients = useCallback((
     searchTerm: string,
     selectedNationality: string,
     dateRange: DateRange | undefined
   ) => {
-    // Si les filtres ont changé, applique le filtrage côté serveur
     if (
       searchTerm !== serverFilters.searchTerm ||
       selectedNationality !== serverFilters.nationality ||
@@ -174,14 +164,12 @@ export const useClientData = () => {
       dateRange?.to?.getTime() !== serverFilters.dateTo?.getTime()
     ) {
       applyServerFilters(searchTerm, selectedNationality, dateRange);
-      return clients; // Retourne les clients actuels en attendant le nouveau fetch
+      return clients;
     }
     
-    // Sinon retourne les clients déjà filtrés côté serveur
     return clients;
   }, [clients, serverFilters, applyServerFilters]);
 
-  // Nationalités uniques optimisées avec cache
   const nationalities = useMemo(async () => {
     try {
       console.log('Fetching unique nationalities...');
@@ -201,12 +189,10 @@ export const useClientData = () => {
     }
   }, []);
 
-  // Nombre total de pages
   const totalPages = useMemo(() => {
     return Math.ceil(totalCount / ITEMS_PER_PAGE);
   }, [totalCount]);
 
-  // Fonction pour changer de page de manière optimisée
   const handlePageChange = useCallback((page: number) => {
     if (page !== currentPage && page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -224,6 +210,6 @@ export const useClientData = () => {
     setCurrentPage: handlePageChange,
     fetchClients,
     filterClients,
-    applyServerFilters // Nouvelle fonction pour filtrage optimisé
+    applyServerFilters
   };
 };

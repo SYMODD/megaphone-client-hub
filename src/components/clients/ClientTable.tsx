@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Eye, Edit, FileText } from "lucide-react";
+import { Eye, Edit, FileText, Barcode } from "lucide-react";
 
 interface Client {
   id: string;
@@ -12,6 +12,7 @@ interface Client {
   prenom: string;
   nationalite: string;
   numero_passeport: string;
+  code_barre: string | null;
   date_enregistrement: string;
   photo_url?: string;
   observations?: string;
@@ -59,6 +60,7 @@ export const ClientTable = ({
                 <TableHead>Nom complet</TableHead>
                 <TableHead>Nationalité</TableHead>
                 <TableHead>Numéro de passeport</TableHead>
+                <TableHead>Code-barres</TableHead>
                 <TableHead>Date d'enregistrement</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -79,6 +81,18 @@ export const ClientTable = ({
                   </TableCell>
                   <TableCell className="text-sm font-mono">
                     {client.numero_passeport}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {client.code_barre ? (
+                      <div className="flex items-center space-x-1">
+                        <Barcode className="w-4 h-4 text-blue-600" />
+                        <span className="font-mono text-xs bg-blue-50 px-2 py-1 rounded">
+                          {client.code_barre}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 text-xs">Aucun</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-sm">
                     {new Date(client.date_enregistrement).toLocaleDateString('fr-FR')}
