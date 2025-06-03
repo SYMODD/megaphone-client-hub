@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { scanPassportWithOCR, MRZData } from "@/services/ocrService";
+import { scanPassportWithOCR, MRZData } from "@/services/ocr";
 import { toast } from "sonner";
 
 export const usePassportOCR = () => {
