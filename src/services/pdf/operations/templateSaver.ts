@@ -43,8 +43,12 @@ export class TemplateSaver {
 
     console.log('✅ Fichier téléversé:', uploadData.path);
 
+    // Generate a unique ID for the template
+    const templateId = `template_${timestamp}_${Math.random().toString(36).substr(2, 9)}`;
+
     // Save template metadata to database
     const templateData = {
+      id: templateId,
       name: fileName.replace('.pdf', ''),
       file_name: fileName,
       file_path: filePath,
