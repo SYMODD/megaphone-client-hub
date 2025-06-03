@@ -3,6 +3,7 @@ import { ClientPhotoSection } from "./ClientPhotoSection";
 import { PersonalInfoFields } from "./PersonalInfoFields";
 import { ContactInfoFields } from "./ContactInfoFields";
 import { BarcodeImageSection } from "./BarcodeImageSection";
+import { BarcodeScannerSection } from "./BarcodeScannerSection";
 import { Client } from "@/hooks/useClientData/types";
 
 interface ClientEditFormProps {
@@ -14,13 +15,24 @@ interface ClientEditFormProps {
     numero_passeport: string;
     numero_telephone: string;
     code_barre: string;
+    code_barre_image_url: string;
     date_enregistrement: string;
     observations: string;
   };
   onUpdate: (field: string, value: string) => void;
+  onBarcodeScanned: (barcode: string, phone?: string, barcodeImageUrl?: string) => void;
+  onSaveBarcodeData: () => void;
+  isLoading: boolean;
 }
 
-export const ClientEditForm = ({ client, formData, onUpdate }: ClientEditFormProps) => {
+export const ClientEditForm = ({ 
+  client, 
+  formData, 
+  onUpdate, 
+  onBarcodeScanned, 
+  onSaveBarcodeData,
+  isLoading 
+}: ClientEditFormProps) => {
   return (
     <div className="space-y-6">
       <ClientPhotoSection client={client} />
@@ -46,6 +58,13 @@ export const ClientEditForm = ({ client, formData, onUpdate }: ClientEditFormPro
       />
 
       <BarcodeImageSection client={client} />
+      
+      <BarcodeScannerSection 
+        client={client}
+        onBarcodeScanned={onBarcodeScanned}
+        onSaveBarcodeData={onSaveBarcodeData}
+        isLoading={isLoading}
+      />
     </div>
   );
 };
