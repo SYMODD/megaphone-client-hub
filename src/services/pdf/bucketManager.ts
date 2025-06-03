@@ -34,7 +34,7 @@ export class BucketManager {
     }
   }
 
-  static async testBucketAccess(): Promise<{ success: boolean; message: string }> => {
+  static async testBucketAccess(): Promise<{ success: boolean; message: string }> {
     try {
       console.log(`Test d'accès au bucket: ${BUCKET_NAME}`);
 
@@ -65,7 +65,7 @@ export class BucketManager {
     }
   }
 
-  static async syncBucketWithDatabase(): Promise<void> => {
+  static async syncBucketWithDatabase(): Promise<void> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
