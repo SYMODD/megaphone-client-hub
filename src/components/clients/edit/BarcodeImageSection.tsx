@@ -2,31 +2,44 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Image, Barcode, CheckCircle, AlertCircle } from "lucide-react";
 import { Client } from "@/hooks/useClientData/types";
+import { BarcodeImageUpload } from "./BarcodeImageUpload";
+import { useState } from "react";
 
 interface BarcodeImageSectionProps {
   client: Client;
+  onClientUpdated?: () => void;
 }
 
-export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
+export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSectionProps) => {
+  const [currentImageUrl, setCurrentImageUrl] = useState(client.code_barre_image_url);
+  
   console.log('🔍 BarcodeImageSection - Analyse des données client:', {
     id: client.id,
     code_barre: client.code_barre,
-    code_barre_image_url: client.code_barre_image_url,
+    code_barre_image_url: currentImageUrl,
     nom_prenom: `${client.nom} ${client.prenom}`
   });
 
   const hasBarcode = Boolean(client.code_barre?.trim());
-  const hasBarcodeImage = Boolean(client.code_barre_image_url?.trim());
+  const hasBarcodeImage = Boolean(currentImageUrl?.trim());
   
   // Vérifier si l'image est dans le bon bucket
-  const isCorrectBucket = client.code_barre_image_url?.includes('barcode-images') || false;
+  const isCorrectBucket = currentImageUrl?.includes('barcode-images') || false;
 
   console.log('📊 État des données barcode:', { 
     hasBarcode, 
     hasBarcodeImage, 
     isCorrectBucket,
-    imageUrl: client.code_barre_image_url 
+    imageUrl: currentImageUrl 
   });
+
+  const handleImageUploaded = (newImageUrl: string) => {
+    console.log("🔄 Nouvelle image uploadée:", newImageUrl);
+    setCurrentImageUrl(newImageUrl);
+    if (onClientUpdated) {
+      onClientUpdated();
+    }
+  };
 
   // Si aucune donnée de code-barres
   if (!hasBarcode && !hasBarcodeImage) {
@@ -41,6 +54,12 @@ export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
             Aucun code-barres ni image disponible pour ce client
           </CardDescription>
         </CardHeader>
+        <CardContent>
+          <BarcodeImageUpload 
+            clientId={client.id} 
+            onImageUploaded={handleImageUploaded}
+          />
+        </CardContent>
       </Card>
     );
   }
@@ -83,25 +102,25 @@ export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
             <div className="space-y-2">
               <div className="flex items-center justify-center p-4 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg min-h-[140px]">
                 <img 
-                  src={client.code_barre_image_url} 
+                  src={currentImageUrl} 
                   alt="Image du code-barres scanné" 
                   className="max-w-full max-h-32 object-contain border border-gray-200 rounded"
                   onError={(e) => {
-                    console.error('❌ ERREUR chargement image code-barres:', client.code_barre_image_url);
+                    console.error('❌ ERREUR chargement image code-barres:', currentImageUrl);
                     const target = e.currentTarget;
                     const parent = target.parentElement;
                     if (parent) {
                       parent.innerHTML = `
                         <div class="text-center">
                           <p class="text-red-600 text-sm font-medium">❌ Image non disponible</p>
-                          <p class="text-xs text-gray-500 mt-1">URL: ${client.code_barre_image_url}</p>
+                          <p class="text-xs text-gray-500 mt-1">URL: ${currentImageUrl}</p>
                           <p class="text-xs text-gray-500">Bucket correct: ${isCorrectBucket ? 'Oui' : 'Non'}</p>
                         </div>
                       `;
                     }
                   }}
                   onLoad={() => {
-                    console.log('✅ Image du code-barres chargée avec succès:', client.code_barre_image_url);
+                    console.log('✅ Image du code-barres chargée avec succès:', currentImageUrl);
                     console.log(`📁 Bucket utilisé: ${isCorrectBucket ? 'barcode-images (correct)' : 'autre bucket'}`);
                   }}
                 />
@@ -128,6 +147,19 @@ export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
               )}
             </div>
           )}
+
+          {/* Upload d'image si pas d'image ou pour remplacer */}
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">
+                {hasBarcodeImage ? "Remplacer l'image" : "Ajouter une image"}
+              </span>
+            </div>
+            <BarcodeImageUpload 
+              clientId={client.id} 
+              onImageUploaded={handleImageUploaded}
+            />
+          </div>
 
           {/* Message informatif si code-barres sans image */}
           {hasBarcode && !hasBarcodeImage && (

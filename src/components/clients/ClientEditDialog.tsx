@@ -23,6 +23,11 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
     });
   };
 
+  const handleClientUpdated = () => {
+    // Rafraîchir les données du client
+    onClientUpdated();
+  };
+
   if (!client) return null;
 
   return (
@@ -39,6 +44,7 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
           client={client}
           formData={formData}
           onUpdate={updateFormData}
+          onClientUpdated={handleClientUpdated}
         />
 
         <DialogFooter className="pt-4 flex-col sm:flex-row gap-2 sm:gap-0">
