@@ -6,33 +6,6 @@ export interface CompressionOptions {
   maxSizeKB?: number;
 }
 
-export interface ImageInfo {
-  width: number;
-  height: number;
-  size: number;
-  type: string;
-  name: string;
-}
-
-export const getImageInfo = async (file: File): Promise<ImageInfo> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    
-    img.onload = () => {
-      resolve({
-        width: img.width,
-        height: img.height,
-        size: file.size,
-        type: file.type,
-        name: file.name
-      });
-    };
-    
-    img.onerror = () => reject(new Error('Failed to load image'));
-    img.src = URL.createObjectURL(file);
-  });
-};
-
 export const compressImage = async (
   file: File, 
   options: CompressionOptions = {}
@@ -101,6 +74,23 @@ export const compressImage = async (
       tryCompress(quality);
     };
 
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = URL.createObjectURL(file);
+  });
+};
+
+export const getImageInfo = (file: File): Promise<{ width: number; height: number; sizeKB: number }> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    
+    img.onload = () => {
+      resolve({
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+        sizeKB: file.size / 1024
+      });
+    };
+    
     img.onerror = () => reject(new Error('Failed to load image'));
     img.src = URL.createObjectURL(file);
   });

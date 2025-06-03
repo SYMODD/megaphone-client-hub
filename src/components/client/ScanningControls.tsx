@@ -17,7 +17,6 @@ export const ScanningControls = ({ isScanning, isCompressing = false, onImageUpl
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        console.log("Camera file selected:", file.name, file.size);
         onImageUpload(file);
       }
     };
@@ -30,10 +29,7 @@ export const ScanningControls = ({ isScanning, isCompressing = false, onImageUpl
     input.accept = 'image/*';
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        console.log("File selected:", file.name, file.size);
-        onImageUpload(file);
-      }
+      if (file) onImageUpload(file);
     };
     input.click();
   };
