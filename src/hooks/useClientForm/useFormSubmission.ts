@@ -28,7 +28,7 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
     try {
       let photoUrl = null;
       
-      // Upload image if present
+      // Upload document image if present
       if (formData.scannedImage) {
         photoUrl = await uploadImage(formData.scannedImage);
       }
@@ -43,7 +43,7 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
           numero_passeport: formData.numero_passeport,
           numero_telephone: formData.numero_telephone,
           code_barre: formData.code_barre,
-          code_barre_image_url: formData.code_barre_image_url,
+          code_barre_image_url: formData.code_barre_image_url, // Inclure l'URL de l'image du code-barres
           photo_url: photoUrl,
           observations: formData.observations,
           date_enregistrement: formData.date_enregistrement,
@@ -61,7 +61,13 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         return;
       }
 
-      toast.success("Client enregistré avec succès!");
+      // Construire le message de succès avec les détails de ce qui a été sauvegardé
+      const savedItems = ["Client enregistré"];
+      if (formData.code_barre) savedItems.push("code-barres");
+      if (formData.code_barre_image_url) savedItems.push("image du code-barres");
+      if (photoUrl) savedItems.push("photo du document");
+      
+      toast.success(`${savedItems.join(", ")} avec succès!`);
       navigate("/");
     } catch (error) {
       console.error('Error:', error);

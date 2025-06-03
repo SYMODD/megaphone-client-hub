@@ -7,7 +7,7 @@ interface UseBarcodeHandlerProps {
 
 export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
   const handleBarcodeScanned = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
-    console.log("=== BARCODE HANDLER ===");
+    console.log("=== BARCODE HANDLER - NOUVEAU CLIENT ===");
     console.log("Données reçues:", { barcode, phone, barcodeImageUrl });
     
     setFormData(prev => {
@@ -15,7 +15,7 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         ...prev,
         code_barre: barcode || prev.code_barre,
         numero_telephone: phone || prev.numero_telephone,
-        // CORRECTION: Toujours sauvegarder l'URL de l'image si elle existe
+        // IMPORTANT: Sauvegarder l'URL de l'image du code-barres pour l'enregistrement
         code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url
       };
       
@@ -41,9 +41,11 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         ...prev,
         observations: prev.observations ? `${prev.observations}\n\n${scanInfo}` : scanInfo
       }));
+      
+      console.log("📝 Note ajoutée aux observations:", scanInfo);
     }
 
-    console.log("✅ Gestionnaire de code-barres terminé");
+    console.log("✅ Gestionnaire de code-barres terminé - Image prête pour sauvegarde");
   };
 
   return {
