@@ -17,6 +17,7 @@ interface BaseClientsContentProps {
   onViewClient: (client: Client) => void;
   onEditClient: (client: Client) => void;
   onGenerateDocument: (client: Client) => void;
+  onDeleteClient: (client: Client) => void;
   onExport: (format: 'csv' | 'pdf') => void;
   filterClients: (searchTerm: string, selectedNationality: string, dateRange: DateRange | undefined) => Client[];
 }
@@ -32,6 +33,7 @@ export const BaseClientsContent = ({
   onViewClient,
   onEditClient,
   onGenerateDocument,
+  onDeleteClient,
   onExport,
   filterClients
 }: BaseClientsContentProps) => {
@@ -73,6 +75,7 @@ export const BaseClientsContent = ({
         onViewClient={onViewClient}
         onEditClient={onEditClient}
         onGenerateDocument={onGenerateDocument}
+        onDeleteClient={onDeleteClient}
       />
     </div>
   );

@@ -8,6 +8,10 @@ import { Client } from "@/hooks/useClientData/types";
 
 interface ClientTableProps {
   clients: Client[];
+  totalCount?: number;
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
   onViewClient: (client: Client) => void;
   onEditClient: (client: Client) => void;
   onGenerateDocument: (client: Client) => void;
@@ -69,7 +73,7 @@ export const ClientTable = ({
                     {client.code_barre ? formatBarcodeForDisplay(client.code_barre) : '-'}
                   </span>
                   {client.code_barre_image_url && (
-                    <Image className="w-4 h-4 text-blue-600" title="Image du code-barres disponible" />
+                    <Image className="w-4 h-4 text-blue-600" />
                   )}
                 </div>
               </TableCell>

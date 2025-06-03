@@ -68,3 +68,26 @@ export const DEFAULT_FIELD_MAPPINGS = [
     fontSize: 12
   }
 ];
+
+export const DEFAULT_MAPPINGS = DEFAULT_FIELD_MAPPINGS;
+
+export const PRESET_FIELDS = [
+  {
+    id: 'nom_entreprise',
+    placeholder: '{{nom_entreprise}}',
+    clientField: 'nom_entreprise',
+    description: 'Nom de l\'entreprise',
+    fontSize: 12,
+    x: 100,
+    y: 700
+  },
+  {
+    id: 'annee_courante',
+    placeholder: '{{annee_courante}}',
+    clientField: 'annee_courante',
+    description: 'Année courante',
+    fontSize: 12,
+    x: 100,
+    y: 650
+  }
+];

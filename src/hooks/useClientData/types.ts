@@ -7,6 +7,7 @@ export interface Client {
   numero_passeport: string;
   numero_telephone?: string;
   code_barre?: string;
+  code_barre_image_url?: string;
   date_enregistrement: string;
   photo_url?: string;
   observations?: string;

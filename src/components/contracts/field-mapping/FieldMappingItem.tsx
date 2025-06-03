@@ -52,9 +52,6 @@ export const FieldMappingItem = ({ mapping, onUpdate, onRemove }: FieldMappingIt
                     <SelectItem key={field.value} value={field.value}>
                       <div className="flex flex-col">
                         <span className="font-medium">{field.label}</span>
-                        {field.description && (
-                          <span className="text-xs text-gray-500">{field.description}</span>
-                        )}
                       </div>
                     </SelectItem>
                   ))}
