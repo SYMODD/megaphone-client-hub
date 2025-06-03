@@ -3,6 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { extractBarcode } from "@/services/ocr/barcodeExtractor";
 import { extractPhoneNumber } from "@/services/ocr/phoneExtractor";
+import { compressImage } from "@/utils/imageCompression";
 
 interface UseBarcodeScanning {
   onBarcodeScanned: (barcode: string, phone?: string) => void;
@@ -11,6 +12,7 @@ interface UseBarcodeScanning {
 export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => {
   const [isScanning, setIsScanning] = useState(false);
   const [scannedImage, setScannedImage] = useState<string | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [apiKey] = useState("K87783069388957");
 
   const extractBarcodeAndPhone = (text: string): { barcode?: string; phone?: string } => {
@@ -75,16 +77,63 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
   const handleImageUpload = async (file: File) => {
     if (!file) return;
 
-    // Convert to base64 for preview
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      setScannedImage(result);
-    };
-    reader.readAsDataURL(file);
+    try {
+      setIsCompressing(true);
+      
+      // Vérifier la taille du fichier original
+      const originalSizeKB = file.size / 1024;
+      console.log(`Taille originale: ${originalSizeKB.toFixed(1)} KB`);
 
-    // Scan with OCR for barcode and phone
-    await scanForBarcodeAndPhone(file);
+      // Compresser l'image si nécessaire
+      let processedFile = file;
+      if (originalSizeKB > 800) { // Compresser si plus de 800KB pour être sûr de rester sous 1MB
+        console.log("Compression de l'image nécessaire...");
+        processedFile = await compressImage(file, {
+          maxWidth: 1024,
+          maxHeight: 1024,
+          quality: 0.8,
+          maxSizeKB: 800
+        });
+        
+        const compressedSizeKB = processedFile.size / 1024;
+        const compressionRatio = ((file.size - processedFile.size) / file.size) * 100;
+        
+        console.log(`Image compressée: ${originalSizeKB.toFixed(1)}KB → ${compressedSizeKB.toFixed(1)}KB (-${compressionRatio.toFixed(0)}%)`);
+        
+        if (compressionRatio > 10) {
+          toast.success(`Image compressée de ${compressionRatio.toFixed(0)}%`);
+        }
+      } else {
+        console.log("Compression non nécessaire, taille acceptable");
+      }
+
+      setIsCompressing(false);
+
+      // Convert to base64 for preview
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        setScannedImage(result);
+      };
+      reader.readAsDataURL(processedFile);
+
+      // Scan with OCR for barcode and phone
+      await scanForBarcodeAndPhone(processedFile);
+    } catch (error) {
+      console.error("Erreur lors du traitement de l'image:", error);
+      toast.error("Erreur lors du traitement de l'image");
+      setIsCompressing(false);
+      
+      // En cas d'erreur de compression, utiliser le fichier original
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        setScannedImage(result);
+      };
+      reader.readAsDataURL(file);
+      
+      await scanForBarcodeAndPhone(file);
+    }
   };
 
   const resetScan = () => {
@@ -93,6 +142,7 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
 
   return {
     isScanning,
+    isCompressing,
     scannedImage,
     handleImageUpload,
     resetScan

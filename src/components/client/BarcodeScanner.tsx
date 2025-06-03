@@ -12,7 +12,7 @@ interface BarcodeScannerProps {
 }
 
 export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScannerProps) => {
-  const { isScanning, scannedImage, handleImageUpload, resetScan } = useBarcodeScanning({
+  const { isScanning, isCompressing, scannedImage, handleImageUpload, resetScan } = useBarcodeScanning({
     onBarcodeScanned
   });
 
@@ -30,6 +30,7 @@ export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScan
       <CardContent className="space-y-4">
         <ScanningControls 
           isScanning={isScanning}
+          isCompressing={isCompressing}
           onImageUpload={handleImageUpload}
         />
 
