@@ -17,6 +17,7 @@ interface AutoDocumentFormData {
   nationalite: string;
   numero_passeport: string;
   numero_telephone: string;
+  code_barre: string;
   scannedImage: string | null;
   observations: string;
   date_enregistrement: string;
@@ -34,6 +35,7 @@ export const AutoDocumentForm = () => {
     nationalite: "",
     numero_passeport: "",
     numero_telephone: "",
+    code_barre: "",
     scannedImage: null,
     observations: "",
     date_enregistrement: new Date().toISOString().split('T')[0],
@@ -53,6 +55,7 @@ export const AutoDocumentForm = () => {
       prenom: extractedData.prenom || prev.prenom,
       nationalite: extractedData.nationalite || prev.nationalite,
       numero_passeport: extractedData.numero_passeport || extractedData.numero_carte || prev.numero_passeport,
+      code_barre: extractedData.code_barre || prev.code_barre,
       document_type: documentType
     }));
 
@@ -103,6 +106,7 @@ export const AutoDocumentForm = () => {
         nationalite: formData.nationalite,
         numero_passeport: formData.numero_passeport.trim(),
         numero_telephone: formData.numero_telephone.trim(),
+        code_barre: formData.code_barre.trim(),
         photo_url: photoUrl,
         observations: formData.observations,
         date_enregistrement: formData.date_enregistrement,

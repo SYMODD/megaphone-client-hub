@@ -46,7 +46,7 @@ export const ClientFilters = ({
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
             <Input
-              placeholder="Rechercher par nom, prénom ou passeport"
+              placeholder="Rechercher par nom, prénom, passeport ou code-barres"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"

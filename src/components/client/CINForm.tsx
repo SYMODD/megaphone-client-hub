@@ -17,6 +17,7 @@ interface CINFormData {
   nationalite: string;
   numero_passeport: string;
   numero_telephone: string;
+  code_barre: string;
   scannedImage: string | null;
   observations: string;
   date_enregistrement: string;
@@ -33,6 +34,7 @@ export const CINForm = () => {
     nationalite: "Maroc",
     numero_passeport: "",
     numero_telephone: "",
+    code_barre: "",
     scannedImage: null,
     observations: "",
     date_enregistrement: new Date().toISOString().split('T')[0]
@@ -60,6 +62,10 @@ export const CINForm = () => {
     // Utiliser numero_cin pour le champ numero_passeport
     if (extractedData.numero_cin) {
       updatedData.numero_passeport = extractedData.numero_cin;
+    }
+    // Extraire le code-barres s'il est disponible
+    if (extractedData.code_barre) {
+      updatedData.code_barre = extractedData.code_barre;
     }
 
     setFormData(prev => ({ ...prev, ...updatedData }));
@@ -105,6 +111,7 @@ export const CINForm = () => {
         nationalite: formData.nationalite,
         numero_passeport: formData.numero_passeport.trim(),
         numero_telephone: formData.numero_telephone.trim(),
+        code_barre: formData.code_barre.trim(),
         photo_url: photoUrl,
         observations: formData.observations,
         date_enregistrement: formData.date_enregistrement,

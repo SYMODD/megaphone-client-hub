@@ -36,6 +36,7 @@ export type Database = {
       clients: {
         Row: {
           agent_id: string
+          code_barre: string | null
           created_at: string | null
           date_enregistrement: string
           id: string
@@ -49,6 +50,7 @@ export type Database = {
         }
         Insert: {
           agent_id: string
+          code_barre?: string | null
           created_at?: string | null
           date_enregistrement?: string
           id?: string
@@ -62,6 +64,7 @@ export type Database = {
         }
         Update: {
           agent_id?: string
+          code_barre?: string | null
           created_at?: string | null
           date_enregistrement?: string
           id?: string

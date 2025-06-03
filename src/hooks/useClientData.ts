@@ -11,6 +11,7 @@ interface Client {
   prenom: string;
   nationalite: string;
   numero_passeport: string;
+  code_barre: string | null;
   date_enregistrement: string;
   photo_url?: string;
   observations?: string;
@@ -61,10 +62,10 @@ export const useClientData = () => {
         .from('clients')
         .select('*', { count: 'exact' });
 
-      // Applique les filtres de recherche côté serveur
+      // Applique les filtres de recherche côté serveur (inclut maintenant code_barre)
       if (currentFilters.searchTerm) {
         const searchTerm = currentFilters.searchTerm.toLowerCase();
-        query = query.or(`nom.ilike.%${searchTerm}%,prenom.ilike.%${searchTerm}%,numero_passeport.ilike.%${searchTerm}%`);
+        query = query.or(`nom.ilike.%${searchTerm}%,prenom.ilike.%${searchTerm}%,numero_passeport.ilike.%${searchTerm}%,code_barre.ilike.%${searchTerm}%`);
       }
 
       // Filtre par nationalité côté serveur

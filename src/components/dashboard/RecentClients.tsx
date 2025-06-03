@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit, FileText } from "lucide-react";
+import { Eye, Edit, FileText, QrCode } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
@@ -18,6 +18,7 @@ interface RecentClientsProps {
       dateEnregistrement: string;
       photo?: string | null;
       pointOperation: string;
+      code_barre?: string | null;
     }>;
   };
 }
@@ -96,6 +97,12 @@ export const RecentClients = ({ data }: RecentClientsProps) => {
                       <Badge variant="outline" className="text-xs">
                         {client.nationalite}
                       </Badge>
+                      {client.code_barre && (
+                        <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                          <QrCode className="w-3 h-3" />
+                          Code-barres
+                        </Badge>
+                      )}
                       <span className="text-xs text-slate-500">
                         {new Date(client.dateEnregistrement).toLocaleDateString('fr-FR')}
                       </span>

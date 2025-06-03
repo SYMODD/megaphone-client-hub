@@ -13,6 +13,7 @@ interface ClientFormData {
   nationalite: string;
   numero_passeport: string;
   numero_telephone: string;
+  code_barre: string;
   scannedImage: string | null;
   observations: string;
   date_enregistrement: string;
@@ -31,6 +32,7 @@ export const useClientFormLogic = () => {
     nationalite: "",
     numero_passeport: "",
     numero_telephone: "",
+    code_barre: "",
     scannedImage: null,
     observations: "",
     date_enregistrement: new Date().toISOString().split('T')[0]
@@ -54,6 +56,7 @@ export const useClientFormLogic = () => {
       prenom: mrzData.prenom || prev.prenom,
       nationalite: mrzData.nationalite || prev.nationalite,
       numero_passeport: mrzData.numero_passeport || prev.numero_passeport,
+      code_barre: mrzData.code_barre || prev.code_barre,
       document_type: documentType
     }));
 
@@ -123,7 +126,7 @@ export const useClientFormLogic = () => {
         photoUrl = await uploadImage(formData.scannedImage);
       }
 
-      // Insert client data with document type
+      // Insert client data with barcode
       const { error } = await supabase
         .from('clients')
         .insert({
@@ -132,6 +135,7 @@ export const useClientFormLogic = () => {
           nationalite: formData.nationalite,
           numero_passeport: formData.numero_passeport,
           numero_telephone: formData.numero_telephone,
+          code_barre: formData.code_barre,
           photo_url: photoUrl,
           observations: formData.observations,
           date_enregistrement: formData.date_enregistrement,

@@ -7,6 +7,7 @@ export interface ClientData {
   dateEnregistrement: string;
   photo?: string | null;
   pointOperation: string;
+  code_barre?: string | null;
 }
 
 export interface NationalityData {
