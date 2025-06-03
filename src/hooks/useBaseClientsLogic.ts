@@ -48,56 +48,41 @@ export const useBaseClientsLogic = () => {
     fetchClients();
   };
 
-  // CORRECTION DÉFINITIVE: Fonction de suppression simplifiée et efficace
+  // CORRECTION URGENTE: Fonction de suppression simplifiée
   const handleConfirmDeleteClient = async () => {
     if (!selectedClient) return;
 
     try {
-      console.log('=== DÉBUT SUPPRESSION CLIENT ===');
-      console.log('Client à supprimer:', selectedClient.id, selectedClient.nom, selectedClient.prenom);
+      console.log('SUPPRESSION CLIENT:', selectedClient.id);
       
-      // 1. Supprimer de la base de données
       const { error } = await supabase
         .from('clients')
         .delete()
         .eq('id', selectedClient.id);
 
-      if (error) {
-        console.error('❌ Erreur Supabase lors de la suppression:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('✅ Client supprimé avec succès de la base de données');
-
-      // 2. Toast de succès
       toast({
         title: "Client supprimé",
-        description: `${selectedClient.prenom} ${selectedClient.nom} a été supprimé avec succès.`,
+        description: `${selectedClient.prenom} ${selectedClient.nom} supprimé.`,
         duration: 2000,
       });
       
-      // 3. Fermer le dialog
       setDeleteDialogOpen(false);
       
-      // 4. CORRECTION: Rechargement forcé et immédiat des données
-      console.log('🔄 Rechargement des données...');
+      // CORRECTION: Rechargement immédiat
       await fetchClients();
       
-      // 5. Si on était sur la dernière entrée d'une page > 1, retourner à la page précédente
       if (currentPage > 1 && clients.length === 1) {
-        console.log('📄 Retour à la page précédente');
         setCurrentPage(currentPage - 1);
       }
       
-      console.log('=== FIN SUPPRESSION CLIENT (SUCCÈS) ===');
-      
     } catch (error) {
-      console.error('❌ Erreur lors de la suppression:', error);
+      console.error('Erreur suppression:', error);
       toast({
-        title: "Erreur de suppression",
-        description: "Impossible de supprimer le client. Veuillez réessayer.",
+        title: "Erreur",
+        description: "Impossible de supprimer le client.",
         variant: "destructive",
-        duration: 5000,
       });
     }
   };
