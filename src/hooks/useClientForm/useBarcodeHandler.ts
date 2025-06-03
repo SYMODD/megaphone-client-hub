@@ -15,10 +15,11 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         ...prev,
         code_barre: barcode || prev.code_barre,
         numero_telephone: phone || prev.numero_telephone,
+        // CORRECTION: Toujours sauvegarder l'URL de l'image si elle existe
         code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url
       };
       
-      console.log("Nouvelles données du formulaire:", {
+      console.log("✅ Données du formulaire mises à jour:", {
         code_barre: newData.code_barre,
         numero_telephone: newData.numero_telephone,
         code_barre_image_url: newData.code_barre_image_url
@@ -27,20 +28,22 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
       return newData;
     });
 
-    // Ajouter une note dans les observations avec plus de détails
+    // Ajouter une note détaillée dans les observations
     const scanDetails = [];
     if (barcode) scanDetails.push(`Code: ${barcode}`);
     if (phone) scanDetails.push(`Tel: ${phone}`);
     if (barcodeImageUrl) scanDetails.push(`Image: sauvegardée`);
     
-    const scanInfo = `Scan automatique du ${new Date().toLocaleString('fr-FR')} - ${scanDetails.join(' - ')}`;
-    
-    setFormData(prev => ({
-      ...prev,
-      observations: prev.observations ? `${prev.observations}\n\n${scanInfo}` : scanInfo
-    }));
+    if (scanDetails.length > 0) {
+      const scanInfo = `Scan automatique du ${new Date().toLocaleString('fr-FR')} - ${scanDetails.join(' - ')}`;
+      
+      setFormData(prev => ({
+        ...prev,
+        observations: prev.observations ? `${prev.observations}\n\n${scanInfo}` : scanInfo
+      }));
+    }
 
-    console.log("✅ Données du code-barres mises à jour dans le formulaire");
+    console.log("✅ Gestionnaire de code-barres terminé");
   };
 
   return {
