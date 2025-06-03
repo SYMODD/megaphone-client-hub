@@ -4,16 +4,16 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useImageUpload } from "./useClientForm/useImageUpload";
+import { uploadClientPhoto } from "@/utils/storageUtils";
+import { usePassportMarocainConfirmation } from "./usePassportMarocainConfirmation";
 
-export interface PassportMarocainFormData {
+interface PassportMarocainFormData {
   nom: string;
   prenom: string;
   nationalite: string;
   numero_passeport: string;
   numero_telephone: string;
   code_barre: string;
-  code_barre_image_url: string;
   scannedImage: string | null;
   observations: string;
   date_enregistrement: string;
@@ -23,16 +23,15 @@ export const usePassportMarocainForm = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const { uploadImage } = useImageUpload();
-
+  const { confirmedData, isConfirmed, confirmData, resetConfirmation } = usePassportMarocainConfirmation();
+  
   const [formData, setFormData] = useState<PassportMarocainFormData>({
     nom: "",
     prenom: "",
-    nationalite: "Marocaine",
+    nationalite: "Maroc",
     numero_passeport: "",
     numero_telephone: "",
     code_barre: "",
-    code_barre_image_url: "",
     scannedImage: null,
     observations: "",
     date_enregistrement: new Date().toISOString().split('T')[0]
@@ -40,14 +39,10 @@ export const usePassportMarocainForm = () => {
 
   const handleInputChange = (field: keyof PassportMarocainFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const confirmData = () => {
-    console.log("Data confirmed for PassportMarocain");
-  };
-
-  const resetConfirmation = () => {
-    console.log("Confirmation reset for PassportMarocain");
+    // Reset confirmation when data changes
+    if (isConfirmed) {
+      resetConfirmation();
+    }
   };
 
   const handleSubmit = async () => {
@@ -56,56 +51,57 @@ export const usePassportMarocainForm = () => {
       return;
     }
 
+    // Validation des champs obligatoires
     if (!formData.nom || !formData.prenom || !formData.numero_passeport) {
-      toast.error("Veuillez remplir tous les champs obligatoires");
+      toast.error("Veuillez remplir tous les champs obligatoires (nom, prénom, numéro de passeport)");
       return;
     }
 
     setIsLoading(true);
 
     try {
+      console.log("Données du formulaire à enregistrer:", formData);
+      
       let photoUrl = null;
       
-      // Upload document image if present
       if (formData.scannedImage) {
-        photoUrl = await uploadImage(formData.scannedImage);
+        photoUrl = await uploadClientPhoto(formData.scannedImage, 'passeport_marocain');
+        if (!photoUrl) {
+          toast.error("Erreur lors du téléchargement de l'image. Enregistrement sans photo.");
+        }
       }
 
-      // Insert client data with barcode and barcode image URL
+      // Préparer les données pour l'insertion
+      const clientData = {
+        nom: formData.nom.trim(),
+        prenom: formData.prenom.trim(),
+        nationalite: formData.nationalite,
+        numero_passeport: formData.numero_passeport.trim(),
+        numero_telephone: formData.numero_telephone.trim(),
+        code_barre: formData.code_barre.trim(),
+        photo_url: photoUrl,
+        observations: formData.observations,
+        date_enregistrement: formData.date_enregistrement,
+        agent_id: user.id
+      };
+
+      console.log("Données client à insérer:", clientData);
+
       const { error } = await supabase
         .from('clients')
-        .insert({
-          nom: formData.nom,
-          prenom: formData.prenom,
-          nationalite: formData.nationalite,
-          numero_passeport: formData.numero_passeport,
-          numero_telephone: formData.numero_telephone,
-          code_barre: formData.code_barre,
-          code_barre_image_url: formData.code_barre_image_url, // Inclure l'URL de l'image du code-barres
-          photo_url: photoUrl,
-          observations: formData.observations,
-          date_enregistrement: formData.date_enregistrement,
-          agent_id: user.id,
-          document_type: 'passport_marocain'
-        });
+        .insert(clientData);
 
       if (error) {
         console.error('Error inserting client:', error);
         if (error.code === '23505') {
-          toast.error("Ce numéro de passeport existe déjà");
+          toast.error("Ce numéro de passeport existe déjà dans la base de données");
         } else {
-          toast.error("Erreur lors de l'enregistrement du client");
+          toast.error(`Erreur lors de l'enregistrement du client: ${error.message}`);
         }
         return;
       }
 
-      // Construire le message de succès avec les détails de ce qui a été sauvegardé
-      const savedItems = ["Client enregistré"];
-      if (formData.code_barre) savedItems.push("code-barres");
-      if (formData.code_barre_image_url) savedItems.push("image du code-barres");
-      if (photoUrl) savedItems.push("photo du document");
-      
-      toast.success(`${savedItems.join(", ")} avec succès!`);
+      toast.success("Client avec passeport marocain enregistré avec succès!");
       navigate("/");
     } catch (error) {
       console.error('Error:', error);
@@ -118,9 +114,13 @@ export const usePassportMarocainForm = () => {
   return {
     formData,
     isLoading,
+    confirmedData,
+    isConfirmed,
     handleInputChange,
     handleSubmit,
     confirmData,
     resetConfirmation
   };
 };
+
+export type { PassportMarocainFormData };

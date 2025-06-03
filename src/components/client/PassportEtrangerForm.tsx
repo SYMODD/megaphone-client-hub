@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,6 +6,7 @@ import { toast } from "sonner";
 import { PersonalInfoSection } from "./PersonalInfoSection";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { RegistrationSection } from "./RegistrationSection";
+import { FormActions } from "./FormActions";
 import { PassportEtrangerScanner } from "./PassportEtrangerScanner";
 import { uploadClientPhoto } from "@/utils/storageUtils";
 
@@ -150,13 +150,16 @@ export const PassportEtrangerForm = () => {
       <ContactInfoSection 
         formData={formData}
         onInputChange={handleInputChange}
-        isLoading={isLoading}
-        onSubmit={handleSubmit}
       />
 
       <RegistrationSection 
         formData={formData}
         onInputChange={handleInputChange}
+      />
+
+      <FormActions 
+        isLoading={isLoading}
+        onSubmit={handleSubmit}
       />
     </form>
   );

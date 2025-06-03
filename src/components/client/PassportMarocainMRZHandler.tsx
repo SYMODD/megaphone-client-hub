@@ -43,9 +43,7 @@ export const usePassportMarocainMRZHandler = ({
 
     // Mettre à jour les champs un par un
     Object.entries(updatedData).forEach(([field, value]) => {
-      if (typeof value === 'string') {
-        onInputChange(field as keyof PassportMarocainFormData, value);
-      }
+      onInputChange(field as keyof PassportMarocainFormData, value);
     });
 
     // Ajouter l'information d'extraction aux observations

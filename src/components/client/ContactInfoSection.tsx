@@ -1,12 +1,10 @@
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Phone, Barcode, Save } from "lucide-react";
+import { Phone, Barcode } from "lucide-react";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { formatBarcodeForDisplay } from "@/utils/barcodeUtils";
-import { Link } from "react-router-dom";
 
 interface ContactInfoSectionProps {
   formData: {
@@ -15,11 +13,9 @@ interface ContactInfoSectionProps {
     [key: string]: any;
   };
   onInputChange: (field: string, value: string) => void;
-  isLoading?: boolean;
-  onSubmit?: () => void;
 }
 
-export const ContactInfoSection = ({ formData, onInputChange, isLoading, onSubmit }: ContactInfoSectionProps) => {
+export const ContactInfoSection = ({ formData, onInputChange }: ContactInfoSectionProps) => {
   const handleBarcodeScanned = (barcode: string, phone?: string) => {
     if (barcode) {
       onInputChange("code_barre", barcode);
@@ -84,26 +80,6 @@ export const ContactInfoSection = ({ formData, onInputChange, isLoading, onSubmi
             )}
           </div>
         </div>
-
-        {/* Actions du formulaire */}
-        {onSubmit && (
-          <div className="flex justify-end space-x-4 pt-6 border-t">
-            <Link to="/">
-              <Button type="button" variant="outline" disabled={isLoading}>
-                Annuler
-              </Button>
-            </Link>
-            <Button 
-              type="button" 
-              className="bg-blue-600 hover:bg-blue-700" 
-              disabled={isLoading}
-              onClick={onSubmit}
-            >
-              <Save className="w-4 h-4 mr-2" />
-              {isLoading ? "Enregistrement..." : "Enregistrer le client"}
-            </Button>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

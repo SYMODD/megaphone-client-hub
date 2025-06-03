@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { PersonalInfoSection } from "./PersonalInfoSection";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { RegistrationSection } from "./RegistrationSection";
+import { FormActions } from "./FormActions";
 import { AutoDocumentScanner } from "./AutoDocumentScanner";
 import { uploadClientPhoto } from "@/utils/storageUtils";
 
@@ -162,13 +163,16 @@ export const AutoDocumentForm = () => {
           <ContactInfoSection 
             formData={formData}
             onInputChange={handleInputChange}
-            isLoading={isLoading}
-            onSubmit={handleSubmit}
           />
 
           <RegistrationSection 
             formData={formData}
             onInputChange={handleInputChange}
+          />
+
+          <FormActions 
+            isLoading={isLoading}
+            onSubmit={handleSubmit}
           />
         </>
       )}
