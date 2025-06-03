@@ -15,7 +15,7 @@ export const useImageUpload = () => {
       console.log("📁 Nom du fichier:", fileName);
       
       // Upload vers Supabase Storage dans le bucket client-assets
-      const { data, error } = await supabase.storage
+      let { data, error } = await supabase.storage
         .from('client-assets')
         .upload(fileName, file, {
           contentType: file.type || 'image/jpeg',
