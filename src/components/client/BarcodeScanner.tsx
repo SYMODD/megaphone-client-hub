@@ -7,7 +7,7 @@ import { ScanningControls } from "./ScanningControls";
 import { CurrentBarcodeDisplay } from "./CurrentBarcodeDisplay";
 
 interface BarcodeScannerProps {
-  onBarcodeScanned: (barcode: string, phone?: string) => void;
+  onBarcodeScanned: (barcode: string, phone?: string, barcodeImageUrl?: string) => void;
   currentBarcode?: string;
 }
 

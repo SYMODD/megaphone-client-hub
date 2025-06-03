@@ -4,6 +4,7 @@ import { ContactInfoSection } from "./ContactInfoSection";
 import { PassportSection } from "./PassportSection";
 import { RegistrationSection } from "./RegistrationSection";
 import { FormActions } from "./FormActions";
+import { BarcodeScanner } from "./BarcodeScanner";
 import { useClientFormLogic } from "./ClientFormLogic";
 
 export const ClientForm = () => {
@@ -14,7 +15,8 @@ export const ClientForm = () => {
     handleInputChange, 
     handleSubmit, 
     handleMRZDataExtracted,
-    handleDocumentTypeSelect 
+    handleDocumentTypeSelect,
+    handleBarcodeScanned
   } = useClientFormLogic();
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -31,6 +33,11 @@ export const ClientForm = () => {
           onMRZDataExtracted={handleMRZDataExtracted}
           selectedDocumentType={selectedDocumentType}
           onDocumentTypeSelect={handleDocumentTypeSelect}
+        />
+
+        <BarcodeScanner 
+          onBarcodeScanned={handleBarcodeScanned}
+          currentBarcode={formData.code_barre}
         />
 
         {selectedDocumentType && (

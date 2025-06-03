@@ -7,6 +7,7 @@ export interface Client {
   numero_passeport: string;
   date_enregistrement: string;
   observations?: string;
+  code_barre_image_url?: string;
 }
 
 export interface FieldMapping {
@@ -17,7 +18,7 @@ export interface FieldMapping {
   x?: number;
   y?: number;
   fontSize?: number;
-  defaultValue?: string; // Nouvelle propriété pour stocker la valeur par défaut
+  defaultValue?: string;
 }
 
 export interface ReplacementData {

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,6 +14,7 @@ interface ClientFormData {
   numero_passeport: string;
   numero_telephone: string;
   code_barre: string;
+  code_barre_image_url: string;
   scannedImage: string | null;
   observations: string;
   date_enregistrement: string;
@@ -32,6 +34,7 @@ export const useClientFormLogic = () => {
     numero_passeport: "",
     numero_telephone: "",
     code_barre: "",
+    code_barre_image_url: "",
     scannedImage: null,
     observations: "",
     date_enregistrement: new Date().toISOString().split('T')[0]
@@ -80,6 +83,25 @@ export const useClientFormLogic = () => {
     setFormData(prev => ({
       ...prev,
       observations: prev.observations ? `${prev.observations}\n\n${mrzInfo}` : mrzInfo
+    }));
+  };
+
+  // Nouveau handler pour gérer le scan de code-barres avec l'image
+  const handleBarcodeScanned = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
+    console.log("Barcode scanned:", { barcode, phone, barcodeImageUrl });
+    
+    setFormData(prev => ({
+      ...prev,
+      code_barre: barcode,
+      numero_telephone: phone || prev.numero_telephone,
+      code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url
+    }));
+
+    // Ajouter une note dans les observations
+    const scanInfo = `Code-barres scanné automatiquement le ${new Date().toLocaleString('fr-FR')} - Code: ${barcode}${phone ? ` - Téléphone: ${phone}` : ''}${barcodeImageUrl ? ' - Image sauvegardée' : ''}`;
+    setFormData(prev => ({
+      ...prev,
+      observations: prev.observations ? `${prev.observations}\n\n${scanInfo}` : scanInfo
     }));
   };
 
@@ -134,7 +156,7 @@ export const useClientFormLogic = () => {
         photoUrl = await uploadImage(formData.scannedImage);
       }
 
-      // Insert client data with barcode
+      // Insert client data with barcode and barcode image URL
       const { error } = await supabase
         .from('clients')
         .insert({
@@ -144,6 +166,7 @@ export const useClientFormLogic = () => {
           numero_passeport: formData.numero_passeport,
           numero_telephone: formData.numero_telephone,
           code_barre: formData.code_barre,
+          code_barre_image_url: formData.code_barre_image_url,
           photo_url: photoUrl,
           observations: formData.observations,
           date_enregistrement: formData.date_enregistrement,
@@ -178,6 +201,7 @@ export const useClientFormLogic = () => {
     handleInputChange,
     handleSubmit,
     handleMRZDataExtracted,
-    handleDocumentTypeSelect
+    handleDocumentTypeSelect,
+    handleBarcodeScanned
   };
 };

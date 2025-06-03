@@ -1,6 +1,4 @@
 
-import { PDFTemplate, FieldMapping } from "@/hooks/usePDFTemplates";
-
 export interface Client {
   id: string;
   nom: string;
@@ -8,8 +6,28 @@ export interface Client {
   nationalite: string;
   numero_passeport: string;
   date_enregistrement: string;
-  photo_url?: string;
   observations?: string;
+  code_barre_image_url?: string;
+}
+
+export interface PDFTemplate {
+  id: string;
+  name: string;
+  fileName: string;
+  filePath: string;
+  uploadDate: string;
+  userId: string;
+}
+
+export interface FieldMapping {
+  id: string;
+  placeholder: string;
+  clientField: string;
+  description?: string;
+  x?: number;
+  y?: number;
+  fontSize?: number;
+  defaultValue?: string;
 }
 
 export interface PDFContractContextType {
@@ -25,7 +43,7 @@ export interface PDFContractContextType {
   
   // From hook
   templates: PDFTemplate[];
-  templateMappings: Record<string, FieldMapping[]>;
+  templateMappings: { [templateId: string]: FieldMapping[] };
   loading: boolean;
   
   // Actions
@@ -36,16 +54,18 @@ export interface PDFContractContextType {
   handleFieldMappingsChange: (mappings: FieldMapping[]) => void;
   handleClientSelect: (client: Client) => void;
   handleSaveMappings: () => Promise<void>;
+  handleDownloadPDF: () => void;
   
   // Template handlers
-  handleTemplateUploaded: (file: File, fileName: string) => Promise<void>;
-  handleTemplateSelect: (templateId: string) => Promise<void>;
-  handleDeleteTemplate: (templateId: string) => Promise<void>;
-  handleRenameTemplate: (templateId: string, newName: string) => Promise<void>;
-  handleForceReload: () => Promise<void>;
+  handleTemplateUploaded: (file: File, fileName: string) => void;
+  handleTemplateSelect: (templateId: string) => void;
+  handleDeleteTemplate: (templateId: string) => void;
+  handleRenameTemplate: (templateId: string, newName: string) => void;
   
   // Contract generation
   handleGenerateContract: () => Promise<void>;
   handlePreviewContract: () => Promise<void>;
-  handleDownloadPDF: () => void;
+  
+  // Force reload
+  handleForceReload: () => Promise<void>;
 }

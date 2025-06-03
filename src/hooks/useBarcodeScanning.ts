@@ -1,18 +1,56 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { extractBarcode } from "@/services/ocr/barcodeExtractor";
 import { extractPhoneNumber } from "@/services/ocr/phoneExtractor";
 import { compressImage } from "@/utils/imageCompression";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UseBarcodeScanning {
-  onBarcodeScanned: (barcode: string, phone?: string) => void;
+  onBarcodeScanned: (barcode: string, phone?: string, barcodeImageUrl?: string) => void;
 }
 
 export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => {
   const [isScanning, setIsScanning] = useState(false);
   const [scannedImage, setScannedImage] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
-  const [apiKey] = useState("K82173618788957");  // Utiliser la nouvelle clé API
+  const [apiKey] = useState("K82173618788957");
+
+  const uploadBarcodeImage = async (file: File): Promise<string | null> => {
+    try {
+      console.log("📤 Upload de l'image du code-barres...");
+      
+      // Générer un nom de fichier unique
+      const timestamp = Date.now();
+      const randomId = Math.random().toString(36).substr(2, 9);
+      const fileExtension = file.name.split('.').pop() || 'jpg';
+      const fileName = `barcode_${timestamp}_${randomId}.${fileExtension}`;
+      
+      // Upload vers Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('client-photos')
+        .upload(fileName, file, {
+          contentType: file.type || 'image/jpeg',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('❌ Erreur upload image code-barres:', error);
+        return null;
+      }
+
+      // Obtenir l'URL publique
+      const { data: publicUrl } = supabase.storage
+        .from('client-photos')
+        .getPublicUrl(data.path);
+
+      console.log("✅ Image code-barres uploadée:", publicUrl.publicUrl);
+      return publicUrl.publicUrl;
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'upload de l\'image code-barres:', error);
+      return null;
+    }
+  };
 
   const extractBarcodeAndPhone = (text: string): { barcode?: string; phone?: string } => {
     console.log("Extracting barcode and phone from text:", text);
@@ -28,6 +66,8 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
   const scanForBarcodeAndPhone = async (file: File) => {
     console.log("=== DÉBUT SCAN BARCODE ===");
     setIsScanning(true);
+    let barcodeImageUrl: string | null = null;
+    
     try {
       console.log("Starting barcode and phone scan...");
       console.log("File details:", {
@@ -39,7 +79,7 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
       const formData = new FormData();
       formData.append('file', file);
       formData.append('apikey', apiKey);
-      formData.append('language', 'eng');  // Changé de 'eng+fre+ara' à 'eng'
+      formData.append('language', 'eng');
       formData.append('isOverlayRequired', 'true');
       formData.append('detectOrientation', 'true');
       formData.append('scale', 'true');
@@ -52,7 +92,7 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
       const timeoutId = setTimeout(() => {
         console.log("⏰ TIMEOUT - Annulation après 60 secondes");
         controller.abort();
-      }, 60000); // Augmenté à 60 secondes
+      }, 60000);
 
       const startTime = Date.now();
       console.log("Making fetch request...");
@@ -105,13 +145,22 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
       const extractedData = extractBarcodeAndPhone(parsedText);
       console.log("Final extracted data:", extractedData);
 
+      // Si un code-barres est trouvé, sauvegarder l'image
+      if (extractedData.barcode) {
+        console.log("📸 Code-barres détecté, sauvegarde de l'image...");
+        barcodeImageUrl = await uploadBarcodeImage(file);
+        if (barcodeImageUrl) {
+          console.log("✅ Image du code-barres sauvegardée:", barcodeImageUrl);
+        }
+      }
+
       if (extractedData.barcode || extractedData.phone) {
         const successItems = [];
         if (extractedData.barcode) successItems.push("code-barres");
         if (extractedData.phone) successItems.push("numéro de téléphone");
         
         console.log("✅ Scan successful, calling callback...");
-        onBarcodeScanned(extractedData.barcode || "", extractedData.phone);
+        onBarcodeScanned(extractedData.barcode || "", extractedData.phone, barcodeImageUrl || undefined);
         toast.success(`${successItems.join(" et ")} extraits avec succès!`);
       } else {
         console.warn("No barcode or phone found in extracted data");

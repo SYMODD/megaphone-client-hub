@@ -18,6 +18,7 @@ export const generatePDFContract = async (
     console.log('🔄 Début de la génération du contrat PDF...');
     console.log('Client sélectionné:', client);
     console.log('Mappings des champs:', fieldMappings);
+    console.log('URL image code-barres:', client.code_barre_image_url);
     
     // Valider les entrées
     validateInputs(templateFile, client, fieldMappings);
@@ -45,7 +46,7 @@ export const generatePDFContract = async (
     for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
       const page = pages[pageIndex];
       console.log(`🔄 Traitement de la page ${pageIndex + 1}/${pages.length}`);
-      await processPageContent(page, fieldMappings, replacementData, font);
+      await processPageContent(page, fieldMappings, replacementData, font, client.code_barre_image_url);
     }
     
     // Retourner le PDF modifié
