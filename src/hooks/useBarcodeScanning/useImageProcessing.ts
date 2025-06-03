@@ -10,7 +10,7 @@ interface UseImageProcessingProps {
 
 export const useImageProcessing = ({ onBarcodeScanned }: UseImageProcessingProps) => {
   const [isCompressing, setIsCompressing] = useState(false);
-  const [scannedImage, setScannedImage] = useState<string | null>(null);
+  const [barcodePreviewImage, setBarcodePreviewImage] = useState<string | null>(null);
   const { scanForBarcodeAndPhone } = useOCRScanning();
 
   const handleImageUpload = async (file: File) => {
@@ -24,7 +24,7 @@ export const useImageProcessing = ({ onBarcodeScanned }: UseImageProcessingProps
       name: file.name,
       type: file.type,
       size: `${(file.size / 1024).toFixed(1)}KB`,
-      purpose: "SCAN CODE-BARRES UNIQUEMENT"
+      purpose: "SCAN CODE-BARRES UNIQUEMENT - PAS photo client"
     });
 
     try {
@@ -57,20 +57,20 @@ export const useImageProcessing = ({ onBarcodeScanned }: UseImageProcessingProps
 
       setIsCompressing(false);
 
-      // Afficher l'image pour preview (MAIS pas pour upload client)
+      // Preview UNIQUEMENT pour le scanner de code-barres (PAS pour la photo client)
       const reader = new FileReader();
       reader.onload = (event) => {
         const result = event.target?.result as string;
-        setScannedImage(result);
-        console.log("Image code-barres set for preview (PAS pour photo client)");
+        setBarcodePreviewImage(result);
+        console.log("✅ Image code-barres set pour PREVIEW SEULEMENT (pas pour photo client)");
       };
       reader.readAsDataURL(processedFile);
 
       // Lancer le scan pour code-barres UNIQUEMENT
-      console.log("Launching OCR scan pour code-barres...");
+      console.log("🚀 Lancement du scan OCR pour code-barres...");
       await scanForBarcodeAndPhone(processedFile, onBarcodeScanned);
     } catch (error) {
-      console.error("Erreur lors du traitement de l'image code-barres:", error);
+      console.error("❌ Erreur lors du traitement de l'image code-barres:", error);
       toast.error(`Erreur lors du traitement de l'image: ${error.message}`);
       setIsCompressing(false);
       
@@ -78,7 +78,7 @@ export const useImageProcessing = ({ onBarcodeScanned }: UseImageProcessingProps
       const reader = new FileReader();
       reader.onload = (event) => {
         const result = event.target?.result as string;
-        setScannedImage(result);
+        setBarcodePreviewImage(result);
       };
       reader.readAsDataURL(file);
       
@@ -88,13 +88,13 @@ export const useImageProcessing = ({ onBarcodeScanned }: UseImageProcessingProps
   };
 
   const resetScan = () => {
-    console.log("Resetting barcode scan state");
-    setScannedImage(null);
+    console.log("🔄 Reset du scan de code-barres - NE TOUCHE PAS à la photo client");
+    setBarcodePreviewImage(null);
   };
 
   return {
     isCompressing,
-    scannedImage,
+    scannedImage: barcodePreviewImage, // Renommé pour clarté mais garde la compatibilité
     handleImageUpload,
     resetScan
   };

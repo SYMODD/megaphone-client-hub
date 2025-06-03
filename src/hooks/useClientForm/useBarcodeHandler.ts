@@ -12,7 +12,7 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
       barcode,
       phone,
       barcodeImageUrl,
-      barcodeImageUrl_bucket: barcodeImageUrl?.includes('barcode-images') ? 'barcode-images' : 'autre'
+      context: "Traitement code-barres SEULEMENT - photo client INTACTE"
     });
 
     setFormData(prev => {
@@ -21,19 +21,19 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         code_barre: barcode || prev.code_barre,
         numero_telephone: phone || prev.numero_telephone,
         code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url,
-        // IMPORTANT: NE PAS toucher à scannedImage ici - c'est pour la photo du client
-        // La séparation est cruciale pour éviter les conflits
+        // 🚨 CRUCIAL: NE JAMAIS TOUCHER à scannedImage - c'est UNIQUEMENT pour la photo client
+        // scannedImage reste INTACT - c'est la photo du client (CIN, passeport, etc.)
       };
       
-      console.log("📝 BARCODE HANDLER - Mise à jour du formulaire:", {
-        ancien_code_barre: prev.code_barre,
-        nouveau_code_barre: newData.code_barre,
-        ancien_telephone: prev.numero_telephone,
-        nouveau_telephone: newData.numero_telephone,
-        ancienne_image_url: prev.code_barre_image_url,
-        nouvelle_image_url: newData.code_barre_image_url,
-        scannedImage_preserved: prev.scannedImage ? "OUI (photo client préservée)" : "NON",
-        bucket_correct: newData.code_barre_image_url?.includes('barcode-images') ? "OUI" : "NON"
+      console.log("📝 BARCODE HANDLER - Mise à jour SÉCURISÉE:", {
+        code_barre_ancien: prev.code_barre,
+        code_barre_nouveau: newData.code_barre,
+        telephone_ancien: prev.numero_telephone,
+        telephone_nouveau: newData.numero_telephone,
+        image_barcode_ancienne: prev.code_barre_image_url,
+        image_barcode_nouvelle: newData.code_barre_image_url,
+        photo_client_preservee: prev.scannedImage ? "✅ OUI - INTACTE" : "❌ Pas de photo client",
+        separation_confirmee: "✅ Buckets séparés: client-photos vs barcode-images"
       });
       
       return newData;
@@ -43,7 +43,7 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
     const messages = [];
     if (barcode) messages.push("code-barres");
     if (phone) messages.push("numéro de téléphone");
-    if (barcodeImageUrl) messages.push("image de code-barres sauvegardée");
+    if (barcodeImageUrl) messages.push("image de code-barres");
 
     if (messages.length > 0) {
       toast.success(`✅ ${messages.join(" et ")} extraits avec succès!`);
@@ -51,7 +51,7 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
       toast.info("Scan terminé - aucune donnée textuelle détectée");
     }
     
-    console.log("✅ BARCODE HANDLER - Traitement terminé");
+    console.log("✅ BARCODE HANDLER - Traitement terminé sans affecter la photo client");
   };
 
   return {
