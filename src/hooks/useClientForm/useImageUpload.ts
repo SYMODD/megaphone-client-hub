@@ -1,25 +1,38 @@
 
-import { uploadClientPhoto } from "@/utils/storageUtils";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const useImageUpload = () => {
   const uploadImage = async (imageBase64: string): Promise<string | null> => {
     try {
-      console.log("📤 Upload d'image client en cours...");
+      // Convert base64 to blob
+      const response = await fetch(imageBase64);
+      const blob = await response.blob();
       
-      // Utiliser la fonction centralisée pour l'upload des photos clients
-      const photoUrl = await uploadClientPhoto(imageBase64, 'document_scan');
+      // Generate unique filename
+      const filename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.jpg`;
       
-      if (!photoUrl) {
-        console.error('❌ Échec de l\'upload de l\'image');
+      // Upload to Supabase storage
+      const { data, error } = await supabase.storage
+        .from('client-photos')
+        .upload(filename, blob, {
+          contentType: 'image/jpeg'
+        });
+
+      if (error) {
+        console.error('Error uploading image:', error);
         toast.error("Erreur lors du téléchargement de l'image");
         return null;
       }
 
-      console.log("✅ Image client uploadée avec succès:", photoUrl);
-      return photoUrl;
+      // Get public URL
+      const { data: publicURL } = supabase.storage
+        .from('client-photos')
+        .getPublicUrl(data.path);
+
+      return publicURL.publicUrl;
     } catch (error) {
-      console.error('❌ Erreur lors de l\'upload de l\'image:', error);
+      console.error('Error uploading image:', error);
       toast.error("Erreur lors du téléchargement de l'image");
       return null;
     }
