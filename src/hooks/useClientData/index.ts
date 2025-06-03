@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { DateRange } from "react-day-picker";
@@ -18,6 +18,7 @@ export const useClientData = () => {
     fetchClients
   } = useClientFetcher();
   const { currentPage, totalPages, handlePageChange } = usePagination(totalCount);
+  const [nationalities, setNationalities] = useState<string[]>([]);
 
   // Fonction optimisée avec filtrage côté serveur
   const fetchClientsWithFilters = useCallback(async (filters?: {
@@ -52,6 +53,30 @@ export const useClientData = () => {
     fetchClientsWithFilters({ ...newFilters, page: 1 });
   }, [applyServerFilters, fetchClientsWithFilters]);
 
+  // Fetch nationalities separately
+  useEffect(() => {
+    const fetchNationalities = async () => {
+      try {
+        console.log('Fetching unique nationalities...');
+        const { data, error } = await supabase
+          .from('clients')
+          .select('nationalite')
+          .not('nationalite', 'is', null);
+        
+        if (error) throw error;
+        
+        const uniqueNationalities = [...new Set(data?.map(client => client.nationalite) || [])];
+        console.log('Unique nationalities loaded:', uniqueNationalities.length);
+        setNationalities(uniqueNationalities);
+      } catch (error) {
+        console.error('Error fetching nationalities:', error);
+        setNationalities([]);
+      }
+    };
+
+    fetchNationalities();
+  }, []);
+
   useEffect(() => {
     if (user) {
       fetchClientsWithFilters();
@@ -81,25 +106,6 @@ export const useClientData = () => {
     
     return clients;
   }, [clients, serverFilters, applyFiltersAndFetch]);
-
-  const nationalities = useMemo(async () => {
-    try {
-      console.log('Fetching unique nationalities...');
-      const { data, error } = await supabase
-        .from('clients')
-        .select('nationalite')
-        .not('nationalite', 'is', null);
-      
-      if (error) throw error;
-      
-      const uniqueNationalities = [...new Set(data?.map(client => client.nationalite) || [])];
-      console.log('Unique nationalities loaded:', uniqueNationalities.length);
-      return uniqueNationalities;
-    } catch (error) {
-      console.error('Error fetching nationalities:', error);
-      return [];
-    }
-  }, []);
 
   return {
     clients,

@@ -1,3 +1,4 @@
+
 import { DocumentScanner } from "./DocumentScanner";
 import { DocumentTypeSelector } from "./DocumentTypeSelector";
 import { MRZData } from "@/services/ocr";
@@ -8,7 +9,7 @@ interface PassportSectionProps {
   onImageScanned: (image: string) => void;
   onMRZDataExtracted: (data: MRZData, documentType: DocumentType) => void;
   selectedDocumentType: DocumentType | null;
-  onDocumentTypeSelect: (type: DocumentType) => void;
+  onDocumentTypeSelect: (type: DocumentType | null) => void;
 }
 
 export const PassportSection = ({ 
@@ -20,7 +21,7 @@ export const PassportSection = ({
 }: PassportSectionProps) => {
   
   const handleBackToSelection = () => {
-    onDocumentTypeSelect(null as any);
+    onDocumentTypeSelect(null);
   };
 
   return (
