@@ -51,6 +51,12 @@ export const useBaseClientsLogic = () => {
         title: "Aucune donnée à exporter",
         description: "Il n'y a aucun client dans la base de données.",
         variant: "destructive",
+        style: {
+          backgroundColor: "white",
+          border: "1px solid #e2e8f0",
+          color: "#0f172a",
+          zIndex: 9999
+        }
       });
       return;
     }
@@ -64,6 +70,12 @@ export const useBaseClientsLogic = () => {
       toast({
         title: "Export en cours...",
         description: `Préparation de l'export de ${totalCount} clients.`,
+        style: {
+          backgroundColor: "white",
+          border: "1px solid #e2e8f0",
+          color: "#0f172a",
+          zIndex: 9999
+        }
       });
 
       while (currentChunk * EXPORT_CHUNK_SIZE < totalCount) {
@@ -86,6 +98,12 @@ export const useBaseClientsLogic = () => {
           toast({
             title: "Export en cours...",
             description: `${allClients.length}/${totalCount} clients chargés.`,
+            style: {
+              backgroundColor: "white",
+              border: "1px solid #e2e8f0",
+              color: "#0f172a",
+              zIndex: 9999
+            }
           });
         }
       }
@@ -97,12 +115,24 @@ export const useBaseClientsLogic = () => {
         toast({
           title: "Export CSV réussi",
           description: `${allClients.length} client(s) exporté(s) en CSV.`,
+          style: {
+            backgroundColor: "white",
+            border: "1px solid #e2e8f0",
+            color: "#0f172a",
+            zIndex: 9999
+          }
         });
       } else {
         exportToPDF(allClients, filename);
         toast({
           title: "Export PDF réussi", 
           description: `${allClients.length} client(s) exporté(s) en PDF.`,
+          style: {
+            backgroundColor: "white",
+            border: "1px solid #e2e8f0",
+            color: "#0f172a",
+            zIndex: 9999
+          }
         });
       }
     } catch (error) {
@@ -111,6 +141,12 @@ export const useBaseClientsLogic = () => {
         title: "Erreur d'export",
         description: "Une erreur est survenue lors de l'exportation des données.",
         variant: "destructive",
+        style: {
+          backgroundColor: "white",
+          border: "1px solid #e2e8f0",
+          color: "#0f172a",
+          zIndex: 9999
+        }
       });
     }
   };
