@@ -7,6 +7,7 @@ export interface MRZData {
   nationalite?: string;
   date_naissance?: string;
   date_expiration?: string;
+  code_barre?: string;
 }
 
 export interface OCRResponse {
@@ -180,6 +181,27 @@ const extractMRZData = (text: string): MRZData => {
     const passportMatch = text.match(/SY\d{7}/);
     if (passportMatch) {
       mrzData.numero_passeport = passportMatch[0];
+    }
+  }
+
+  // Extraction du code-barres depuis le texte OCR
+  // Rechercher des motifs de code-barres communs
+  const barcodePatterns = [
+    /\b[A-Z0-9]{8,20}\b/g, // Code-barres alphanumérique général
+    /\|\|\|[A-Z0-9]+\|\|\|/g, // Code-barres avec délimiteurs
+    /\*[A-Z0-9]+\*/g, // Code-barres avec astérisques
+    /\b\d{10,15}\b/g // Code-barres numérique
+  ];
+
+  for (const pattern of barcodePatterns) {
+    const matches = text.match(pattern);
+    if (matches && matches.length > 0) {
+      // Prendre le premier match qui semble être un code-barres
+      const potentialBarcode = matches[0].replace(/[\|\*]/g, '');
+      if (potentialBarcode.length >= 8 && potentialBarcode.length <= 20) {
+        mrzData.code_barre = potentialBarcode;
+        break;
+      }
     }
   }
 
