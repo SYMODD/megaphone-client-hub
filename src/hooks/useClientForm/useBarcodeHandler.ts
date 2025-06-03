@@ -12,9 +12,9 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
     setFormData(prev => ({
       ...prev,
       code_barre: barcode,
-      // CORRECTION CRITIQUE: Le téléphone vient SEULEMENT du scan barcode
+      // Le téléphone vient SEULEMENT du scan barcode
       numero_telephone: phone || prev.numero_telephone,
-      // CORRECTION CRITIQUE: Toujours sauvegarder l'URL de l'image
+      // Toujours sauvegarder l'URL de l'image
       code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url
     }));
 

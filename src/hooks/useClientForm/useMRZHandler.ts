@@ -18,8 +18,7 @@ export const useMRZHandler = ({ formData, setFormData }: UseMRZHandlerProps) => 
       prenom: mrzData.prenom || prev.prenom,
       nationalite: mrzData.nationalite || prev.nationalite,
       numero_passeport: mrzData.numero_passeport || prev.numero_passeport,
-      // CORRECTION CRITIQUE: Ne JAMAIS toucher au téléphone via MRZ
-      // Le téléphone ne vient QUE du scan barcode
+      // Ne JAMAIS toucher au téléphone via MRZ - le téléphone ne vient QUE du scan barcode
       code_barre: (mrzData.code_barre && mrzData.code_barre !== mrzData.numero_passeport) ? mrzData.code_barre : prev.code_barre,
       document_type: documentType
     }));
