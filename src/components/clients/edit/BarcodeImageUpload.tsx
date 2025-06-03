@@ -49,6 +49,8 @@ export const BarcodeImageUpload = ({ clientId, onImageUploaded }: BarcodeImageUp
 
       console.log("✅ Client mis à jour avec l'image de code-barres");
       toast.success("Image de code-barres ajoutée avec succès!");
+      
+      // Appeler immédiatement le callback pour mettre à jour l'interface
       onImageUploaded(imageUrl);
       
     } catch (error) {

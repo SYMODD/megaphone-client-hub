@@ -41,9 +41,12 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
 
   const handleImageUploaded = (newImageUrl: string) => {
     console.log("🔄 Nouvelle image uploadée:", newImageUrl);
+    // Mise à jour immédiate de l'état local
     setCurrentImageUrl(newImageUrl);
+    
     // Appeler le callback pour rafraîchir les données du client parent
     if (onClientUpdated) {
+      console.log("📞 Appel du callback onClientUpdated");
       onClientUpdated();
     }
   };
@@ -130,6 +133,8 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
                     console.log('✅ Image du code-barres chargée avec succès:', currentImageUrl);
                     console.log(`📁 Bucket utilisé: ${isCorrectBucket ? 'barcode-images (correct)' : 'autre bucket'}`);
                   }}
+                  // Ajouter une clé pour forcer le rechargement de l'image
+                  key={currentImageUrl}
                 />
               </div>
               

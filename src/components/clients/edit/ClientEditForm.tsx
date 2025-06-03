@@ -22,6 +22,13 @@ interface ClientEditFormProps {
 }
 
 export const ClientEditForm = ({ client, formData, onUpdate, onClientUpdated }: ClientEditFormProps) => {
+  const handleClientUpdated = () => {
+    console.log("🔄 ClientEditForm - Client mis à jour, rafraîchissement...");
+    if (onClientUpdated) {
+      onClientUpdated();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <ClientPhotoSection client={client} />
@@ -48,7 +55,7 @@ export const ClientEditForm = ({ client, formData, onUpdate, onClientUpdated }: 
 
       <BarcodeImageSection 
         client={client} 
-        onClientUpdated={onClientUpdated}
+        onClientUpdated={handleClientUpdated}
       />
     </div>
   );
