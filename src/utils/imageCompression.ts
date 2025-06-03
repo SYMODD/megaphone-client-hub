@@ -78,20 +78,3 @@ export const compressImage = async (
     img.src = URL.createObjectURL(file);
   });
 };
-
-export const getImageInfo = (file: File): Promise<{ width: number; height: number; sizeKB: number }> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    
-    img.onload = () => {
-      resolve({
-        width: img.naturalWidth,
-        height: img.naturalHeight,
-        sizeKB: file.size / 1024
-      });
-    };
-    
-    img.onerror = () => reject(new Error('Failed to load image'));
-    img.src = URL.createObjectURL(file);
-  });
-};
