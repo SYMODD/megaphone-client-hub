@@ -42,8 +42,10 @@ export const scanPassportWithOCR = async (imageFile: File, apiKey: string = "K87
     
     let errorMessage = "Erreur de connexion à l'API OCR";
     
-    if (error.message.includes("Timeout")) {
-      errorMessage = "Le scan a pris trop de temps, veuillez réessayer";
+    if (error.message.includes("surchargée")) {
+      errorMessage = "⚠️ La clé API OCR partagée est temporairement surchargée. Veuillez réessayer dans quelques minutes.";
+    } else if (error.message.includes("Timeout")) {
+      errorMessage = "Le scan a pris trop de temps, veuillez réessayer avec une image plus petite";
     } else if (error.message.includes("connexion")) {
       errorMessage = error.message;
     }
