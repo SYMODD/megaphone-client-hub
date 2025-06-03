@@ -49,25 +49,49 @@ export const useBaseClientsLogic = () => {
     fetchClients();
   };
 
-  // CORRECTION: Fonction de suppression améliorée avec rechargement forcé
+  // CORRECTION DÉFINITIVE: Fonction de suppression qui force le rechargement
   const handleConfirmDeleteClient = async () => {
     if (!selectedClient) return;
 
     try {
-      console.log('Début suppression client:', selectedClient.id);
+      console.log('=== DÉBUT SUPPRESSION CLIENT ===');
+      console.log('Client à supprimer:', selectedClient.id, selectedClient.nom, selectedClient.prenom);
       
-      // Appeler la fonction de suppression
-      await confirmDeleteClient();
+      // Supprimer directement via Supabase
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', selectedClient.id);
+
+      if (error) {
+        console.error('❌ Erreur Supabase lors de la suppression:', error);
+        throw error;
+      }
+
+      console.log('✅ Client supprimé avec succès de la base de données');
+
+      // Fermer le dialog immédiatement
+      setDeleteDialogOpen(false);
       
-      console.log('Suppression réussie, rechargement des données...');
+      // Toast de succès
+      toast({
+        title: "Client supprimé",
+        description: `Le client ${selectedClient.prenom} ${selectedClient.nom} a été supprimé avec succès.`,
+      });
       
-      // Forcer le rechargement immédiat des données
+      // CORRECTION: Forcer le rechargement immédiat et complet
+      console.log('🔄 Rechargement forcé des données...');
       await fetchClients();
       
-      console.log('Données rechargées après suppression');
+      // Forcer un re-render en changeant de page si on est pas sur la première
+      if (currentPage > 1 && clients.length === 1) {
+        setCurrentPage(currentPage - 1);
+      }
+      
+      console.log('=== FIN SUPPRESSION CLIENT (SUCCÈS) ===');
       
     } catch (error) {
-      console.error('Erreur lors de la suppression:', error);
+      console.error('❌ Erreur lors de la suppression:', error);
       toast({
         title: "Erreur de suppression",
         description: "Impossible de supprimer le client. Veuillez réessayer.",
