@@ -94,7 +94,7 @@ export const useImageProcessing = ({ onBarcodeScanned }: UseImageProcessingProps
 
   return {
     isCompressing,
-    scannedImage: barcodePreviewImage, // Renommé pour clarté mais garde la compatibilité
+    scannedImage: barcodePreviewImage, // Pour la compatibilité avec l'interface existante
     handleImageUpload,
     resetScan
   };

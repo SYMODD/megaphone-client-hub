@@ -23,7 +23,7 @@ export const useImageUpload = () => {
 
       if (error) {
         console.error('❌ Erreur upload photo client:', error);
-        return null;
+        throw new Error(`Erreur upload photo client: ${error.message}`);
       }
 
       const { data: publicURL } = supabase.storage
@@ -34,7 +34,7 @@ export const useImageUpload = () => {
       return publicURL.publicUrl;
     } catch (error) {
       console.error('❌ Erreur upload photo client:', error);
-      return null;
+      throw error;
     }
   };
 
