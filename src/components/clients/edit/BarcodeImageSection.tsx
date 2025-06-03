@@ -12,19 +12,20 @@ export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
     id: client.id,
     code_barre: client.code_barre,
     code_barre_image_url: client.code_barre_image_url,
-    photo_url: client.photo_url
   });
 
-  // CORRECTION: Vérifications améliorées et debugging complet
+  // CORRECTION: Vérifications améliorées pour l'affichage de l'image
   const hasBarcode = client.code_barre && client.code_barre.trim() !== '';
-  const hasBarcodeImage = client.code_barre_image_url && client.code_barre_image_url.trim() !== '' && client.code_barre_image_url !== 'undefined';
+  const hasBarcodeImage = client.code_barre_image_url && 
+                          client.code_barre_image_url.trim() !== '' && 
+                          client.code_barre_image_url !== 'undefined' &&
+                          client.code_barre_image_url !== 'null' &&
+                          client.code_barre_image_url.startsWith('http');
 
   console.log('Barcode check détaillé:', { 
     hasBarcode, 
     hasBarcodeImage, 
     rawUrl: client.code_barre_image_url,
-    urlType: typeof client.code_barre_image_url,
-    urlLength: client.code_barre_image_url?.length 
   });
 
   return (
@@ -40,7 +41,7 @@ export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {/* CORRECTION: Affichage conditionnel du code-barres texte */}
+          {/* Affichage du code-barres texte */}
           {hasBarcode && (
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800">
@@ -49,7 +50,7 @@ export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
             </div>
           )}
 
-          {/* CORRECTION: Affichage de l'image avec gestion d'erreur améliorée */}
+          {/* CORRECTION: Affichage de l'image avec vérifications strictes */}
           {hasBarcodeImage ? (
             <div className="space-y-2">
               <div className="flex items-center justify-center p-4 bg-gray-50 border rounded-lg min-h-[120px]">
@@ -60,7 +61,6 @@ export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
                   onError={(e) => {
                     console.error('❌ ERREUR chargement image code-barres:', client.code_barre_image_url);
                     const target = e.currentTarget;
-                    target.style.display = 'none';
                     const parent = target.parentElement;
                     if (parent) {
                       parent.innerHTML = `
@@ -81,15 +81,9 @@ export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
                 <Image className="w-4 h-4" />
                 <span>Image sauvegardée lors du scan automatique</span>
               </div>
-              
-              {/* Debug info en développement */}
-              <div className="text-xs text-gray-400 bg-gray-50 p-2 rounded border-l-2 border-blue-200">
-                <p><strong>Debug URL:</strong> {client.code_barre_image_url}</p>
-                <p><strong>Longueur:</strong> {client.code_barre_image_url?.length} caractères</p>
-              </div>
             </div>
           ) : (
-            /* CORRECTION: Message plus informatif quand pas d'image */
+            /* Message informatif quand pas d'image */
             <div className="p-4 bg-gray-50 border rounded-lg text-center">
               <div className="space-y-2">
                 <p className="text-sm text-gray-600 font-medium">
@@ -101,19 +95,11 @@ export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
                     : "Scannez un document pour extraire automatiquement le code-barres"
                   }
                 </p>
-                {/* Debug info pour les cas problématiques */}
-                {client.code_barre_image_url && (
-                  <div className="text-xs text-red-500 mt-2 p-2 bg-red-50 rounded">
-                    <p><strong>Problème détecté avec l'URL:</strong></p>
-                    <p>"{client.code_barre_image_url}"</p>
-                    <p>Type: {typeof client.code_barre_image_url}</p>
-                  </div>
-                )}
               </div>
             </div>
           )}
 
-          {/* CORRECTION: Affichage des informations de debugging */}
+          {/* Conseil pour les futurs scans */}
           {!hasBarcode && !hasBarcodeImage && (
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
               <p className="text-sm text-amber-800">

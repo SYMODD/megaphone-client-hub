@@ -27,7 +27,6 @@ export const useBaseClientsLogic = () => {
     handleEditClient,
     handleGenerateDocument,
     handleDeleteClient,
-    confirmDeleteClient,
     selectedClient,
     viewDialogOpen,
     editDialogOpen,
@@ -49,12 +48,12 @@ export const useBaseClientsLogic = () => {
     fetchClients();
   };
 
-  // CORRECTION DÉFINITIVE: Fonction de suppression avec rechargement forcé et immédiat
+  // CORRECTION DÉFINITIVE: Fonction de suppression simplifiée et efficace
   const handleConfirmDeleteClient = async () => {
     if (!selectedClient) return;
 
     try {
-      console.log('=== DÉBUT SUPPRESSION CLIENT CORRIGÉE ===');
+      console.log('=== DÉBUT SUPPRESSION CLIENT ===');
       console.log('Client à supprimer:', selectedClient.id, selectedClient.nom, selectedClient.prenom);
       
       // 1. Supprimer de la base de données
@@ -70,30 +69,27 @@ export const useBaseClientsLogic = () => {
 
       console.log('✅ Client supprimé avec succès de la base de données');
 
-      // 2. Fermer immédiatement le dialog
-      setDeleteDialogOpen(false);
-      
-      // 3. Toast de succès avec durée plus longue
+      // 2. Toast de succès
       toast({
-        title: "Client supprimé avec succès",
-        description: `${selectedClient.prenom} ${selectedClient.nom} a été définitivement supprimé.`,
-        duration: 3000, // 3 secondes au lieu de la durée par défaut
+        title: "Client supprimé",
+        description: `${selectedClient.prenom} ${selectedClient.nom} a été supprimé avec succès.`,
+        duration: 2000,
       });
       
-      // 4. CORRECTION: Rechargement forcé et immédiat des données
-      console.log('🔄 Rechargement immédiat et forcé...');
+      // 3. Fermer le dialog
+      setDeleteDialogOpen(false);
       
-      // Invalider le cache et recharger
-      await new Promise(resolve => setTimeout(resolve, 100)); // Petit délai pour s'assurer que la suppression est finalisée
-      await fetchClients(); // Recharger depuis la base
+      // 4. CORRECTION: Rechargement forcé et immédiat des données
+      console.log('🔄 Rechargement des données...');
+      await fetchClients();
       
       // 5. Si on était sur la dernière entrée d'une page > 1, retourner à la page précédente
       if (currentPage > 1 && clients.length === 1) {
-        console.log('📄 Retour à la page précédente car dernière entrée supprimée');
+        console.log('📄 Retour à la page précédente');
         setCurrentPage(currentPage - 1);
       }
       
-      console.log('=== FIN SUPPRESSION CLIENT CORRIGÉE (SUCCÈS) ===');
+      console.log('=== FIN SUPPRESSION CLIENT (SUCCÈS) ===');
       
     } catch (error) {
       console.error('❌ Erreur lors de la suppression:', error);

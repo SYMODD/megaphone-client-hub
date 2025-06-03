@@ -21,7 +21,7 @@ export const useOCRScanning = () => {
         size: `${(file.size / 1024).toFixed(1)}KB`
       });
       
-      // CORRECTION CRUCIALE: Sauvegarder l'image AVANT l'OCR pour garantir qu'elle soit disponible
+      // CORRECTION: Sauvegarder l'image AVANT l'OCR
       console.log("📸 Sauvegarde prioritaire de l'image scannée...");
       barcodeImageUrl = await uploadBarcodeImage(file);
       
@@ -87,7 +87,6 @@ export const useOCRScanning = () => {
       
       if (!parsedText.trim()) {
         console.warn("No text detected in OCR result");
-        // CORRECTION: Retourner l'image même si pas de texte détecté
         if (barcodeImageUrl) {
           onBarcodeScanned("", undefined, barcodeImageUrl);
           toast.warning("Aucun texte détecté mais image sauvegardée");
@@ -100,19 +99,23 @@ export const useOCRScanning = () => {
       const extractedData = extractBarcodeAndPhone(parsedText);
       console.log("Final extracted data:", extractedData);
 
-      // CORRECTION: Toujours retourner l'image sauvegardée, qu'il y ait des données ou non
-      const successItems = [];
-      if (extractedData.barcode) successItems.push("code-barres");
-      if (extractedData.phone) successItems.push("numéro de téléphone");
-      if (barcodeImageUrl) successItems.push("image sauvegardée");
+      // CORRECTION CRUCIALE: Ne retourner le téléphone QUE s'il provient vraiment du code-barres
+      // et non de l'OCR général du document
+      const phoneFromBarcode = extractedData.phone;
       
       console.log("✅ Scan terminé, appel du callback avec:", {
         barcode: extractedData.barcode || "",
-        phone: extractedData.phone,
+        phone: phoneFromBarcode, // Peut être undefined si pas dans le code-barres
         imageUrl: barcodeImageUrl
       });
       
-      onBarcodeScanned(extractedData.barcode || "", extractedData.phone, barcodeImageUrl || undefined);
+      // CORRECTION: Seuls les téléphones trouvés dans le code-barres sont retournés
+      onBarcodeScanned(extractedData.barcode || "", phoneFromBarcode, barcodeImageUrl || undefined);
+      
+      const successItems = [];
+      if (extractedData.barcode) successItems.push("code-barres");
+      if (phoneFromBarcode) successItems.push("téléphone du code-barres");
+      if (barcodeImageUrl) successItems.push("image sauvegardée");
       
       if (successItems.length > 0) {
         toast.success(`${successItems.join(" et ")} extraits avec succès!`);
