@@ -3,72 +3,44 @@
    NOTIFICATION/TOAST FIXES
    ============================================================================= */
 
-/* Toast notifications - force white background avec sélecteurs ultra-spécifiques */
+/* Toast notifications - force white background */
 [data-radix-toast-viewport],
 [data-radix-toast-root],
 .toast,
-.sonner-toast,
-div[data-radix-toast-root],
-div[data-sonner-toast] {
+.sonner-toast {
   background-color: white !important;
   border: 1px solid #e2e8f0 !important;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-  z-index: 9999 !important;
+  z-index: 100 !important;
 }
 
-/* Toast content styling avec couleurs forcées */
+/* Toast content styling */
 [data-radix-toast-title],
-.toast-title,
-div[data-radix-toast-title] {
+.toast-title {
   color: #0f172a !important;
   font-weight: 600 !important;
 }
 
 [data-radix-toast-description],
-.toast-description,
-div[data-radix-toast-description] {
+.toast-description {
   color: #64748b !important;
 }
 
-/* Sonner specific overrides - plus spécifiques */
-[data-sonner-toast],
-div[data-sonner-toast],
-.sonner-toast {
+/* Sonner specific overrides */
+[data-sonner-toast] {
   background-color: white !important;
   border: 1px solid #e2e8f0 !important;
   color: #0f172a !important;
-  z-index: 9999 !important;
 }
 
-[data-sonner-toast] [data-description],
-div[data-sonner-toast] div[data-description] {
+[data-sonner-toast] [data-description] {
   color: #64748b !important;
 }
 
-/* Toast viewport positioning - ultra-spécifique */
-[data-radix-toast-viewport],
-div[data-radix-toast-viewport] {
+/* Toast viewport positioning */
+[data-radix-toast-viewport] {
   position: fixed !important;
   bottom: 0 !important;
   right: 0 !important;
-  z-index: 9999 !important;
-  background: transparent !important;
-}
-
-/* Override pour tous les éléments toast possibles */
-.toaster .toast,
-.toaster [data-radix-toast-root],
-.group.toast,
-.group[data-radix-toast-root] {
-  background-color: white !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-/* Forcer l'affichage même si masqué */
-[data-radix-toast-root][data-state="open"],
-[data-sonner-toast][data-mounted="true"] {
-  display: flex !important;
-  opacity: 1 !important;
-  transform: translateX(0) !important;
+  z-index: 100 !important;
 }
