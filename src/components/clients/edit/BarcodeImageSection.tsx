@@ -53,9 +53,9 @@ export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
           Code-barres du client
           {hasBarcodeImage && (
             isCorrectBucket ? (
-              <CheckCircle className="w-4 h-4 text-green-600" title="Image dans le bon bucket" />
+              <CheckCircle className="w-4 h-4 text-green-600" />
             ) : (
-              <AlertCircle className="w-4 h-4 text-orange-500" title="Image dans un bucket incorrect" />
+              <AlertCircle className="w-4 h-4 text-orange-500" />
             )
           )}
         </CardTitle>
