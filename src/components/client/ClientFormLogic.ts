@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,15 +51,13 @@ export const useClientFormLogic = () => {
   const handleMRZDataExtracted = (mrzData: MRZData, documentType: DocumentType) => {
     console.log("Applying MRZ data to form:", mrzData, "Document type:", documentType);
     
-    // CORRECTION: Ne pas mettre le numéro de document dans le champ code_barre
+    // CORRECTION IMPORTANTE: Ne jamais mettre le numéro de document dans le champ code_barre
     setFormData(prev => ({
       ...prev,
       nom: mrzData.nom || prev.nom,
       prenom: mrzData.prenom || prev.prenom,
       nationalite: mrzData.nationalite || prev.nationalite,
       numero_passeport: mrzData.numero_passeport || prev.numero_passeport,
-      // NE PAS mettre le numéro de passeport dans code_barre
-      // code_barre: mrzData.code_barre || prev.code_barre, // Retiré
       numero_telephone: mrzData.numero_telephone || prev.numero_telephone,
       document_type: documentType
     }));
@@ -87,7 +84,7 @@ export const useClientFormLogic = () => {
     }));
   };
 
-  // Nouveau handler pour gérer le scan de code-barres avec l'image
+  // Handler pour gérer le scan de code-barres avec l'image
   const handleBarcodeScanned = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
     console.log("Barcode scanned:", { barcode, phone, barcodeImageUrl });
     

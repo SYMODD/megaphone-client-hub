@@ -1,4 +1,3 @@
-
 import { useToast } from "@/hooks/use-toast";
 import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
 import { useClientData } from "@/hooks/useClientData";
@@ -47,6 +46,14 @@ export const useBaseClientsLogic = () => {
 
   const handleClientUpdated = () => {
     fetchClients();
+  };
+
+  // Fonction de suppression qui recharge les données
+  const handleConfirmDeleteClient = () => {
+    confirmDeleteClient(() => {
+      // Recharger les données après suppression réussie
+      fetchClients();
+    });
   };
 
   // Fonction optimisée pour l'export avec gestion de gros volumes
@@ -147,7 +154,7 @@ export const useBaseClientsLogic = () => {
     handleEditClient,
     handleGenerateDocument,
     handleDeleteClient,
-    confirmDeleteClient,
+    confirmDeleteClient: handleConfirmDeleteClient,
     setViewDialogOpen,
     setEditDialogOpen,
     setDocumentDialogOpen,

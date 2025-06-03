@@ -37,17 +37,24 @@ export const useClientActions = () => {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDeleteClient = async () => {
+  const confirmDeleteClient = async (onSuccess?: () => void) => {
     if (!selectedClient) return;
 
     setIsDeleting(true);
     try {
+      console.log('Tentative de suppression du client:', selectedClient.id);
+      
       const { error } = await supabase
         .from('clients')
         .delete()
         .eq('id', selectedClient.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur Supabase lors de la suppression:', error);
+        throw error;
+      }
+
+      console.log('Client supprimé avec succès de la base de données');
 
       toast({
         title: "Client supprimé",
@@ -57,8 +64,10 @@ export const useClientActions = () => {
       setDeleteDialogOpen(false);
       setSelectedClient(null);
       
-      // Déclencher un rechargement de la liste
-      window.location.reload();
+      // Appeler le callback de succès au lieu de recharger la page
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
       toast({
