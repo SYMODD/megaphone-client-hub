@@ -54,7 +54,7 @@ export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScan
       const formData = new FormData();
       formData.append('file', file);
       formData.append('apikey', apiKey);
-      formData.append('language', 'eng+fre');
+      formData.append('language', 'eng'); // Changé de 'eng+fre' à 'eng'
       formData.append('isOverlayRequired', 'true');
       formData.append('detectOrientation', 'true');
       formData.append('scale', 'true');
@@ -149,86 +149,82 @@ export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScan
   };
 
   return (
-    <div className="space-y-4">
-      <Label className="text-base font-medium">Scanner Code-barres et Téléphone</Label>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <ScanBarcode className="w-5 h-5" />
-            Scanner automatique
-          </CardTitle>
-          <CardDescription>
-            Prenez une photo ou téléversez une image pour extraire automatiquement le code-barres et le numéro de téléphone
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCameraCapture}
-              disabled={isScanning}
-              className="flex items-center gap-2"
-            >
-              <Camera className="w-4 h-4" />
-              {isScanning ? "Scan en cours..." : "Prendre une photo"}
-            </Button>
-            
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.onchange = (e) => {
-                  const file = (e.target as HTMLInputElement).files?.[0];
-                  if (file) handleImageUpload(file);
-                };
-                input.click();
-              }}
-              disabled={isScanning}
-              className="flex items-center gap-2"
-            >
-              <Upload className="w-4 h-4" />
-              Téléverser une image
-            </Button>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <ScanBarcode className="w-5 h-5" />
+          Scanner automatique
+        </CardTitle>
+        <CardDescription>
+          Prenez une photo ou téléversez une image pour extraire automatiquement le code-barres et le numéro de téléphone
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCameraCapture}
+            disabled={isScanning}
+            className="flex items-center gap-2"
+          >
+            <Camera className="w-4 h-4" />
+            {isScanning ? "Scan en cours..." : "Prendre une photo"}
+          </Button>
+          
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = 'image/*';
+              input.onchange = (e) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (file) handleImageUpload(file);
+              };
+              input.click();
+            }}
+            disabled={isScanning}
+            className="flex items-center gap-2"
+          >
+            <Upload className="w-4 h-4" />
+            Téléverser une image
+          </Button>
+        </div>
+
+        {scannedImage && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Image scannée</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={resetScan}
+                className="flex items-center gap-1"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Réinitialiser
+              </Button>
+            </div>
+            <div className="border rounded-lg p-3 bg-gray-50">
+              <img 
+                src={scannedImage} 
+                alt="Image scannée" 
+                className="max-w-full h-auto max-h-32 rounded"
+              />
+            </div>
           </div>
+        )}
 
-          {scannedImage && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">Image scannée</Label>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={resetScan}
-                  className="flex items-center gap-1"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  Réinitialiser
-                </Button>
-              </div>
-              <div className="border rounded-lg p-3 bg-gray-50">
-                <img 
-                  src={scannedImage} 
-                  alt="Image scannée" 
-                  className="max-w-full h-auto max-h-32 rounded"
-                />
-              </div>
-            </div>
-          )}
-
-          {currentBarcode && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-              <Label className="text-sm font-medium text-green-800">Code-barres actuel</Label>
-              <p className="text-green-700 font-mono text-sm mt-1">{currentBarcode}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        {currentBarcode && (
+          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+            <Label className="text-sm font-medium text-green-800">Code-barres actuel</Label>
+            <p className="text-green-700 font-mono text-sm mt-1">{currentBarcode}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };

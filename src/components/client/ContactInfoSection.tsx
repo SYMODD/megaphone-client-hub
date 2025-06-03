@@ -36,12 +36,14 @@ export const ContactInfoSection = ({ formData, onInputChange }: ContactInfoSecti
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Scanner en premier */}
         <BarcodeScanner 
           onBarcodeScanned={handleBarcodeScanned}
           currentBarcode={formData.code_barre}
         />
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Champs de saisie avec un meilleur alignement */}
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="numero_telephone">Numéro de téléphone</Label>
             <Input
