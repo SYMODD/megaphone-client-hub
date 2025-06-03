@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Phone, Barcode } from "lucide-react";
+import { formatBarcodeForDisplay } from "@/utils/barcodeUtils";
 
 interface ContactInfoFieldsProps {
   formData: {
@@ -15,6 +16,8 @@ interface ContactInfoFieldsProps {
 }
 
 export const ContactInfoFields = ({ formData, onUpdate }: ContactInfoFieldsProps) => {
+  const displayBarcode = formatBarcodeForDisplay(formData.code_barre);
+
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -38,11 +41,19 @@ export const ContactInfoFields = ({ formData, onUpdate }: ContactInfoFieldsProps
           </Label>
           <Input
             id="code_barre"
-            value={formData.code_barre}
-            onChange={(e) => onUpdate('code_barre', e.target.value)}
+            value={displayBarcode}
+            onChange={(e) => {
+              // Si l'utilisateur modifie manuellement, garder la valeur telle qu'elle est
+              onUpdate('code_barre', e.target.value);
+            }}
             placeholder="Code-barres du document"
             className="text-sm font-mono"
           />
+          {displayBarcode !== formData.code_barre && formData.code_barre && (
+            <p className="text-xs text-gray-500">
+              Valeur complète : {formData.code_barre}
+            </p>
+          )}
         </div>
       </div>
 

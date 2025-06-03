@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Phone, Barcode } from "lucide-react";
 import { BarcodeScanner } from "./BarcodeScanner";
+import { formatBarcodeForDisplay } from "@/utils/barcodeUtils";
 
 interface ContactInfoSectionProps {
   formData: {
@@ -23,6 +24,8 @@ export const ContactInfoSection = ({ formData, onInputChange }: ContactInfoSecti
       onInputChange("numero_telephone", phone);
     }
   };
+
+  const displayBarcode = formatBarcodeForDisplay(formData.code_barre);
 
   return (
     <Card>
@@ -62,11 +65,19 @@ export const ContactInfoSection = ({ formData, onInputChange }: ContactInfoSecti
             </Label>
             <Input
               id="code_barre"
-              value={formData.code_barre}
-              onChange={(e) => onInputChange("code_barre", e.target.value)}
+              value={displayBarcode}
+              onChange={(e) => {
+                // Si l'utilisateur modifie manuellement, garder la valeur telle qu'elle est
+                onInputChange("code_barre", e.target.value);
+              }}
               placeholder="Code-barres du document"
               className="font-mono"
             />
+            {displayBarcode !== formData.code_barre && formData.code_barre && (
+              <p className="text-xs text-gray-500">
+                Valeur complète stockée : {formData.code_barre}
+              </p>
+            )}
           </div>
         </div>
       </CardContent>
