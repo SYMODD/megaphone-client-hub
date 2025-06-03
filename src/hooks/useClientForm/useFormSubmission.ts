@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { ClientFormData } from "./types";
 
 interface UseFormSubmissionProps {
@@ -13,8 +14,18 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleSubmit = async () => {
+    if (!user) {
+      toast({
+        title: "Erreur d'authentification",
+        description: "Vous devez être connecté pour enregistrer un client.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!formData.nom || !formData.prenom) {
       toast({
         title: "Erreur de validation",
@@ -34,6 +45,7 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
 
       // CORRECTION: Nettoyer et valider les données avant sauvegarde
       const clientData = {
+        agent_id: user.id, // CORRECTION CRUCIALE: Ajouter l'agent_id requis
         nom: formData.nom.trim(),
         prenom: formData.prenom.trim(),
         nationalite: formData.nationalite?.trim() || null,
@@ -49,9 +61,10 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
 
       console.log("Données nettoyées pour sauvegarde:", clientData);
 
+      // CORRECTION: Passer l'objet directement, pas dans un tableau
       const { data, error } = await supabase
         .from('clients')
-        .insert([clientData])
+        .insert(clientData)
         .select();
 
       if (error) {
