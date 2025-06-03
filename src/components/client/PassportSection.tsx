@@ -1,7 +1,6 @@
-
 import { DocumentScanner } from "./DocumentScanner";
 import { DocumentTypeSelector } from "./DocumentTypeSelector";
-import { MRZData } from "@/services/ocrService";
+import { MRZData } from "@/services/ocr";
 import { DocumentType } from "@/types/documentTypes";
 
 interface PassportSectionProps {

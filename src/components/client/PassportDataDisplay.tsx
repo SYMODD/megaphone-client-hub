@@ -1,8 +1,7 @@
-
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, XCircle } from "lucide-react";
-import { MRZData } from "@/services/ocrService";
+import { MRZData } from "@/services/ocr";
 
 interface PassportDataDisplayProps {
   extractedData: MRZData | null;

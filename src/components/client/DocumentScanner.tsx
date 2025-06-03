@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { DocumentType } from "@/types/documentTypes";
-import { MRZData } from "@/services/ocrService";
+import { MRZData } from "@/services/ocr";
 import { toast } from "sonner";
 import { usePassportOCR } from "@/hooks/usePassportOCR";
 import { AdminAPIKeySection } from "./AdminAPIKeySection";

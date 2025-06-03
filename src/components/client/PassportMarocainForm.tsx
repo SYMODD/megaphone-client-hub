@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +15,7 @@ interface PassportMarocainFormData {
   nationalite: string;
   numero_passeport: string;
   numero_telephone: string;
+  code_barre: string;
   scannedImage: string | null;
   observations: string;
   date_enregistrement: string;
@@ -33,6 +33,7 @@ export const PassportMarocainForm = () => {
     nationalite: "Maroc",
     numero_passeport: "",
     numero_telephone: "",
+    code_barre: "",
     scannedImage: null,
     observations: "",
     date_enregistrement: new Date().toISOString().split('T')[0],
@@ -112,6 +113,7 @@ export const PassportMarocainForm = () => {
           nationalite: formData.nationalite,
           numero_passeport: formData.numero_passeport,
           numero_telephone: formData.numero_telephone,
+          code_barre: formData.code_barre,
           photo_url: photoUrl,
           observations: formData.observations,
           date_enregistrement: formData.date_enregistrement,
