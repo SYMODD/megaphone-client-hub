@@ -1,41 +1,48 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export const ensureStorageBucket = async () => {
+export const ensureStorageBucket = async (bucketName: string = 'client-photos') => {
   try {
+    console.log(`🔍 Vérification du bucket: ${bucketName}`);
+    
     const { data: buckets, error } = await supabase.storage.listBuckets();
     
     if (error) {
-      console.error('Error listing buckets:', error);
+      console.error(`❌ Erreur lors de la vérification des buckets:`, error);
       return false;
     }
 
-    const clientPhotosBucket = buckets.find(bucket => bucket.name === 'client-photos');
+    const bucket = buckets.find(bucket => bucket.name === bucketName);
     
-    if (!clientPhotosBucket) {
-      console.warn('Bucket client-photos not found. Please create it in Supabase.');
+    if (!bucket) {
+      console.warn(`⚠️ Bucket ${bucketName} non trouvé.`);
       return false;
     }
 
+    console.log(`✅ Bucket ${bucketName} trouvé et accessible`);
     return true;
   } catch (error) {
-    console.error('Error checking storage bucket:', error);
+    console.error(`❌ Erreur lors de la vérification du bucket ${bucketName}:`, error);
     return false;
   }
 };
 
 export const uploadClientPhoto = async (imageBase64: string, documentType: string = 'cin'): Promise<string | null> => {
   try {
+    console.log("📤 UPLOAD PHOTO CLIENT - Début de l'upload vers client-photos");
+    
     // Vérifier que le bucket existe
-    const bucketExists = await ensureStorageBucket();
+    const bucketExists = await ensureStorageBucket('client-photos');
     if (!bucketExists) {
-      console.error('Storage bucket client-photos does not exist');
+      console.error('❌ Le bucket client-photos n\'existe pas ou n\'est pas accessible');
       return null;
     }
 
     const response = await fetch(imageBase64);
     const blob = await response.blob();
     const filename = `${documentType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.jpg`;
+    
+    console.log(`📝 Nom du fichier généré: ${filename}`);
     
     const { data, error } = await supabase.storage
       .from('client-photos')
@@ -45,17 +52,26 @@ export const uploadClientPhoto = async (imageBase64: string, documentType: strin
       });
 
     if (error) {
-      console.error('Error uploading image:', error);
+      console.error('❌ Erreur lors de l\'upload vers client-photos:', error);
       return null;
     }
+
+    console.log('✅ Upload réussi vers client-photos:', data);
 
     const { data: publicURL } = supabase.storage
       .from('client-photos')
       .getPublicUrl(data.path);
 
-    return publicURL.publicUrl;
+    const finalUrl = publicURL.publicUrl;
+    console.log('🌐 URL publique générée pour client-photos:', finalUrl);
+    
+    if (!finalUrl.includes('client-photos')) {
+      console.warn('⚠️ URL ne contient pas client-photos');
+    }
+
+    return finalUrl;
   } catch (error) {
-    console.error('Error uploading image:', error);
+    console.error('❌ Erreur inattendue lors de l\'upload photo client:', error);
     return null;
   }
 };

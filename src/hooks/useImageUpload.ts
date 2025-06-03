@@ -15,26 +15,38 @@ export const useImageUpload = () => {
       
       const filename = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.jpg`;
       
+      console.log(`📝 Upload vers client-photos avec le nom: ${filename}`);
+      
       const { data, error } = await supabase.storage
         .from('client-photos')
         .upload(filename, blob, {
-          contentType: 'image/jpeg'
+          contentType: 'image/jpeg',
+          upsert: false
         });
 
       if (error) {
         console.error('❌ Erreur upload photo client:', error);
-        throw new Error(`Erreur upload photo client: ${error.message}`);
+        toast.error(`Erreur lors de l'upload de la photo client: ${error.message}`);
+        return null;
       }
 
       const { data: publicURL } = supabase.storage
         .from('client-photos')
         .getPublicUrl(data.path);
 
-      console.log("✅ Photo client uploadée vers client-photos:", publicURL.publicUrl);
-      return publicURL.publicUrl;
+      const finalUrl = publicURL.publicUrl;
+      console.log("✅ Photo client uploadée vers client-photos:", finalUrl);
+      
+      // Vérification que l'URL contient bien le bucket correct
+      if (!finalUrl.includes('client-photos')) {
+        console.warn("⚠️ URL ne contient pas client-photos, vérification requise");
+      }
+      
+      return finalUrl;
     } catch (error) {
       console.error('❌ Erreur upload photo client:', error);
-      throw error;
+      toast.error("Erreur lors de l'upload de la photo du client");
+      return null;
     }
   };
 
@@ -67,7 +79,8 @@ export const useImageUpload = () => {
 
       if (error) {
         console.error('❌ Erreur upload barcode:', error);
-        throw new Error(`Erreur upload: ${error.message}`);
+        toast.error(`Erreur lors de l'upload du code-barres: ${error.message}`);
+        return null;
       }
 
       console.log("✅ Upload code-barres réussi:", data);
@@ -83,10 +96,12 @@ export const useImageUpload = () => {
         console.warn("⚠️ URL ne contient pas barcode-images");
       }
       
+      toast.success("Image de code-barres uploadée avec succès!");
       return finalUrl;
     } catch (error) {
       console.error('❌ Erreur upload barcode:', error);
-      throw error;
+      toast.error("Erreur lors de l'upload de l'image de code-barres");
+      return null;
     }
   };
 
