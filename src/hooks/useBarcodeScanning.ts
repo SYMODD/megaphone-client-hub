@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { extractBarcode } from "@/services/ocr/barcodeExtractor";
@@ -13,7 +12,7 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
   const [isScanning, setIsScanning] = useState(false);
   const [scannedImage, setScannedImage] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
-  const [apiKey] = useState("K87783069388957");
+  const [apiKey] = useState("K82173618788957");  // Utiliser la nouvelle clé API
 
   const extractBarcodeAndPhone = (text: string): { barcode?: string; phone?: string } => {
     console.log("Extracting barcode and phone from text:", text);
@@ -40,7 +39,7 @@ export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => 
       const formData = new FormData();
       formData.append('file', file);
       formData.append('apikey', apiKey);
-      formData.append('language', 'eng+fre+ara');
+      formData.append('language', 'eng');  // Changé de 'eng+fre+ara' à 'eng'
       formData.append('isOverlayRequired', 'true');
       formData.append('detectOrientation', 'true');
       formData.append('scale', 'true');

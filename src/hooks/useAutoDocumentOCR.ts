@@ -29,7 +29,7 @@ export const useAutoDocumentOCR = () => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('apikey', apiKey);
-      formData.append('language', 'eng+fre');
+      formData.append('language', 'eng');  // Changé de 'eng+fre' à 'eng'
       formData.append('isOverlayRequired', 'true');
       formData.append('detectOrientation', 'true');
       formData.append('scale', 'true');

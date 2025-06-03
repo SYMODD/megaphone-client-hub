@@ -20,7 +20,7 @@ export const performOCRRequest = async (imageFile: File, apiKey: string = "hello
   const formData = new FormData();
   formData.append('file', imageFile);
   formData.append('apikey', apiKey);
-  formData.append('language', 'eng+fre+ara');
+  formData.append('language', 'eng');  // Changé de 'eng+fre+ara' à 'eng'
   formData.append('isOverlayRequired', 'true');
   formData.append('detectOrientation', 'true');
   formData.append('scale', 'true');
@@ -29,7 +29,7 @@ export const performOCRRequest = async (imageFile: File, apiKey: string = "hello
 
   console.log("FormData prepared, parameters:");
   console.log("- apikey:", apiKey.substring(0, 5) + "...");
-  console.log("- language: eng+fre+ara");
+  console.log("- language: eng");  // Mise à jour du log
   console.log("- OCREngine: 2");
   console.log("- file size:", fileSizeKB.toFixed(1), "KB");
 
