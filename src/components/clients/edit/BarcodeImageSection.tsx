@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Image, Barcode } from "lucide-react";
+import { Image, Barcode, CheckCircle, AlertCircle } from "lucide-react";
 import { Client } from "@/hooks/useClientData/types";
 
 interface BarcodeImageSectionProps {
@@ -8,18 +8,25 @@ interface BarcodeImageSectionProps {
 }
 
 export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
-  console.log('BarcodeImageSection - données client:', {
+  console.log('🔍 BarcodeImageSection - Analyse des données client:', {
     id: client.id,
     code_barre: client.code_barre,
     code_barre_image_url: client.code_barre_image_url,
-    photo_url: client.photo_url
+    nom_prenom: `${client.nom} ${client.prenom}`
   });
 
-  // CORRECTION: Logique simplifiée et plus robuste
   const hasBarcode = Boolean(client.code_barre?.trim());
   const hasBarcodeImage = Boolean(client.code_barre_image_url?.trim());
+  
+  // Vérifier si l'image est dans le bon bucket
+  const isCorrectBucket = client.code_barre_image_url?.includes('barcode-images') || false;
 
-  console.log('Barcode check:', { hasBarcode, hasBarcodeImage });
+  console.log('📊 État des données barcode:', { 
+    hasBarcode, 
+    hasBarcodeImage, 
+    isCorrectBucket,
+    imageUrl: client.code_barre_image_url 
+  });
 
   // Si aucune donnée de code-barres
   if (!hasBarcode && !hasBarcodeImage) {
@@ -44,9 +51,20 @@ export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
         <CardTitle className="flex items-center gap-2 text-sm">
           <Barcode className="w-4 h-4" />
           Code-barres du client
+          {hasBarcodeImage && (
+            isCorrectBucket ? (
+              <CheckCircle className="w-4 h-4 text-green-600" title="Image dans le bon bucket" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-orange-500" title="Image dans un bucket incorrect" />
+            )
+          )}
         </CardTitle>
         <CardDescription>
-          {hasBarcodeImage ? 'Code-barres avec image scannée' : 'Code-barres sans image'}
+          {hasBarcodeImage ? (
+            isCorrectBucket ? 
+              'Code-barres avec image scannée (bucket: barcode-images)' : 
+              'Code-barres avec image scannée (ancien bucket)'
+          ) : 'Code-barres sans image'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -73,19 +91,41 @@ export const BarcodeImageSection = ({ client }: BarcodeImageSectionProps) => {
                     const target = e.currentTarget;
                     const parent = target.parentElement;
                     if (parent) {
-                      parent.innerHTML = '<div class="text-center"><p class="text-red-600 text-sm font-medium">❌ Image non disponible</p><p class="text-xs text-gray-500 mt-1">URL: ' + client.code_barre_image_url + '</p></div>';
+                      parent.innerHTML = `
+                        <div class="text-center">
+                          <p class="text-red-600 text-sm font-medium">❌ Image non disponible</p>
+                          <p class="text-xs text-gray-500 mt-1">URL: ${client.code_barre_image_url}</p>
+                          <p class="text-xs text-gray-500">Bucket correct: ${isCorrectBucket ? 'Oui' : 'Non'}</p>
+                        </div>
+                      `;
                     }
                   }}
                   onLoad={() => {
                     console.log('✅ Image du code-barres chargée avec succès:', client.code_barre_image_url);
+                    console.log(`📁 Bucket utilisé: ${isCorrectBucket ? 'barcode-images (correct)' : 'autre bucket'}`);
                   }}
                 />
               </div>
               
-              <div className="flex items-center gap-2 text-sm text-gray-600 justify-center">
+              <div className="flex items-center gap-2 text-sm justify-center">
                 <Image className="w-4 h-4" />
-                <span>Image sauvegardée automatiquement</span>
+                <span className={isCorrectBucket ? "text-green-600" : "text-orange-600"}>
+                  {isCorrectBucket ? 
+                    "Image sauvegardée dans barcode-images" : 
+                    "Image dans un ancien bucket"
+                  }
+                </span>
               </div>
+
+              {/* Informations de débogage pour les admins */}
+              {!isCorrectBucket && (
+                <div className="p-2 bg-orange-50 border border-orange-200 rounded text-xs">
+                  <p className="text-orange-800">
+                    <strong>Info technique :</strong> Cette image a été sauvegardée avant la mise à jour du système.
+                    Les nouvelles images sont maintenant stockées dans le bucket "barcode-images".
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

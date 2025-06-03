@@ -10,16 +10,34 @@ export const useOCRScanning = () => {
   const [apiKey] = useState("K82173618788957");
 
   const scanForBarcodeAndPhone = async (file: File, onBarcodeScanned: (barcode: string, phone?: string, barcodeImageUrl?: string) => void) => {
-    console.log("=== DÉBUT SCAN BARCODE ===");
+    console.log("=== DÉBUT TEST SCAN BARCODE ===");
+    console.log("🔍 Fichier à scanner:", {
+      name: file.name,
+      type: file.type,
+      size: `${(file.size / 1024).toFixed(1)}KB`
+    });
+    
     let barcodeImageUrl: string | null = null;
     
     try {
-      console.log("Starting barcode and phone scan...");
-      console.log("File details:", {
-        name: file.name,
-        type: file.type,
-        size: `${(file.size / 1024).toFixed(1)}KB`
-      });
+      // ÉTAPE 1: Sauvegarde immédiate de l'image dans barcode-images
+      console.log("📤 ÉTAPE 1: Sauvegarde de l'image dans le bucket barcode-images...");
+      barcodeImageUrl = await uploadBarcodeImage(file);
+      
+      if (barcodeImageUrl) {
+        console.log("✅ Image sauvegardée avec succès:", barcodeImageUrl);
+        // Vérifier que l'URL contient bien "barcode-images"
+        if (barcodeImageUrl.includes('barcode-images')) {
+          console.log("✅ CORRECT: L'image est bien dans le bucket barcode-images");
+        } else {
+          console.warn("⚠️ ATTENTION: L'image n'est pas dans le bon bucket!");
+        }
+      } else {
+        console.error("❌ Échec de la sauvegarde de l'image");
+      }
+      
+      // ÉTAPE 2: Analyse OCR
+      console.log("🔍 ÉTAPE 2: Lancement de l'analyse OCR...");
       
       const formData = new FormData();
       formData.append('file', file);
@@ -29,8 +47,6 @@ export const useOCRScanning = () => {
       formData.append('detectOrientation', 'true');
       formData.append('scale', 'true');
       formData.append('OCREngine', '2');
-
-      console.log("Sending request to OCR API for barcode extraction...");
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
@@ -47,64 +63,67 @@ export const useOCRScanning = () => {
 
       clearTimeout(timeoutId);
       const elapsed = Date.now() - startTime;
-      console.log(`Response received after ${elapsed}ms`);
+      console.log(`⚡ Réponse OCR reçue en ${elapsed}ms`);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("OCR API error:", errorText);
+        console.error("❌ Erreur API OCR:", errorText);
         throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
-      console.log("Barcode OCR API Response:", result);
+      console.log("📋 Réponse OCR complète:", result);
 
       if (result.IsErroredOnProcessing || result.OCRExitCode !== 1) {
         const errorMsg = result.ErrorMessage || "Erreur lors du traitement OCR";
-        console.error("OCR processing error:", errorMsg);
+        console.error("❌ Erreur traitement OCR:", errorMsg);
         toast.error(errorMsg);
+        
+        // Même en cas d'erreur OCR, on retourne l'image sauvegardée
+        if (barcodeImageUrl) {
+          console.log("💾 Retour de l'image sauvegardée malgré l'erreur OCR");
+          onBarcodeScanned("", undefined, barcodeImageUrl);
+          toast.info("Image sauvegardée, mais aucun texte détecté");
+        }
         return;
       }
 
       const parsedText = result.ParsedResults[0]?.ParsedText || "";
-      console.log("Parsed text for barcode extraction:", parsedText);
+      console.log("📝 Texte extrait:", parsedText);
       
-      if (!parsedText.trim()) {
-        console.warn("No text detected in OCR result");
-        toast.warning("Aucun texte détecté dans l'image");
-        return;
-      }
-
+      // ÉTAPE 3: Extraction des données
+      console.log("🔄 ÉTAPE 3: Extraction du code-barres et du téléphone...");
       const extractedData = extractBarcodeAndPhone(parsedText);
-      console.log("Final extracted data:", extractedData);
+      console.log("📊 Données extraites:", extractedData);
 
-      // CORRECTION: Toujours sauvegarder l'image du code-barres quand on fait un scan
-      console.log("📸 Sauvegarde systématique de l'image scannée...");
-      barcodeImageUrl = await uploadBarcodeImage(file);
-      if (barcodeImageUrl) {
-        console.log("✅ Image du scan sauvegardée:", barcodeImageUrl);
-      } else {
-        console.warn("⚠️ Échec de la sauvegarde de l'image");
-      }
+      // ÉTAPE 4: Résultat final
+      console.log("🎯 ÉTAPE 4: Préparation du résultat final...");
+      const finalResult = {
+        barcode: extractedData.barcode || "",
+        phone: extractedData.phone,
+        imageUrl: barcodeImageUrl
+      };
+      console.log("🏆 Résultat final:", finalResult);
 
-      if (extractedData.barcode || extractedData.phone || barcodeImageUrl) {
-        const successItems = [];
-        if (extractedData.barcode) successItems.push("code-barres");
-        if (extractedData.phone) successItems.push("numéro de téléphone");
-        if (barcodeImageUrl) successItems.push("image sauvegardée");
-        
-        console.log("✅ Scan successful, calling callback...");
-        onBarcodeScanned(extractedData.barcode || "", extractedData.phone, barcodeImageUrl || undefined);
-        toast.success(`${successItems.join(" et ")} extraits avec succès!`);
+      // Callback avec toutes les données
+      onBarcodeScanned(finalResult.barcode, finalResult.phone, finalResult.imageUrl || undefined);
+
+      // Messages de succès
+      const successItems = [];
+      if (finalResult.barcode) successItems.push("code-barres");
+      if (finalResult.phone) successItems.push("numéro de téléphone");
+      if (finalResult.imageUrl) successItems.push("image sauvegardée");
+      
+      if (successItems.length > 0) {
+        toast.success(`✅ ${successItems.join(" et ")} extraits avec succès!`);
       } else {
-        console.warn("No barcode or phone found, but image was saved");
-        toast.warning("Aucun code-barres ou numéro détecté, mais l'image a été sauvegardée");
-        onBarcodeScanned("", undefined, barcodeImageUrl || undefined);
+        toast.info("Image sauvegardée, mais aucune donnée textuelle détectée");
       }
       
-      console.log("=== FIN SCAN BARCODE (SUCCÈS) ===");
+      console.log("=== FIN TEST SCAN BARCODE (SUCCÈS) ===");
     } catch (error) {
-      console.error(`=== ERREUR SCAN BARCODE ===`);
-      console.error("Barcode scan error:", error);
+      console.error("=== ERREUR SCAN BARCODE ===");
+      console.error("Détails de l'erreur:", error);
       
       if (error.name === 'AbortError') {
         toast.error("Timeout: Le scan a pris trop de temps (plus de 60 secondes)");
@@ -112,6 +131,13 @@ export const useOCRScanning = () => {
         toast.error("Erreur de connexion: Impossible de joindre le service OCR");
       } else {
         toast.error(`Erreur lors du scan: ${error.message}`);
+      }
+      
+      // Même en cas d'erreur, retourner l'image si elle a été sauvegardée
+      if (barcodeImageUrl) {
+        console.log("💾 Retour de l'image sauvegardée malgré l'erreur");
+        onBarcodeScanned("", undefined, barcodeImageUrl);
+        toast.info("Image sauvegardée malgré l'erreur de scan");
       }
     }
   };
