@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
@@ -8,6 +7,7 @@ import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
 import { useClientData } from "@/hooks/useClientData";
 import { useClientActions } from "@/hooks/useClientActions";
 import { useNationalities } from "@/hooks/useNationalities";
+import { Client } from "@/hooks/useClientData/types";
 import { ClientStatistics } from "@/components/clients/ClientStatistics";
 import { ClientFilters } from "@/components/clients/ClientFilters";
 import { ClientTable } from "@/components/clients/ClientTable";
@@ -76,7 +76,7 @@ const BaseClients = () => {
     try {
       // Pour de gros volumes, on exporte par chunks
       const EXPORT_CHUNK_SIZE = 1000;
-      let allClients = [];
+      let allClients: Client[] = [];
       let currentChunk = 0;
       
       toast({
