@@ -37,14 +37,17 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
     try {
       let photoUrl = null;
       
-      // Upload image if present
-      if (formData.scannedImage) {
-        console.log("📤 Upload de l'image scannée...");
+      // Upload image only if present AND no barcode image URL exists
+      // Si on a déjà une URL d'image de code-barres, on ne fait pas d'upload supplémentaire
+      if (formData.scannedImage && !formData.code_barre_image_url) {
+        console.log("📤 Upload de l'image scannée vers client-photos...");
         photoUrl = await uploadImage(formData.scannedImage);
         console.log("✅ Image scannée uploadée:", photoUrl);
+      } else if (formData.code_barre_image_url) {
+        console.log("✅ Image de code-barres déjà uploadée:", formData.code_barre_image_url);
       }
 
-      // Préparer les données client avec l'image de code-barres
+      // Préparer les données client
       const clientData = {
         nom: formData.nom,
         prenom: formData.prenom,
@@ -52,17 +55,21 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         numero_passeport: formData.numero_passeport,
         numero_telephone: formData.numero_telephone,
         code_barre: formData.code_barre,
-        code_barre_image_url: formData.code_barre_image_url, // IMPORTANT: Inclure l'URL de l'image de code-barres
-        photo_url: photoUrl,
+        code_barre_image_url: formData.code_barre_image_url, // Image de code-barres depuis le scan
+        photo_url: photoUrl, // Photo du client (différente de l'image de code-barres)
         observations: formData.observations,
         date_enregistrement: formData.date_enregistrement,
         agent_id: user.id,
         document_type: formData.document_type
       };
 
-      console.log("💾 INSERTION CLIENT - Données complètes:", clientData);
+      console.log("💾 INSERTION CLIENT - Données complètes:", {
+        ...clientData,
+        code_barre_image_url: clientData.code_barre_image_url ? "PRÉSENT" : "ABSENT",
+        photo_url: clientData.photo_url ? "PRÉSENT" : "ABSENT"
+      });
 
-      // Insert client data with barcode and barcode image URL
+      // Insert client data
       const { error } = await supabase
         .from('clients')
         .insert(clientData);
@@ -77,8 +84,14 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         return;
       }
 
-      console.log("✅ Client enregistré avec succès avec image de code-barres!");
-      toast.success("Client enregistré avec succès!");
+      console.log("✅ Client enregistré avec succès!");
+      
+      // Message de succès avec détails
+      const successMessage = formData.code_barre_image_url 
+        ? "Client enregistré avec succès avec image de code-barres!"
+        : "Client enregistré avec succès!";
+      
+      toast.success(successMessage);
       navigate("/");
     } catch (error) {
       console.error('❌ Erreur:', error);

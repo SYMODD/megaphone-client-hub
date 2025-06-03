@@ -19,7 +19,9 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         ...prev,
         code_barre: barcode || prev.code_barre,
         numero_telephone: phone || prev.numero_telephone,
-        code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url
+        code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url,
+        // NE PAS mettre l'image dans scannedImage si on a déjà l'URL de l'image de code-barres
+        scannedImage: barcodeImageUrl ? null : prev.scannedImage
       };
       
       console.log("📝 BARCODE HANDLER - Mise à jour du formulaire:", {
@@ -27,8 +29,9 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         nouveau_code_barre: newData.code_barre,
         ancien_telephone: prev.numero_telephone,
         nouveau_telephone: newData.numero_telephone,
-        ancienne_image: prev.code_barre_image_url,
-        nouvelle_image: newData.code_barre_image_url
+        ancienne_image_url: prev.code_barre_image_url,
+        nouvelle_image_url: newData.code_barre_image_url,
+        scannedImage_reset: barcodeImageUrl ? "OUI" : "NON"
       });
       
       return newData;
