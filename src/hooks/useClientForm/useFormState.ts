@@ -13,6 +13,7 @@ export const useFormState = () => {
     numero_passeport: "",
     numero_telephone: "",
     code_barre: "",
+    code_barre_image_url: "",
     scannedImage: null,
     observations: "",
     date_enregistrement: new Date().toISOString().split('T')[0]

@@ -8,6 +8,7 @@ export interface ClientFormData {
   numero_passeport: string;
   numero_telephone: string;
   code_barre: string;
+  code_barre_image_url: string;
   scannedImage: string | null;
   observations: string;
   date_enregistrement: string;

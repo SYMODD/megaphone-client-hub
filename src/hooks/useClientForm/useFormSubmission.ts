@@ -43,6 +43,7 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
           numero_passeport: formData.numero_passeport,
           numero_telephone: formData.numero_telephone,
           code_barre: formData.code_barre,
+          code_barre_image_url: formData.code_barre_image_url,
           photo_url: photoUrl,
           observations: formData.observations,
           date_enregistrement: formData.date_enregistrement,

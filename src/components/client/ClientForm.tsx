@@ -14,7 +14,8 @@ export const ClientForm = () => {
     handleInputChange, 
     handleSubmit, 
     handleMRZDataExtracted,
-    handleDocumentTypeSelect
+    handleDocumentTypeSelect,
+    handleBarcodeScanned
   } = useClientFormLogic();
 
   const handleFormSubmit = (e: React.FormEvent) => {

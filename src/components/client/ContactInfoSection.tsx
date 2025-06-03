@@ -10,18 +10,24 @@ interface ContactInfoSectionProps {
   formData: {
     numero_telephone: string;
     code_barre: string;
+    code_barre_image_url?: string;
     [key: string]: any;
   };
   onInputChange: (field: string, value: string) => void;
 }
 
 export const ContactInfoSection = ({ formData, onInputChange }: ContactInfoSectionProps) => {
-  const handleBarcodeScanned = (barcode: string, phone?: string) => {
+  const handleBarcodeScanned = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
+    console.log("📤 ContactInfoSection - Données reçues:", { barcode, phone, barcodeImageUrl });
+    
     if (barcode) {
       onInputChange("code_barre", barcode);
     }
     if (phone) {
       onInputChange("numero_telephone", phone);
+    }
+    if (barcodeImageUrl) {
+      onInputChange("code_barre_image_url", barcodeImageUrl);
     }
   };
 
@@ -79,6 +85,22 @@ export const ContactInfoSection = ({ formData, onInputChange }: ContactInfoSecti
               </p>
             )}
           </div>
+
+          {formData.code_barre_image_url && (
+            <div className="space-y-2">
+              <Label>Image du code-barres scanné</Label>
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <img 
+                  src={formData.code_barre_image_url} 
+                  alt="Image du code-barres" 
+                  className="max-w-full max-h-32 object-contain mx-auto"
+                />
+                <p className="text-xs text-green-600 mt-2 text-center">
+                  ✅ Image sauvegardée automatiquement
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
