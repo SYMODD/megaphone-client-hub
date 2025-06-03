@@ -10,10 +10,10 @@ export const ensureStorageBucket = async () => {
       return false;
     }
 
-    const clientPhotosBucket = buckets.find(bucket => bucket.name === 'client-photos');
+    const clientAssetsBucket = buckets.find(bucket => bucket.name === 'client-assets');
     
-    if (!clientPhotosBucket) {
-      console.warn('Bucket client-photos not found. Please create it in Supabase.');
+    if (!clientAssetsBucket) {
+      console.warn('Bucket client-assets not found. Please create it in Supabase.');
       return false;
     }
 
@@ -29,16 +29,16 @@ export const uploadClientPhoto = async (imageBase64: string, documentType: strin
     // Vérifier que le bucket existe
     const bucketExists = await ensureStorageBucket();
     if (!bucketExists) {
-      console.error('Storage bucket client-photos does not exist');
+      console.error('Storage bucket client-assets does not exist');
       return null;
     }
 
     const response = await fetch(imageBase64);
     const blob = await response.blob();
-    const filename = `${documentType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.jpg`;
+    const filename = `client-photos/${documentType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.jpg`;
     
     const { data, error } = await supabase.storage
-      .from('client-photos')
+      .from('client-assets')
       .upload(filename, blob, { 
         contentType: 'image/jpeg',
         upsert: false
@@ -50,7 +50,7 @@ export const uploadClientPhoto = async (imageBase64: string, documentType: strin
     }
 
     const { data: publicURL } = supabase.storage
-      .from('client-photos')
+      .from('client-assets')
       .getPublicUrl(data.path);
 
     return publicURL.publicUrl;

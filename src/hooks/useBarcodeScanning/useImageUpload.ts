@@ -4,17 +4,17 @@ import { supabase } from "@/integrations/supabase/client";
 export const useImageUpload = () => {
   const uploadBarcodeImage = async (file: File): Promise<string | null> => {
     try {
-      console.log("📤 Upload de l'image du code-barres...");
+      console.log("📤 Upload de l'image du code-barres vers client-assets...");
       
-      // Générer un nom de fichier unique
+      // Générer un nom de fichier unique avec le préfixe barcode-images/
       const timestamp = Date.now();
       const randomId = Math.random().toString(36).substr(2, 9);
       const fileExtension = file.name.split('.').pop() || 'jpg';
-      const fileName = `barcode_${timestamp}_${randomId}.${fileExtension}`;
+      const fileName = `barcode-images/barcode_${timestamp}_${randomId}.${fileExtension}`;
       
-      // Upload vers Supabase Storage
+      // Upload vers Supabase Storage dans le bucket client-assets
       const { data, error } = await supabase.storage
-        .from('client-photos')
+        .from('client-assets')
         .upload(fileName, file, {
           contentType: file.type || 'image/jpeg',
           upsert: false
@@ -27,10 +27,10 @@ export const useImageUpload = () => {
 
       // Obtenir l'URL publique
       const { data: publicUrl } = supabase.storage
-        .from('client-photos')
+        .from('client-assets')
         .getPublicUrl(data.path);
 
-      console.log("✅ Image code-barres uploadée:", publicUrl.publicUrl);
+      console.log("✅ Image code-barres uploadée vers client-assets:", publicUrl.publicUrl);
       return publicUrl.publicUrl;
     } catch (error) {
       console.error('❌ Erreur lors de l\'upload de l\'image code-barres:', error);
