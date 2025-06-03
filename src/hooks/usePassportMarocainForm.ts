@@ -65,9 +65,15 @@ export const usePassportMarocainForm = () => {
       let photoUrl = null;
       
       if (formData.scannedImage) {
+        console.log("📤 Upload de l'image scannée en cours...");
         photoUrl = await uploadClientPhoto(formData.scannedImage, 'passeport_marocain');
+        
         if (!photoUrl) {
+          console.error("❌ Échec de l'upload de l'image");
           toast.error("Erreur lors du téléchargement de l'image. Enregistrement sans photo.");
+          // Continue sans photo plutôt que d'arrêter complètement
+        } else {
+          console.log("✅ Image uploadée avec succès:", photoUrl);
         }
       }
 
