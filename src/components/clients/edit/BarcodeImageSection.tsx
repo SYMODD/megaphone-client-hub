@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Image, Barcode, CheckCircle, AlertCircle } from "lucide-react";
 import { Client } from "@/hooks/useClientData/types";
 import { BarcodeImageUpload } from "./BarcodeImageUpload";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface BarcodeImageSectionProps {
   client: Client;
@@ -13,10 +13,16 @@ interface BarcodeImageSectionProps {
 export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSectionProps) => {
   const [currentImageUrl, setCurrentImageUrl] = useState(client.code_barre_image_url);
   
+  // Synchroniser l'état local avec les props du client
+  useEffect(() => {
+    setCurrentImageUrl(client.code_barre_image_url);
+  }, [client.code_barre_image_url]);
+  
   console.log('🔍 BarcodeImageSection - Analyse des données client:', {
     id: client.id,
     code_barre: client.code_barre,
     code_barre_image_url: currentImageUrl,
+    client_image_url: client.code_barre_image_url,
     nom_prenom: `${client.nom} ${client.prenom}`
   });
 
@@ -36,6 +42,7 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
   const handleImageUploaded = (newImageUrl: string) => {
     console.log("🔄 Nouvelle image uploadée:", newImageUrl);
     setCurrentImageUrl(newImageUrl);
+    // Appeler le callback pour rafraîchir les données du client parent
     if (onClientUpdated) {
       onClientUpdated();
     }
