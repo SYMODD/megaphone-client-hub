@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { PersonalInfoSection } from "./PersonalInfoSection";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { RegistrationSection } from "./RegistrationSection";
-import { FormActions } from "./FormActions";
 import { CINScanner } from "./CINScanner";
 import { uploadClientPhoto } from "@/utils/storageUtils";
 

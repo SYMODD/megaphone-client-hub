@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,7 +7,6 @@ import { toast } from "sonner";
 import { PersonalInfoSection } from "./PersonalInfoSection";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { RegistrationSection } from "./RegistrationSection";
-import { FormActions } from "./FormActions";
 import { CarteSejourScanner } from "./CarteSejourScanner";
 import { uploadClientPhoto } from "@/utils/storageUtils";
 
