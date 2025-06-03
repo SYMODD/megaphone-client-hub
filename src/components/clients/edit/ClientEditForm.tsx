@@ -2,6 +2,7 @@
 import { ClientPhotoSection } from "./ClientPhotoSection";
 import { PersonalInfoFields } from "./PersonalInfoFields";
 import { ContactInfoFields } from "./ContactInfoFields";
+import { BarcodeImageSection } from "./BarcodeImageSection";
 import { Client } from "@/hooks/useClientData/types";
 
 interface ClientEditFormProps {
@@ -43,6 +44,8 @@ export const ClientEditForm = ({ client, formData, onUpdate }: ClientEditFormPro
         }}
         onUpdate={onUpdate}
       />
+
+      <BarcodeImageSection client={client} />
     </div>
   );
 };

@@ -52,13 +52,15 @@ export const useClientFormLogic = () => {
   const handleMRZDataExtracted = (mrzData: MRZData, documentType: DocumentType) => {
     console.log("Applying MRZ data to form:", mrzData, "Document type:", documentType);
     
+    // CORRECTION: Ne pas mettre le numéro de document dans le champ code_barre
     setFormData(prev => ({
       ...prev,
       nom: mrzData.nom || prev.nom,
       prenom: mrzData.prenom || prev.prenom,
       nationalite: mrzData.nationalite || prev.nationalite,
       numero_passeport: mrzData.numero_passeport || prev.numero_passeport,
-      code_barre: mrzData.code_barre || prev.code_barre,
+      // NE PAS mettre le numéro de passeport dans code_barre
+      // code_barre: mrzData.code_barre || prev.code_barre, // Retiré
       numero_telephone: mrzData.numero_telephone || prev.numero_telephone,
       document_type: documentType
     }));
@@ -76,7 +78,6 @@ export const useClientFormLogic = () => {
     if (mrzData.nom) extractedItems.push("nom");
     if (mrzData.prenom) extractedItems.push("prénom");
     if (mrzData.numero_passeport) extractedItems.push("numéro de document");
-    if (mrzData.code_barre) extractedItems.push("code-barres");
     if (mrzData.numero_telephone) extractedItems.push("numéro de téléphone");
 
     const mrzInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: ${documentTypeLabels[documentType]} - Données: ${extractedItems.join(", ")}`;

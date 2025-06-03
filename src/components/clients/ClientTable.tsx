@@ -1,175 +1,126 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Eye, Edit, FileText, Barcode } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Eye, Edit, FileText, Trash2, Image } from "lucide-react";
+import { formatBarcodeForDisplay } from "@/utils/barcodeUtils";
+import { useAuth } from "@/contexts/AuthContext";
 import { Client } from "@/hooks/useClientData/types";
 
 interface ClientTableProps {
   clients: Client[];
-  totalCount: number;
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
   onViewClient: (client: Client) => void;
   onEditClient: (client: Client) => void;
   onGenerateDocument: (client: Client) => void;
+  onDeleteClient?: (client: Client) => void;
 }
 
-export const ClientTable = ({
-  clients,
-  totalCount,
-  currentPage,
-  totalPages,
-  onPageChange,
-  onViewClient,
-  onEditClient,
-  onGenerateDocument
+export const ClientTable = ({ 
+  clients, 
+  onViewClient, 
+  onEditClient, 
+  onGenerateDocument,
+  onDeleteClient 
 }: ClientTableProps) => {
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === 'admin';
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          Clients ({clients.length} résultat{clients.length > 1 ? 's' : ''} sur {totalCount})
-        </CardTitle>
-        <CardDescription>
-          Liste complète des clients avec leurs informations principales - Page {currentPage} sur {totalPages}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nom complet</TableHead>
-                <TableHead>Nationalité</TableHead>
-                <TableHead>Numéro de passeport</TableHead>
-                <TableHead>Code-barres</TableHead>
-                <TableHead>Date d'enregistrement</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {clients.map((client) => (
-                <TableRow key={client.id} className="hover:bg-slate-50">
-                  <TableCell className="font-medium">
-                    <div>
-                      <p className="font-semibold">{client.prenom} {client.nom}</p>
-                      {client.observations && (
-                        <p className="text-sm text-slate-500">{client.observations}</p>
-                      )}
+    <div className="rounded-md border overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[200px]">Nom complet</TableHead>
+            <TableHead className="hidden sm:table-cell">Nationalité</TableHead>
+            <TableHead className="hidden md:table-cell">N° Document</TableHead>
+            <TableHead className="hidden md:table-cell">Code-barres</TableHead>
+            <TableHead className="hidden lg:table-cell">Date d'enregistrement</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {clients.map((client) => (
+            <TableRow key={client.id}>
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  {client.photo_url && (
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                      <img 
+                        src={client.photo_url} 
+                        alt="Photo" 
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{client.nationalite}</Badge>
-                  </TableCell>
-                  <TableCell className="text-sm font-mono">
-                    {client.numero_passeport}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {client.code_barre ? (
-                      <div className="flex items-center space-x-1">
-                        <Barcode className="w-4 h-4 text-blue-600" />
-                        <span className="font-mono text-xs bg-blue-50 px-2 py-1 rounded">
-                          {client.code_barre}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-slate-400 text-xs">Aucun</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {new Date(client.date_enregistrement).toLocaleDateString('fr-FR')}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => onViewClient(client)}
-                        title="Voir les détails"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => onEditClient(client)}
-                        title="Modifier le client"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => onGenerateDocument(client)}
-                        title="Générer un document"
-                      >
-                        <FileText className="w-4 h-4" />
-                      </Button>
+                  )}
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{client.prenom} {client.nom}</div>
+                    <div className="text-sm text-muted-foreground sm:hidden truncate">
+                      {client.nationalite}
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        {clients.length === 0 && totalCount > 0 && (
-          <div className="text-center py-8">
-            <p className="text-slate-500">Aucun client trouvé avec les critères sélectionnés.</p>
-          </div>
-        )}
-
-        {totalCount === 0 && (
-          <div className="text-center py-8">
-            <p className="text-slate-500">Aucun client dans la base de données.</p>
-            <p className="text-sm text-slate-400 mt-2">
-              Les clients s'afficheront ici une fois qu'ils seront ajoutés à la base de données.
-            </p>
-            <p className="text-sm text-slate-400 mt-2">
-              Utilisez la page "Nouveau Client" pour ajouter votre premier client.
-            </p>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-6">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-                
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      onClick={() => onPageChange(page)}
-                      isActive={currentPage === page}
-                      className="cursor-pointer"
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell className="hidden sm:table-cell">{client.nationalite}</TableCell>
+              <TableCell className="hidden md:table-cell">
+                <span className="font-mono text-sm">{client.numero_passeport}</span>
+              </TableCell>
+              <TableCell className="hidden md:table-cell">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-sm">
+                    {client.code_barre ? formatBarcodeForDisplay(client.code_barre) : '-'}
+                  </span>
+                  {client.code_barre_image_url && (
+                    <Image className="w-4 h-4 text-blue-600" title="Image du code-barres disponible" />
+                  )}
+                </div>
+              </TableCell>
+              <TableCell className="hidden lg:table-cell">
+                {client.date_enregistrement 
+                  ? new Date(client.date_enregistrement).toLocaleDateString('fr-FR')
+                  : '-'
+                }
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onViewClient(client)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEditClient(client)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onGenerateDocument(client)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <FileText className="h-4 w-4" />
+                  </Button>
+                  {isAdmin && onDeleteClient && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDeleteClient(client)}
+                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };

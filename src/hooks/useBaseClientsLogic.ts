@@ -27,13 +27,18 @@ export const useBaseClientsLogic = () => {
     handleViewClient,
     handleEditClient,
     handleGenerateDocument,
+    handleDeleteClient,
+    confirmDeleteClient,
     selectedClient,
     viewDialogOpen,
     editDialogOpen,
     documentDialogOpen,
+    deleteDialogOpen,
+    isDeleting,
     setViewDialogOpen,
     setEditDialogOpen,
-    setDocumentDialogOpen
+    setDocumentDialogOpen,
+    setDeleteDialogOpen
   } = useClientActions();
 
   const handlePageChange = (page: number) => {
@@ -132,6 +137,8 @@ export const useBaseClientsLogic = () => {
     viewDialogOpen,
     editDialogOpen,
     documentDialogOpen,
+    deleteDialogOpen,
+    isDeleting,
     handlePageChange,
     handleClientUpdated,
     handleExport,
@@ -139,9 +146,12 @@ export const useBaseClientsLogic = () => {
     handleViewClient,
     handleEditClient,
     handleGenerateDocument,
+    handleDeleteClient,
+    confirmDeleteClient,
     setViewDialogOpen,
     setEditDialogOpen,
     setDocumentDialogOpen,
+    setDeleteDialogOpen,
     filterClients
   };
 };

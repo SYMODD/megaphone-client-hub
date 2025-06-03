@@ -21,6 +21,8 @@ const BaseClients = () => {
     viewDialogOpen,
     editDialogOpen,
     documentDialogOpen,
+    deleteDialogOpen,
+    isDeleting,
     handlePageChange,
     handleClientUpdated,
     handleExport,
@@ -28,9 +30,12 @@ const BaseClients = () => {
     handleViewClient,
     handleEditClient,
     handleGenerateDocument,
+    handleDeleteClient,
+    confirmDeleteClient,
     setViewDialogOpen,
     setEditDialogOpen,
     setDocumentDialogOpen,
+    setDeleteDialogOpen,
     filterClients
   } = useBaseClientsLogic();
 
@@ -92,6 +97,7 @@ const BaseClients = () => {
             onViewClient={handleViewClient}
             onEditClient={handleEditClient}
             onGenerateDocument={handleGenerateDocument}
+            onDeleteClient={handleDeleteClient}
             onExport={handleExport}
             filterClients={filterClients}
           />
@@ -103,10 +109,14 @@ const BaseClients = () => {
         viewDialogOpen={viewDialogOpen}
         editDialogOpen={editDialogOpen}
         documentDialogOpen={documentDialogOpen}
+        deleteDialogOpen={deleteDialogOpen}
+        isDeleting={isDeleting}
         setViewDialogOpen={setViewDialogOpen}
         setEditDialogOpen={setEditDialogOpen}
         setDocumentDialogOpen={setDocumentDialogOpen}
+        setDeleteDialogOpen={setDeleteDialogOpen}
         onClientUpdated={handleClientUpdated}
+        onConfirmDelete={confirmDeleteClient}
       />
     </div>
   );
