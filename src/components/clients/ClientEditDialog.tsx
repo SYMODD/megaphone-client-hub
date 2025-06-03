@@ -1,13 +1,10 @@
-import { useState, useEffect } from "react";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Edit, Save, X, Phone, Barcode, Image } from "lucide-react";
+import { Edit, Save, X } from "lucide-react";
 import { Client } from "@/hooks/useClientData/types";
+import { useClientEditForm } from "@/hooks/useClientEditForm";
+import { ClientEditForm } from "./edit/ClientEditForm";
 
 interface ClientEditDialogProps {
   client: Client | null;
@@ -17,79 +14,13 @@ interface ClientEditDialogProps {
 }
 
 export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }: ClientEditDialogProps) => {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    nom: client?.nom || "",
-    prenom: client?.prenom || "",
-    nationalite: client?.nationalite || "",
-    numero_passeport: client?.numero_passeport || "",
-    numero_telephone: client?.numero_telephone || "",
-    code_barre: client?.code_barre || "",
-    date_enregistrement: client?.date_enregistrement || "",
-    observations: client?.observations || ""
-  });
+  const { formData, loading, updateFormData, handleSave } = useClientEditForm(client);
 
-  // Mettre à jour les données du formulaire quand le client change
-  useEffect(() => {
-    if (client) {
-      setFormData({
-        nom: client.nom,
-        prenom: client.prenom,
-        nationalite: client.nationalite,
-        numero_passeport: client.numero_passeport,
-        numero_telephone: client.numero_telephone || "",
-        code_barre: client.code_barre || "",
-        date_enregistrement: client.date_enregistrement,
-        observations: client.observations || ""
-      });
-    }
-  }, [client]);
-
-  const handleSave = async () => {
-    if (!client) return;
-
-    try {
-      setLoading(true);
-      console.log('Mise à jour du client:', client.id, formData);
-
-      const { error } = await supabase
-        .from('clients')
-        .update({
-          nom: formData.nom,
-          prenom: formData.prenom,
-          nationalite: formData.nationalite,
-          numero_passeport: formData.numero_passeport,
-          numero_telephone: formData.numero_telephone || null,
-          code_barre: formData.code_barre || null,
-          date_enregistrement: formData.date_enregistrement,
-          observations: formData.observations,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', client.id);
-
-      if (error) {
-        console.error('Erreur lors de la mise à jour:', error);
-        throw error;
-      }
-
-      toast({
-        title: "Client mis à jour",
-        description: `Les informations de ${formData.prenom} ${formData.nom} ont été mises à jour avec succès.`,
-      });
-
+  const onSave = () => {
+    handleSave(() => {
       onClientUpdated();
       onOpenChange(false);
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le client. Veuillez réessayer.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   if (!client) return null;
@@ -104,122 +35,11 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-6">
-          {/* Photo du client si disponible */}
-          {client.photo_url && (
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2 text-sm">
-                <Image className="w-4 h-4" />
-                Photo scannée
-              </Label>
-              <div className="border rounded-lg p-4 bg-gray-50">
-                <img 
-                  src={client.photo_url} 
-                  alt="Photo du client"
-                  className="max-w-full h-auto max-h-48 rounded-lg shadow-md mx-auto"
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="prenom" className="text-sm">Prénom</Label>
-              <Input
-                id="prenom"
-                value={formData.prenom}
-                onChange={(e) => setFormData(prev => ({ ...prev, prenom: e.target.value }))}
-                placeholder="Prénom"
-                className="text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="nom" className="text-sm">Nom</Label>
-              <Input
-                id="nom"
-                value={formData.nom}
-                onChange={(e) => setFormData(prev => ({ ...prev, nom: e.target.value }))}
-                placeholder="Nom"
-                className="text-sm"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="nationalite" className="text-sm">Nationalité</Label>
-            <Input
-              id="nationalite"
-              value={formData.nationalite}
-              onChange={(e) => setFormData(prev => ({ ...prev, nationalite: e.target.value }))}
-              placeholder="Nationalité"
-              className="text-sm"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="numero_passeport" className="text-sm">Numéro de passeport</Label>
-            <Input
-              id="numero_passeport"
-              value={formData.numero_passeport}
-              onChange={(e) => setFormData(prev => ({ ...prev, numero_passeport: e.target.value }))}
-              placeholder="Numéro de passeport"
-              className="text-sm font-mono"
-            />
-          </div>
-
-          {/* Nouveaux champs pour téléphone et code-barres */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="numero_telephone" className="flex items-center gap-2 text-sm">
-                <Phone className="w-4 h-4" />
-                Numéro de téléphone
-              </Label>
-              <Input
-                id="numero_telephone"
-                value={formData.numero_telephone}
-                onChange={(e) => setFormData(prev => ({ ...prev, numero_telephone: e.target.value }))}
-                placeholder="Ex: +212 6 12 34 56 78"
-                className="text-sm font-mono"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="code_barre" className="flex items-center gap-2 text-sm">
-                <Barcode className="w-4 h-4" />
-                Code-barres
-              </Label>
-              <Input
-                id="code_barre"
-                value={formData.code_barre}
-                onChange={(e) => setFormData(prev => ({ ...prev, code_barre: e.target.value }))}
-                placeholder="Code-barres du document"
-                className="text-sm font-mono"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="date_enregistrement" className="text-sm">Date d'enregistrement</Label>
-            <Input
-              id="date_enregistrement"
-              type="date"
-              value={formData.date_enregistrement}
-              onChange={(e) => setFormData(prev => ({ ...prev, date_enregistrement: e.target.value }))}
-              className="text-sm"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="observations" className="text-sm">Observations</Label>
-            <Textarea
-              id="observations"
-              value={formData.observations}
-              onChange={(e) => setFormData(prev => ({ ...prev, observations: e.target.value }))}
-              placeholder="Observations (optionnel)"
-              rows={3}
-              className="text-sm resize-none"
-            />
-          </div>
-        </div>
+        <ClientEditForm 
+          client={client}
+          formData={formData}
+          onUpdate={updateFormData}
+        />
 
         <DialogFooter className="pt-4 flex-col sm:flex-row gap-2 sm:gap-0">
           <Button
@@ -232,7 +52,7 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
             Annuler
           </Button>
           <Button
-            onClick={handleSave}
+            onClick={onSave}
             disabled={loading}
             className="w-full sm:w-auto order-1 sm:order-2"
           >
