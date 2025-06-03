@@ -5,6 +5,7 @@ export interface PDFTemplate {
   fileName: string;
   uploadDate: string;
   filePath: string; // Path in Supabase storage instead of base64
+  userId: string; // Add the missing userId property
 }
 
 export interface FieldMapping {

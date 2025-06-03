@@ -47,7 +47,8 @@ export class TemplateLoader {
         name: template.name,
         fileName: template.file_name,
         uploadDate: template.upload_date,
-        filePath: template.file_path
+        filePath: template.file_path,
+        userId: template.user_id // Include the userId from the database
       }));
 
       console.log(`✅ ${validTemplates.length} template(s) disponible(s)`);
