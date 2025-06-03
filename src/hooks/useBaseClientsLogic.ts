@@ -49,15 +49,15 @@ export const useBaseClientsLogic = () => {
     fetchClients();
   };
 
-  // CORRECTION DÉFINITIVE: Fonction de suppression qui force le rechargement
+  // CORRECTION DÉFINITIVE: Fonction de suppression avec rechargement forcé et immédiat
   const handleConfirmDeleteClient = async () => {
     if (!selectedClient) return;
 
     try {
-      console.log('=== DÉBUT SUPPRESSION CLIENT ===');
+      console.log('=== DÉBUT SUPPRESSION CLIENT CORRIGÉE ===');
       console.log('Client à supprimer:', selectedClient.id, selectedClient.nom, selectedClient.prenom);
       
-      // Supprimer directement via Supabase
+      // 1. Supprimer de la base de données
       const { error } = await supabase
         .from('clients')
         .delete()
@@ -70,25 +70,30 @@ export const useBaseClientsLogic = () => {
 
       console.log('✅ Client supprimé avec succès de la base de données');
 
-      // Fermer le dialog immédiatement
+      // 2. Fermer immédiatement le dialog
       setDeleteDialogOpen(false);
       
-      // Toast de succès
+      // 3. Toast de succès avec durée plus longue
       toast({
-        title: "Client supprimé",
-        description: `Le client ${selectedClient.prenom} ${selectedClient.nom} a été supprimé avec succès.`,
+        title: "Client supprimé avec succès",
+        description: `${selectedClient.prenom} ${selectedClient.nom} a été définitivement supprimé.`,
+        duration: 3000, // 3 secondes au lieu de la durée par défaut
       });
       
-      // CORRECTION: Forcer le rechargement immédiat et complet
-      console.log('🔄 Rechargement forcé des données...');
-      await fetchClients();
+      // 4. CORRECTION: Rechargement forcé et immédiat des données
+      console.log('🔄 Rechargement immédiat et forcé...');
       
-      // Forcer un re-render en changeant de page si on est pas sur la première
+      // Invalider le cache et recharger
+      await new Promise(resolve => setTimeout(resolve, 100)); // Petit délai pour s'assurer que la suppression est finalisée
+      await fetchClients(); // Recharger depuis la base
+      
+      // 5. Si on était sur la dernière entrée d'une page > 1, retourner à la page précédente
       if (currentPage > 1 && clients.length === 1) {
+        console.log('📄 Retour à la page précédente car dernière entrée supprimée');
         setCurrentPage(currentPage - 1);
       }
       
-      console.log('=== FIN SUPPRESSION CLIENT (SUCCÈS) ===');
+      console.log('=== FIN SUPPRESSION CLIENT CORRIGÉE (SUCCÈS) ===');
       
     } catch (error) {
       console.error('❌ Erreur lors de la suppression:', error);
@@ -96,6 +101,7 @@ export const useBaseClientsLogic = () => {
         title: "Erreur de suppression",
         description: "Impossible de supprimer le client. Veuillez réessayer.",
         variant: "destructive",
+        duration: 5000,
       });
     }
   };

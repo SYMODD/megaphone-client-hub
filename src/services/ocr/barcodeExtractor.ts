@@ -6,25 +6,29 @@ export const extractBarcode = (text: string, phoneToExclude?: string): string =>
   const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
   console.log("Text lines:", lines);
 
-  // CORRECTION: Chercher d'abord le vrai numéro qui pourrait être un code-barres
-  // Dans les logs, on voit "667352333" qui est probablement le vrai code-barres
+  // CORRECTION MAJEURE: Concentrer la recherche sur les vrais codes-barres uniquement
+  // Exclure totalement les numéros de passeport et téléphones
   const barcodePatterns = [
-    // Pattern pour les codes-barres numériques longs (souvent en première ligne)
+    // Pattern 1: Codes numériques purs longs (9-15 chiffres) - priorité absolue
     /^\d{9,15}$/,
-    // Pattern pour codes-barres alphanumériques avec tirets ou égals
-    /\b\d{8,12}[A-ZА-Я0-9]\-[A-Z]{1,4}\-?[A-Z]?=?\d{3,6}\b/gi,
-    // Pattern P= pour certains documents
+    
+    // Pattern 2: Codes P= spéciaux
     /P=\d{4,8}/gi,
-    // Pattern avec tirets multiples
-    /\b[A-Z0-9]{3,15}\-[A-Z0-9]{2,10}\-[A-Z0-9]{1,10}\b/gi,
-    // Pattern codes longs alphanumériques
-    /\b[A-Z0-9]{12,25}\b/g,
-    // Pattern numérique long
-    /\b\d{10,20}\b/g,
-    // Pattern avec égal ou tiret
-    /\b[A-Z0-9]{3,15}[=\-][A-Z0-9]{2,10}\b/gi,
-    // Pattern général alphanumérique
-    /\b[A-Z0-9]{8,15}\b/g
+    
+    // Pattern 3: Codes avec tirets mais pas de lettres en début
+    /\b\d{3,}\-\d{2,}\-\d{1,}\b/gi,
+    
+    // Pattern 4: Codes alphanumériques très longs (12+ caractères)
+    /\b[A-Z0-9]{12,25}\b/g
+  ];
+
+  // Liste des patterns à exclure absolument
+  const excludePatterns = [
+    /^[A-Z]{1,3}\d{5,9}$/, // Numéros de passeport (commence par des lettres)
+    /^\+?[0-9\s\-\(\)]{8,15}$/, // Numéros de téléphone
+    /PASSPORT|PASSEPORT|KINGDOM|MOROCCO|MAROC/i, // Mots de documents
+    /^[0-9]{4}[\-\/][0-9]{2}[\-\/][0-9]{2}$/, // Dates
+    /^[0-9]{8}$/ // Codes trop courts (souvent dates sans séparateurs)
   ];
 
   for (const pattern of barcodePatterns) {
@@ -33,35 +37,41 @@ export const extractBarcode = (text: string, phoneToExclude?: string): string =>
       console.log(`Pattern ${pattern} matches:`, matches);
       
       for (const match of matches) {
-        console.log("Potential barcode found:", match);
+        console.log("Evaluating potential barcode:", match);
         
-        // Exclure les numéros de téléphone
-        if (phoneToExclude && match.includes(phoneToExclude)) {
-          console.log("Skipping as it contains phone number");
-          continue;
+        // CORRECTION: Vérifications strictes d'exclusion
+        let shouldExclude = false;
+        
+        // 1. Exclure si contient le numéro de téléphone
+        if (phoneToExclude && match.includes(phoneToExclude.replace(/\D/g, ''))) {
+          console.log("❌ Exclu: contient le numéro de téléphone");
+          shouldExclude = true;
         }
         
-        // CORRECTION: Exclure aussi les numéros de passeport qui commencent par des lettres
-        if (/^[A-Z]{1,3}\d/.test(match)) {
-          console.log("Skipping as it looks like passport number (starts with letters)");
-          continue;
+        // 2. Exclure selon les patterns d'exclusion
+        for (const excludePattern of excludePatterns) {
+          if (excludePattern.test(match)) {
+            console.log(`❌ Exclu: correspond au pattern d'exclusion ${excludePattern}`);
+            shouldExclude = true;
+            break;
+          }
         }
         
-        // Préférer les codes numériques purs en début de texte (souvent les vrais codes-barres)
-        if (/^\d{9,15}$/.test(match)) {
-          console.log("Valid numeric barcode extracted:", match);
-          return match;
+        // 3. Exclure si c'est dans une ligne contenant des mots de document
+        const matchLine = lines.find(line => line.includes(match));
+        if (matchLine && /PASSPORT|PASSEPORT|KINGDOM|MOROCCO|MAROC|EXPIRE|VALID/i.test(matchLine)) {
+          console.log("❌ Exclu: dans une ligne de document officiel");
+          shouldExclude = true;
         }
         
-        // Sinon, prendre le premier code valide qui n'est pas un passeport
-        if (match.length >= 8 && !match.includes('PREFECTURE') && !match.includes('KINGDOM')) {
-          console.log("Valid barcode extracted:", match);
+        if (!shouldExclude) {
+          console.log("✅ Code-barres valide trouvé:", match);
           return match;
         }
       }
     }
   }
 
-  console.log("No barcode found in text");
+  console.log("❌ Aucun code-barres valide trouvé");
   return "";
 };
