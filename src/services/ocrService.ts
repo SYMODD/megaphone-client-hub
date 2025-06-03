@@ -8,6 +8,7 @@ export interface MRZData {
   date_naissance?: string;
   date_expiration?: string;
   code_barre?: string;
+  numero_telephone?: string;
 }
 
 export interface OCRResponse {
@@ -150,6 +151,49 @@ const extractMRZData = (text: string): MRZData => {
     }
   }
 
+  // Nouvelle extraction du numéro de téléphone
+  const phonePatterns = [
+    /\+?212\s?[5-7]\d{8}/g, // Format marocain international
+    /0[5-7]\d{8}/g, // Format marocain national
+    /\+?\d{1,4}[\s-]?\d{8,12}/g, // Format international général
+    /\b\d{10}\b/g // 10 chiffres consécutifs
+  ];
+
+  for (const pattern of phonePatterns) {
+    const matches = text.match(pattern);
+    if (matches && matches.length > 0) {
+      const potentialPhone = matches[0].replace(/[\s-]/g, '');
+      if (potentialPhone.length >= 8 && potentialPhone.length <= 15) {
+        mrzData.numero_telephone = potentialPhone;
+        break;
+      }
+    }
+  }
+
+  // Amélioration de l'extraction du code-barres
+  const enhancedBarcodePatterns = [
+    /\b[A-Z0-9]{8,20}\b/g,
+    /\|\|\|[A-Z0-9]+\|\|\|/g,
+    /\*[A-Z0-9]+\*/g,
+    /\b\d{10,15}\b/g,
+    /[A-Z]{2,3}\d{6,10}/g, // Codes avec préfixe lettres
+    /\b[A-Z0-9]{6,15}\b/g // Codes alphanumériques mixtes
+  ];
+
+  for (const pattern of enhancedBarcodePatterns) {
+    const matches = text.match(pattern);
+    if (matches && matches.length > 0) {
+      const potentialBarcode = matches[0].replace(/[\|\*]/g, '');
+      if (potentialBarcode.length >= 6 && potentialBarcode.length <= 20) {
+        // Éviter de confondre avec un numéro de téléphone
+        if (!mrzData.numero_telephone || potentialBarcode !== mrzData.numero_telephone) {
+          mrzData.code_barre = potentialBarcode;
+          break;
+        }
+      }
+    }
+  }
+
   // Si pas de données MRZ trouvées, essayer d'extraire depuis le texte lisible
   if (!mrzData.nom || !mrzData.prenom) {
     // Chercher dans le texte pour "CHEHBOUNE" et "RANIA"
@@ -181,27 +225,6 @@ const extractMRZData = (text: string): MRZData => {
     const passportMatch = text.match(/SY\d{7}/);
     if (passportMatch) {
       mrzData.numero_passeport = passportMatch[0];
-    }
-  }
-
-  // Extraction du code-barres depuis le texte OCR
-  // Rechercher des motifs de code-barres communs
-  const barcodePatterns = [
-    /\b[A-Z0-9]{8,20}\b/g, // Code-barres alphanumérique général
-    /\|\|\|[A-Z0-9]+\|\|\|/g, // Code-barres avec délimiteurs
-    /\*[A-Z0-9]+\*/g, // Code-barres avec astérisques
-    /\b\d{10,15}\b/g // Code-barres numérique
-  ];
-
-  for (const pattern of barcodePatterns) {
-    const matches = text.match(pattern);
-    if (matches && matches.length > 0) {
-      // Prendre le premier match qui semble être un code-barres
-      const potentialBarcode = matches[0].replace(/[\|\*]/g, '');
-      if (potentialBarcode.length >= 8 && potentialBarcode.length <= 20) {
-        mrzData.code_barre = potentialBarcode;
-        break;
-      }
     }
   }
 

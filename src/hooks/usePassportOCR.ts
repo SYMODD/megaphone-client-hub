@@ -17,7 +17,16 @@ export const usePassportOCR = () => {
       if (result.success && result.data) {
         setExtractedData(result.data);
         setRawText(result.rawText || "");
-        toast.success("Données MRZ extraites avec succès!");
+        
+        // Message de succès personnalisé selon les données extraites
+        const extractedItems = [];
+        if (result.data.nom) extractedItems.push("nom");
+        if (result.data.prenom) extractedItems.push("prénom");
+        if (result.data.numero_passeport) extractedItems.push("passeport");
+        if (result.data.code_barre) extractedItems.push("code-barres");
+        if (result.data.numero_telephone) extractedItems.push("téléphone");
+        
+        toast.success(`Données extraites: ${extractedItems.join(", ")}`);
         console.log("OCR extraction successful:", result.data);
         return result.data;
       } else {

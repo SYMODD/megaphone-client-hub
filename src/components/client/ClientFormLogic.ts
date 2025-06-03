@@ -57,6 +57,7 @@ export const useClientFormLogic = () => {
       nationalite: mrzData.nationalite || prev.nationalite,
       numero_passeport: mrzData.numero_passeport || prev.numero_passeport,
       code_barre: mrzData.code_barre || prev.code_barre,
+      numero_telephone: mrzData.numero_telephone || prev.numero_telephone,
       document_type: documentType
     }));
 
@@ -68,7 +69,15 @@ export const useClientFormLogic = () => {
       'carte_sejour': 'Carte de Séjour'
     };
 
-    const mrzInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: ${documentTypeLabels[documentType]}`;
+    // Détailler les données extraites
+    const extractedItems = [];
+    if (mrzData.nom) extractedItems.push("nom");
+    if (mrzData.prenom) extractedItems.push("prénom");
+    if (mrzData.numero_passeport) extractedItems.push("numéro de document");
+    if (mrzData.code_barre) extractedItems.push("code-barres");
+    if (mrzData.numero_telephone) extractedItems.push("numéro de téléphone");
+
+    const mrzInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: ${documentTypeLabels[documentType]} - Données: ${extractedItems.join(", ")}`;
     setFormData(prev => ({
       ...prev,
       observations: prev.observations ? `${prev.observations}\n\n${mrzInfo}` : mrzInfo
