@@ -1,7 +1,6 @@
 
 import { useFormState } from "./useFormState";
 import { useMRZHandler } from "./useMRZHandler";
-import { useBarcodeHandler } from "./useBarcodeHandler";
 import { useFormSubmission } from "./useFormSubmission";
 
 export const useClientFormLogic = () => {
@@ -14,7 +13,6 @@ export const useClientFormLogic = () => {
   } = useFormState();
 
   const { handleMRZDataExtracted } = useMRZHandler({ formData, setFormData });
-  const { handleBarcodeScanned } = useBarcodeHandler({ setFormData });
   const { isLoading, handleSubmit } = useFormSubmission({ formData });
 
   return {
@@ -24,7 +22,6 @@ export const useClientFormLogic = () => {
     handleInputChange,
     handleSubmit,
     handleMRZDataExtracted,
-    handleDocumentTypeSelect,
-    handleBarcodeScanned
+    handleDocumentTypeSelect
   };
 };
