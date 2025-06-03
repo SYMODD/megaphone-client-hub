@@ -43,6 +43,7 @@ export type Database = {
           nationalite: string
           nom: string
           numero_passeport: string
+          numero_telephone: string | null
           observations: string | null
           photo_url: string | null
           prenom: string
@@ -57,6 +58,7 @@ export type Database = {
           nationalite: string
           nom: string
           numero_passeport: string
+          numero_telephone?: string | null
           observations?: string | null
           photo_url?: string | null
           prenom: string
@@ -71,6 +73,7 @@ export type Database = {
           nationalite?: string
           nom?: string
           numero_passeport?: string
+          numero_telephone?: string | null
           observations?: string | null
           photo_url?: string | null
           prenom?: string

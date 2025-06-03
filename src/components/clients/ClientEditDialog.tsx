@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Edit, Save, X } from "lucide-react";
+import { Edit, Save, X, Phone, Barcode, Image } from "lucide-react";
 
 interface Client {
   id: string;
@@ -15,6 +15,8 @@ interface Client {
   prenom: string;
   nationalite: string;
   numero_passeport: string;
+  numero_telephone?: string;
+  code_barre?: string;
   date_enregistrement: string;
   photo_url?: string;
   observations?: string;
@@ -38,6 +40,8 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
     prenom: client?.prenom || "",
     nationalite: client?.nationalite || "",
     numero_passeport: client?.numero_passeport || "",
+    numero_telephone: client?.numero_telephone || "",
+    code_barre: client?.code_barre || "",
     date_enregistrement: client?.date_enregistrement || "",
     observations: client?.observations || ""
   });
@@ -50,6 +54,8 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
         prenom: client.prenom,
         nationalite: client.nationalite,
         numero_passeport: client.numero_passeport,
+        numero_telephone: client.numero_telephone || "",
+        code_barre: client.code_barre || "",
         date_enregistrement: client.date_enregistrement,
         observations: client.observations || ""
       });
@@ -70,6 +76,8 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
           prenom: formData.prenom,
           nationalite: formData.nationalite,
           numero_passeport: formData.numero_passeport,
+          numero_telephone: formData.numero_telephone || null,
+          code_barre: formData.code_barre || null,
           date_enregistrement: formData.date_enregistrement,
           observations: formData.observations,
           updated_at: new Date().toISOString()
@@ -104,7 +112,7 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-md mx-2 sm:mx-auto max-h-[95vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl mx-2 sm:mx-auto max-h-[95vh] overflow-y-auto">
         <DialogHeader className="pb-4">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -112,7 +120,24 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* Photo du client si disponible */}
+          {client.photo_url && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-sm">
+                <Image className="w-4 h-4" />
+                Photo scannée
+              </Label>
+              <div className="border rounded-lg p-4 bg-gray-50">
+                <img 
+                  src={client.photo_url} 
+                  alt="Photo du client"
+                  className="max-w-full h-auto max-h-48 rounded-lg shadow-md mx-auto"
+                />
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="prenom" className="text-sm">Prénom</Label>
@@ -156,6 +181,36 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
               placeholder="Numéro de passeport"
               className="text-sm font-mono"
             />
+          </div>
+
+          {/* Nouveaux champs pour téléphone et code-barres */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="numero_telephone" className="flex items-center gap-2 text-sm">
+                <Phone className="w-4 h-4" />
+                Numéro de téléphone
+              </Label>
+              <Input
+                id="numero_telephone"
+                value={formData.numero_telephone}
+                onChange={(e) => setFormData(prev => ({ ...prev, numero_telephone: e.target.value }))}
+                placeholder="Ex: +212 6 12 34 56 78"
+                className="text-sm font-mono"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="code_barre" className="flex items-center gap-2 text-sm">
+                <Barcode className="w-4 h-4" />
+                Code-barres
+              </Label>
+              <Input
+                id="code_barre"
+                value={formData.code_barre}
+                onChange={(e) => setFormData(prev => ({ ...prev, code_barre: e.target.value }))}
+                placeholder="Code-barres du document"
+                className="text-sm font-mono"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">

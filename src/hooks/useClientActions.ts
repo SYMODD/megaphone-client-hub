@@ -8,6 +8,8 @@ interface Client {
   prenom: string;
   nationalite: string;
   numero_passeport: string;
+  numero_telephone?: string;
+  code_barre?: string;
   date_enregistrement: string;
   photo_url?: string;
   observations?: string;

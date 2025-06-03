@@ -5,7 +5,8 @@ export interface Client {
   prenom: string;
   nationalite: string;
   numero_passeport: string;
-  code_barre: string | null;
+  numero_telephone?: string;
+  code_barre?: string;
   date_enregistrement: string;
   photo_url?: string;
   observations?: string;
