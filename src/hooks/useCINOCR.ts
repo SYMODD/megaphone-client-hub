@@ -47,7 +47,7 @@ export const useCINOCR = () => {
         console.log("🎯 CIN - Données finales fusionnées:", {
           nom: finalData.nom,
           prenom: finalData.prenom,
-          cin: finalData.cin,
+          numero_cin: finalData.numero_cin,
           code_barre: finalData.code_barre || "Non détecté",
           numero_telephone: finalData.numero_telephone || "Non détecté",
           code_barre_image_url: finalData.code_barre_image_url ? "✅ PRÉSENTE" : "❌ ABSENTE"
