@@ -20,16 +20,16 @@ export const useClientUpdate = ({
   const handleClientUpdated = useCallback(async () => {
     console.log("🔄 BaseClientsLogic - Client mis à jour, rafraîchissement forcé...");
     
-    // Fermer les dialogues
-    setViewDialogOpen(false);
-    setEditDialogOpen(false);
-    setDocumentDialogOpen(false);
-    
-    // Forcer le rechargement des données depuis Supabase
+    // Forcer le rechargement des données depuis Supabase IMMÉDIATEMENT
     if (user) {
       await fetchClients();
       console.log("✅ BaseClientsLogic - Données rafraîchies après mise à jour client");
     }
+    
+    // Fermer les dialogues APRÈS le rechargement
+    setViewDialogOpen(false);
+    setEditDialogOpen(false);
+    setDocumentDialogOpen(false);
   }, [fetchClients, user, setViewDialogOpen, setEditDialogOpen, setDocumentDialogOpen]);
 
   return { handleClientUpdated };

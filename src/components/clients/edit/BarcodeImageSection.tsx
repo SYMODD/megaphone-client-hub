@@ -39,7 +39,7 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
     imageUrl: currentImageUrl 
   });
 
-  const handleImageUploaded = (newImageUrl: string) => {
+  const handleImageUploaded = async (newImageUrl: string) => {
     console.log("🔄 BarcodeImageSection - Nouvelle image uploadée:", {
       url: newImageUrl,
       bucket: newImageUrl.includes('barcode-images') ? 'barcode-images' : 'autre'
@@ -51,7 +51,11 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
     // Appeler le callback pour rafraîchir les données du client parent
     if (onClientUpdated) {
       console.log("📞 BarcodeImageSection - Appel du callback onClientUpdated");
-      onClientUpdated();
+      // Délai court pour s'assurer que la DB est mise à jour
+      setTimeout(async () => {
+        await onClientUpdated();
+        console.log("✅ BarcodeImageSection - Callback onClientUpdated terminé");
+      }, 200);
     }
   };
 

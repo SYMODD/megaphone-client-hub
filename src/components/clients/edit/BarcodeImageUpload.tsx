@@ -91,10 +91,15 @@ export const BarcodeImageUpload = ({ clientId, onImageUploaded }: BarcodeImageUp
 
       console.log("✅ Client mis à jour avec URL image code-barres:", imageUrl);
 
-      // Appeler le callback pour informer le parent
+      // Appeler le callback IMMÉDIATEMENT pour informer le parent
       onImageUploaded(imageUrl);
 
       toast.success("Image du code-barres uploadée avec succès!");
+
+      // Forcer un délai pour s'assurer que tous les callbacks sont traités
+      setTimeout(() => {
+        console.log("🔄 Délai de sécurité terminé après upload image code-barres");
+      }, 100);
 
     } catch (error) {
       console.error("❌ Erreur complète upload image code-barres:", error);
