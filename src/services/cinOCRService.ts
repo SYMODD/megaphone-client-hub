@@ -1,5 +1,6 @@
 
 import { CINOCRResult } from "@/types/cinTypes";
+import { extractCINData as extractDataFromText } from "@/utils/cinDataExtractor";
 
 export const performCINOCR = async (file: File, apiKey: string): Promise<CINOCRResult> => {
   console.log("🔍 CIN OCR - Début de la requête avec clé API:", apiKey.substring(0, 5) + "...");
@@ -51,5 +52,65 @@ export const performCINOCR = async (file: File, apiKey: string): Promise<CINOCRR
       throw new Error("Timeout: L'analyse OCR a pris trop de temps. Veuillez réessayer avec une image plus petite.");
     }
     throw error;
+  }
+};
+
+export const extractCINData = async (file: File, apiKey: string) => {
+  console.log("🔍 CIN SERVICE - Début extraction données CIN");
+  
+  try {
+    // 1. Effectuer l'OCR
+    const ocrResult = await performCINOCR(file, apiKey);
+    
+    if (!ocrResult || ocrResult.IsErroredOnProcessing) {
+      console.error("❌ Erreur OCR:", ocrResult?.ErrorMessage || "Erreur inconnue");
+      return {
+        success: false,
+        error: ocrResult?.ErrorMessage || "Erreur lors de l'analyse OCR"
+      };
+    }
+
+    // 2. Extraire le texte de la réponse OCR
+    let rawText = "";
+    if (ocrResult.ParsedResults && ocrResult.ParsedResults.length > 0) {
+      rawText = ocrResult.ParsedResults[0].ParsedText || "";
+    }
+
+    console.log("📄 Texte OCR extrait:", rawText.substring(0, 200) + "...");
+
+    if (!rawText.trim()) {
+      console.warn("⚠️ Aucun texte détecté dans l'image");
+      return {
+        success: false,
+        error: "Aucun texte détecté dans l'image"
+      };
+    }
+
+    // 3. Extraire les données CIN du texte
+    const extractedData = extractDataFromText(rawText);
+    
+    if (!extractedData || Object.keys(extractedData).length === 0) {
+      console.warn("⚠️ Aucune donnée CIN identifiée");
+      return {
+        success: false,
+        error: "Aucune donnée CIN identifiée dans le texte",
+        rawText
+      };
+    }
+
+    console.log("✅ Données CIN extraites:", extractedData);
+    
+    return {
+      success: true,
+      data: extractedData,
+      rawText
+    };
+
+  } catch (error) {
+    console.error("❌ Erreur extraction CIN:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erreur inconnue lors de l'extraction"
+    };
   }
 };
