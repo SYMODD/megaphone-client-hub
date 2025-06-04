@@ -9,37 +9,46 @@ interface UseMRZHandlerProps {
 
 export const useMRZHandler = ({ formData, setFormData }: UseMRZHandlerProps) => {
   const handleMRZDataExtracted = (data: any, imageUrl?: string) => {
-    console.log("📄 MRZ HANDLER - Réception données:", {
+    console.log("📄 MRZ HANDLER - Réception données CIN:", {
       data,
       imageUrl,
-      contient_barcode: data.code_barre ? "✅ OUI" : "❌ NON",
-      contient_barcode_url: data.code_barre_image_url ? "✅ OUI" : "❌ NON"
+      champs_identite: {
+        nom: data.nom || "Non défini",
+        prenom: data.prenom || "Non défini", 
+        nationalite: data.nationalite || "Non défini",
+        numero_document: data.numero_cin || data.numero_passeport || "Non défini"
+      }
     });
 
     setFormData(prev => {
       const updatedData = {
         ...prev,
+        // Champs d'identité uniquement (section Informations Personnelles)
         nom: data.nom || prev.nom,
         prenom: data.prenom || prev.prenom,
         nationalite: data.nationalite || prev.nationalite,
-        numero_passeport: data.numero_passeport || prev.numero_passeport,
-        numero_telephone: data.numero_telephone || prev.numero_telephone,
-        code_barre: data.code_barre || prev.code_barre,
-        code_barre_image_url: data.code_barre_image_url || prev.code_barre_image_url, // 🎯 CRITIQUE
-        photo_url: imageUrl || prev.photo_url // 🎯 PHOTO DOCUMENT
+        numero_passeport: data.numero_cin || data.numero_passeport || prev.numero_passeport,
+        // Photo du document (CIN/Passeport)
+        photo_url: imageUrl || prev.photo_url
+        // Note: On ne touche PAS aux champs code_barre, numero_telephone, code_barre_image_url
+        // Ces champs seront remplis par le scan code-barres séparément
       };
 
-      console.log("🔄 MRZ HANDLER - Mise à jour complète:", {
-        barcode_avant: prev.code_barre,
-        barcode_apres: updatedData.code_barre,
-        url_barcode_avant: prev.code_barre_image_url,
-        url_barcode_apres: updatedData.code_barre_image_url,
+      console.log("🔄 MRZ HANDLER - Mise à jour des champs d'identité:", {
+        nom_avant: prev.nom,
+        nom_apres: updatedData.nom,
+        prenom_avant: prev.prenom,
+        prenom_apres: updatedData.prenom,
+        nationalite_avant: prev.nationalite,
+        nationalite_apres: updatedData.nationalite,
+        numero_avant: prev.numero_passeport,
+        numero_apres: updatedData.numero_passeport,
         photo_avant: prev.photo_url,
         photo_apres: updatedData.photo_url,
-        confirmation: {
-          barcode_ok: updatedData.code_barre ? "✅" : "❌",
-          barcode_url_ok: updatedData.code_barre_image_url ? "✅" : "❌",
-          photo_ok: updatedData.photo_url ? "✅" : "❌"
+        champs_contact_preserves: {
+          telephone: prev.numero_telephone,
+          code_barre: prev.code_barre,
+          code_barre_url: prev.code_barre_image_url
         }
       });
 

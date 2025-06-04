@@ -8,28 +8,37 @@ interface UseBarcodeHandlerProps {
 
 export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
   const handleBarcodeScanned = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
-    console.log("📊 BARCODE HANDLER - Réception données complètes:", {
+    console.log("📊 BARCODE HANDLER - Réception données de contact:", {
       barcode,
       phone,
       barcodeImageUrl,
-      url_valide: barcodeImageUrl ? "✅ OUI" : "❌ NON"
+      section: "INFORMATIONS DE CONTACT UNIQUEMENT"
     });
 
     setFormData(prev => {
       const updatedData = {
         ...prev,
+        // Champs de contact uniquement (section Informations de Contact)
         code_barre: barcode || prev.code_barre,
-        code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url, // 🎯 CRUCIAL
-        ...(phone && { numero_telephone: phone })
+        numero_telephone: phone || prev.numero_telephone,
+        code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url
+        // Note: On ne touche PAS aux champs d'identité (nom, prenom, nationalite, numero_passeport)
+        // Ces champs sont remplis par le scan CIN séparément
       };
 
-      console.log("🔄 BARCODE HANDLER - Données mises à jour:", {
-        ancien_code: prev.code_barre,
-        nouveau_code: updatedData.code_barre,
-        ancienne_url: prev.code_barre_image_url,
-        nouvelle_url: updatedData.code_barre_image_url,
-        telephone_mis_a_jour: phone ? "✅ OUI" : "❌ NON",
-        url_confirmee: updatedData.code_barre_image_url ? "✅ DÉFINIE" : "❌ VIDE"
+      console.log("🔄 BARCODE HANDLER - Mise à jour des champs de contact:", {
+        code_barre_avant: prev.code_barre,
+        code_barre_apres: updatedData.code_barre,
+        telephone_avant: prev.numero_telephone,
+        telephone_apres: updatedData.numero_telephone,
+        url_avant: prev.code_barre_image_url,
+        url_apres: updatedData.code_barre_image_url,
+        champs_identite_preserves: {
+          nom: prev.nom,
+          prenom: prev.prenom,
+          nationalite: prev.nationalite,
+          numero_passeport: prev.numero_passeport
+        }
       });
 
       return updatedData;
