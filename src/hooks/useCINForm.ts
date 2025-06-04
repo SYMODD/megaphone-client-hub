@@ -44,12 +44,11 @@ export const useCINForm = () => {
       ...prev,
       nom: extractedData.nom || prev.nom,
       prenom: extractedData.prenom || prev.prenom,
-      numero_passeport: extractedData.cin || extractedData.numero_cin || prev.numero_passeport, // Store CIN in passeport field
+      numero_passeport: extractedData.cin || extractedData.numero_cin || prev.numero_passeport,
       code_barre: extractedData.code_barre || prev.code_barre,
       code_barre_image_url: extractedData.code_barre_image_url || prev.code_barre_image_url
     }));
 
-    // Ajouter info d'extraction automatique dans les observations
     const extractionInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: CIN`;
     setFormData(prev => ({
       ...prev,
@@ -63,7 +62,6 @@ export const useCINForm = () => {
       return;
     }
 
-    // Validation des champs obligatoires
     if (!formData.nom || !formData.prenom || !formData.numero_passeport) {
       toast.error("Veuillez remplir tous les champs obligatoires (nom, prénom, CIN)");
       return;
@@ -81,7 +79,7 @@ export const useCINForm = () => {
       
       let photoUrl = formData.photo_url;
       
-      // 🔥 UPLOAD AUTOMATIQUE DE L'IMAGE SCANNÉE
+      // 🔥 UPLOAD AUTOMATIQUE DE L'IMAGE SCANNÉE vers client-photos
       if (formData.scannedImage && !photoUrl) {
         console.log("📤 UPLOAD IMAGE CIN vers client-photos");
         photoUrl = await uploadClientPhoto(formData.scannedImage, 'cin');
@@ -93,7 +91,6 @@ export const useCINForm = () => {
         }
       }
 
-      // Préparer les données pour l'insertion
       const clientData = {
         nom: formData.nom.trim(),
         prenom: formData.prenom.trim(),
