@@ -24,6 +24,12 @@ export const PassportMarocainForm = () => {
     resetConfirmation
   });
 
+  // Fonction pour gérer l'image scannée
+  const handleImageScanned = (imageData: string) => {
+    console.log("🖼️ Image passeport marocain scannée reçue");
+    handleInputChange("scannedImage", imageData);
+  };
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleSubmit();
@@ -33,7 +39,7 @@ export const PassportMarocainForm = () => {
     <form onSubmit={handleFormSubmit} className="space-y-4 sm:space-y-6">
       <PassportOCRScanner 
         scannedImage={formData.scannedImage}
-        onImageScanned={(image) => handleInputChange("scannedImage", image)}
+        onImageScanned={handleImageScanned}
         onDataExtracted={handleMRZDataExtracted}
       />
 
