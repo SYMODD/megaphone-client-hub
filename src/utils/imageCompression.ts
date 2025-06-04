@@ -6,6 +6,40 @@ interface CompressionOptions {
   maxHeight?: number;
 }
 
+interface ImageInfo {
+  width: number;
+  height: number;
+  size: number;
+  type: string;
+  name: string;
+}
+
+export const getImageInfo = async (file: File): Promise<ImageInfo> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    
+    img.onload = () => {
+      resolve({
+        width: img.width,
+        height: img.height,
+        size: file.size,
+        type: file.type,
+        name: file.name
+      });
+    };
+
+    img.onerror = () => {
+      reject(new Error('Erreur lors du chargement de l\'image'));
+    };
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
 export const compressImage = async (
   file: File, 
   options: CompressionOptions = {}
