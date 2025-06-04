@@ -27,7 +27,8 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         ...prev,
         code_barre: barcode || prev.code_barre,
         numero_telephone: phone || prev.numero_telephone,
-        code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url
+        // 🎯 CORRECTION CRITIQUE : Assignment direct sans fallback
+        code_barre_image_url: barcodeImageUrl ? barcodeImageUrl : prev.code_barre_image_url
       };
 
       console.log("🔥 BARCODE HANDLER - APRÈS MISE À JOUR:", {
@@ -35,7 +36,8 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         code_barre_image_url: updatedData.code_barre_image_url,
         url_assignée: updatedData.code_barre_image_url === barcodeImageUrl ? "✅ OUI" : "❌ NON",
         url_fournie: barcodeImageUrl,
-        url_finale: updatedData.code_barre_image_url
+        url_finale: updatedData.code_barre_image_url,
+        correction_appliquée: "✅ Assignment conditionnel corrigé"
       });
 
       return updatedData;

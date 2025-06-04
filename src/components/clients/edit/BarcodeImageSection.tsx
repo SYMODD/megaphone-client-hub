@@ -30,18 +30,25 @@ export const BarcodeImageSection = ({
     url_presente: currentImageUrl ? "✅ OUI" : "❌ NON"
   });
 
-  // Synchroniser l'URL locale avec les props
+  // 🎯 CORRECTION : Synchronisation renforcée avec validation
   useEffect(() => {
-    if (code_barre_image_url !== currentImageUrl) {
-      console.log("🔄 Mise à jour URL image:", {
+    const incomingUrl = code_barre_image_url?.trim();
+    const validUrl = incomingUrl && incomingUrl !== "" && incomingUrl !== "null" && incomingUrl !== "undefined" 
+      ? incomingUrl 
+      : "";
+
+    if (validUrl !== currentImageUrl) {
+      console.log("🔄 Mise à jour URL image avec validation:", {
         ancienne: currentImageUrl,
-        nouvelle: code_barre_image_url
+        nouvelle: validUrl,
+        source: code_barre_image_url,
+        validation_ok: validUrl ? "✅ URL VALIDE" : "❌ URL INVALIDE"
       });
-      setCurrentImageUrl(code_barre_image_url);
+      setCurrentImageUrl(validUrl);
       setImageError(false);
-      setImageLoading(true);
+      setImageLoading(!!validUrl); // Loading seulement si URL valide
     }
-  }, [code_barre_image_url]);
+  }, [code_barre_image_url, currentImageUrl]);
 
   // Vérifier si nous avons vraiment une URL d'image valide
   const hasValidImageUrl = currentImageUrl && currentImageUrl.trim() !== "";
@@ -76,12 +83,15 @@ export const BarcodeImageSection = ({
   };
 
   const handleImageUploaded = (imageUrl: string) => {
-    console.log("✅ Nouvelle image uploadée:", imageUrl);
-    setCurrentImageUrl(imageUrl);
-    onImageUploaded(imageUrl);
-    setShowUpload(false);
-    setImageError(false);
-    setImageLoading(true);
+    console.log("✅ Nouvelle image uploadée avec validation:", imageUrl);
+    const cleanUrl = imageUrl?.trim();
+    if (cleanUrl && cleanUrl !== "") {
+      setCurrentImageUrl(cleanUrl);
+      onImageUploaded(cleanUrl);
+      setShowUpload(false);
+      setImageError(false);
+      setImageLoading(true);
+    }
   };
 
   const handleCancelUpload = () => {
@@ -152,6 +162,8 @@ export const BarcodeImageSection = ({
               <strong>URL:</strong> {currentImageUrl}
               <br />
               <strong>Statut:</strong> {imageError ? "❌ Erreur" : imageLoading ? "⏳ Chargement" : "✅ Chargée"}
+              <br />
+              <strong>Correction:</strong> ✅ Validation et synchronisation renforcées
             </div>
           </div>
         ) : (
