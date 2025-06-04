@@ -40,6 +40,7 @@ export type Database = {
           code_barre_image_url: string | null
           created_at: string | null
           date_enregistrement: string
+          document_type: string | null
           id: string
           nationalite: string
           nom: string
@@ -56,6 +57,7 @@ export type Database = {
           code_barre_image_url?: string | null
           created_at?: string | null
           date_enregistrement?: string
+          document_type?: string | null
           id?: string
           nationalite: string
           nom: string
@@ -72,6 +74,7 @@ export type Database = {
           code_barre_image_url?: string | null
           created_at?: string | null
           date_enregistrement?: string
+          document_type?: string | null
           id?: string
           nationalite?: string
           nom?: string

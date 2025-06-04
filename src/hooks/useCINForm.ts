@@ -27,7 +27,7 @@ export const useCINForm = () => {
   const [formData, setFormData] = useState<CINFormData>({
     nom: "",
     prenom: "",
-    nationalite: "",
+    nationalite: "Maroc",
     numero_passeport: "",
     numero_telephone: "",
     code_barre: "",
@@ -78,7 +78,6 @@ ${data.code_barre_image_url ? 'Image code-barres: Sauvegardée automatiquement' 
       numero_passeport: data.numero_cin || data.numero_passeport || prev.numero_passeport,
       numero_telephone: data.numero_telephone || prev.numero_telephone,
       code_barre: data.code_barre || prev.code_barre,
-      // 🎯 CRUCIAL: Inclure l'URL de l'image code-barres
       code_barre_image_url: data.code_barre_image_url || prev.code_barre_image_url,
       observations: observations
     }));
@@ -111,7 +110,6 @@ ${data.code_barre_image_url ? 'Image code-barres: Sauvegardée automatiquement' 
         numero_passeport: formData.numero_passeport,
         numero_telephone: formData.numero_telephone,
         code_barre: formData.code_barre,
-        // 🎯 CRUCIAL: Inclure l'URL de l'image code-barres
         code_barre_image_url: formData.code_barre_image_url || null,
         photo_url: formData.photo_url || null,
         observations: formData.observations,
@@ -126,7 +124,8 @@ ${data.code_barre_image_url ? 'Image code-barres: Sauvegardée automatiquement' 
         telephone: clientData.numero_telephone || "NON",
         photo_client: clientData.photo_url ? "✅ client-photos (AUTO)" : "❌ NON",
         image_barcode: clientData.code_barre_image_url ? "✅ barcode-images (AUTO)" : "❌ NON",
-        les_deux_images: (clientData.photo_url && clientData.code_barre_image_url) ? "✅ OUI" : "❌ NON"
+        les_deux_images: (clientData.photo_url && clientData.code_barre_image_url) ? "✅ OUI" : "❌ NON",
+        document_type: clientData.document_type
       });
 
       const { error } = await supabase
