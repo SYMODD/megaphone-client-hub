@@ -29,27 +29,6 @@ export const useImageUpload = () => {
       
       setUploadProgress(0);
 
-      // Vérifier que le bucket existe et est accessible
-      console.log("🔍 Vérification de l'existence du bucket barcode-images...");
-      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-      
-      if (bucketsError) {
-        console.error("❌ Erreur vérification buckets:", bucketsError);
-        toast.error(`Erreur de configuration: ${bucketsError.message}`);
-        throw bucketsError;
-      }
-
-      console.log("📋 Buckets disponibles:", buckets.map(b => b.name));
-      const barcodeImagesBucket = buckets.find(bucket => bucket.name === 'barcode-images');
-      
-      if (!barcodeImagesBucket) {
-        console.error("❌ Bucket 'barcode-images' non trouvé dans:", buckets.map(b => b.name));
-        toast.error("Le bucket de stockage 'barcode-images' n'existe pas");
-        return null;
-      }
-
-      console.log("✅ Bucket 'barcode-images' trouvé:", barcodeImagesBucket);
-
       // Générer un nom de fichier unique
       const timestamp = Date.now();
       const randomId = Math.random().toString(36).substr(2, 9);
@@ -58,7 +37,7 @@ export const useImageUpload = () => {
       
       console.log("📝 Nom de fichier généré:", filename);
 
-      // Upload du fichier vers Supabase Storage
+      // Upload direct vers Supabase Storage (sans vérification préalable)
       console.log("📤 Début de l'upload du fichier...");
       const { data, error } = await supabase.storage
         .from('barcode-images')
@@ -77,6 +56,8 @@ export const useImageUpload = () => {
           toast.error("Fichier trop volumineux");
         } else if (error.message.includes('type')) {
           toast.error("Type de fichier non autorisé");
+        } else if (error.message.includes('bucket')) {
+          toast.error("Bucket de stockage non accessible");
         } else {
           toast.error(`Erreur d'upload: ${error.message}`);
         }
