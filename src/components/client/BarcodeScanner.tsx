@@ -18,10 +18,11 @@ export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScan
         barcode,
         phone,
         barcodeImageUrl,
-        url_presente: barcodeImageUrl ? "✅ OUI" : "❌ NON"
+        url_presente: barcodeImageUrl ? "✅ OUI" : "❌ NON",
+        url_length: barcodeImageUrl?.length || 0
       });
 
-      // Transmettre tous les paramètres au parent
+      // CRUCIAL: S'assurer que tous les paramètres sont transmis
       onBarcodeScanned(barcode, phone, barcodeImageUrl);
     }
   });

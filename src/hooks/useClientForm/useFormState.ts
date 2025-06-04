@@ -3,8 +3,6 @@ import { useState } from "react";
 import { ClientFormData } from "./types";
 
 export const useFormState = () => {
-  const [selectedDocumentType, setSelectedDocumentType] = useState<string>("");
-  
   const [formData, setFormData] = useState<ClientFormData>({
     nom: "",
     prenom: "",
@@ -12,40 +10,35 @@ export const useFormState = () => {
     numero_passeport: "",
     numero_telephone: "",
     code_barre: "",
-    code_barre_image_url: "", // 🎯 INITIALISATION
-    observations: "",
-    date_enregistrement: new Date().toISOString().split('T')[0],
-    document_type: "",
+    code_barre_image_url: "", // 🎯 CRUCIAL: Initialisation vide
     photo_url: "",
-    scannedImage: null
+    scannedImage: null,
+    observations: "",
+    date_enregistrement: new Date().toISOString().split('T')[0]
   });
 
-  const handleInputChange = (field: keyof ClientFormData, value: string) => {
+  const updateFormData = (field: keyof ClientFormData, value: string | null) => {
+    console.log(`📝 useFormState - Mise à jour ${field}:`, value);
+    
     setFormData(prev => {
-      const updated = { ...prev, [field]: value };
+      const newData = { ...prev, [field]: value || "" };
       
-      console.log(`🔄 FORM STATE - Mise à jour ${field}:`, {
-        ancien_valeur: prev[field],
-        nouvelle_valeur: value,
-        champ: field,
-        special_tracking: field === 'code_barre_image_url' ? "🎯 URL CODE-BARRES" : ""
-      });
+      // Log spécial pour l'URL de l'image du code-barres
+      if (field === 'code_barre_image_url') {
+        console.log("🎯 FORM STATE - Mise à jour URL image code-barres:", {
+          ancienne_url: prev.code_barre_image_url,
+          nouvelle_url: value,
+          statut: value ? "✅ DÉFINIE" : "❌ VIDE"
+        });
+      }
       
-      return updated;
+      return newData;
     });
-  };
-
-  const handleDocumentTypeSelect = (documentType: string) => {
-    console.log("📄 TYPE DOCUMENT sélectionné:", documentType);
-    setSelectedDocumentType(documentType);
-    setFormData(prev => ({ ...prev, document_type: documentType }));
   };
 
   return {
     formData,
     setFormData,
-    selectedDocumentType,
-    handleInputChange,
-    handleDocumentTypeSelect
+    updateFormData
   };
 };
