@@ -5,7 +5,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { ClientFormData } from "./types";
-import { useImageUpload } from "@/hooks/useImageUpload";
 
 interface UseFormSubmissionProps {
   formData: ClientFormData;
@@ -15,12 +14,9 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { uploadClientPhoto } = useImageUpload();
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
     if (!user) {
       toast.error("Vous devez être connecté pour enregistrer un client");
@@ -34,31 +30,11 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
       code_barre: formData.code_barre,
       code_barre_image_url: formData.code_barre_image_url,
       photo_url: formData.photo_url,
-      scannedImage: formData.scannedImage ? "✅ PRÉSENTE" : "❌ ABSENTE",
       url_barcode_presente: formData.code_barre_image_url ? "✅ OUI" : "❌ NON",
       url_photo_presente: formData.photo_url ? "✅ OUI" : "❌ NON"
     });
 
     try {
-      let finalPhotoUrl = formData.photo_url;
-
-      // 🔥 UPLOAD AUTOMATIQUE DE L'IMAGE SCANNÉE
-      if (formData.scannedImage && !finalPhotoUrl) {
-        console.log("📤 UPLOAD IMAGE SCANNÉE - Début upload vers client-photos");
-        
-        const uploadedPhotoUrl = await uploadClientPhoto(
-          formData.scannedImage, 
-          formData.document_type || 'cin'
-        );
-        
-        if (uploadedPhotoUrl) {
-          finalPhotoUrl = uploadedPhotoUrl;
-          console.log("✅ IMAGE SCANNÉE UPLOADÉE:", uploadedPhotoUrl);
-        } else {
-          console.warn("⚠️ Échec upload image scannée, continuons sans photo");
-        }
-      }
-
       // 🎯 DONNÉES COMPLÈTES POUR INSERTION
       const clientData = {
         nom: formData.nom.trim(),
@@ -67,8 +43,8 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         numero_passeport: formData.numero_passeport.trim(),
         numero_telephone: formData.numero_telephone?.trim() || null,
         code_barre: formData.code_barre?.trim() || null,
-        code_barre_image_url: formData.code_barre_image_url || null,
-        photo_url: finalPhotoUrl || null, // 🔥 PHOTO FINALE (uploadée ou existante)
+        code_barre_image_url: formData.code_barre_image_url || null, // 🔥 CRITIQUE
+        photo_url: formData.photo_url || null, // 🔥 CRITIQUE
         observations: formData.observations?.trim() || null,
         date_enregistrement: formData.date_enregistrement,
         document_type: formData.document_type || 'cin',
@@ -78,8 +54,7 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
       console.log("💾 INSERTION CLIENT - Données finales:", {
         ...clientData,
         confirmation_barcode_url: clientData.code_barre_image_url ? "✅ INCLUSE" : "❌ MANQUANTE",
-        confirmation_photo_url: clientData.photo_url ? "✅ INCLUSE" : "❌ MANQUANTE",
-        photo_source: formData.scannedImage && !formData.photo_url ? "📤 UPLOADÉE" : "🔗 EXISTANTE"
+        confirmation_photo_url: clientData.photo_url ? "✅ INCLUSE" : "❌ MANQUANTE"
       });
 
       const { data, error } = await supabase

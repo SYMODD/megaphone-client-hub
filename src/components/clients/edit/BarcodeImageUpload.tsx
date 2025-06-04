@@ -6,12 +6,11 @@ import { useImageUpload } from "@/hooks/useImageUpload";
 import { toast } from "sonner";
 
 interface BarcodeImageUploadProps {
-  currentImageUrl?: string;
   onImageUploaded: (imageUrl: string) => void;
   onCancel: () => void;
 }
 
-export const BarcodeImageUpload = ({ currentImageUrl, onImageUploaded, onCancel }: BarcodeImageUploadProps) => {
+export const BarcodeImageUpload = ({ onImageUploaded, onCancel }: BarcodeImageUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -67,13 +66,6 @@ export const BarcodeImageUpload = ({ currentImageUrl, onImageUploaded, onCancel 
   return (
     <div className="border rounded-lg p-4 bg-gray-50">
       <h4 className="font-medium mb-3">Uploader une nouvelle image de code-barres</h4>
-      
-      {currentImageUrl && (
-        <div className="mb-3 text-sm text-gray-600">
-          <p>Image actuelle :</p>
-          <p className="text-xs break-all">{currentImageUrl}</p>
-        </div>
-      )}
       
       <div className="space-y-3">
         {/* Sélection de fichier */}

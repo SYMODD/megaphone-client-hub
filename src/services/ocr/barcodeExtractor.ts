@@ -6,12 +6,10 @@ export const extractBarcode = (text: string, phoneToExclude?: string): string =>
   const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
   console.log("Text lines:", lines);
 
-  // AMÉLIORATION: Patterns spécifiques pour les codes-barres réels avec priorité pour P=
+  // AMÉLIORATION: Patterns spécifiques pour les codes-barres réels
   const barcodePatterns = [
     // Pattern P= qui est très commun sur les documents officiels (priorité 1)
-    /P\s*=\s*(\d{3,8})/gi,
-    // Pattern alternatif pour P= avec espaces ou sans
-    /P\s*[:=]\s*(\d{3,8})/gi,
+    /P=(\d{3,8})/gi,
     // Pattern pour codes numériques longs isolés (priorité 2)
     /(?:^|\s)(\d{9,15})(?:\s|$)/g,
     // Pattern pour codes avec tirets (priorité 3)
@@ -22,24 +20,17 @@ export const extractBarcode = (text: string, phoneToExclude?: string): string =>
     /\b([A-Z0-9]{3,15}[=\-][A-Z0-9]{2,10})\b/gi
   ];
 
-  // Recherche prioritaire du pattern P= avec espaces possibles
-  const pPatterns = [
-    /P\s*=\s*(\d{3,8})/gi,
-    /P\s*[:=]\s*(\d{3,8})/gi
-  ];
-  
-  for (const pPattern of pPatterns) {
-    pPattern.lastIndex = 0; // Reset regex state
-    let match = pPattern.exec(text);
-    if (match) {
-      const pCode = match[1];
-      console.log("✅ Code P= trouvé (priorité haute):", pCode);
-      return pCode; // Retourner seulement la partie numérique
-    }
+  // Recherche prioritaire du pattern P=
+  const pPattern = /P=(\d{3,8})/gi;
+  let match = pPattern.exec(text);
+  if (match) {
+    const pCode = match[1];
+    console.log("✅ Code P= trouvé (priorité haute):", pCode);
+    return pCode; // Retourner seulement la partie numérique
   }
 
   // Si pas de P=, chercher avec les autres patterns
-  for (const pattern of barcodePatterns.slice(2)) { // Skip P= patterns already checked
+  for (const pattern of barcodePatterns) {
     const matches = text.match(pattern);
     if (matches) {
       console.log(`Pattern ${pattern} matches:`, matches);

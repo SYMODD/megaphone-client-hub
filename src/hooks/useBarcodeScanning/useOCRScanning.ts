@@ -11,72 +11,12 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
   const { uploadBarcodeImage } = useImageUpload();
   const { extractBarcodeAndPhone } = useDataExtraction();
 
-  // Fonction pour compresser l'image
-  const compressImage = (file: File, maxSizeKB: number = 800): Promise<File> => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      
-      img.onload = () => {
-        // Calculer les nouvelles dimensions pour respecter la limite de taille
-        let { width, height } = img;
-        const aspectRatio = width / height;
-        
-        // Réduire progressivement jusqu'à obtenir une taille acceptable
-        let quality = 0.8;
-        let compressedFile: File;
-        
-        const compress = () => {
-          // Ajuster les dimensions si nécessaire
-          if (width > 1500) {
-            width = 1500;
-            height = width / aspectRatio;
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          
-          ctx!.drawImage(img, 0, 0, width, height);
-          
-          canvas.toBlob((blob) => {
-            if (blob) {
-              compressedFile = new File([blob], file.name, {
-                type: 'image/jpeg',
-                lastModified: Date.now()
-              });
-              
-              console.log(`🗜️ Compression: ${(file.size / 1024).toFixed(1)}KB → ${(compressedFile.size / 1024).toFixed(1)}KB`);
-              
-              // Si encore trop gros, réduire la qualité
-              if (compressedFile.size > maxSizeKB * 1024 && quality > 0.3) {
-                quality -= 0.1;
-                width *= 0.9;
-                height *= 0.9;
-                compress();
-              } else {
-                resolve(compressedFile);
-              }
-            }
-          }, 'image/jpeg', quality);
-        };
-        
-        compress();
-      };
-      
-      img.src = URL.createObjectURL(file);
-    });
-  };
-
   const performOCRExtraction = async (file: File): Promise<{ barcode?: string; phone?: string }> => {
-    console.log("🔍 Début de l'extraction OCR avec compression...");
-    
-    // Compresser l'image avant l'OCR
-    const compressedFile = await compressImage(file);
+    console.log("🔍 Début de l'extraction OCR réelle...");
     
     const formData = new FormData();
-    formData.append('file', compressedFile);
-    formData.append('apikey', 'K87783069388957');
+    formData.append('file', file);
+    formData.append('apikey', 'K87783069388957'); // Clé API OCR.space
     formData.append('language', 'fre');
     formData.append('isOverlayRequired', 'true');
     formData.append('detectOrientation', 'true');
@@ -141,8 +81,8 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
 
       console.log("✅ Image de code-barres uploadée avec succès:", barcodeImageUrl);
 
-      // 2. Extraction OCR réelle avec compression
-      console.log("🔍 Démarrage de l'extraction OCR avec compression...");
+      // 2. Extraction OCR réelle
+      console.log("🔍 Démarrage de l'extraction OCR réelle...");
       const extractedData = await performOCRExtraction(file);
       
       console.log("📊 Données extraites par OCR:", {
