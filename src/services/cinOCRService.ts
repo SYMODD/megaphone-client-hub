@@ -7,8 +7,8 @@ export const performCINOCR = async (file: File, apiKey: string): Promise<CINOCRR
   const formData = new FormData();
   formData.append('file', file);
   formData.append('apikey', apiKey);
-  formData.append('language', 'eng+fre+ara'); // Support multiple languages
-  formData.append('isOverlayRequired', 'false'); // Réduire la charge
+  formData.append('language', 'eng'); // Changé de 'eng+fre+ara' à 'eng'
+  formData.append('isOverlayRequired', 'false');
   formData.append('detectOrientation', 'true');
   formData.append('scale', 'true');
   formData.append('OCREngine', '2');
