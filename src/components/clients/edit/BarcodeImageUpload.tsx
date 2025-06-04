@@ -1,11 +1,11 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useImageUpload } from "@/hooks/useImageUpload";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface BarcodeImageUploadProps {
   clientId: string;
@@ -14,91 +14,128 @@ interface BarcodeImageUploadProps {
 
 export const BarcodeImageUpload = ({ clientId, onImageUploaded }: BarcodeImageUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
-  const { uploadBarcodeImage } = useImageUpload();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    console.log("📤 BarcodeImageUpload - Upload image pour client:", clientId);
-    
+    // Vérifier le type de fichier
+    if (!file.type.startsWith('image/')) {
+      toast.error("Veuillez sélectionner un fichier image");
+      return;
+    }
+
+    // Vérifier la taille du fichier (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Le fichier est trop volumineux (max 10MB)");
+      return;
+    }
+
+    await uploadBarcodeImage(file);
+  };
+
+  const uploadBarcodeImage = async (file: File) => {
+    if (!user) {
+      toast.error("Vous devez être connecté pour uploader une image");
+      return;
+    }
+
+    setIsUploading(true);
+    console.log("🔄 BarcodeImageUpload - Début upload pour client:", clientId);
+
     try {
-      setIsUploading(true);
-      
-      // Upload vers barcode-images avec la fonction unifiée
-      const imageUrl = await uploadBarcodeImage(file);
-      
-      if (!imageUrl) {
-        toast.error("Erreur lors de l'upload de l'image");
-        return;
+      // Générer un nom de fichier unique
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `barcode_${clientId}_${Date.now()}.${fileExtension}`;
+
+      console.log("📤 Upload vers bucket barcode-images avec nom:", fileName);
+
+      // Upload vers le bucket barcode-images
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('barcode-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error("❌ Erreur upload:", uploadError);
+        throw uploadError;
       }
 
-      console.log("✅ BarcodeImageUpload - Image uploadée:", {
-        url: imageUrl,
-        bucket: imageUrl.includes('barcode-images') ? 'barcode-images' : 'autre',
-        clientId
-      });
+      console.log("✅ Upload réussi:", uploadData);
 
-      // Mise à jour du client avec la nouvelle URL
-      const { error } = await supabase
+      // Construire l'URL publique
+      const { data: urlData } = supabase.storage
+        .from('barcode-images')
+        .getPublicUrl(fileName);
+
+      const imageUrl = urlData.publicUrl;
+      console.log("🔗 URL publique générée:", imageUrl);
+
+      // Mettre à jour le client avec la nouvelle URL d'image
+      const { error: updateError } = await supabase
         .from('clients')
-        .update({ code_barre_image_url: imageUrl })
+        .update({ 
+          code_barre_image_url: imageUrl,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', clientId);
 
-      if (error) {
-        console.error("❌ BarcodeImageUpload - Erreur mise à jour client:", error);
-        toast.error("Erreur lors de la sauvegarde");
-        return;
+      if (updateError) {
+        console.error("❌ Erreur mise à jour client:", updateError);
+        throw updateError;
       }
 
-      console.log("✅ BarcodeImageUpload - Client mis à jour avec l'image");
-      toast.success("Image de code-barres ajoutée avec succès!");
-      
-      // Callback immédiat pour mettre à jour l'interface
+      console.log("✅ Client mis à jour avec URL image code-barres:", imageUrl);
+
+      // Appeler le callback pour informer le parent
       onImageUploaded(imageUrl);
-      
+
+      toast.success("Image du code-barres uploadée avec succès!");
+
     } catch (error) {
-      console.error("❌ BarcodeImageUpload - Erreur upload:", error);
-      toast.error("Erreur lors de l'upload de l'image");
+      console.error("❌ Erreur complète upload image code-barres:", error);
+      toast.error(`Erreur lors de l'upload: ${error.message}`);
     } finally {
       setIsUploading(false);
-      // Reset input
-      if (event.target) {
-        event.target.value = '';
+      // Réinitialiser l'input file
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
     }
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Input
+          ref={fileInputRef}
           type="file"
           accept="image/*"
-          onChange={handleFileUpload}
+          onChange={handleFileSelect}
           disabled={isUploading}
           className="flex-1"
-          id="barcode-image-upload"
         />
         <Button
+          type="button"
           variant="outline"
           size="sm"
+          onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          onClick={() => document.getElementById('barcode-image-upload')?.click()}
+          className="shrink-0"
         >
           {isUploading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Upload...
-            </>
+            <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <>
-              <Upload className="w-4 h-4 mr-2" />
-              Ajouter image
-            </>
+            <Upload className="w-4 h-4" />
           )}
+          {isUploading ? "Upload..." : "Choisir"}
         </Button>
       </div>
+      
       <p className="text-xs text-gray-500">
         Formats acceptés: JPG, PNG, WebP. Max 10MB. Sauvegardé dans barcode-images.
       </p>

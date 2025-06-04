@@ -5,6 +5,7 @@ import { useClientActions } from "@/hooks/useClientActions";
 import { useNationalities } from "@/hooks/useNationalities";
 import { Client } from "@/hooks/useClientData/types";
 import { supabase } from "@/integrations/supabase/client";
+import { useCallback } from "react";
 
 export const useBaseClientsLogic = () => {
   const { toast } = useToast();
@@ -44,10 +45,20 @@ export const useBaseClientsLogic = () => {
     setCurrentPage(page);
   };
 
-  const handleClientUpdated = () => {
-    console.log("Client updated, reloading data...");
-    fetchClients();
-  };
+  const handleClientUpdated = useCallback(async () => {
+    console.log("🔄 BaseClientsLogic - Client mis à jour, rafraîchissement forcé...");
+    
+    // Fermer les dialogues
+    setViewDialogOpen(false);
+    setEditDialogOpen(false);
+    setDocumentDialogOpen(false);
+    
+    // Forcer le rechargement des données depuis Supabase
+    if (user) {
+      await fetchClients();
+      console.log("✅ BaseClientsLogic - Données rafraîchies après mise à jour client");
+    }
+  }, [fetchClients, user]);
 
   // CORRECTION DÉFINITIVE: Fonction de suppression qui force le rechargement
   const handleConfirmDeleteClient = async () => {
