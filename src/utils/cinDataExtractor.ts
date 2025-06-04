@@ -2,138 +2,161 @@
 import { CINData } from "@/types/cinTypes";
 
 export const extractCINData = (text: string): CINData => {
-  console.log("Extracting CIN data from text:", text);
+  console.log("🔍 EXTRACTION CIN - Texte OCR reçu:", text);
   
   const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  console.log("📝 Lignes de texte:", lines);
+  
   const cinData: CINData = {
     nationalite: "Maroc"
   };
 
-  // Recherche patterns spécifiques pour CIN marocaine
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].toUpperCase();
-    const nextLine = i + 1 < lines.length ? lines[i + 1].toUpperCase() : "";
-    const prevLine = i > 0 ? lines[i - 1].toUpperCase() : "";
-    
-    console.log(`Processing line ${i}: "${line}"`);
-
-    // Recherche directe des noms spécifiques "ESSBANE" et "SALIM"
-    if (line.includes('ESSBANE')) {
-      cinData.nom = 'ESSBANE';
-      console.log("Found nom via direct match: ESSBANE");
-    }
-    
-    if (line.includes('SALIM')) {
-      cinData.prenom = 'SALIM';
-      console.log("Found prenom via direct match: SALIM");
-    }
-
-    // Patterns plus génériques pour d'autres CIN
-    if (!cinData.nom || !cinData.prenom) {
-      // Recherche de lignes contenant seulement des lettres (noms potentiels)
-      const namePattern = /^[A-Z]{3,}$/;
-      if (namePattern.test(line) && line.length >= 3 && line.length <= 20) {
-        if (!cinData.nom && !['MAROC', 'CARTE', 'IDENTITE', 'NATIONALE', 'ROYAUME'].includes(line)) {
-          cinData.nom = line;
-          console.log("Found potential nom:", line);
-        } else if (!cinData.prenom && cinData.nom && line !== cinData.nom && !['MAROC', 'CARTE', 'IDENTITE', 'NATIONALE', 'ROYAUME'].includes(line)) {
-          cinData.prenom = line;
-          console.log("Found potential prenom:", line);
-        }
-      }
-    }
-
-    // Numéro CIN - patterns améliorés
-    if (!cinData.numero_cin) {
-      const cinMatches = [
-        line.match(/\b([A-Z]{1,2}\d{6,8})\b/),
-        line.match(/([J]\d{6})/), // Pattern spécifique comme J433636
-        line.match(/N[°o]\s*:?\s*([A-Z]{1,2}\d{6,8})/i),
-        line.match(/CIN[:\s]+([A-Z]{1,2}\d{6,8})/i),
-        line.match(/IDENTITE[:\s]+([A-Z]{1,2}\d{6,8})/i)
-      ];
-      
-      for (const match of cinMatches) {
-        if (match) {
-          cinData.numero_cin = match[1];
-          console.log("Found CIN number:", match[1]);
-          break;
-        }
-      }
-    }
-
-    // Date de naissance - patterns améliorés
-    if (!cinData.date_naissance) {
-      const datePatterns = [
-        line.match(/(\d{2})[\/\-\.](\d{2})[\/\-\.](\d{4})/),
-        line.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/),
-        line.match(/NE\(E\)\s+LE[:\s]+(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/i),
-        line.match(/NAISSANCE[:\s]+(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/i),
-      ];
-      
-      for (const match of datePatterns) {
-        if (match) {
-          const day = match[1].padStart(2, '0');
-          const month = match[2].padStart(2, '0');
-          const year = match[3];
-          cinData.date_naissance = `${day}/${month}/${year}`;
-          console.log("Found date de naissance:", cinData.date_naissance);
-          break;
-        }
-      }
-    }
-
-    // Lieu de naissance - patterns améliorés
-    if (!cinData.lieu_naissance) {
-      const lieuPatterns = [
-        line.match(/AGADIR/),
-        line.match(/OUTANANE/),
-        line.match(/NE\(E\)\s+A[:\s]+([A-Z\s]+)/i),
-        line.match(/LIEU[:\s]+([A-Z\s]+)/i),
-        line.match(/A[:\s]+([A-Z][A-Z\s]+)$/i),
-      ];
-      
-      for (const match of lieuPatterns) {
-        if (match) {
-          if (line.includes('AGADIR') && line.includes('OUTANANE')) {
-            cinData.lieu_naissance = 'AGADIR AGADIR IDA OUTANANE';
-          } else if (match[1] && match[1].length > 2 && match[1].length < 50) {
-            cinData.lieu_naissance = match[1].trim();
-          } else if (line.includes('AGADIR')) {
-            cinData.lieu_naissance = 'AGADIR';
-          }
-          console.log("Found lieu de naissance:", cinData.lieu_naissance);
-          break;
-        }
-      }
-    }
-  }
-
-  // Recherche dans le texte complet pour des patterns plus complexes
-  const fullText = text.toUpperCase();
+  const fullTextUpper = text.toUpperCase();
   
-  // Si on n'a toujours pas trouvé les noms, chercher dans le texte complet
-  if (!cinData.nom && fullText.includes('ESSBANE')) {
-    cinData.nom = 'ESSBANE';
-    console.log("Found nom in full text: ESSBANE");
-  }
+  // 1. EXTRACTION DU NOM ET PRÉNOM - Patterns améliorés
+  console.log("🔤 Recherche nom et prénom...");
   
-  if (!cinData.prenom && fullText.includes('SALIM')) {
-    cinData.prenom = 'SALIM';
-    console.log("Found prenom in full text: SALIM");
+  // Recherche de patterns "NOM:" ou "NOM :" ou juste des mots en majuscules
+  const nomPatterns = [
+    /NOM\s*:\s*([A-Z][A-Z\s]+)/gi,
+    /SURNAME\s*:\s*([A-Z][A-Z\s]+)/gi,
+    /^([A-Z]{2,20})$/gm, // Mots tout en majuscules sur une ligne
+  ];
+  
+  const prenomPatterns = [
+    /PRENOM\s*:\s*([A-Z][A-Z\s]+)/gi,
+    /PRÉNOM\s*:\s*([A-Z][A-Z\s]+)/gi,
+    /GIVEN\s*NAME\s*:\s*([A-Z][A-Z\s]+)/gi,
+    /^([A-Z]{2,20})$/gm,
+  ];
+
+  // Extraction du nom
+  for (const pattern of nomPatterns) {
+    const match = pattern.exec(text);
+    if (match && match[1]) {
+      const nom = match[1].trim().replace(/[^A-Z\s]/g, '');
+      if (nom.length >= 2 && nom.length <= 30 && !['ROYAUME', 'MAROC', 'CARTE', 'IDENTITE'].includes(nom)) {
+        cinData.nom = nom;
+        console.log("✅ Nom trouvé:", nom);
+        break;
+      }
+    }
   }
 
-  // Nettoyage des données extraites
-  if (cinData.nom) {
-    cinData.nom = cinData.nom.replace(/[^A-Z\s]/g, '').trim();
-  }
-  if (cinData.prenom) {
-    cinData.prenom = cinData.prenom.replace(/[^A-Z\s]/g, '').trim();
-  }
-  if (cinData.lieu_naissance) {
-    cinData.lieu_naissance = cinData.lieu_naissance.replace(/[^A-Z\s]/g, '').trim();
+  // Extraction du prénom
+  for (const pattern of prenomPatterns) {
+    const match = pattern.exec(text);
+    if (match && match[1]) {
+      const prenom = match[1].trim().replace(/[^A-Z\s]/g, '');
+      if (prenom.length >= 2 && prenom.length <= 30 && prenom !== cinData.nom && !['ROYAUME', 'MAROC', 'CARTE', 'IDENTITE'].includes(prenom)) {
+        cinData.prenom = prenom;
+        console.log("✅ Prénom trouvé:", prenom);
+        break;
+      }
+    }
   }
 
-  console.log("Final extracted CIN data:", cinData);
+  // Si pas de nom/prénom trouvé avec les patterns, chercher dans les lignes
+  if (!cinData.nom || !cinData.prenom) {
+    console.log("🔍 Recherche alternative dans les lignes...");
+    const candidateNames = [];
+    
+    for (const line of lines) {
+      const cleanLine = line.toUpperCase().replace(/[^A-Z\s]/g, '').trim();
+      if (cleanLine.length >= 2 && cleanLine.length <= 30 && 
+          !['ROYAUME', 'MAROC', 'CARTE', 'IDENTITE', 'NATIONALE', 'KINGDOM', 'MOROCCO'].includes(cleanLine) &&
+          /^[A-Z\s]+$/.test(cleanLine)) {
+        candidateNames.push(cleanLine);
+      }
+    }
+    
+    console.log("👥 Candidats noms:", candidateNames);
+    
+    if (candidateNames.length >= 2) {
+      if (!cinData.nom) {
+        cinData.nom = candidateNames[0];
+        console.log("✅ Nom alternatif:", candidateNames[0]);
+      }
+      if (!cinData.prenom) {
+        cinData.prenom = candidateNames[1];
+        console.log("✅ Prénom alternatif:", candidateNames[1]);
+      }
+    }
+  }
+
+  // 2. EXTRACTION DU NUMÉRO CIN - Patterns très flexibles
+  console.log("🔢 Recherche numéro CIN...");
+  
+  const cinPatterns = [
+    /CIN\s*:?\s*([A-Z]{0,3}\d{5,8})/gi,
+    /N[°O]\s*:?\s*([A-Z]{0,3}\d{5,8})/gi,
+    /([A-Z]{1,3}\d{5,8})/g,
+    /(\d{6,8})/g, // Numéros longs
+  ];
+
+  for (const pattern of cinPatterns) {
+    const matches = text.match(pattern);
+    if (matches) {
+      for (const match of matches) {
+        const cleanMatch = match.replace(/[^A-Z0-9]/g, '');
+        if (cleanMatch.length >= 5 && cleanMatch.length <= 10) {
+          cinData.numero_cin = cleanMatch;
+          console.log("✅ Numéro CIN trouvé:", cleanMatch);
+          break;
+        }
+      }
+      if (cinData.numero_cin) break;
+    }
+  }
+
+  // 3. EXTRACTION DE LA DATE DE NAISSANCE
+  console.log("📅 Recherche date de naissance...");
+  
+  const datePatterns = [
+    /(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/g,
+    /NE\(E\)?\s*LE\s*:?\s*(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/gi,
+    /NAISSANCE\s*:?\s*(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/gi,
+  ];
+
+  for (const pattern of datePatterns) {
+    const match = pattern.exec(text);
+    if (match) {
+      const day = match[1].padStart(2, '0');
+      const month = match[2].padStart(2, '0');
+      const year = match[3];
+      
+      // Validation basique de la date
+      if (parseInt(day) <= 31 && parseInt(month) <= 12 && parseInt(year) >= 1900 && parseInt(year) <= 2024) {
+        cinData.date_naissance = `${day}/${month}/${year}`;
+        console.log("✅ Date de naissance trouvée:", cinData.date_naissance);
+        break;
+      }
+    }
+  }
+
+  // 4. EXTRACTION DU LIEU DE NAISSANCE
+  console.log("📍 Recherche lieu de naissance...");
+  
+  const lieuPatterns = [
+    /NE\(E\)?\s*A\s*:?\s*([A-Z][A-Z\s]{2,30})/gi,
+    /LIEU\s*:?\s*([A-Z][A-Z\s]{2,30})/gi,
+    /A\s*:?\s*([A-Z][A-Z\s]{2,30})$/gim,
+    /(AGADIR|CASABLANCA|RABAT|FES|MARRAKECH|TANGER|MEKNES|OUJDA|KENITRA|TETOUAN)/gi,
+  ];
+
+  for (const pattern of lieuPatterns) {
+    const match = pattern.exec(text);
+    if (match && match[1]) {
+      const lieu = match[1].trim().replace(/[^A-Z\s]/g, '');
+      if (lieu.length >= 3 && lieu.length <= 50) {
+        cinData.lieu_naissance = lieu;
+        console.log("✅ Lieu de naissance trouvé:", lieu);
+        break;
+      }
+    }
+  }
+
+  console.log("📋 RÉSULTAT FINAL extraction CIN:", cinData);
+  
   return cinData;
 };

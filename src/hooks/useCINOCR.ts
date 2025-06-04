@@ -12,52 +12,69 @@ export const useCINOCR = () => {
 
   const scanImage = async (file: File, apiKey: string): Promise<CINData | null> => {
     setIsScanning(true);
-    setExtractedData(null); // Reset previous data
+    setExtractedData(null);
     setRawText("");
     
     try {
-      console.log("🔍 Starting OCR scan for CIN...");
+      console.log("🔍 DÉBUT SCAN CIN avec clé API:", apiKey.substring(0, 5) + "...");
+      console.log("📁 Fichier à analyser:", {
+        name: file.name,
+        size: (file.size / 1024).toFixed(1) + " KB",
+        type: file.type
+      });
       
       const result = await performCINOCR(file, apiKey);
-      console.log("📄 CIN OCR API Response:", result);
+      console.log("📄 Réponse OCR brute:", result);
 
       if (result.IsErroredOnProcessing || result.OCRExitCode !== 1) {
         const errorMsg = result.ErrorMessage || "Erreur lors du traitement OCR";
-        console.error("❌ OCR Error:", errorMsg);
-        toast.error(errorMsg);
+        console.error("❌ Erreur OCR:", errorMsg);
+        toast.error(`Erreur OCR: ${errorMsg}`);
         return null;
       }
 
       const parsedText = result.ParsedResults[0]?.ParsedText || "";
-      console.log("📝 Texte OCR brut:", parsedText);
+      console.log("📝 Texte OCR extrait:", parsedText);
       
       if (!parsedText.trim()) {
-        console.warn("⚠️ Aucun texte détecté dans l'image");
+        console.warn("⚠️ Aucun texte détecté");
         toast.warning("Aucun texte détecté dans l'image CIN");
         return null;
       }
 
       setRawText(parsedText);
       
-      // Extraction des données CIN
-      console.log("🔍 Extraction des données CIN...");
+      // Extraction des données CIN avec logging détaillé
+      console.log("🔍 DÉBUT extraction des données CIN...");
       const cinData = extractCINData(parsedText);
       console.log("📋 Données CIN extraites:", cinData);
 
-      if (cinData && (cinData.nom || cinData.prenom || cinData.numero_cin)) {
+      // Vérification si au moins une donnée utile a été extraite
+      const hasValidData = !!(cinData.nom || cinData.prenom || cinData.numero_cin || cinData.date_naissance || cinData.lieu_naissance);
+      
+      if (hasValidData) {
         setExtractedData(cinData);
-        console.log("✅ CIN extraction successful:", cinData);
-        toast.success("Données CIN extraites avec succès!");
+        console.log("✅ Extraction CIN réussie:", cinData);
+        
+        // Message de succès détaillé
+        const extractedFields = [];
+        if (cinData.nom) extractedFields.push("nom");
+        if (cinData.prenom) extractedFields.push("prénom");
+        if (cinData.numero_cin) extractedFields.push("numéro CIN");
+        if (cinData.date_naissance) extractedFields.push("date de naissance");
+        if (cinData.lieu_naissance) extractedFields.push("lieu de naissance");
+        
+        toast.success(`Données CIN extraites: ${extractedFields.join(", ")}`);
         return cinData;
       } else {
         console.warn("⚠️ Aucune donnée CIN valide extraite");
-        toast.warning("Image scannée mais aucune donnée CIN détectée");
+        toast.warning("Image scannée mais aucune donnée CIN claire détectée. Vérifiez la qualité de l'image.");
         return null;
       }
     } catch (error) {
-      console.error("❌ CIN OCR scan error:", error);
+      console.error("❌ Erreur lors du scan CIN:", error);
       const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
-      toast.error(`Erreur lors du scan OCR de la CIN: ${errorMessage}`);
+      toast.error(`Erreur scan CIN: ${errorMessage}`);
       return null;
     } finally {
       setIsScanning(false);
@@ -65,7 +82,7 @@ export const useCINOCR = () => {
   };
 
   const resetScan = () => {
-    console.log("🔄 Reset CIN OCR scan data");
+    console.log("🔄 Reset CIN OCR");
     setExtractedData(null);
     setRawText("");
   };
