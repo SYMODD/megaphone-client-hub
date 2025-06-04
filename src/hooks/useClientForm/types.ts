@@ -11,4 +11,5 @@ export interface ClientFormData {
   scannedImage: string | null;
   observations: string;
   date_enregistrement: string;
+  document_type?: string; // 🔧 FIX: Add missing document_type field
 }

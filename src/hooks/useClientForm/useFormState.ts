@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { ClientFormData } from "./types";
+import { DocumentType } from "@/types/documentTypes";
 
 export const useFormState = () => {
   const [formData, setFormData] = useState<ClientFormData>({
@@ -14,8 +15,11 @@ export const useFormState = () => {
     photo_url: "",
     scannedImage: null,
     observations: "",
-    date_enregistrement: new Date().toISOString().split('T')[0]
+    date_enregistrement: new Date().toISOString().split('T')[0],
+    document_type: undefined // 🔧 FIX: Initialize document_type
   });
+
+  const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType | null>(null);
 
   const updateFormData = (field: keyof ClientFormData, value: string | null) => {
     console.log(`📝 useFormState - Mise à jour ${field}:`, value);
@@ -36,9 +40,23 @@ export const useFormState = () => {
     });
   };
 
+  const handleInputChange = (field: keyof ClientFormData, value: string) => {
+    updateFormData(field, value);
+  };
+
+  const handleDocumentTypeSelect = (type: DocumentType | null) => {
+    setSelectedDocumentType(type);
+    if (type) {
+      updateFormData('document_type', type);
+    }
+  };
+
   return {
     formData,
     setFormData,
-    updateFormData
+    updateFormData,
+    selectedDocumentType,
+    handleInputChange,
+    handleDocumentTypeSelect
   };
 };

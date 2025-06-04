@@ -22,7 +22,7 @@ export const ClientForm = () => {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleSubmit(e);
+    handleSubmit(); // 🔧 FIX: Remove the argument
   };
 
   return (
