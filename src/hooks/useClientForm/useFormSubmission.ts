@@ -54,7 +54,7 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
         timestamp: new Date().toISOString()
       });
 
-      // 🎯 PRÉPARATION PAYLOAD AVEC VÉRIFICATION RIGOUREUSE
+      // 🎯 PRÉPARATION PAYLOAD AVEC VÉRIFICATION ULTRA-RIGOUREUSE
       const dataToInsert = {
         nom: formData.nom,
         prenom: formData.prenom,
@@ -70,8 +70,12 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
         agent_id: user.id
       };
 
-      // 🔥 LOG DU PAYLOAD EXACT ENVOYÉ À SUPABASE
-      console.log("🔥 PAYLOAD ENVOYÉ À SUPABASE - Validation finale:", {
+      // 🔥 VALIDATION CRITIQUE AVANT INSERTION
+      const isUrlValid = dataToInsert.code_barre_image_url && 
+                        typeof dataToInsert.code_barre_image_url === 'string' && 
+                        dataToInsert.code_barre_image_url.trim() !== '';
+
+      console.log("🔥 PAYLOAD ENVOYÉ À SUPABASE - Validation finale CRITIQUE:", {
         dataToInsert_complet: dataToInsert,
         champs_critiques: {
           code_barre_image_url: dataToInsert.code_barre_image_url,
@@ -85,18 +89,35 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
           longueur: dataToInsert.code_barre_image_url?.length || 0,
           sera_null_en_base: dataToInsert.code_barre_image_url === null || dataToInsert.code_barre_image_url === undefined,
           sera_vide_en_base: dataToInsert.code_barre_image_url === "",
-          validation_pre_insert: dataToInsert.code_barre_image_url ? "✅ URL VALIDE POUR INSERTION" : "❌ URL NULL/VIDE SERA INSÉRÉE"
+          validation_pre_insert: isUrlValid ? "✅ URL VALIDE POUR INSERTION" : "❌ URL NULL/VIDE SERA INSÉRÉE",
+          url_status: isUrlValid ? "VALID" : "INVALID_OR_EMPTY"
         },
         aucun_filtrage_appliqué: "✅ Pas de Object.entries().filter() qui pourrait supprimer les valeurs vides",
         timestamp: new Date().toISOString()
       });
 
+      // 🚨 ARRÊT CRITIQUE SI URL INVALIDE
+      if (!isUrlValid) {
+        console.error("🚨 ARRÊT CRITIQUE: URL invalide détectée avant insertion Supabase", {
+          url_dans_payload: dataToInsert.code_barre_image_url,
+          type: typeof dataToInsert.code_barre_image_url,
+          formData_original: formData.code_barre_image_url,
+          action: "ARRÊT DE LA SOUMISSION POUR ÉVITER PERTE DE DONNÉES",
+          timestamp: new Date().toISOString()
+        });
+        
+        toast.error("🚨 Erreur critique: Image du code-barres manquante. Veuillez rescanner.");
+        setIsSubmitting(false);
+        return;
+      }
+
       // 🔥 INSERTION SUPABASE AVEC TRACKING COMPLET
-      console.log("🔥 APPEL SUPABASE INSERT - Requête critique:", {
+      console.log("🔥 APPEL SUPABASE INSERT - Requête critique avec URL VALIDÉE:", {
         table: "clients",
         action: "insert",
         données_exactes: dataToInsert,
         url_dans_payload: dataToInsert.code_barre_image_url,
+        url_confirmée_valide: "✅ URL VALIDÉE AVANT INSERTION",
         payload_size: Object.keys(dataToInsert).length,
         timestamp: new Date().toISOString()
       });
@@ -138,7 +159,7 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
             correspondance_envoi_base: savedClient.code_barre_image_url === dataToInsert.code_barre_image_url ? "✅ CORRESPONDANCE PARFAITE" : "❌ DIVERGENCE DÉTECTÉE",
             correspondance_form_base: savedClient.code_barre_image_url === formData.code_barre_image_url ? "✅ FORM = BASE" : "❌ FORM ≠ BASE",
             statut_final: savedClient.code_barre_image_url ? "✅ URL SAUVÉE EN BASE" : "❌ URL VIDE EN BASE",
-            analyse_critique: savedClient.code_barre_image_url ? "SUCCESS COMPLET" : "ÉCHEC - URL PERDUE"
+            analyse_critique: savedClient.code_barre_image_url ? "SUCCESS COMPLET" : "ÉCHEC - URL PERDUE MALGRÉ VALIDATION"
           },
           autres_champs_sauvés: {
             code_barre: savedClient.code_barre,
@@ -150,22 +171,22 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
         });
 
         if (savedClient.code_barre_image_url) {
-          console.log("✅ SUCCÈS COMPLET - URL SAUVÉE:", {
+          console.log("✅ SUCCÈS COMPLET - URL SAUVÉE AVEC SÉCURITÉ RENFORCÉE:", {
             message: "Client et image sauvegardés avec succès",
             url_confirmée: savedClient.code_barre_image_url,
-            résolution: "PROBLÈME RÉSOLU",
+            résolution: "PROBLÈME RÉSOLU AVEC SÉCURITÉ RENFORCÉE",
             timestamp: new Date().toISOString()
           });
           toast.success("✅ Client et image sauvegardés avec succès !");
         } else {
-          console.log("❌ ÉCHEC CRITIQUE - URL PERDUE:", {
-            message: "Client enregistré mais URL image nulle en base",
+          console.log("❌ ÉCHEC MYSTÉRIEUX - URL PERDUE MALGRÉ VALIDATION:", {
+            message: "URL était valide avant insertion mais nulle après",
             données_client: savedClient,
-            investigation_requise: "URL s'est perdue lors de l'insertion Supabase",
-            urgence: "PROBLÈME NON RÉSOLU",
+            investigation_requise: "Problème au niveau de Supabase lui-même",
+            urgence: "PROBLÈME SYSTÈME CRITIQUE",
             timestamp: new Date().toISOString()
           });
-          toast.error("⚠️ Client enregistré mais image non sauvegardée");
+          toast.error("⚠️ Erreur système: URL perdue lors de la sauvegarde");
         }
       }
 
