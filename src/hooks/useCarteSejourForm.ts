@@ -89,10 +89,8 @@ export const useCarteSejourForm = () => {
       if (formData.scannedImage) {
         console.log("📤 UPLOAD IMAGE CARTE SÉJOUR vers client-photos");
         
-        const blob = await fetch(formData.scannedImage).then(r => r.blob());
-        const file = new File([blob], `carte_sejour_${Date.now()}.jpg`, { type: 'image/jpeg' });
-        
-        photoUrl = await uploadClientPhoto(file);
+        // 🎯 FIX: Utiliser uploadClientPhoto avec l'image base64 et le type de document
+        photoUrl = await uploadClientPhoto(formData.scannedImage, 'carte_sejour');
         console.log("✅ Image carte séjour uploadée:", photoUrl);
       }
 
