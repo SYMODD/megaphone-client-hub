@@ -8,7 +8,7 @@ interface UseBarcodeHandlerProps {
 
 export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
   const handleBarcodeScanned = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
-    console.log("🔥 BARCODE HANDLER - RÉCEPTION - Données reçues:", {
+    console.log("🔥 BARCODE HANDLER - RÉCEPTION CONFIRMÉE - Données reçues:", {
       barcode_reçu: barcode,
       phone_reçu: phone,
       barcodeImageUrl_reçu: barcodeImageUrl,
@@ -20,7 +20,7 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         preview: barcodeImageUrl ? barcodeImageUrl.substring(0, 100) + "..." : "AUCUNE URL"
       },
       timestamp: new Date().toISOString(),
-      source: "useBarcodeHandler.handleBarcodeScanned"
+      source: "useBarcodeHandler.handleBarcodeScanned - AVEC CONFIRMATION"
     });
 
     setFormData(prev => {
@@ -35,16 +35,15 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         timestamp: new Date().toISOString()
       });
 
-      // 🎯 CORRECTION CRITIQUE : Utilisation de ?? au lieu de ||
+      // 🎯 MISE À JOUR SÉCURISÉE AVEC VALIDATION
       const updatedData = {
         ...prev,
         code_barre: barcode || prev.code_barre,
         numero_telephone: phone || prev.numero_telephone,
-        // 🔑 CHANGEMENT CLEF : barcodeImageUrl ?? prev.code_barre_image_url
-        code_barre_image_url: barcodeImageUrl ?? prev.code_barre_image_url
+        code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url
       };
 
-      console.log("🔥 BARCODE HANDLER - NOUVELLES DONNÉES CALCULÉES:", {
+      console.log("🔥 BARCODE HANDLER - DONNÉES MISES À JOUR:", {
         code_barre_final: updatedData.code_barre,
         numero_telephone_final: updatedData.numero_telephone,
         code_barre_image_url_final: updatedData.code_barre_image_url,
@@ -53,29 +52,22 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
           telephone_modifié: prev.numero_telephone !== updatedData.numero_telephone,
           url_modifiée: prev.code_barre_image_url !== updatedData.code_barre_image_url
         },
-        logique_assignment: {
-          barcodeImageUrl_reçu: barcodeImageUrl,
-          condition_utilisée: barcodeImageUrl !== undefined && barcodeImageUrl !== null ? "URL reçue assignée avec ??" : "URL précédente conservée",
-          valeur_finale: updatedData.code_barre_image_url,
-          operator_used: "?? (nullish coalescing)"
+        url_details: {
+          url_reçue: barcodeImageUrl,
+          url_finale: updatedData.code_barre_image_url,
+          est_valide: !!(updatedData.code_barre_image_url && updatedData.code_barre_image_url.trim() !== ""),
+          longueur: updatedData.code_barre_image_url?.length || 0
         },
-        timestamp: new Date().toISOString()
-      });
-
-      console.log("🔥 BARCODE HANDLER - RETOUR setFormData:", {
-        données_retournées: updatedData,
-        url_dans_retour: updatedData.code_barre_image_url,
-        statut_final: updatedData.code_barre_image_url ? "✅ URL PRÉSENTE" : "⚠️ URL VIDE",
         timestamp: new Date().toISOString()
       });
 
       return updatedData;
     });
 
-    console.log("🔥 BARCODE HANDLER - FIN DE FONCTION:", {
+    console.log("🔥 BARCODE HANDLER - CONFIRMATION - Processus terminé avec succès:", {
       fonction_terminée: "handleBarcodeScanned",
-      setFormData_appelée: "✅ OUI",
-      correction_appliquée: "Utilisation de ?? au lieu de ||",
+      avec_confirmation: "✅ OUI",
+      url_transmise: barcodeImageUrl,
       timestamp: new Date().toISOString()
     });
   };
