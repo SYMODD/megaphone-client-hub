@@ -28,6 +28,7 @@ export const useCINOCR = () => {
           console.log("📤 CIN - Upload automatique image code-barres détecté:", result.data.code_barre);
           
           try {
+            // Upload avec compression automatique
             const barcodeImageUrl = await uploadBarcodeImage(file);
             
             if (barcodeImageUrl) {
@@ -48,36 +49,38 @@ export const useCINOCR = () => {
               // Mettre à jour l'état local avec les données complètes
               setExtractedData(finalData);
               
-              toast.success("Données CIN et image code-barres extraites avec succès!");
+              toast.success("✅ Données CIN et image code-barres extraites avec succès!", {
+                duration: 4000
+              });
               
               // Retourner les données complètes avec l'URL
               return finalData;
             } else {
               console.warn("⚠️ CIN - Échec upload image code-barres, mais données CIN OK");
               setExtractedData(result.data);
-              toast.success("Données CIN extraites (image code-barres non sauvegardée)");
+              toast.success("✅ Données CIN extraites (image code-barres non sauvegardée)");
               return result.data;
             }
           } catch (barcodeError) {
             console.error("❌ CIN - Erreur upload image code-barres:", barcodeError);
             setExtractedData(result.data);
-            toast.success("Données CIN extraites (erreur sauvegarde image code-barres)");
+            toast.success("✅ Données CIN extraites (erreur sauvegarde image code-barres)");
             return result.data;
           }
         } else {
           console.log("ℹ️ CIN - Aucun code-barres détecté, pas d'upload d'image");
           setExtractedData(result.data);
-          toast.success("Données CIN extraites (aucun code-barres détecté)");
+          toast.success("✅ Données CIN extraites (aucun code-barres détecté)");
           return result.data;
         }
       } else {
         console.error("❌ CIN OCR - Échec extraction:", result.error);
-        toast.error(result.error || "Impossible d'extraire les données CIN");
+        toast.error(result.error || "❌ Impossible d'extraire les données CIN");
         return null;
       }
     } catch (error) {
       console.error("❌ CIN OCR - Erreur générale:", error);
-      toast.error("Erreur lors du scan CIN");
+      toast.error("❌ Erreur lors du scan CIN");
       return null;
     } finally {
       setIsScanning(false);

@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const ensureStorageBucket = async (bucketName: string = 'client-photos') => {
   try {
@@ -38,6 +39,9 @@ export const uploadClientPhoto = async (imageBase64: string, documentType: strin
     
     console.log(`📝 Nom du fichier généré: ${filename}`);
     
+    // Affichage du toast de progression
+    toast.loading("📤 Upload de l'image du document...", { id: 'client-photo-upload' });
+    
     // Upload direct vers Supabase Storage (sans vérification préalable)
     const { data, error } = await supabase.storage
       .from('client-photos')
@@ -48,6 +52,8 @@ export const uploadClientPhoto = async (imageBase64: string, documentType: strin
 
     if (error) {
       console.error('❌ Erreur lors de l\'upload vers client-photos:', error);
+      toast.dismiss('client-photo-upload');
+      toast.error('❌ Erreur lors de l\'upload de l\'image du document');
       return null;
     }
 
@@ -65,9 +71,18 @@ export const uploadClientPhoto = async (imageBase64: string, documentType: strin
       console.warn('⚠️ URL ne contient pas client-photos');
     }
 
+    toast.dismiss('client-photo-upload');
+    
+    // 🎉 MESSAGE DE SUCCÈS
+    toast.success("📸 Image du document uploadée avec succès vers client-photos", {
+      duration: 4000
+    });
+
     return finalUrl;
   } catch (error) {
     console.error('❌ Erreur inattendue lors de l\'upload photo client:', error);
+    toast.dismiss('client-photo-upload');
+    toast.error('❌ Erreur lors de l\'upload de l\'image du document');
     return null;
   }
 };

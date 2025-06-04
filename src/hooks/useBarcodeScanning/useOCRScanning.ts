@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useImageUpload } from "@/hooks/useImageUpload";
+import { toast } from "sonner";
 
 interface UseOCRScanningProps {}
 
@@ -16,19 +17,20 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       setIsScanning(true);
       console.log("🔍 OCR SCANNING - Début du scan avec upload automatique");
 
-      // 1. Upload de l'image vers barcode-images AVANT le scan OCR
-      console.log("📤 ÉTAPE 1: Upload de l'image code-barres...");
+      // 1. Upload de l'image vers barcode-images AVANT le scan OCR (avec compression automatique)
+      console.log("📤 ÉTAPE 1: Upload et compression de l'image code-barres...");
       const barcodeImageUrl = await uploadBarcodeImage(file);
       
       if (!barcodeImageUrl) {
         console.error("❌ Échec upload image - abandon du processus");
+        toast.error("❌ Impossible d'uploader l'image du code-barres");
         onResult("", "");
         return;
       }
       
       console.log("✅ Image uploadée avec succès:", barcodeImageUrl);
 
-      // 2. Scan OCR de l'image
+      // 2. Scan OCR de l'image (avec le fichier original non compressé pour une meilleure qualité OCR)
       console.log("🔍 ÉTAPE 2: Scan OCR de l'image...");
       
       const formData = new FormData();
@@ -75,11 +77,19 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
         barcodeImageUrl: barcodeImageUrl
       });
 
-      // 4. Retourner les résultats avec l'URL de l'image
+      // 4. Message de succès pour l'extraction
+      if (barcode || phone) {
+        toast.success(`🎯 Données extraites avec succès: ${barcode ? 'Code-barres ✓' : ''} ${phone ? 'Téléphone ✓' : ''}`, {
+          duration: 4000
+        });
+      }
+
+      // 5. Retourner les résultats avec l'URL de l'image
       onResult(barcode, phone, barcodeImageUrl);
 
     } catch (error) {
       console.error("❌ Erreur processus OCR complet:", error);
+      toast.error("❌ Erreur lors du scan du code-barres");
       onResult("", "");
     } finally {
       setIsScanning(false);
