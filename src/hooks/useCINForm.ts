@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,17 +36,41 @@ export const useCINForm = () => {
     setFormData(prev => ({ ...prev, scannedImage: imageData }));
   };
 
+  // Helper function to normalize nationality for CIN
+  const normalizeNationality = (nationality: string): string => {
+    if (!nationality) return "Marocaine";
+    
+    const normalizedNationality = nationality.toLowerCase().trim();
+    
+    // Mapping for CIN nationality values
+    if (normalizedNationality === "maroc" || normalizedNationality === "marocaine" || normalizedNationality === "moroccan") {
+      return "Marocaine";
+    }
+    
+    // For other nationalities, capitalize first letter
+    return nationality.charAt(0).toUpperCase() + nationality.slice(1).toLowerCase();
+  };
+
   const handleCINDataExtracted = (extractedData: any) => {
     console.log("📄 Données CIN extraites:", extractedData);
+    
+    // Normalize the nationality specifically for CIN
+    const normalizedNationality = normalizeNationality(extractedData.nationalite);
     
     setFormData(prev => ({
       ...prev,
       nom: extractedData.nom || prev.nom,
       prenom: extractedData.prenom || prev.prenom,
+      nationalite: normalizedNationality, // Use normalized nationality
       numero_passeport: extractedData.cin || extractedData.numero_cin || prev.numero_passeport,
       code_barre: extractedData.code_barre || prev.code_barre,
       code_barre_image_url: extractedData.code_barre_image_url || prev.code_barre_image_url
     }));
+
+    console.log("🔄 Nationalité normalisée:", {
+      originale: extractedData.nationalite,
+      normalisée: normalizedNationality
+    });
 
     const extractionInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: CIN`;
     setFormData(prev => ({
