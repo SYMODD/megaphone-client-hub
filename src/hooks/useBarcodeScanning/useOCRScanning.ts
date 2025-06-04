@@ -18,83 +18,10 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
   ) => {
     try {
       setIsScanning(true);
-      console.log("🔥 OCR SCANNING - DÉBUT du processus complet");
+      console.log("🔥 OCR SCANNING - DÉBUT du processus unifié");
 
-      // 1. Upload de l'image IMMÉDIATEMENT avec validation renforcée
-      console.log("🔥 ÉTAPE 1: Upload immédiat de l'image...", {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        timestamp: new Date().toISOString()
-      });
-      
-      // 🎯 SÉCURITÉ RENFORCÉE : Double vérification de l'upload
-      let barcodeImageUrl: string | null = null;
-      let uploadAttempts = 0;
-      const maxUploadAttempts = 3;
-
-      while (!barcodeImageUrl && uploadAttempts < maxUploadAttempts) {
-        uploadAttempts++;
-        console.log(`🔄 TENTATIVE UPLOAD ${uploadAttempts}/${maxUploadAttempts}`, {
-          attempt: uploadAttempts,
-          timestamp: new Date().toISOString()
-        });
-
-        barcodeImageUrl = await uploadBarcodeImage(file);
-        
-        if (barcodeImageUrl && typeof barcodeImageUrl === 'string' && barcodeImageUrl.trim() !== '') {
-          console.log(`✅ UPLOAD RÉUSSI à la tentative ${uploadAttempts}:`, {
-            url: barcodeImageUrl,
-            length: barcodeImageUrl.length,
-            type: typeof barcodeImageUrl,
-            validation: "URL valide confirmée",
-            timestamp: new Date().toISOString()
-          });
-          break;
-        } else {
-          console.warn(`⚠️ ÉCHEC UPLOAD tentative ${uploadAttempts}:`, {
-            url_retournée: barcodeImageUrl,
-            type: typeof barcodeImageUrl,
-            will_retry: uploadAttempts < maxUploadAttempts,
-            timestamp: new Date().toISOString()
-          });
-          
-          if (uploadAttempts < maxUploadAttempts) {
-            // Attendre 1 seconde avant de réessayer
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
-        }
-      }
-      
-      // Vérification finale absolue
-      if (!barcodeImageUrl || typeof barcodeImageUrl !== 'string' || barcodeImageUrl.trim() === '') {
-        console.error("❌ ÉCHEC CRITIQUE: Impossible d'uploader l'image après toutes les tentatives", {
-          tentatives_effectuées: uploadAttempts,
-          url_finale: barcodeImageUrl,
-          file_info: {
-            name: file.name,
-            size: file.size,
-            type: file.type
-          },
-          timestamp: new Date().toISOString()
-        });
-        toast.error("❌ Impossible d'uploader l'image du code-barres après plusieurs tentatives");
-        onResult("", "", "");
-        return;
-      }
-
-      console.log("🎯 UPLOAD CONFIRMÉ ET VALIDÉ:", {
-        url_finale: barcodeImageUrl,
-        longueur: barcodeImageUrl.length,
-        type: typeof barcodeImageUrl,
-        starts_with: barcodeImageUrl.substring(0, 50) + "...",
-        validation_finale: "✅ URL GARANTIE VALIDE",
-        tentatives_utilisées: uploadAttempts,
-        timestamp: new Date().toISOString()
-      });
-
-      // 2. Compression pour OCR (en parallèle maintenant que l'upload est sécurisé)
-      console.log("🔥 ÉTAPE 2: Compression pour OCR...");
+      // 1. Compression pour OCR d'abord
+      console.log("🔥 ÉTAPE 1: Compression pour OCR...");
       const compressedFileForOCR = await compressImage(file, {
         maxWidth: 1200,
         maxHeight: 1200,
@@ -102,10 +29,80 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
         maxSizeKB: 800
       });
 
-      // 3. Scan OCR
-      console.log("🔥 ÉTAPE 3: Scan OCR...");
+      // 2. Scan OCR en parallèle de l'upload pour optimiser
+      console.log("🔥 ÉTAPE 2: Scan OCR...");
+      
+      // Upload et OCR en parallèle
+      const [uploadResult, ocrResult] = await Promise.all([
+        uploadBarcodeImage(file),
+        performOCR(compressedFileForOCR)
+      ]);
+
+      // 3. Vérification upload
+      if (!uploadResult || typeof uploadResult !== 'string' || uploadResult.trim() === '') {
+        console.error("❌ ÉCHEC UPLOAD:", uploadResult);
+        toast.error("❌ Impossible d'uploader l'image du code-barres");
+        onResult("", "", "");
+        return;
+      }
+
+      console.log("✅ UPLOAD CONFIRMÉ:", {
+        url: uploadResult,
+        longueur: uploadResult.length,
+        validation: "URL garantie valide"
+      });
+
+      // 4. Traitement OCR
+      if (!ocrResult.success) {
+        console.error("❌ Erreur OCR:", ocrResult.error);
+        toast.error(ocrResult.error || "❌ Erreur lors du traitement OCR");
+        onResult("", "", uploadResult); // Transmettre l'URL même si OCR échoue
+        return;
+      }
+
+      const extractedText = ocrResult.data || "";
+      
+      // 5. Extraction des données
+      const phone = extractPhoneNumber(extractedText);
+      const barcode = extractBarcode(extractedText, phone);
+
+      console.log("🔥 RÉSULTATS FINAUX:", {
+        barcode: barcode || "Non détecté",
+        phone: phone || "Non détecté",
+        barcodeImageUrl: uploadResult,
+        url_validation: "✅ URL GARANTIE TRANSMISE"
+      });
+
+      // 6. TRANSMISSION FINALE avec garantie absolue
+      console.log("🔥 APPEL onResult avec URL GARANTIE:", {
+        param1_barcode: barcode,
+        param2_phone: phone,
+        param3_barcodeImageUrl: uploadResult,
+        url_status: "ABSOLUMENT GARANTIE"
+      });
+
+      onResult(barcode, phone, uploadResult);
+
+      if (barcode || phone) {
+        toast.success(`🎯 Scan réussi: ${barcode ? 'Code-barres ✓' : ''} ${phone ? 'Téléphone ✓' : ''} Image ✓`);
+      } else {
+        toast.success("📸 Image uploadée avec succès (données non détectées)");
+      }
+
+    } catch (error) {
+      console.error("❌ Erreur processus OCR:", error);
+      toast.error("❌ Erreur lors du scan");
+      onResult("", "", "");
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  // Fonction OCR séparée pour simplifier
+  const performOCR = async (file: File) => {
+    try {
       const formData = new FormData();
-      formData.append('file', compressedFileForOCR);
+      formData.append('file', file);
       formData.append('apikey', 'K87899883388957');
       formData.append('language', 'fre');
       formData.append('isOverlayRequired', 'false');
@@ -120,93 +117,26 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       });
 
       if (!response.ok) {
-        console.error("❌ Erreur API OCR:", response.status, response.statusText);
         throw new Error(`Erreur API OCR: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("📄 Réponse OCR:", data);
 
       if (data.IsErroredOnProcessing) {
-        console.error("❌ Erreur traitement OCR:", data.ErrorMessage);
         throw new Error(data.ErrorMessage || "Erreur lors du traitement OCR");
       }
 
       const extractedText = data.ParsedResults?.[0]?.ParsedText || "";
       
-      // 4. Extraction des données
-      const phone = extractPhoneNumber(extractedText);
-      const barcode = extractBarcode(extractedText, phone);
-
-      console.log("🔥 EXTRACTION TERMINÉE:", {
-        barcode: barcode || "Non détecté",
-        phone: phone || "Non détecté"
-      });
-
-      // 5. TRANSMISSION FINALE avec URL ABSOLUMENT GARANTIE
-      console.log("🔥 TRANSMISSION FINALE - Validation ultime avant envoi:", {
-        barcode_extrait: barcode,
-        phone_extrait: phone, 
-        barcodeImageUrl_à_envoyer: barcodeImageUrl,
-        validations_finales: {
-          url_existe: !!barcodeImageUrl,
-          url_non_vide: barcodeImageUrl && barcodeImageUrl.trim() !== "",
-          url_est_string: typeof barcodeImageUrl === 'string',
-          longueur: barcodeImageUrl?.length || 0,
-          type: typeof barcodeImageUrl,
-          preview: barcodeImageUrl ? barcodeImageUrl.substring(0, 100) + "..." : "AUCUNE",
-          upload_confirmé: "✅ UPLOAD GARANTI RÉUSSI"
-        },
-        timestamp: new Date().toISOString()
-      });
-
-      // 🔒 SÉCURITÉ ULTIME : Triple vérification avant transmission
-      if (!barcodeImageUrl || typeof barcodeImageUrl !== 'string' || barcodeImageUrl.trim() === '') {
-        console.error("❌ IMPOSSIBLE: URL invalide détectée à la transmission finale", {
-          barcodeImageUrl,
-          type: typeof barcodeImageUrl,
-          evaluation: "Cette situation ne devrait JAMAIS se produire",
-          timestamp: new Date().toISOString()
-        });
-        toast.error("❌ Erreur système: URL image invalide");
-        onResult("", "", "");
-        return;
-      }
-
-      console.log("🔥 APPEL onResult - URL ABSOLUMENT VALIDÉE:", {
-        param1_barcode: barcode,
-        param2_phone: phone,
-        param3_barcodeImageUrl: barcodeImageUrl,
-        function_call: "onResult() avec URL 100% garantie",
-        url_length: barcodeImageUrl.length,
-        url_type: typeof barcodeImageUrl,
-        url_preview: barcodeImageUrl.substring(0, 100) + "...",
-        timestamp: new Date().toISOString()
-      });
-
-      // APPEL DE LA FONCTION CALLBACK AVEC URL ABSOLUMENT GARANTIE
-      onResult(barcode, phone, barcodeImageUrl);
-
-      console.log("✅ CALLBACK EXÉCUTÉE - URL TRANSMISE AVEC GARANTIE ABSOLUE", {
-        url_transmise: barcodeImageUrl,
-        verification_finale: "URL validée avec triple sécurité",
-        success: "TRANSMISSION 100% SÉCURISÉE",
-        timestamp: new Date().toISOString()
-      });
-
-      if (barcode || phone) {
-        toast.success(`🎯 Scan réussi: ${barcode ? 'Code-barres ✓' : ''} ${phone ? 'Téléphone ✓' : ''} Image ✓`);
-      }
-
+      return {
+        success: true,
+        data: extractedText
+      };
     } catch (error) {
-      console.error("❌ Erreur processus OCR:", error, {
-        timestamp: new Date().toISOString(),
-        context: "useOCRScanning.scanForBarcodeAndPhone"
-      });
-      toast.error("❌ Erreur lors du scan");
-      onResult("", "", "");
-    } finally {
-      setIsScanning(false);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Erreur OCR inconnue"
+      };
     }
   };
 

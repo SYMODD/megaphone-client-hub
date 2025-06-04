@@ -2,33 +2,61 @@
 import { useState } from "react";
 import { extractCINData } from "@/services/cinOCRService";
 import { toast } from "sonner";
-import { useImageUpload } from "@/hooks/useImageUpload";
+import { uploadClientPhoto } from "@/utils/storageUtils";
 
 export const useCINOCR = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [extractedData, setExtractedData] = useState<any>(null);
   const [rawText, setRawText] = useState<string>("");
-  const { uploadBarcodeImage } = useImageUpload();
 
   const scanImage = async (file: File, apiKey: string) => {
     setIsScanning(true);
-    console.log("🔍 CIN OCR - Début du scan CIN");
+    console.log("🔍 CIN OCR - Début du scan CIN UNIFIÉ");
     
     try {
-      // Extraction OCR des données CIN uniquement
-      console.log("📄 Extraction des données CIN via OCR...");
+      // 🎯 UPLOAD UNIQUE - SUPPRESSION DE LA DUPLICATION
+      console.log("📤 CIN OCR - Upload unique de l'image CIN...");
+      
+      // Convertir le fichier en base64 pour l'upload
+      const reader = new FileReader();
+      const imageBase64 = await new Promise<string>((resolve) => {
+        reader.onload = (event) => resolve(event.target?.result as string);
+        reader.readAsDataURL(file);
+      });
+
+      // Upload unique vers client-photos
+      const uploadedUrl = await uploadClientPhoto(imageBase64, 'cin');
+      
+      if (!uploadedUrl) {
+        console.error("❌ CIN OCR - Échec upload");
+        toast.error("❌ Impossible d'uploader l'image CIN");
+        return null;
+      }
+
+      console.log("✅ CIN OCR - Image uploadée une seule fois:", uploadedUrl);
+
+      // Extraction OCR des données CIN
+      console.log("📄 CIN OCR - Extraction des données via OCR...");
       const result = await extractCINData(file, apiKey);
       
       if (result.success && result.data) {
-        console.log("✅ Données CIN extraites:", result.data);
+        console.log("✅ CIN OCR - Données extraites:", result.data);
         setRawText(result.rawText || "");
-        setExtractedData(result.data);
+        
+        // 🔑 AJOUT DE L'URL À L'OBJET DE DONNÉES
+        const dataWithUrl = {
+          ...result.data,
+          photo_url: uploadedUrl // Assignation de l'URL uploadée
+        };
+        
+        setExtractedData(dataWithUrl);
 
-        toast.success("✅ Données CIN extraites avec succès !", {
+        toast.success("✅ Données CIN et image uploadées avec succès !", {
           duration: 4000
         });
 
-        return result.data;
+        console.log("🔥 CIN OCR - Données finales avec URL:", dataWithUrl);
+        return dataWithUrl;
         
       } else {
         console.error("❌ CIN OCR - Échec extraction:", result.error);
@@ -45,7 +73,7 @@ export const useCINOCR = () => {
   };
 
   const resetScan = () => {
-    console.log("🔄 Reset scan CIN");
+    console.log("🔄 CIN OCR - Reset scan");
     setExtractedData(null);
     setRawText("");
   };
