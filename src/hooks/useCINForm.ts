@@ -57,11 +57,12 @@ export const useCINForm = () => {
   };
 
   const handleCINDataExtracted = (data: any) => {
-    console.log("📋 CIN FORM - Données CIN reçues:", {
+    console.log("📋 CIN FORM - Données CIN reçues COMPLÈTES:", {
       ...data,
       code_barre_present: data.code_barre ? "✅ OUI" : "❌ NON",
       image_barcode_presente: data.code_barre_image_url ? "✅ OUI" : "❌ NON",
-      image_barcode_url: data.code_barre_image_url
+      image_barcode_url: data.code_barre_image_url,
+      verification_url: data.code_barre_image_url ? "URL REÇUE" : "PAS D'URL"
     });
 
     const observations = `=== EXTRACTION CIN AUTOMATIQUE ===
@@ -70,16 +71,32 @@ Type: Carte d'Identité Nationale
 Champs extraits: ${Object.keys(data).filter(key => data[key] && key !== 'code_barre_image_url').join(', ')}
 ${data.code_barre_image_url ? 'Image code-barres: Sauvegardée automatiquement' : ''}`;
 
+    // 🚨 CORRECTION CRITIQUE : S'assurer que l'URL de l'image est bien transmise
+    const updatedFormData = {
+      nom: data.nom || formData.nom,
+      prenom: data.prenom || formData.prenom,
+      nationalite: data.nationalite || formData.nationalite,
+      numero_passeport: data.numero_cin || data.numero_passeport || formData.numero_passeport,
+      numero_telephone: data.numero_telephone || formData.numero_telephone,
+      code_barre: data.code_barre || formData.code_barre,
+      // 🎯 ESSENTIEL : Préserver l'URL de l'image du code-barres
+      code_barre_image_url: data.code_barre_image_url || formData.code_barre_image_url,
+      observations: observations,
+      // Préserver les autres champs
+      scannedImage: formData.scannedImage,
+      photo_url: formData.photo_url,
+      date_enregistrement: formData.date_enregistrement
+    };
+
+    console.log("💾 CIN FORM - MISE À JOUR avec URL image préservée:", {
+      code_barre: updatedFormData.code_barre,
+      code_barre_image_url: updatedFormData.code_barre_image_url,
+      url_preservee: updatedFormData.code_barre_image_url ? "✅ OUI" : "❌ NON"
+    });
+
     setFormData(prev => ({
       ...prev,
-      nom: data.nom || prev.nom,
-      prenom: data.prenom || prev.prenom,
-      nationalite: data.nationalite || prev.nationalite,
-      numero_passeport: data.numero_cin || data.numero_passeport || prev.numero_passeport,
-      numero_telephone: data.numero_telephone || prev.numero_telephone,
-      code_barre: data.code_barre || prev.code_barre,
-      code_barre_image_url: data.code_barre_image_url || prev.code_barre_image_url,
-      observations: observations
+      ...updatedFormData
     }));
   };
 
@@ -89,7 +106,7 @@ ${data.code_barre_image_url ? 'Image code-barres: Sauvegardée automatiquement' 
       return;
     }
 
-    console.log("📝 CIN FORM - SOUMISSION avec données complètes:", {
+    console.log("📝 CIN FORM - SOUMISSION avec données complètes et URL image:", {
       nom: formData.nom,
       prenom: formData.prenom,
       code_barre: formData.code_barre,
@@ -97,7 +114,8 @@ ${data.code_barre_image_url ? 'Image code-barres: Sauvegardée automatiquement' 
       photo_client_presente: formData.photo_url ? "✅ OUI" : "❌ NON",
       image_barcode_presente: formData.code_barre_image_url ? "✅ OUI" : "❌ NON",
       photo_url: formData.photo_url,
-      code_barre_image_url: formData.code_barre_image_url
+      code_barre_image_url: formData.code_barre_image_url,
+      verification_finale: formData.code_barre_image_url ? "URL PRÉSENTE POUR INSERTION" : "PAS D'URL"
     });
 
     setIsLoading(true);
@@ -110,6 +128,7 @@ ${data.code_barre_image_url ? 'Image code-barres: Sauvegardée automatiquement' 
         numero_passeport: formData.numero_passeport,
         numero_telephone: formData.numero_telephone,
         code_barre: formData.code_barre,
+        // 🎯 CRITIQUE : S'assurer que l'URL est bien dans les données d'insertion
         code_barre_image_url: formData.code_barre_image_url || null,
         photo_url: formData.photo_url || null,
         observations: formData.observations,
@@ -118,12 +137,13 @@ ${data.code_barre_image_url ? 'Image code-barres: Sauvegardée automatiquement' 
         document_type: 'cin'
       };
 
-      console.log("💾 CIN FORM - INSERTION avec DEUX IMAGES AUTOMATIQUES:", {
+      console.log("💾 CIN FORM - INSERTION FINALE avec URL d'image:", {
         nom_complet: `${clientData.prenom} ${clientData.nom}`,
         code_barre: clientData.code_barre || "NON",
         telephone: clientData.numero_telephone || "NON",
         photo_client: clientData.photo_url ? "✅ client-photos (AUTO)" : "❌ NON",
         image_barcode: clientData.code_barre_image_url ? "✅ barcode-images (AUTO)" : "❌ NON",
+        url_image_finale: clientData.code_barre_image_url,
         les_deux_images: (clientData.photo_url && clientData.code_barre_image_url) ? "✅ OUI" : "❌ NON",
         document_type: clientData.document_type
       });
@@ -142,7 +162,7 @@ ${data.code_barre_image_url ? 'Image code-barres: Sauvegardée automatiquement' 
         return;
       }
 
-      console.log("🎉 Client CIN enregistré avec succès avec LES DEUX IMAGES!");
+      console.log("🎉 Client CIN enregistré avec succès avec URL image code-barres!");
       
       let successMessage = "Client CIN enregistré avec succès";
       const elements = [];
@@ -151,6 +171,7 @@ ${data.code_barre_image_url ? 'Image code-barres: Sauvegardée automatiquement' 
       }
       if (clientData.code_barre_image_url) {
         elements.push("image code-barres");
+        console.log("✅ URL image code-barres sauvegardée en base:", clientData.code_barre_image_url);
       }
       
       if (elements.length > 0) {

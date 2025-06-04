@@ -34,11 +34,18 @@ export const useCINOCR = () => {
             if (barcodeImageUrl) {
               console.log("✅ CIN - Image code-barres uploadée automatiquement:", barcodeImageUrl);
               
-              // Ajouter l'URL de l'image code-barres aux données extraites
+              // 🚨 CORRECTION CRITIQUE : Mettre à jour les données extraites avec l'URL
               const updatedData = {
                 ...result.data,
                 code_barre_image_url: barcodeImageUrl
               };
+              
+              console.log("🎯 CIN - Mise à jour des données avec URL image:", {
+                ancien_code_barre: result.data.code_barre,
+                nouveau_code_barre: updatedData.code_barre,
+                url_image_ajoutee: updatedData.code_barre_image_url,
+                donnees_completes: updatedData
+              });
               
               setExtractedData(updatedData);
               
