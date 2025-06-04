@@ -1,7 +1,7 @@
-
 import { useState } from "react";
 import { useFormSubmission } from "./useClientForm/useFormSubmission";
 import { useImageUpload } from "./useImageUpload";
+import { DocumentType } from "@/types/documentTypes";
 
 export const useCINForm = () => {
   const [formData, setFormData] = useState({
@@ -16,7 +16,7 @@ export const useCINForm = () => {
     scannedImage: null as string | null,
     photo_url: "",
     code_barre_image_url: "",
-    document_type: "cin"
+    document_type: "cin" as DocumentType
   });
 
   const { isLoading, handleSubmit: submitForm } = useFormSubmission({ formData });
