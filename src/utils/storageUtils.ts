@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 export const ensureStorageBucket = async (bucketName: string = 'client-photos') => {
   try {
-    console.log(`🔍 Vérification du bucket: ${bucketName}`);
+    console.log(`🔍 Tentative d'accès direct au bucket: ${bucketName}`);
     
     // Test d'accès direct au bucket en tentant de lister les fichiers
     const { error: listError } = await supabase.storage
@@ -12,21 +12,8 @@ export const ensureStorageBucket = async (bucketName: string = 'client-photos') 
       .list('', { limit: 1 });
     
     if (listError) {
-      console.warn(`⚠️ Bucket ${bucketName} non accessible, tentative de création:`, listError);
-      
-      // Tentative de création du bucket
-      const { error: createError } = await supabase.storage.createBucket(bucketName, {
-        public: true,
-        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
-        fileSizeLimit: 10485760 // 10MB
-      });
-      
-      if (createError) {
-        console.error(`❌ Impossible de créer le bucket ${bucketName}:`, createError);
-        return false;
-      }
-      
-      console.log(`✅ Bucket ${bucketName} créé avec succès`);
+      console.warn(`⚠️ Erreur d'accès au bucket ${bucketName}:`, listError);
+      return false;
     }
     
     console.log(`✅ Bucket ${bucketName} accessible et fonctionnel`);
@@ -40,16 +27,6 @@ export const ensureStorageBucket = async (bucketName: string = 'client-photos') 
 export const uploadClientPhoto = async (imageBase64: string, documentType: string = 'cin'): Promise<string | null> => {
   try {
     console.log("📤 UPLOAD PHOTO CLIENT - Début de l'upload vers client-photos");
-
-    // 🔥 VÉRIFICATION/CRÉATION AUTOMATIQUE DU BUCKET
-    console.log("🔍 Vérification de l'existence du bucket client-photos...");
-    const bucketReady = await ensureStorageBucket('client-photos');
-    
-    if (!bucketReady) {
-      console.error("❌ Bucket client-photos non disponible");
-      toast.error("❌ Système de stockage non disponible");
-      return null;
-    }
 
     // Convertir base64 en blob
     const response = await fetch(imageBase64);
@@ -65,7 +42,7 @@ export const uploadClientPhoto = async (imageBase64: string, documentType: strin
     // Affichage du toast de progression
     toast.loading("📤 Upload de l'image du document...", { id: 'client-photo-upload' });
     
-    // Upload direct vers Supabase Storage
+    // Upload direct vers Supabase Storage (sans vérification préalable)
     const { data, error } = await supabase.storage
       .from('client-photos')
       .upload(filename, blob, { 

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { uploadClientPhoto as uploadToClientPhotos, ensureStorageBucket } from "@/utils/storageUtils";
+import { uploadClientPhoto as uploadToClientPhotos } from "@/utils/storageUtils";
 import { compressImage, formatFileSize } from "@/utils/imageCompression";
 
 export const useImageUpload = () => {
@@ -35,16 +35,6 @@ export const useImageUpload = () => {
       });
       
       setUploadProgress(10);
-
-      // 🔥 VÉRIFICATION/CRÉATION AUTOMATIQUE DU BUCKET BARCODE-IMAGES
-      console.log("🔍 Vérification de l'existence du bucket barcode-images...");
-      const bucketReady = await ensureStorageBucket('barcode-images');
-      
-      if (!bucketReady) {
-        console.error("❌ Bucket barcode-images non disponible");
-        toast.error("❌ Système de stockage des codes-barres non disponible");
-        return null;
-      }
 
       // 🔥 COMPRESSION AUTOMATIQUE DE L'IMAGE
       console.log("🗜️ Début de la compression de l'image...");
