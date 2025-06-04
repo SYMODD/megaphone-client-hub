@@ -5,19 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useImageUpload } from "@/hooks/useImageUpload";
-
-interface CINFormData {
-  nom: string;
-  prenom: string;
-  cin: string;
-  date_naissance: string;
-  lieu_naissance: string;
-  adresse: string;
-  scannedImage: string | null;
-  numero_telephone: string;
-  observations: string;
-  date_enregistrement: string;
-}
+import { ClientFormData } from "@/hooks/useClientForm/types";
 
 export const useCINForm = () => {
   const { user } = useAuth();
@@ -25,20 +13,22 @@ export const useCINForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { uploadClientPhoto } = useImageUpload();
   
-  const [formData, setFormData] = useState<CINFormData>({
+  const [formData, setFormData] = useState<ClientFormData>({
     nom: "",
     prenom: "",
-    cin: "",
-    date_naissance: "",
-    lieu_naissance: "",
-    adresse: "",
-    scannedImage: null,
+    nationalite: "Marocaine", // Default for CIN
+    numero_passeport: "", // Will store CIN number
     numero_telephone: "",
+    code_barre: "",
+    code_barre_image_url: "",
     observations: "",
-    date_enregistrement: new Date().toISOString().split('T')[0]
+    date_enregistrement: new Date().toISOString().split('T')[0],
+    document_type: "cin",
+    photo_url: "",
+    scannedImage: null
   });
 
-  const handleInputChange = (field: keyof CINFormData, value: string) => {
+  const handleInputChange = (field: keyof ClientFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -54,10 +44,9 @@ export const useCINForm = () => {
       ...prev,
       nom: extractedData.nom || prev.nom,
       prenom: extractedData.prenom || prev.prenom,
-      cin: extractedData.cin || prev.cin,
-      date_naissance: extractedData.date_naissance || prev.date_naissance,
-      lieu_naissance: extractedData.lieu_naissance || prev.lieu_naissance,
-      adresse: extractedData.adresse || prev.adresse
+      numero_passeport: extractedData.cin || extractedData.numero_cin || prev.numero_passeport, // Store CIN in passeport field
+      code_barre: extractedData.code_barre || prev.code_barre,
+      code_barre_image_url: extractedData.code_barre_image_url || prev.code_barre_image_url
     }));
 
     // Ajouter info d'extraction automatique dans les observations
@@ -75,7 +64,7 @@ export const useCINForm = () => {
     }
 
     // Validation des champs obligatoires
-    if (!formData.nom || !formData.prenom || !formData.cin) {
+    if (!formData.nom || !formData.prenom || !formData.numero_passeport) {
       toast.error("Veuillez remplir tous les champs obligatoires (nom, prénom, CIN)");
       return;
     }
@@ -86,14 +75,14 @@ export const useCINForm = () => {
       console.log("🚀 SOUMISSION CIN - Début avec données:", {
         nom: formData.nom,
         prenom: formData.prenom,
-        cin: formData.cin,
+        cin: formData.numero_passeport,
         scannedImage: formData.scannedImage ? "✅ PRÉSENTE" : "❌ ABSENTE"
       });
       
-      let photoUrl = null;
+      let photoUrl = formData.photo_url;
       
       // 🔥 UPLOAD AUTOMATIQUE DE L'IMAGE SCANNÉE
-      if (formData.scannedImage) {
+      if (formData.scannedImage && !photoUrl) {
         console.log("📤 UPLOAD IMAGE CIN vers client-photos");
         photoUrl = await uploadClientPhoto(formData.scannedImage, 'cin');
         
@@ -108,13 +97,15 @@ export const useCINForm = () => {
       const clientData = {
         nom: formData.nom.trim(),
         prenom: formData.prenom.trim(),
-        nationalite: "Marocaine", // Par défaut pour CIN
-        numero_passeport: formData.cin.trim(), // CIN dans le champ passeport
-        numero_telephone: formData.numero_telephone.trim(),
-        photo_url: photoUrl, // 🔥 PHOTO UPLOADÉE
-        observations: formData.observations,
+        nationalite: formData.nationalite,
+        numero_passeport: formData.numero_passeport.trim(),
+        numero_telephone: formData.numero_telephone.trim() || null,
+        code_barre: formData.code_barre?.trim() || null,
+        code_barre_image_url: formData.code_barre_image_url || null,
+        photo_url: photoUrl || null,
+        observations: formData.observations?.trim() || null,
         date_enregistrement: formData.date_enregistrement,
-        document_type: 'cin',
+        document_type: formData.document_type,
         agent_id: user.id
       };
 

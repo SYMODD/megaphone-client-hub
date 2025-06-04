@@ -6,6 +6,7 @@ import { RegistrationSection } from "./RegistrationSection";
 import { FormActions } from "./FormActions";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { useClientFormLogic } from "@/hooks/useClientForm";
+import { DocumentType } from "@/types/documentTypes";
 
 export const ClientForm = () => {
   const { 
@@ -31,7 +32,7 @@ export const ClientForm = () => {
           scannedImage={formData.scannedImage}
           onImageScanned={(image) => handleInputChange("scannedImage", image)}
           onMRZDataExtracted={handleMRZDataExtracted}
-          selectedDocumentType={selectedDocumentType}
+          selectedDocumentType={selectedDocumentType as DocumentType}
           onDocumentTypeSelect={handleDocumentTypeSelect}
         />
 
