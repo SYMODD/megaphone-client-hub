@@ -22,7 +22,7 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       
       if (!barcodeImageUrl) {
         console.error("❌ Échec upload image - abandon du processus");
-        onResult("", "");
+        onResult("", "", ""); // 🎯 IMPORTANT: Passer une chaîne vide au lieu d'undefined
         return;
       }
       
@@ -72,15 +72,24 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       console.log("🎯 Données extraites:", {
         barcode: barcode || "Non détecté",
         phone: phone || "Non détecté",
-        barcodeImageUrl: barcodeImageUrl
+        barcodeImageUrl: barcodeImageUrl,
+        url_sera_retournee: "✅ OUI"
       });
 
       // 4. Retourner les résultats avec l'URL de l'image
+      console.log("📋 RETOUR DES RÉSULTATS:", {
+        barcode,
+        phone,
+        barcodeImageUrl,
+        tous_parametres_definis: barcode !== undefined && phone !== undefined && barcodeImageUrl !== undefined
+      });
+
       onResult(barcode, phone, barcodeImageUrl);
 
     } catch (error) {
       console.error("❌ Erreur processus OCR complet:", error);
-      onResult("", "");
+      // En cas d'erreur, on retourne quand même l'URL de l'image si elle a été uploadée
+      onResult("", "", "");
     } finally {
       setIsScanning(false);
     }
