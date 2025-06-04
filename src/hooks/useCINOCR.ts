@@ -3,16 +3,18 @@ import { useState } from "react";
 import { extractCINData } from "@/services/cinOCRService";
 import { toast } from "sonner";
 import { useImageUpload } from "@/hooks/useImageUpload";
+import { useOCRScanning } from "@/hooks/useBarcodeScanning/useOCRScanning";
 
 export const useCINOCR = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [extractedData, setExtractedData] = useState<any>(null);
   const [rawText, setRawText] = useState<string>("");
   const { uploadBarcodeImage } = useImageUpload();
+  const { scanForBarcodeAndPhone } = useOCRScanning();
 
   const scanImage = async (file: File, apiKey: string) => {
     setIsScanning(true);
-    console.log("🔍 CIN OCR - Début du scan avec upload automatique image code-barres");
+    console.log("🔍 CIN OCR - Début du scan CIN avec détection code-barres");
     
     try {
       // 1. Extraction OCR des données CIN
@@ -23,56 +25,48 @@ export const useCINOCR = () => {
         console.log("✅ Données CIN extraites:", result.data);
         setRawText(result.rawText || "");
 
-        // 2. Upload automatique de l'image code-barres SI un code-barres a été détecté
-        if (result.data.code_barre) {
-          console.log("📤 CIN - Upload automatique image code-barres détecté:", result.data.code_barre);
-          
-          try {
-            // Upload avec compression automatique
-            const barcodeImageUrl = await uploadBarcodeImage(file);
-            
-            if (barcodeImageUrl) {
-              console.log("✅ CIN - Image code-barres uploadée automatiquement:", barcodeImageUrl);
-              
-              // 🚨 CORRECTION CRITIQUE : Inclure IMMÉDIATEMENT l'URL dans les données
-              const finalData = {
-                ...result.data,
-                code_barre_image_url: barcodeImageUrl
-              };
-              
-              console.log("🎯 CIN - Données finales AVEC URL image confirmée:", {
-                code_barre: finalData.code_barre,
-                code_barre_image_url: finalData.code_barre_image_url,
-                url_valide: finalData.code_barre_image_url ? "✅ OUI" : "❌ NON"
-              });
-              
-              // Mettre à jour l'état local avec les données complètes
-              setExtractedData(finalData);
-              
-              toast.success("✅ Données CIN et image code-barres extraites avec succès!", {
-                duration: 4000
-              });
-              
-              // Retourner les données complètes avec l'URL
-              return finalData;
-            } else {
-              console.warn("⚠️ CIN - Échec upload image code-barres, mais données CIN OK");
-              setExtractedData(result.data);
-              toast.success("✅ Données CIN extraites (image code-barres non sauvegardée)");
-              return result.data;
-            }
-          } catch (barcodeError) {
-            console.error("❌ CIN - Erreur upload image code-barres:", barcodeError);
-            setExtractedData(result.data);
-            toast.success("✅ Données CIN extraites (erreur sauvegarde image code-barres)");
-            return result.data;
-          }
+        // 2. NOUVEAU : Scan OCR spécifique pour code-barres et téléphone
+        console.log("🔍 CIN - Scan supplémentaire pour code-barres...");
+        
+        // Créer une promesse pour capturer les données du code-barres
+        const barcodeData = await new Promise<{barcode: string, phone?: string, barcodeImageUrl?: string}>((resolve) => {
+          scanForBarcodeAndPhone(file, (barcode: string, phone?: string, barcodeImageUrl?: string) => {
+            console.log("📊 CIN - Données code-barres reçues:", { barcode, phone, barcodeImageUrl });
+            resolve({ barcode, phone, barcodeImageUrl });
+          });
+        });
+
+        // 3. Fusionner les données CIN avec les données du code-barres
+        const finalData = {
+          ...result.data,
+          ...(barcodeData.barcode && { code_barre: barcodeData.barcode }),
+          ...(barcodeData.phone && { numero_telephone: barcodeData.phone }),
+          ...(barcodeData.barcodeImageUrl && { code_barre_image_url: barcodeData.barcodeImageUrl })
+        };
+
+        console.log("🎯 CIN - Données finales fusionnées:", {
+          nom: finalData.nom,
+          prenom: finalData.prenom,
+          cin: finalData.cin,
+          code_barre: finalData.code_barre || "Non détecté",
+          numero_telephone: finalData.numero_telephone || "Non détecté",
+          code_barre_image_url: finalData.code_barre_image_url ? "✅ PRÉSENTE" : "❌ ABSENTE"
+        });
+
+        // Mettre à jour l'état local avec les données complètes
+        setExtractedData(finalData);
+
+        // Message de succès adapté
+        if (finalData.code_barre || finalData.numero_telephone) {
+          toast.success(`✅ CIN scanné avec succès ! ${finalData.code_barre ? 'Code-barres ✓' : ''} ${finalData.numero_telephone ? 'Téléphone ✓' : ''}`, {
+            duration: 4000
+          });
         } else {
-          console.log("ℹ️ CIN - Aucun code-barres détecté, pas d'upload d'image");
-          setExtractedData(result.data);
-          toast.success("✅ Données CIN extraites (aucun code-barres détecté)");
-          return result.data;
+          toast.success("✅ Données CIN extraites (code-barres non détecté)");
         }
+
+        return finalData;
+        
       } else {
         console.error("❌ CIN OCR - Échec extraction:", result.error);
         toast.error(result.error || "❌ Impossible d'extraire les données CIN");

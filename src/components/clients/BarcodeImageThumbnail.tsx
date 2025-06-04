@@ -7,13 +7,18 @@ interface BarcodeImageThumbnailProps {
 }
 
 export const BarcodeImageThumbnail = ({ imageUrl, className = "" }: BarcodeImageThumbnailProps) => {
-  if (!imageUrl) {
+  console.log("🔍 BarcodeImageThumbnail - URL reçue:", imageUrl);
+  
+  if (!imageUrl || imageUrl.trim() === "") {
+    console.log("❌ BarcodeImageThumbnail - Pas d'URL valide");
     return (
       <div className={`w-8 h-8 bg-gray-100 rounded border border-gray-200 flex items-center justify-center ${className}`}>
         <Barcode className="w-4 h-4 text-gray-400" />
       </div>
     );
   }
+
+  console.log("✅ BarcodeImageThumbnail - URL valide trouvée:", imageUrl);
 
   return (
     <div className={`group relative ${className}`}>

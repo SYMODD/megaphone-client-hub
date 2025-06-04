@@ -15,6 +15,17 @@ interface ClientTableProps {
 }
 
 export const ClientTable = ({ clients, onViewClient, onEditClient, onGenerateDocument, onDeleteClient }: ClientTableProps) => {
+  // Log pour déboguer les URLs d'images de code-barres
+  console.log("📊 ClientTable - Vérification des URLs de code-barres:");
+  clients.forEach((client, index) => {
+    console.log(`Client ${index + 1} (${client.prenom} ${client.nom}):`, {
+      id: client.id,
+      code_barre: client.code_barre,
+      code_barre_image_url: client.code_barre_image_url,
+      url_valide: client.code_barre_image_url ? "✅ OUI" : "❌ NON"
+    });
+  });
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -71,7 +82,7 @@ export const ClientTable = ({ clients, onViewClient, onEditClient, onGenerateDoc
                     </div>
                   )}
                   
-                  {/* Image du code-barres */}
+                  {/* Image du code-barres avec log de debug */}
                   <BarcodeImageThumbnail 
                     imageUrl={client.code_barre_image_url}
                   />
