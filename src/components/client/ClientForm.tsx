@@ -19,9 +19,9 @@ export const ClientForm = () => {
     handleBarcodeScanned
   } = useClientFormLogic();
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    handleSubmit();
+    await handleSubmit();
   };
 
   return (
@@ -59,7 +59,7 @@ export const ClientForm = () => {
 
             <FormActions 
               isLoading={isLoading}
-              onSubmit={handleSubmit}
+              onSubmit={() => handleSubmit()}
             />
           </>
         )}

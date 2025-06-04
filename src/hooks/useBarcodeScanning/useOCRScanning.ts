@@ -60,6 +60,27 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
     }
   };
 
+  const scanImageForData = async (file: File): Promise<{ barcode?: string; phone?: string }> => {
+    console.log("🔍 DÉBUT SCAN OCR pour extraction données");
+    setIsScanning(true);
+
+    try {
+      // Extraction OCR
+      console.log("🔍 Démarrage de l'extraction OCR...");
+      const extractedData = await performOCRExtraction(file);
+      
+      console.log("📊 Données extraites par OCR:", extractedData);
+
+      return extractedData;
+      
+    } catch (error) {
+      console.error("❌ Erreur lors du scan OCR:", error);
+      return {};
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
   const scanForBarcodeAndPhone = async (
     file: File,
     onBarcodeScanned: (barcode: string, phone?: string, barcodeImageUrl?: string) => void
@@ -127,6 +148,7 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
 
   return {
     scanForBarcodeAndPhone,
+    scanImageForData,
     isScanning
   };
 };

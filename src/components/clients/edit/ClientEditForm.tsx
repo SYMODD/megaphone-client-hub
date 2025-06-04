@@ -29,6 +29,12 @@ export const ClientEditForm = ({ client, formData, onUpdate, onClientUpdated }: 
     }
   };
 
+  const handleImageUploaded = (imageUrl: string) => {
+    console.log("✅ Nouvelle image uploadée:", imageUrl);
+    onUpdate('code_barre_image_url', imageUrl);
+    handleClientUpdated();
+  };
+
   return (
     <div className="space-y-6">
       <ClientPhotoSection client={client} />
@@ -54,8 +60,10 @@ export const ClientEditForm = ({ client, formData, onUpdate, onClientUpdated }: 
       />
 
       <BarcodeImageSection 
-        client={client} 
-        onClientUpdated={handleClientUpdated}
+        code_barre={formData.code_barre}
+        code_barre_image_url={client.code_barre_image_url || ""}
+        onUpdate={onUpdate}
+        onImageUploaded={handleImageUploaded}
       />
     </div>
   );
