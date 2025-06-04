@@ -134,7 +134,9 @@ export const BarcodeImageUpload = ({ currentImageUrl, onImageUploaded, onCancel 
                   <>
                     <Upload className="w-4 h-4 mr-2" />
                     Confirmer l'upload
-                  </Button>
+                  </>
+                )}
+              </Button>
               <Button
                 type="button"
                 variant="outline"
