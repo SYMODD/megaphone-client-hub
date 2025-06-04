@@ -91,7 +91,6 @@ export const useImageUpload = () => {
         console.error("❌ Erreur upload code-barres:", {
           error: error,
           message: error.message,
-          statusCode: error.statusCode,
           details: error
         });
         
