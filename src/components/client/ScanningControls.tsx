@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Camera, Upload, Loader2 } from "lucide-react";
+import { Camera, Upload, Loader2, Maximize2 } from "lucide-react";
 
 interface ScanningControlsProps {
   isScanning: boolean;
@@ -63,20 +63,40 @@ export const ScanningControls = ({ isScanning, isCompressing = false, onImageUpl
       </div>
 
       {isCompressing && (
-        <div className="flex items-center justify-center space-x-2 py-2">
+        <div className="flex items-center justify-center space-x-2 py-3 bg-blue-50 rounded-lg border border-blue-200">
           <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-          <span className="text-sm text-gray-600">
-            Compression de l'image...
-          </span>
+          <div className="text-sm">
+            <span className="text-blue-800 font-medium">Compression en cours...</span>
+            <br />
+            <span className="text-blue-600 text-xs">Optimisation pour OCR (limite 1MB)</span>
+          </div>
         </div>
       )}
 
       {isScanning && (
-        <div className="flex items-center justify-center space-x-2 py-2">
+        <div className="flex items-center justify-center space-x-2 py-3 bg-green-50 rounded-lg border border-green-200">
           <Loader2 className="w-4 h-4 animate-spin text-green-600" />
-          <span className="text-sm text-gray-600">
-            Analyse OCR en cours...
-          </span>
+          <div className="text-sm">
+            <span className="text-green-800 font-medium">Analyse OCR en cours...</span>
+            <br />
+            <span className="text-green-600 text-xs">Extraction des données du code-barres</span>
+          </div>
+        </div>
+      )}
+
+      {!isDisabled && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+          <div className="flex items-start gap-2">
+            <Maximize2 className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+            <div className="text-xs text-yellow-800">
+              <strong>Conseil :</strong> Pour de meilleurs résultats OCR, assurez-vous que :
+              <ul className="mt-1 ml-3 list-disc space-y-0.5">
+                <li>Le code-barres est bien visible et net</li>
+                <li>L'image est bien éclairée</li>
+                <li>Le document est droit (pas incliné)</li>
+              </ul>
+            </div>
+          </div>
         </div>
       )}
     </div>

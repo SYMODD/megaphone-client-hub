@@ -1,9 +1,9 @@
 
-export interface CompressionOptions {
+interface CompressionOptions {
+  maxSizeKB?: number;
+  quality?: number;
   maxWidth?: number;
   maxHeight?: number;
-  quality?: number;
-  maxSizeKB?: number;
 }
 
 export const compressImage = async (
@@ -11,11 +11,19 @@ export const compressImage = async (
   options: CompressionOptions = {}
 ): Promise<File> => {
   const {
-    maxWidth = 1024,
-    maxHeight = 1024,
+    maxSizeKB = 1000,
     quality = 0.8,
-    maxSizeKB = 500
+    maxWidth = 1200,
+    maxHeight = 1200
   } = options;
+
+  console.log("📦 COMPRESSION - Début avec options:", {
+    maxSizeKB,
+    quality,
+    maxWidth,
+    maxHeight,
+    tailleOriginale: file.size
+  });
 
   return new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas');
@@ -23,47 +31,51 @@ export const compressImage = async (
     const img = new Image();
 
     img.onload = () => {
-      // Calculate new dimensions while maintaining aspect ratio
+      // Calculer les nouvelles dimensions en gardant le ratio
       let { width, height } = img;
       
       if (width > maxWidth || height > maxHeight) {
         const ratio = Math.min(maxWidth / width, maxHeight / height);
         width *= ratio;
         height *= ratio;
+        console.log("📐 Redimensionnement:", `${img.width}x${img.height} → ${Math.round(width)}x${Math.round(height)}`);
       }
 
       canvas.width = width;
       canvas.height = height;
 
-      if (!ctx) {
-        reject(new Error('Could not get canvas context'));
-        return;
-      }
+      // Dessiner l'image redimensionnée
+      ctx?.drawImage(img, 0, 0, width, height);
 
-      // Draw and compress the image
-      ctx.drawImage(img, 0, 0, width, height);
-      
-      // Try different quality levels to achieve target file size
+      // Fonction pour essayer différents niveaux de qualité
       const tryCompress = (currentQuality: number): void => {
         canvas.toBlob(
           (blob) => {
             if (!blob) {
-              reject(new Error('Failed to compress image'));
+              reject(new Error('Échec création blob'));
               return;
             }
 
-            const sizeKB = blob.size / 1024;
-            
-            // If size is acceptable or quality is already very low, use this result
-            if (sizeKB <= maxSizeKB || currentQuality <= 0.1) {
+            console.log(`📊 Test qualité ${currentQuality}: ${blob.size} bytes`);
+
+            // Si la taille est acceptable ou si on a atteint la qualité minimale
+            if (blob.size <= maxSizeKB * 1024 || currentQuality <= 0.3) {
               const compressedFile = new File([blob], file.name, {
                 type: 'image/jpeg',
-                lastModified: Date.now(),
+                lastModified: Date.now()
               });
+
+              console.log("✅ COMPRESSION TERMINÉE:", {
+                tailleOriginale: file.size,
+                tailleCompressée: compressedFile.size,
+                reductionPourcentage: Math.round((1 - compressedFile.size / file.size) * 100),
+                qualitéFinale: currentQuality
+              });
+
               resolve(compressedFile);
             } else {
-              // Try with lower quality
-              tryCompress(currentQuality - 0.1);
+              // Essayer avec une qualité plus faible
+              tryCompress(Math.max(0.3, currentQuality - 0.1));
             }
           },
           'image/jpeg',
@@ -71,27 +83,19 @@ export const compressImage = async (
         );
       };
 
+      // Commencer la compression
       tryCompress(quality);
     };
 
-    img.onerror = () => reject(new Error('Failed to load image'));
-    img.src = URL.createObjectURL(file);
-  });
-};
-
-export const getImageInfo = (file: File): Promise<{ width: number; height: number; sizeKB: number }> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    
-    img.onload = () => {
-      resolve({
-        width: img.naturalWidth,
-        height: img.naturalHeight,
-        sizeKB: file.size / 1024
-      });
+    img.onerror = () => {
+      reject(new Error('Erreur chargement image pour compression'));
     };
-    
-    img.onerror = () => reject(new Error('Failed to load image'));
-    img.src = URL.createObjectURL(file);
+
+    // Charger l'image
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   });
 };
