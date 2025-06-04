@@ -21,9 +21,8 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         // Champs de contact uniquement (section Informations de Contact)
         code_barre: barcode || prev.code_barre,
         numero_telephone: phone || prev.numero_telephone,
+        // 🔥 CORRECTION CRITIQUE: S'assurer que l'URL est bien assignée
         code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url
-        // Note: On ne touche PAS aux champs d'identité (nom, prenom, nationalite, numero_passeport)
-        // Ces champs sont remplis par le scan CIN séparément
       };
 
       console.log("🔄 BARCODE HANDLER - Mise à jour des champs de contact:", {
@@ -33,13 +32,17 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         telephone_apres: updatedData.numero_telephone,
         url_avant: prev.code_barre_image_url,
         url_apres: updatedData.code_barre_image_url,
-        champs_identite_preserves: {
-          nom: prev.nom,
-          prenom: prev.prenom,
-          nationalite: prev.nationalite,
-          numero_passeport: prev.numero_passeport
-        }
+        url_image_fournie: barcodeImageUrl,
+        url_finale_assignee: updatedData.code_barre_image_url
       });
+
+      // 🔥 VÉRIFICATION CRITIQUE: Alerter si l'URL n'est pas assignée
+      if (barcodeImageUrl && !updatedData.code_barre_image_url) {
+        console.error("❌ ERREUR CRITIQUE: URL image fournie mais non assignée!", {
+          url_fournie: barcodeImageUrl,
+          url_finale: updatedData.code_barre_image_url
+        });
+      }
 
       return updatedData;
     });

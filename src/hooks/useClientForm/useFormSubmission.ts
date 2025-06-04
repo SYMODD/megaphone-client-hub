@@ -1,126 +1,88 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 import { ClientFormData } from "./types";
-import { useImageUpload } from "@/hooks/useImageUpload";
 
 interface UseFormSubmissionProps {
   formData: ClientFormData;
+  resetForm: () => void;
 }
 
-export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const { uploadClientPhoto } = useImageUpload();
+export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-    }
-    
-    if (!user) {
-      toast.error("Vous devez être connecté pour enregistrer un client");
-      return;
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
 
-    setIsLoading(true);
-    console.log("🚀 SOUMISSION CLIENT - Début avec données complètes:", {
-      nom: formData.nom,
-      prenom: formData.prenom,
+    console.log("📝 FORM SUBMISSION - Début soumission avec données:", {
       code_barre: formData.code_barre,
       code_barre_image_url: formData.code_barre_image_url,
       photo_url: formData.photo_url,
-      scannedImage: formData.scannedImage ? "✅ PRÉSENTE" : "❌ ABSENTE",
-      url_barcode_presente: formData.code_barre_image_url ? "✅ OUI" : "❌ NON",
-      url_photo_presente: formData.photo_url ? "✅ OUI" : "❌ NON"
+      numero_telephone: formData.numero_telephone
     });
 
     try {
-      let finalPhotoUrl = formData.photo_url;
-
-      // 🔥 UPLOAD AUTOMATIQUE DE L'IMAGE SCANNÉE
-      if (formData.scannedImage && !finalPhotoUrl) {
-        console.log("📤 UPLOAD IMAGE SCANNÉE - Début upload vers client-photos");
-        
-        const uploadedPhotoUrl = await uploadClientPhoto(
-          formData.scannedImage, 
-          formData.document_type || 'cin'
-        );
-        
-        if (uploadedPhotoUrl) {
-          finalPhotoUrl = uploadedPhotoUrl;
-          console.log("✅ IMAGE SCANNÉE UPLOADÉE:", uploadedPhotoUrl);
-        } else {
-          console.warn("⚠️ Échec upload image scannée, continuons sans photo");
-        }
-      }
-
-      // 🎯 DONNÉES COMPLÈTES POUR INSERTION - INCLUANT L'URL DU CODE-BARRES
-      const clientData = {
-        nom: formData.nom.trim(),
-        prenom: formData.prenom.trim(),
+      // 🔥 VÉRIFICATION CRITIQUE: S'assurer que toutes les URLs sont présentes
+      const dataToInsert = {
+        nom: formData.nom,
+        prenom: formData.prenom,
         nationalite: formData.nationalite,
-        numero_passeport: formData.numero_passeport.trim(),
-        numero_telephone: formData.numero_telephone?.trim() || null,
-        code_barre: formData.code_barre?.trim() || null,
-        code_barre_image_url: formData.code_barre_image_url || null, // 🔥 CRUCIAL
-        photo_url: finalPhotoUrl || null,
-        observations: formData.observations?.trim() || null,
+        numero_passeport: formData.numero_passeport,
+        numero_telephone: formData.numero_telephone,
+        code_barre: formData.code_barre,
+        code_barre_image_url: formData.code_barre_image_url, // 🔥 INCLUSION EXPLICITE
+        observations: formData.observations,
         date_enregistrement: formData.date_enregistrement,
-        document_type: formData.document_type || 'cin',
-        agent_id: user.id
+        photo_url: formData.photo_url
       };
 
-      console.log("💾 INSERTION CLIENT - Données finales:", {
-        ...clientData,
-        confirmation_barcode_url: clientData.code_barre_image_url ? "✅ INCLUSE" : "❌ MANQUANTE",
-        confirmation_photo_url: clientData.photo_url ? "✅ INCLUSE" : "❌ MANQUANTE",
-        photo_source: formData.scannedImage && !formData.photo_url ? "📤 UPLOADÉE" : "🔗 EXISTANTE"
-      });
+      console.log("💾 FORM SUBMISSION - Données à insérer en base:", dataToInsert);
 
       const { data, error } = await supabase
         .from('clients')
-        .insert([clientData])
-        .select()
-        .single();
+        .insert([dataToInsert])
+        .select();
 
       if (error) {
         console.error("❌ Erreur insertion client:", error);
-        throw error;
+        toast.error(`Erreur lors de l'enregistrement: ${error.message}`);
+        return;
       }
 
-      console.log("✅ CLIENT ENREGISTRÉ AVEC SUCCÈS:", {
-        id: data.id,
-        nom: data.nom,
-        prenom: data.prenom,
-        code_barre: data.code_barre,
-        code_barre_image_url: data.code_barre_image_url,
-        photo_url: data.photo_url,
-        verification_urls: {
-          barcode_ok: data.code_barre_image_url ? "✅ SAUVÉE" : "❌ MANQUANTE",
-          photo_ok: data.photo_url ? "✅ SAUVÉE" : "❌ MANQUANTE"
-        }
-      });
+      console.log("✅ Client enregistré avec succès:", data);
 
-      toast.success(`Client ${data.prenom} ${data.nom} enregistré avec succès!`);
-      
-      // Rediriger vers la liste des clients
-      navigate("/base-clients");
-      
-    } catch (error: any) {
-      console.error("❌ Erreur lors de l'enregistrement:", error);
-      toast.error(error.message || "Erreur lors de l'enregistrement du client");
+      // 🔥 VÉRIFICATION POST-INSERTION: Vérifier que l'URL a bien été sauvegardée
+      if (data && data[0]) {
+        const savedClient = data[0];
+        console.log("🔍 VÉRIFICATION POST-INSERTION:", {
+          client_id: savedClient.id,
+          code_barre_sauvegarde: savedClient.code_barre,
+          code_barre_image_url_sauvegarde: savedClient.code_barre_image_url,
+          url_correctement_sauvegardee: savedClient.code_barre_image_url ? "✅ OUI" : "❌ NON"
+        });
+
+        if (formData.code_barre_image_url && !savedClient.code_barre_image_url) {
+          console.error("❌ ERREUR CRITIQUE: URL image perdue lors de la sauvegarde!", {
+            url_originale: formData.code_barre_image_url,
+            url_sauvegardee: savedClient.code_barre_image_url
+          });
+        }
+      }
+
+      toast.success("✅ Client enregistré avec succès !");
+      resetForm();
+    } catch (error) {
+      console.error("❌ Erreur générale:", error);
+      toast.error("Erreur lors de l'enregistrement du client");
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return {
-    isLoading,
+    isSubmitting,
     handleSubmit
   };
 };
