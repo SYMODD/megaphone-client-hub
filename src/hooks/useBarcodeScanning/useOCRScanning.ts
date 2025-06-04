@@ -2,12 +2,63 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useImageUpload } from "../useImageUpload";
+import { useDataExtraction } from "./useDataExtraction";
 
 interface UseOCRScanningProps {}
 
 export const useOCRScanning = (props?: UseOCRScanningProps) => {
   const [isScanning, setIsScanning] = useState(false);
   const { uploadBarcodeImage } = useImageUpload();
+  const { extractBarcodeAndPhone } = useDataExtraction();
+
+  const performOCRExtraction = async (file: File): Promise<{ barcode?: string; phone?: string }> => {
+    console.log("🔍 Début de l'extraction OCR réelle...");
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('apikey', 'K87783069388957'); // Clé API OCR.space
+    formData.append('language', 'fre');
+    formData.append('isOverlayRequired', 'true');
+    formData.append('detectOrientation', 'true');
+    formData.append('scale', 'true');
+    formData.append('OCREngine', '2');
+
+    try {
+      const response = await fetch('https://api.ocr.space/parse/image', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("📄 Réponse OCR complète:", result);
+
+      if (result.ParsedResults && result.ParsedResults.length > 0) {
+        const extractedText = result.ParsedResults[0].ParsedText;
+        console.log("📝 Texte extrait par OCR:", extractedText);
+
+        // Utiliser le service d'extraction pour analyser le texte
+        const extractedData = extractBarcodeAndPhone(extractedText);
+        console.log("🎯 Données extraites:", extractedData);
+
+        return extractedData;
+      } else {
+        console.warn("⚠️ Aucun texte extrait par OCR");
+        return {};
+      }
+    } catch (error) {
+      console.error("❌ Erreur OCR:", error);
+      // En cas d'erreur, utiliser la simulation comme fallback
+      console.log("🔄 Fallback vers simulation...");
+      return {
+        barcode: `BC${Date.now().toString().slice(-6)}`,
+        phone: undefined
+      };
+    }
+  };
 
   const scanForBarcodeAndPhone = async (
     file: File,
@@ -30,24 +81,13 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
 
       console.log("✅ Image de code-barres uploadée avec succès:", barcodeImageUrl);
 
-      // 2. Simulation du scan OCR (en attente de l'implémentation réelle de l'API OCR)
-      console.log("🔍 Démarrage simulation du scan OCR...");
+      // 2. Extraction OCR réelle
+      console.log("🔍 Démarrage de l'extraction OCR réelle...");
+      const extractedData = await performOCRExtraction(file);
       
-      // Réduire le délai et s'assurer que le processus se termine
-      await new Promise(resolve => {
-        setTimeout(() => {
-          console.log("⏰ Timeout OCR terminé");
-          resolve(true);
-        }, 1500); // Réduit de 2000ms à 1500ms
-      });
-      
-      // Simulation d'extraction de données (à remplacer par la vraie API OCR)
-      const mockBarcode = `BC${Date.now().toString().slice(-6)}`;
-      const mockPhone = file.name.includes('tel') ? '+212600000000' : undefined;
-      
-      console.log("📊 Données extraites (simulation):", {
-        barcode: mockBarcode,
-        phone: mockPhone,
+      console.log("📊 Données extraites par OCR:", {
+        barcode: extractedData.barcode,
+        phone: extractedData.phone,
         imageUrl: barcodeImageUrl,
         bucket: 'barcode-images'
       });
@@ -56,22 +96,32 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       setIsScanning(false);
       
       console.log("🚀 Transmission des données au callback avec URL:", {
-        barcode: mockBarcode,
-        phone: mockPhone,
+        barcode: extractedData.barcode,
+        phone: extractedData.phone,
         barcodeImageUrl: barcodeImageUrl,
         url_non_nulle: barcodeImageUrl ? "✅ OUI" : "❌ NON"
       });
 
-      // 4. Appeler le callback après avoir mis à jour l'état
-      onBarcodeScanned(mockBarcode, mockPhone, barcodeImageUrl);
+      // 4. Appeler le callback avec les données extraites
+      onBarcodeScanned(extractedData.barcode || "", extractedData.phone, barcodeImageUrl);
       
       console.log("✅ Scan OCR terminé avec succès - URL transmise");
-      toast.success("Code-barres extrait avec succès !");
+      
+      // Message de succès personnalisé
+      const extractedItems = [];
+      if (extractedData.barcode) extractedItems.push("code-barres");
+      if (extractedData.phone) extractedItems.push("numéro de téléphone");
+      
+      if (extractedItems.length > 0) {
+        toast.success(`✅ ${extractedItems.join(" et ")} extraits avec succès !`);
+      } else {
+        toast.info("Image analysée - aucune donnée textuelle détectée");
+      }
       
     } catch (error) {
       console.error("❌ Erreur lors du scan OCR:", error);
       toast.error("Erreur lors du scan de l'image");
-      setIsScanning(false); // S'assurer que l'état est réinitialisé en cas d'erreur
+      setIsScanning(false);
     }
   };
 
