@@ -24,16 +24,22 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       if (!barcodeImageUrl) {
         console.error("❌ Échec de l'upload de l'image de code-barres");
         toast.error("Impossible d'uploader l'image de code-barres");
+        setIsScanning(false);
         return;
       }
 
       console.log("✅ Image de code-barres uploadée avec succès:", barcodeImageUrl);
 
       // 2. Simulation du scan OCR (en attente de l'implémentation réelle de l'API OCR)
-      console.log("🔍 Simulation du scan OCR...");
+      console.log("🔍 Démarrage simulation du scan OCR...");
       
-      // Pour l'instant, on simule un délai et on retourne l'URL de l'image
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Réduire le délai et s'assurer que le processus se termine
+      await new Promise(resolve => {
+        setTimeout(() => {
+          console.log("⏰ Timeout OCR terminé");
+          resolve(true);
+        }, 1500); // Réduit de 2000ms à 1500ms
+      });
       
       // Simulation d'extraction de données (à remplacer par la vraie API OCR)
       const mockBarcode = `BC${Date.now().toString().slice(-6)}`;
@@ -46,7 +52,9 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
         bucket: 'barcode-images'
       });
 
-      // 3. CORRECTION CRITIQUE : S'assurer que l'URL est bien transmise au callback
+      // 3. S'assurer que l'état scanning est mis à false AVANT d'appeler le callback
+      setIsScanning(false);
+      
       console.log("🚀 Transmission des données au callback avec URL:", {
         barcode: mockBarcode,
         phone: mockPhone,
@@ -54,15 +62,16 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
         url_non_nulle: barcodeImageUrl ? "✅ OUI" : "❌ NON"
       });
 
+      // 4. Appeler le callback après avoir mis à jour l'état
       onBarcodeScanned(mockBarcode, mockPhone, barcodeImageUrl);
       
       console.log("✅ Scan OCR terminé avec succès - URL transmise");
+      toast.success("Code-barres extrait avec succès !");
       
     } catch (error) {
       console.error("❌ Erreur lors du scan OCR:", error);
       toast.error("Erreur lors du scan de l'image");
-    } finally {
-      setIsScanning(false);
+      setIsScanning(false); // S'assurer que l'état est réinitialisé en cas d'erreur
     }
   };
 

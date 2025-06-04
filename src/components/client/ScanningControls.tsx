@@ -62,11 +62,20 @@ export const ScanningControls = ({ isScanning, isCompressing = false, onImageUpl
         </Button>
       </div>
 
-      {(isCompressing || isScanning) && (
+      {isCompressing && (
         <div className="flex items-center justify-center space-x-2 py-2">
           <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
           <span className="text-sm text-gray-600">
-            {isCompressing ? "Compression de l'image..." : "Analyse OCR en cours..."}
+            Compression de l'image...
+          </span>
+        </div>
+      )}
+
+      {isScanning && (
+        <div className="flex items-center justify-center space-x-2 py-2">
+          <Loader2 className="w-4 h-4 animate-spin text-green-600" />
+          <span className="text-sm text-gray-600">
+            Analyse OCR en cours...
           </span>
         </div>
       )}

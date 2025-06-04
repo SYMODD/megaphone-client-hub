@@ -11,7 +11,7 @@ interface UseImageProcessingProps {
 export const useImageProcessing = ({ onBarcodeScanned }: UseImageProcessingProps) => {
   const [isCompressing, setIsCompressing] = useState(false);
   const [barcodePreviewImage, setBarcodePreviewImage] = useState<string | null>(null);
-  const { scanForBarcodeAndPhone } = useOCRScanning();
+  const { scanForBarcodeAndPhone, isScanning } = useOCRScanning();
 
   const handleImageUpload = async (file: File) => {
     if (!file) {
@@ -55,6 +55,7 @@ export const useImageProcessing = ({ onBarcodeScanned }: UseImageProcessingProps
         console.log("Compression non nécessaire, taille acceptable");
       }
 
+      // S'assurer que la compression est terminée avant de continuer
       setIsCompressing(false);
 
       // Preview UNIQUEMENT pour le scanner de code-barres (PAS pour la photo client)
@@ -68,7 +69,16 @@ export const useImageProcessing = ({ onBarcodeScanned }: UseImageProcessingProps
 
       // Lancer le scan pour code-barres UNIQUEMENT
       console.log("🚀 Lancement du scan OCR pour code-barres...");
-      await scanForBarcodeAndPhone(processedFile, onBarcodeScanned);
+      await scanForBarcodeAndPhone(processedFile, (barcode, phone, barcodeImageUrl) => {
+        console.log("📞 Callback reçu dans useImageProcessing:", {
+          barcode,
+          phone,
+          barcodeImageUrl,
+          timestamp: new Date().toISOString()
+        });
+        onBarcodeScanned(barcode, phone, barcodeImageUrl);
+      });
+      
     } catch (error) {
       console.error("❌ Erreur lors du traitement de l'image code-barres:", error);
       toast.error(`Erreur lors du traitement de l'image: ${error.message}`);
@@ -83,7 +93,11 @@ export const useImageProcessing = ({ onBarcodeScanned }: UseImageProcessingProps
       reader.readAsDataURL(file);
       
       // Essayer le scan avec l'image originale
-      await scanForBarcodeAndPhone(file, onBarcodeScanned);
+      try {
+        await scanForBarcodeAndPhone(file, onBarcodeScanned);
+      } catch (scanError) {
+        console.error("❌ Erreur lors du scan de fallback:", scanError);
+      }
     }
   };
 
