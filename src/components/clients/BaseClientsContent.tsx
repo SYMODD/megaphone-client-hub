@@ -4,6 +4,8 @@ import { DateRange } from "react-day-picker";
 import { ClientStatistics } from "@/components/clients/ClientStatistics";
 import { ClientFilters } from "@/components/clients/ClientFilters";
 import { ClientTable } from "@/components/clients/ClientTable";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Client } from "@/hooks/useClientData/types";
 
 interface BaseClientsContentProps {
@@ -65,18 +67,43 @@ export const BaseClientsContent = ({
         onExport={onExport}
       />
 
-      {/* Liste des clients avec pagination côté serveur */}
+      {/* Liste des clients */}
       <ClientTable
         clients={filteredClients}
-        totalCount={totalCount}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={onPageChange}
         onViewClient={onViewClient}
         onEditClient={onEditClient}
         onGenerateDocument={onGenerateDocument}
         onDeleteClient={onDeleteClient}
       />
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            Page {currentPage} sur {totalPages} ({totalCount} clients au total)
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Précédent
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+            >
+              Suivant
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
