@@ -16,7 +16,14 @@ export const BarcodeImageDisplay = ({
   onLoad, 
   onError 
 }: BarcodeImageDisplayProps) => {
-  if (imageLoading && !imageError) {
+  console.log("🖼️ BarcodeImageDisplay - RENDU:", {
+    currentImageUrl,
+    imageLoading,
+    imageError,
+    url_valide: !!(currentImageUrl && currentImageUrl.trim() !== "")
+  });
+
+  if (imageLoading && !imageError && currentImageUrl) {
     return (
       <div className="text-center py-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -29,14 +36,27 @@ export const BarcodeImageDisplay = ({
     return null; // Error handled by BarcodeImageError component
   }
 
+  if (!currentImageUrl || currentImageUrl.trim() === "") {
+    console.log("⚠️ BarcodeImageDisplay - URL vide, pas d'affichage");
+    return null;
+  }
+
   return (
-    <img 
-      src={currentImageUrl} 
-      alt="Image du code-barres"
-      className={`max-w-full h-auto max-h-32 rounded-lg shadow-md mx-auto ${imageLoading ? 'hidden' : 'block'}`}
-      onLoad={onLoad}
-      onError={onError}
-      key={currentImageUrl}
-    />
+    <div className="text-center">
+      <img 
+        src={currentImageUrl} 
+        alt="Image du code-barres"
+        className={`max-w-full h-auto max-h-32 rounded-lg shadow-md mx-auto ${imageLoading ? 'opacity-50' : 'opacity-100'}`}
+        onLoad={() => {
+          console.log("✅ BarcodeImageDisplay - Image chargée avec succès");
+          onLoad();
+        }}
+        onError={(e) => {
+          console.error("❌ BarcodeImageDisplay - Erreur chargement:", e);
+          onError(e);
+        }}
+        key={`display-${currentImageUrl}-${Date.now()}`}
+      />
+    </div>
   );
 };
