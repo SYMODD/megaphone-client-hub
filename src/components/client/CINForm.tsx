@@ -18,7 +18,6 @@ interface CINFormData {
   numero_telephone: string;
   code_barre: string;
   scannedImage: string | null;
-  // 🆕 NOUVEAU : URL de la photo uploadée automatiquement
   photo_url: string;
   observations: string;
   date_enregistrement: string;
@@ -56,43 +55,63 @@ export const CINForm = () => {
     setFormData(prev => ({
       ...prev,
       scannedImage: image,
-      // 🚨 CRUCIAL: Sauvegarder l'URL de la photo uploadée automatiquement
       photo_url: photoUrl || prev.photo_url
     }));
   };
 
   const handleCINDataExtracted = (extractedData: any) => {
-    console.log("Données CIN extraites:", extractedData);
+    console.log("📝 CIN FORM - Données CIN extraites:", extractedData);
     
-    // Mapper les données extraites vers les champs du formulaire
+    // Mapper les données extraites vers les champs du formulaire avec validation
     const updatedData: Partial<CINFormData> = {};
     
-    if (extractedData.nom) {
-      updatedData.nom = extractedData.nom;
+    if (extractedData.nom && extractedData.nom.trim()) {
+      updatedData.nom = extractedData.nom.trim();
+      console.log("✅ Nom extrait:", updatedData.nom);
     }
-    if (extractedData.prenom) {
-      updatedData.prenom = extractedData.prenom;
+    
+    if (extractedData.prenom && extractedData.prenom.trim()) {
+      updatedData.prenom = extractedData.prenom.trim();
+      console.log("✅ Prénom extrait:", updatedData.prenom);
     }
-    if (extractedData.nationalite) {
-      updatedData.nationalite = extractedData.nationalite;
+    
+    if (extractedData.nationalite && extractedData.nationalite.trim()) {
+      updatedData.nationalite = extractedData.nationalite.trim();
+      console.log("✅ Nationalité extraite:", updatedData.nationalite);
     }
+    
     // Utiliser numero_cin pour le champ numero_passeport
-    if (extractedData.numero_cin) {
-      updatedData.numero_passeport = extractedData.numero_cin;
+    if (extractedData.numero_cin && extractedData.numero_cin.trim()) {
+      updatedData.numero_passeport = extractedData.numero_cin.trim();
+      console.log("✅ Numéro CIN extrait:", updatedData.numero_passeport);
     }
+    
     // Extraire le code-barres s'il est disponible
-    if (extractedData.code_barre) {
-      updatedData.code_barre = extractedData.code_barre;
+    if (extractedData.code_barre && extractedData.code_barre.trim()) {
+      updatedData.code_barre = extractedData.code_barre.trim();
+      console.log("✅ Code-barres extrait:", updatedData.code_barre);
     }
 
-    setFormData(prev => ({ ...prev, ...updatedData }));
-
-    // Ajouter l'information d'extraction aux observations
-    const scanInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: CIN`;
-    setFormData(prev => ({
-      ...prev,
-      observations: prev.observations ? `${prev.observations}\n\n${scanInfo}` : scanInfo
-    }));
+    // Appliquer les données extraites au formulaire
+    if (Object.keys(updatedData).length > 0) {
+      setFormData(prev => ({ ...prev, ...updatedData }));
+      
+      console.log("📝 Données appliquées au formulaire:", updatedData);
+      
+      // Ajouter l'information d'extraction aux observations
+      const extractedFields = Object.keys(updatedData).join(', ');
+      const scanInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: CIN - Champs: ${extractedFields}`;
+      
+      setFormData(prev => ({
+        ...prev,
+        observations: prev.observations ? `${prev.observations}\n\n${scanInfo}` : scanInfo
+      }));
+      
+      toast.success(`Données CIN extraites et appliquées: ${extractedFields}`);
+    } else {
+      console.warn("⚠️ Aucune donnée valide extraite de la CIN");
+      toast.warning("Données CIN extraites mais aucun champ valide détecté");
+    }
   };
 
   const handleSubmit = async () => {
@@ -124,7 +143,6 @@ export const CINForm = () => {
         numero_passeport: formData.numero_passeport.trim(),
         numero_telephone: formData.numero_telephone.trim(),
         code_barre: formData.code_barre.trim(),
-        // 🚨 UTILISER l'URL de la photo déjà uploadée automatiquement
         photo_url: formData.photo_url || null,
         observations: formData.observations,
         date_enregistrement: formData.date_enregistrement,
@@ -170,15 +188,6 @@ export const CINForm = () => {
         onImageScanned={handleImageScanned}
         onDataExtracted={handleCINDataExtracted}
       />
-
-      {/* Affichage de l'état de l'upload automatique */}
-      {formData.photo_url && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-          <p className="text-sm text-green-800">
-            ✅ Photo automatiquement uploadée dans client-photos
-          </p>
-        </div>
-      )}
 
       <PersonalInfoSection 
         formData={formData}

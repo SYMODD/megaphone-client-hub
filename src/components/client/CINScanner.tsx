@@ -33,13 +33,13 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
     reader.onload = async (event) => {
       const result = event.target?.result as string;
       
-      // 🚨 UPLOAD AUTOMATIQUE de la photo client vers client-photos
+      // 🚨 UPLOAD AUTOMATIQUE de la photo client vers client-photos (SILENCIEUX)
       console.log("📤 Upload automatique photo CIN vers client-photos");
       const photoUrl = await uploadClientPhoto(result);
       
       if (photoUrl) {
         console.log("✅ Photo CIN uploadée automatiquement:", photoUrl);
-        toast.success("Photo CIN uploadée automatiquement dans client-photos!");
+        // 🚨 MESSAGE SUPPRIMÉ - pas de toast success ici
         
         // Transmettre l'image ET l'URL uploadée
         onImageScanned(result, photoUrl);
@@ -53,18 +53,36 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
     };
     reader.readAsDataURL(file);
 
-    // Lancer l'OCR en parallèle
-    await scanImage(file, apiKey);
+    // Lancer l'OCR en parallèle avec gestion d'erreur améliorée
+    try {
+      console.log("🔍 Démarrage de l'OCR pour extraction des données CIN");
+      const extractedCINData = await scanImage(file, apiKey);
+      
+      if (extractedCINData) {
+        console.log("✅ Données CIN extraites avec succès:", extractedCINData);
+        // Les données seront affichées via CINDataDisplay
+      } else {
+        console.warn("⚠️ OCR terminé mais aucune donnée CIN extraite");
+      }
+    } catch (error) {
+      console.error("❌ Erreur lors de l'OCR:", error);
+      toast.error("Erreur lors de l'extraction des données CIN");
+    }
   };
 
   const handleConfirmData = () => {
     if (extractedData) {
+      console.log("✅ Confirmation des données CIN extraites:", extractedData);
       onDataExtracted(extractedData);
       toast.success("Données CIN confirmées et appliquées au formulaire");
+    } else {
+      console.warn("⚠️ Aucune donnée à confirmer");
+      toast.error("Aucune donnée CIN à confirmer");
     }
   };
 
   const handleResetScan = () => {
+    console.log("🔄 Reset du scan CIN");
     resetScan();
     onImageScanned("");
   };
@@ -85,10 +103,6 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
           <CardTitle className="text-lg">📄 Scanner la CIN</CardTitle>
           <CardDescription>
             Prenez une photo ou téléversez une image de la carte d'identité nationale (recto)
-            <br />
-            <span className="text-green-600 font-medium">
-              ✅ La photo sera automatiquement uploadée dans client-photos dès le scan
-            </span>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
