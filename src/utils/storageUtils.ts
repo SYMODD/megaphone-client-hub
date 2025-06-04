@@ -31,19 +31,21 @@ export const uploadClientPhoto = async (imageBase64: string, documentType: strin
   try {
     console.log("📤 UPLOAD PHOTO CLIENT - Début de l'upload vers client-photos");
     
-    // Vérifier que le bucket existe
+    // Vérifier que le bucket client-photos existe
     const bucketExists = await ensureStorageBucket('client-photos');
     if (!bucketExists) {
       console.error('❌ Le bucket client-photos n\'existe pas ou n\'est pas accessible');
       return null;
     }
 
+    // Convertir l'image base64 en blob
     const response = await fetch(imageBase64);
     const blob = await response.blob();
     const filename = `${documentType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.jpg`;
     
-    console.log(`📝 Nom du fichier généré: ${filename}`);
+    console.log(`📝 Upload vers client-photos avec nom: ${filename}`);
     
+    // Upload vers le bucket client-photos
     const { data, error } = await supabase.storage
       .from('client-photos')
       .upload(filename, blob, { 
@@ -58,6 +60,7 @@ export const uploadClientPhoto = async (imageBase64: string, documentType: strin
 
     console.log('✅ Upload réussi vers client-photos:', data);
 
+    // Générer l'URL publique pour client-photos
     const { data: publicURL } = supabase.storage
       .from('client-photos')
       .getPublicUrl(data.path);
@@ -65,13 +68,14 @@ export const uploadClientPhoto = async (imageBase64: string, documentType: strin
     const finalUrl = publicURL.publicUrl;
     console.log('🌐 URL publique générée pour client-photos:', finalUrl);
     
+    // Vérifier que l'URL contient bien client-photos
     if (!finalUrl.includes('client-photos')) {
-      console.warn('⚠️ URL ne contient pas client-photos');
+      console.warn('⚠️ URL ne contient pas client-photos, problème potentiel');
     }
 
     return finalUrl;
   } catch (error) {
-    console.error('❌ Erreur inattendue lors de l\'upload photo client:', error);
+    console.error('❌ Erreur inattendue lors de l\'upload photo client vers client-photos:', error);
     return null;
   }
 };

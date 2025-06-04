@@ -8,7 +8,7 @@ import { AdminAPIKeySection } from "./AdminAPIKeySection";
 import { PassportImageCapture } from "./PassportImageCapture";
 import { CINDataDisplay } from "./CINDataDisplay";
 import { useCINOCR } from "@/hooks/useCINOCR";
-import { useImageUpload } from "@/hooks/useImageUpload";
+import { uploadClientPhoto } from "@/utils/storageUtils";
 
 interface CINScannerProps {
   onDataExtracted: (data: any) => void;
@@ -22,29 +22,28 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
   const [showApiKey, setShowApiKey] = useState(false);
 
   const { isScanning, extractedData, rawText, scanImage, resetScan } = useCINOCR();
-  const { uploadClientPhoto } = useImageUpload();
 
   const handleImageCapture = async (file: File) => {
     if (!file) return;
 
-    console.log("📤 CIN SCANNER - Début traitement image CIN avec upload automatique");
+    console.log("📤 CIN SCANNER - Début traitement image CIN avec upload automatique vers client-photos");
 
     const reader = new FileReader();
     reader.onload = async (event) => {
       const result = event.target?.result as string;
       
-      // 🎯 Upload automatique IMMÉDIAT de la photo client vers client-photos
+      // 🎯 Upload automatique IMMÉDIAT de la photo vers client-photos
       console.log("📤 Upload automatique IMMÉDIAT photo CIN vers client-photos");
       const photoUrl = await uploadClientPhoto(result, 'cin');
       
       if (photoUrl) {
-        console.log("✅ Photo CIN uploadée automatiquement IMMÉDIATEMENT:", photoUrl);
+        console.log("✅ Photo CIN uploadée automatiquement vers client-photos:", photoUrl);
         onImageScanned(result, photoUrl); // 🔥 TRANSMISSION IMMÉDIATE DE L'URL
-        toast.success("📷 Photo CIN uploadée automatiquement !");
+        toast.success("📷 Photo CIN uploadée automatiquement vers client-photos !");
       } else {
-        console.error("❌ Échec upload automatique photo CIN");
-        toast.error("Erreur lors de l'upload automatique de la photo");
-        onImageScanned(result);
+        console.error("❌ Échec upload automatique photo CIN vers client-photos");
+        toast.error("Erreur lors de l'upload automatique vers client-photos");
+        onImageScanned(result); // Transmettre l'image même en cas d'échec upload
       }
     };
     reader.readAsDataURL(file);
@@ -57,8 +56,7 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
       if (extractedCINData) {
         console.log("✅ OCR CIN terminé avec données:", {
           ...extractedCINData,
-          code_barre_present: extractedCINData.code_barre ? "✅ OUI" : "❌ NON",
-          image_url_presente: extractedCINData.code_barre_image_url ? "✅ OUI" : "❌ NON"
+          code_barre_present: extractedCINData.code_barre ? "✅ OUI" : "❌ NON"
         });
       }
     } catch (error) {
@@ -69,14 +67,9 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
 
   const handleConfirmData = () => {
     if (extractedData) {
-      console.log("✅ CIN SCANNER - Confirmation données CIN COMPLÈTES:", {
-        ...extractedData,
-        image_barcode_url_finale: extractedData.code_barre_image_url,
-        confirmation_transmission: extractedData.code_barre_image_url ? "✅ URL PRÊTE" : "❌ PAS D'URL"
-      });
-      
+      console.log("✅ CIN SCANNER - Confirmation données CIN:", extractedData);
       onDataExtracted(extractedData);
-      toast.success("Données CIN confirmées et appliquées avec image code-barres!");
+      toast.success("Données CIN confirmées et appliquées !");
     } else {
       toast.error("Aucune donnée CIN à confirmer");
     }
@@ -103,7 +96,7 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
         <CardHeader>
           <CardTitle className="text-lg">📄 Scanner la CIN</CardTitle>
           <CardDescription>
-            Prenez une photo claire de la carte d'identité nationale (recto) - L'image sera automatiquement sauvegardée
+            Prenez une photo claire de la carte d'identité nationale (recto) - L'image sera automatiquement uploadée vers client-photos
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
