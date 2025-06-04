@@ -1,9 +1,9 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { ClientFormData } from "./types";
 
 interface UseFormSubmissionProps {
@@ -11,103 +11,84 @@ interface UseFormSubmissionProps {
 }
 
 export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
-  const { user, profile } = useAuth();
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = async () => {
-    if (!user || !profile) {
-      toast.error("Vous devez être connecté pour ajouter un client");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user) {
+      toast.error("Vous devez être connecté pour enregistrer un client");
       return;
     }
 
-    console.log("📝 SOUMISSION FORMULAIRE - Analyse des données:", {
+    setIsLoading(true);
+    console.log("🚀 SOUMISSION CLIENT - Début avec données complètes:", {
       nom: formData.nom,
       prenom: formData.prenom,
       code_barre: formData.code_barre,
-      numero_telephone: formData.numero_telephone,
-      scannedImage_present: formData.scannedImage ? "✅ OUI (base64)" : "❌ NON",
-      photo_url_present: formData.photo_url ? "✅ OUI (déjà uploadée)" : "❌ NON",
-      photo_url_value: formData.photo_url,
-      code_barre_image_url_present: formData.code_barre_image_url ? "✅ OUI (image barcode)" : "❌ NON",
-      code_barre_image_url_value: formData.code_barre_image_url,
-      upload_automatique: "✅ Photo client déjà dans client-photos"
+      code_barre_image_url: formData.code_barre_image_url,
+      photo_url: formData.photo_url,
+      url_barcode_presente: formData.code_barre_image_url ? "✅ OUI" : "❌ NON",
+      url_photo_presente: formData.photo_url ? "✅ OUI" : "❌ NON"
     });
 
-    setIsLoading(true);
-
     try {
-      // 🎉 PLUS BESOIN D'UPLOAD MANUEL - la photo est déjà uploadée automatiquement !
-      console.log("🚀 Photo client déjà uploadée automatiquement:", formData.photo_url);
-
-      // Préparation des données avec LES DEUX IMAGES déjà uploadées
+      // 🎯 DONNÉES COMPLÈTES POUR INSERTION
       const clientData = {
-        nom: formData.nom,
-        prenom: formData.prenom,
+        nom: formData.nom.trim(),
+        prenom: formData.prenom.trim(),
         nationalite: formData.nationalite,
-        numero_passeport: formData.numero_passeport,
-        numero_telephone: formData.numero_telephone,
-        code_barre: formData.code_barre,
-        // 🎯 Image du code-barres (uploadée automatiquement par le scanner)
-        code_barre_image_url: formData.code_barre_image_url || null,
-        // 🎯 Photo du client (uploadée automatiquement dès le scan)
-        photo_url: formData.photo_url || null,
-        observations: formData.observations,
+        numero_passeport: formData.numero_passeport.trim(),
+        numero_telephone: formData.numero_telephone?.trim() || null,
+        code_barre: formData.code_barre?.trim() || null,
+        code_barre_image_url: formData.code_barre_image_url || null, // 🔥 CRITIQUE
+        photo_url: formData.photo_url || null, // 🔥 CRITIQUE
+        observations: formData.observations?.trim() || null,
         date_enregistrement: formData.date_enregistrement,
-        agent_id: user.id,
-        document_type: formData.document_type
+        document_type: formData.document_type || 'cin',
+        agent_id: user.id
       };
 
-      console.log("💾 INSERTION CLIENT - Données finales avec DEUX IMAGES AUTOMATIQUES:", {
-        nom_complet: `${clientData.prenom} ${clientData.nom}`,
-        code_barre: clientData.code_barre || "NON",
-        telephone: clientData.numero_telephone || "NON",
-        photo_client: clientData.photo_url ? "✅ client-photos (AUTO)" : "❌ NON UPLOADÉE",
-        image_barcode: clientData.code_barre_image_url ? "✅ barcode-images (AUTO)" : "❌ NON",
-        photo_client_url: clientData.photo_url,
-        image_barcode_url: clientData.code_barre_image_url,
-        uploads_automatiques: "✅ Les deux images uploadées automatiquement"
+      console.log("💾 INSERTION CLIENT - Données finales:", {
+        ...clientData,
+        confirmation_barcode_url: clientData.code_barre_image_url ? "✅ INCLUSE" : "❌ MANQUANTE",
+        confirmation_photo_url: clientData.photo_url ? "✅ INCLUSE" : "❌ MANQUANTE"
       });
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('clients')
-        .insert(clientData);
+        .insert([clientData])
+        .select()
+        .single();
 
       if (error) {
-        console.error('❌ Erreur insertion client:', error);
-        if (error.code === '23505') {
-          toast.error("Ce numéro de passeport existe déjà");
-        } else {
-          toast.error("Erreur lors de l'enregistrement du client");
-        }
-        return;
+        console.error("❌ Erreur insertion client:", error);
+        throw error;
       }
 
-      console.log("🎉 Client enregistré avec succès avec LES DEUX IMAGES AUTOMATIQUES!");
+      console.log("✅ CLIENT ENREGISTRÉ AVEC SUCCÈS:", {
+        id: data.id,
+        nom: data.nom,
+        prenom: data.prenom,
+        code_barre: data.code_barre,
+        code_barre_image_url: data.code_barre_image_url,
+        photo_url: data.photo_url,
+        verification_urls: {
+          barcode_ok: data.code_barre_image_url ? "✅ SAUVÉE" : "❌ MANQUANTE",
+          photo_ok: data.photo_url ? "✅ SAUVÉE" : "❌ MANQUANTE"
+        }
+      });
+
+      toast.success(`Client ${data.prenom} ${data.nom} enregistré avec succès!`);
       
-      // Message de succès adaptatif avec détails des deux images
-      let successMessage = "Client enregistré avec succès";
-      const elements = [];
-      if (clientData.photo_url) {
-        elements.push("photo du document");
-        console.log("✅ Photo client sauvegardée (AUTO):", clientData.photo_url);
-      }
-      if (clientData.code_barre_image_url) {
-        elements.push("image de code-barres");
-        console.log("✅ Image barcode sauvegardée (AUTO):", clientData.code_barre_image_url);
-      }
-      
-      if (elements.length > 0) {
-        successMessage += ` avec ${elements.join(" et ")} uploadées automatiquement !`;
-      } else {
-        successMessage += "!";
-      }
-      
-      toast.success(successMessage);
+      // Rediriger vers la liste des clients
       navigate("/base-clients");
-    } catch (error) {
-      console.error('❌ Erreur inattendue:', error);
-      toast.error("Une erreur inattendue s'est produite");
+      
+    } catch (error: any) {
+      console.error("❌ Erreur lors de l'enregistrement:", error);
+      toast.error(error.message || "Erreur lors de l'enregistrement du client");
     } finally {
       setIsLoading(false);
     }

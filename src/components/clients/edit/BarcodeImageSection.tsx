@@ -1,173 +1,139 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Image, Barcode, CheckCircle, AlertCircle } from "lucide-react";
-import { Client } from "@/hooks/useClientData/types";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Barcode, Upload, X, Check, AlertCircle } from "lucide-react";
+import { BarcodeImageUpload } from "./BarcodeImageUpload";
 
 interface BarcodeImageSectionProps {
-  client: Client;
-  onClientUpdated?: () => void;
+  code_barre: string;
+  code_barre_image_url: string;
+  onUpdate: (field: string, value: string) => void;
+  onImageUploaded: (imageUrl: string) => void;
 }
 
-export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSectionProps) => {
-  const [currentImageUrl, setCurrentImageUrl] = useState(client.code_barre_image_url);
-  const [imageStatus, setImageStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
-  
-  // Synchroniser l'état local avec les props du client
-  useEffect(() => {
-    setCurrentImageUrl(client.code_barre_image_url);
-    if (client.code_barre_image_url) {
-      setImageStatus('loading');
-    }
-  }, [client.code_barre_image_url]);
-  
-  console.log('🔍 BarcodeImageSection - Analyse des données client:', {
-    id: client.id,
-    code_barre: client.code_barre,
-    code_barre_image_url: currentImageUrl,
-    client_image_url: client.code_barre_image_url,
-    nom_prenom: `${client.nom} ${client.prenom}`,
-    status: imageStatus
-  });
-
-  const hasBarcode = Boolean(client.code_barre?.trim());
-  const hasBarcodeImage = Boolean(currentImageUrl?.trim());
-  
-  // Vérifier si l'image est dans le bon bucket barcode-images
-  const isCorrectBucket = currentImageUrl?.includes('barcode-images') || false;
-
-  console.log('📊 BarcodeImageSection - État des données barcode:', { 
-    hasBarcode, 
-    hasBarcodeImage, 
-    isCorrectBucket,
-    imageUrl: currentImageUrl,
-    imageStatus
-  });
-
-  const handleImageLoad = () => {
-    console.log('✅ BarcodeImageSection - Image du code-barres chargée avec succès:', currentImageUrl);
-    setImageStatus('loaded');
-  };
-
-  const handleImageError = () => {
-    console.error('❌ ERREUR chargement image code-barres:', currentImageUrl);
-    setImageStatus('error');
-  };
+export const BarcodeImageSection = ({ 
+  code_barre, 
+  code_barre_image_url, 
+  onUpdate, 
+  onImageUploaded 
+}: BarcodeImageSectionProps) => {
+  const [showUpload, setShowUpload] = useState(false);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-sm">
-          <Barcode className="w-4 h-4" />
-          Code-barres du client
-          {hasBarcodeImage && imageStatus === 'loaded' && (
-            isCorrectBucket ? (
-              <CheckCircle className="w-4 h-4 text-green-600" />
-            ) : (
-              <AlertCircle className="w-4 h-4 text-orange-500" />
-            )
-          )}
+        <CardTitle className="flex items-center gap-2">
+          <Barcode className="w-5 h-5" />
+          Code-barres et Image
         </CardTitle>
-        <CardDescription>
-          {hasBarcodeImage ? (
-            imageStatus === 'loaded' ? (
-              isCorrectBucket ? 
-                'Code-barres avec image scannée (bucket: barcode-images)' : 
-                'Code-barres avec image scannée (ancien bucket)'
-            ) : imageStatus === 'error' ? 
-              'Code-barres avec image (erreur de chargement)' :
-              'Code-barres avec image (chargement...)'
-          ) : 'Code-barres sans image - Scan automatique lors de l\'ajout du client'}
-        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {/* Affichage du code-barres texte */}
-          {hasBarcode && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800 font-mono">
-                <strong>Code-barres :</strong> {client.code_barre}
-              </p>
-            </div>
-          )}
+      <CardContent className="space-y-4">
+        {/* Code-barres */}
+        <div className="space-y-2">
+          <Label htmlFor="code_barre">Code-barres</Label>
+          <Input
+            id="code_barre"
+            value={code_barre}
+            onChange={(e) => onUpdate('code_barre', e.target.value)}
+            placeholder="Code-barres (optionnel)"
+            className="font-mono"
+          />
+        </div>
 
-          {/* Affichage de l'image du code-barres */}
-          {hasBarcodeImage && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-center p-4 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg min-h-[140px]">
-                {imageStatus === 'loading' && (
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                    <p className="text-sm text-gray-600">Chargement de l'image...</p>
-                  </div>
-                )}
-                
-                {imageStatus === 'error' && (
-                  <div className="text-center">
-                    <p className="text-red-600 text-sm font-medium">❌ Image non disponible</p>
-                    <p className="text-xs text-gray-500 mt-1">URL: {currentImageUrl?.substring(0, 60)}...</p>
-                    <p className="text-xs text-gray-500">Bucket correct: {isCorrectBucket ? 'Oui' : 'Non'}</p>
-                  </div>
-                )}
-                
-                {hasBarcodeImage && (
+        {/* Image du code-barres */}
+        <div className="space-y-2">
+          <Label>Image du code-barres</Label>
+          
+          {code_barre_image_url ? (
+            <div className="space-y-3">
+              {/* Aperçu de l'image actuelle */}
+              <div className="flex items-center gap-3 p-3 border rounded-lg bg-green-50">
+                <div className="flex-shrink-0">
                   <img 
-                    src={currentImageUrl} 
-                    alt="Image du code-barres scanné" 
-                    className={`max-w-full max-h-32 object-contain border border-gray-200 rounded ${imageStatus === 'loaded' ? 'block' : 'hidden'}`}
-                    onError={handleImageError}
-                    onLoad={handleImageLoad}
-                    key={currentImageUrl}
+                    src={code_barre_image_url} 
+                    alt="Image code-barres"
+                    className="w-16 h-16 object-cover rounded border"
+                    onError={(e) => {
+                      console.error("Erreur chargement image:", code_barre_image_url);
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
-                )}
-              </div>
-              
-              {imageStatus === 'loaded' && (
-                <div className="flex items-center gap-2 text-sm justify-center">
-                  <Image className="w-4 h-4" />
-                  <span className={isCorrectBucket ? "text-green-600" : "text-orange-600"}>
-                    {isCorrectBucket ? 
-                      "Image sauvegardée dans barcode-images" : 
-                      "Image dans un ancien bucket"
-                    }
-                  </span>
                 </div>
-              )}
-
-              {/* Informations de débogage pour les admins */}
-              {!isCorrectBucket && imageStatus === 'loaded' && (
-                <div className="p-2 bg-orange-50 border border-orange-200 rounded text-xs">
-                  <p className="text-orange-800">
-                    <strong>Info technique :</strong> Cette image a été sauvegardée avant la mise à jour du système.
-                    Les nouvelles images sont maintenant stockées dans le bucket "barcode-images".
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 text-green-700">
+                    <Check className="w-4 h-4" />
+                    <span className="font-medium">Image sauvegardée</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">
+                    URL: {code_barre_image_url.substring(0, 50)}...
                   </p>
                 </div>
-              )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowUpload(!showUpload)}
+                >
+                  {showUpload ? <X className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
+                  {showUpload ? "Annuler" : "Changer"}
+                </Button>
+              </div>
+
+              {/* URL de l'image */}
+              <div className="space-y-2">
+                <Label htmlFor="code_barre_image_url">URL de l'image</Label>
+                <Input
+                  id="code_barre_image_url"
+                  value={code_barre_image_url}
+                  onChange={(e) => onUpdate('code_barre_image_url', e.target.value)}
+                  placeholder="URL de l'image du code-barres"
+                  className="text-sm"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 p-3 border rounded-lg bg-orange-50">
+                <AlertCircle className="w-5 h-5 text-orange-500" />
+                <span className="text-orange-700">Aucune image de code-barres associée</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowUpload(true)}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Ajouter
+                </Button>
+              </div>
+
+              {/* URL manuelle si pas d'image */}
+              <div className="space-y-2">
+                <Label htmlFor="code_barre_image_url">URL de l'image (manuel)</Label>
+                <Input
+                  id="code_barre_image_url"
+                  value={code_barre_image_url}
+                  onChange={(e) => onUpdate('code_barre_image_url', e.target.value)}
+                  placeholder="Coller une URL d'image existante"
+                  className="text-sm"
+                />
+              </div>
             </div>
           )}
 
-          {/* Message informatif si code-barres sans image */}
-          {hasBarcode && !hasBarcodeImage && (
-            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-center">
-              <p className="text-sm text-gray-600">
-                Code-barres enregistré sans image associée
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                L'image est automatiquement sauvegardée lors du scan CIN
-              </p>
-            </div>
-          )}
-
-          {/* Message si aucun code-barres */}
-          {!hasBarcode && (
-            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-center">
-              <p className="text-sm text-gray-600">
-                Aucun code-barres enregistré pour ce client
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Le code-barres est automatiquement extrait lors du scan CIN
-              </p>
-            </div>
+          {/* Composant d'upload */}
+          {showUpload && (
+            <BarcodeImageUpload
+              onImageUploaded={(imageUrl) => {
+                console.log("✅ Nouvelle image uploadée:", imageUrl);
+                onImageUploaded(imageUrl);
+                setShowUpload(false);
+              }}
+              onCancel={() => setShowUpload(false)}
+            />
           )}
         </div>
       </CardContent>

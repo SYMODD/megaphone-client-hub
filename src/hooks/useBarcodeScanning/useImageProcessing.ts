@@ -1,8 +1,7 @@
 
 import { useState } from "react";
-import { toast } from "sonner";
-import { compressImage } from "@/utils/imageCompression";
 import { useOCRScanning } from "./useOCRScanning";
+import { useImageUpload } from "@/hooks/useImageUpload";
 
 interface UseImageProcessingProps {
   onBarcodeScanned: (barcode: string, phone?: string, barcodeImageUrl?: string) => void;
@@ -10,105 +9,77 @@ interface UseImageProcessingProps {
 
 export const useImageProcessing = ({ onBarcodeScanned }: UseImageProcessingProps) => {
   const [isCompressing, setIsCompressing] = useState(false);
-  const [barcodePreviewImage, setBarcodePreviewImage] = useState<string | null>(null);
-  const { scanForBarcodeAndPhone, isScanning } = useOCRScanning();
+  const [scannedImage, setScannedImage] = useState<string | null>(null);
+  
+  const { scanImageForData } = useOCRScanning();
+  const { uploadBarcodeImage } = useImageUpload();
 
   const handleImageUpload = async (file: File) => {
-    if (!file) {
-      console.warn("No file provided to handleImageUpload");
-      return;
-    }
-
-    console.log("=== DÉBUT TRAITEMENT IMAGE CODE-BARRES ===");
-    console.log("Fichier pour scan code-barres:", {
-      name: file.name,
-      type: file.type,
-      size: `${(file.size / 1024).toFixed(1)}KB`,
-      purpose: "SCAN CODE-BARRES UNIQUEMENT - PAS photo client"
-    });
-
     try {
       setIsCompressing(true);
-      
-      const originalSizeKB = file.size / 1024;
-      console.log(`Taille originale: ${originalSizeKB.toFixed(1)} KB`);
+      console.log("🔍 IMAGE PROCESSING - Début traitement complet");
 
-      let processedFile = file;
-      if (originalSizeKB > 800) {
-        console.log("Compression de l'image code-barres nécessaire...");
-        processedFile = await compressImage(file, {
-          maxWidth: 1024,
-          maxHeight: 1024,
-          quality: 0.8,
-          maxSizeKB: 800
-        });
-        
-        const compressedSizeKB = processedFile.size / 1024;
-        const compressionRatio = ((file.size - processedFile.size) / file.size) * 100;
-        
-        console.log(`Image code-barres compressée: ${originalSizeKB.toFixed(1)}KB → ${compressedSizeKB.toFixed(1)}KB (-${compressionRatio.toFixed(0)}%)`);
-        
-        if (compressionRatio > 10) {
-          toast.success(`Image compressée de ${compressionRatio.toFixed(0)}%`);
-        }
-      } else {
-        console.log("Compression non nécessaire, taille acceptable");
-      }
-
-      // S'assurer que la compression est terminée avant de continuer
-      setIsCompressing(false);
-
-      // Preview UNIQUEMENT pour le scanner de code-barres (PAS pour la photo client)
+      // 1. Créer preview de l'image
       const reader = new FileReader();
       reader.onload = (event) => {
         const result = event.target?.result as string;
-        setBarcodePreviewImage(result);
-        console.log("✅ Image code-barres set pour PREVIEW SEULEMENT (pas pour photo client)");
-      };
-      reader.readAsDataURL(processedFile);
-
-      // Lancer le scan pour code-barres UNIQUEMENT
-      console.log("🚀 Lancement du scan OCR pour code-barres...");
-      await scanForBarcodeAndPhone(processedFile, (barcode, phone, barcodeImageUrl) => {
-        console.log("📞 Callback reçu dans useImageProcessing:", {
-          barcode,
-          phone,
-          barcodeImageUrl,
-          timestamp: new Date().toISOString()
-        });
-        onBarcodeScanned(barcode, phone, barcodeImageUrl);
-      });
-      
-    } catch (error) {
-      console.error("❌ Erreur lors du traitement de l'image code-barres:", error);
-      toast.error(`Erreur lors du traitement de l'image: ${error.message}`);
-      setIsCompressing(false);
-      
-      // Afficher l'image même en cas d'erreur de compression
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setBarcodePreviewImage(result);
+        setScannedImage(result);
+        console.log("✅ Aperçu image créé");
       };
       reader.readAsDataURL(file);
+
+      // 2. Scanner pour extraire barcode et téléphone
+      console.log("🔍 Scan OCR pour extraction données...");
+      const extractedData = await scanImageForData(file);
       
-      // Essayer le scan avec l'image originale
-      try {
-        await scanForBarcodeAndPhone(file, onBarcodeScanned);
-      } catch (scanError) {
-        console.error("❌ Erreur lors du scan de fallback:", scanError);
+      if (extractedData.barcode) {
+        console.log("📊 Code-barres détecté:", extractedData.barcode);
+        
+        // 3. Upload automatique de l'image du code-barres
+        console.log("📤 Upload automatique image code-barres...");
+        const barcodeImageUrl = await uploadBarcodeImage(file);
+        
+        if (barcodeImageUrl) {
+          console.log("✅ Image code-barres uploadée:", barcodeImageUrl);
+          
+          // 4. Transmettre TOUTES les données avec l'URL
+          onBarcodeScanned(
+            extractedData.barcode, 
+            extractedData.phone, 
+            barcodeImageUrl // 🎯 URL CRITIQUE
+          );
+          
+          console.log("🎉 TRANSMISSION COMPLÈTE:", {
+            barcode: extractedData.barcode,
+            phone: extractedData.phone || "Non détecté",
+            barcodeImageUrl: barcodeImageUrl,
+            statut: "✅ SUCCÈS TOTAL"
+          });
+        } else {
+          console.warn("⚠️ Échec upload image, transmission sans URL");
+          onBarcodeScanned(extractedData.barcode, extractedData.phone);
+        }
+      } else {
+        console.warn("⚠️ Aucun code-barres détecté dans l'image");
+        onBarcodeScanned("", extractedData.phone);
       }
+      
+    } catch (error) {
+      console.error("❌ Erreur traitement image:", error);
+      onBarcodeScanned("", "");
+    } finally {
+      setIsCompressing(false);
     }
   };
 
   const resetScan = () => {
-    console.log("🔄 Reset du scan de code-barres - NE TOUCHE PAS à la photo client");
-    setBarcodePreviewImage(null);
+    console.log("🔄 Reset scan");
+    setScannedImage(null);
   };
 
   return {
     isCompressing,
-    scannedImage: barcodePreviewImage, // Pour la compatibilité avec l'interface existante
+    scannedImage,
     handleImageUpload,
     resetScan
   };
