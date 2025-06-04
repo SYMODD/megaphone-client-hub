@@ -13,7 +13,7 @@ interface FormData {
   code_barre: string;
   date_enregistrement: string;
   observations: string;
-  code_barre_image_url: string; // 🎯 IMPORTANT: URL de l'image du code-barres
+  code_barre_image_url: string;
 }
 
 export const useClientEditForm = (client: Client | null) => {
@@ -27,7 +27,7 @@ export const useClientEditForm = (client: Client | null) => {
     code_barre: "",
     date_enregistrement: "",
     observations: "",
-    code_barre_image_url: "" // 🎯 Initialisation
+    code_barre_image_url: ""
   });
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export const useClientEditForm = (client: Client | null) => {
         code_barre: client.code_barre || "",
         date_enregistrement: client.date_enregistrement || "",
         observations: client.observations || "",
-        code_barre_image_url: client.code_barre_image_url || "" // 🎯 CRUCIAL: Charger l'URL existante
+        code_barre_image_url: client.code_barre_image_url || ""
       });
     }
   }, [client]);
@@ -60,7 +60,6 @@ export const useClientEditForm = (client: Client | null) => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
       
-      // Log spécial pour l'URL de l'image du code-barres
       if (field === 'code_barre_image_url') {
         console.log("🎯 MISE À JOUR URL IMAGE CODE-BARRES:", {
           ancienne_url: prev.code_barre_image_url,
@@ -90,7 +89,7 @@ export const useClientEditForm = (client: Client | null) => {
         }
       });
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('clients')
         .update({
           nom: formData.nom,
@@ -101,13 +100,20 @@ export const useClientEditForm = (client: Client | null) => {
           code_barre: formData.code_barre || null,
           observations: formData.observations || null,
           date_enregistrement: formData.date_enregistrement,
-          code_barre_image_url: formData.code_barre_image_url || null // 🎯 CRUCIAL: Sauvegarder l'URL
+          code_barre_image_url: formData.code_barre_image_url || null
         })
-        .eq('id', client.id);
+        .eq('id', client.id)
+        .select()
+        .single();
 
       if (error) {
         console.error("❌ Erreur sauvegarde:", error);
         throw error;
+      }
+
+      // 🎯 LOG DE CONFIRMATION DEMANDÉ
+      if (data?.code_barre_image_url) {
+        console.log("🎊 CONFIRMATION EDIT - URL code-barres sauvegardée:", data.code_barre_image_url);
       }
 
       console.log("✅ Client sauvegardé avec succès");

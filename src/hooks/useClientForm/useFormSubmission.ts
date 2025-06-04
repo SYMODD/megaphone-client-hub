@@ -67,7 +67,7 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         numero_passeport: formData.numero_passeport.trim(),
         numero_telephone: formData.numero_telephone?.trim() || null,
         code_barre: formData.code_barre?.trim() || null,
-        code_barre_image_url: formData.code_barre_image_url || null, // 🔥 CRUCIAL
+        code_barre_image_url: formData.code_barre_image_url?.trim() || null, // 🔥 CRUCIAL
         photo_url: finalPhotoUrl || null,
         observations: formData.observations?.trim() || null,
         date_enregistrement: formData.date_enregistrement,
@@ -106,7 +106,14 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         }
       });
 
-      toast.success(`Client ${data.prenom} ${data.nom} enregistré avec succès!`);
+      // 🎯 LOG DE CONFIRMATION DEMANDÉ
+      if (data.code_barre_image_url) {
+        console.log("🎊 CONFIRMATION FINALE - URL code-barres sauvegardée avec succès:", data.code_barre_image_url);
+        toast.success(`Client ${data.prenom} ${data.nom} enregistré avec l'image du code-barres!`);
+      } else {
+        console.warn("⚠️ Client enregistré mais sans URL d'image code-barres");
+        toast.success(`Client ${data.prenom} ${data.nom} enregistré avec succès!`);
+      }
       
       // Rediriger vers la liste des clients
       navigate("/base-clients");

@@ -7,7 +7,14 @@ interface BarcodeImageThumbnailProps {
 }
 
 export const BarcodeImageThumbnail = ({ imageUrl, className = "" }: BarcodeImageThumbnailProps) => {
-  if (!imageUrl) {
+  // 🎯 Log pour debug
+  console.log("🖼️ BarcodeImageThumbnail - Rendu:", {
+    imageUrl,
+    url_presente: imageUrl ? "✅ OUI" : "❌ NON",
+    url_valide: imageUrl && imageUrl.trim() !== "" ? "✅ VALIDE" : "❌ INVALIDE"
+  });
+
+  if (!imageUrl || imageUrl.trim() === "") {
     return (
       <div className={`w-8 h-8 bg-gray-100 rounded border border-gray-200 flex items-center justify-center ${className}`}>
         <Barcode className="w-4 h-4 text-gray-400" />
@@ -26,7 +33,6 @@ export const BarcodeImageThumbnail = ({ imageUrl, className = "" }: BarcodeImage
           console.error("❌ Erreur chargement miniature code-barres:", imageUrl);
           const target = e.currentTarget;
           target.style.display = 'none';
-          // Créer un élément de remplacement
           const parent = target.parentElement;
           if (parent && !parent.querySelector('.error-placeholder')) {
             const errorDiv = document.createElement('div');
@@ -37,7 +43,7 @@ export const BarcodeImageThumbnail = ({ imageUrl, className = "" }: BarcodeImage
           }
         }}
         onLoad={() => {
-          console.log("✅ Miniature code-barres chargée:", imageUrl);
+          console.log("✅ Miniature code-barres chargée avec succès:", imageUrl);
         }}
         key={imageUrl}
       />
