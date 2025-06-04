@@ -1,5 +1,43 @@
 
-export const compressImage = async (file: File, maxSizeKB: number = 800): Promise<File> => {
+export interface CompressionOptions {
+  maxWidth?: number;
+  maxHeight?: number;
+  quality?: number;
+  maxSizeKB?: number;
+}
+
+export const getImageInfo = async (file: File): Promise<{
+  width: number;
+  height: number;
+  size: number;
+  type: string;
+}> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      resolve({
+        width: img.width,
+        height: img.height,
+        size: file.size,
+        type: file.type
+      });
+    };
+    img.src = URL.createObjectURL(file);
+  });
+};
+
+export const compressImage = async (file: File, options: CompressionOptions | number = {}): Promise<File> => {
+  // Handle backward compatibility - if a number is passed, treat it as maxSizeKB
+  const config: CompressionOptions = typeof options === 'number' 
+    ? { maxSizeKB: options }
+    : {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.8,
+        maxSizeKB: 800,
+        ...options
+      };
+
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -7,8 +45,8 @@ export const compressImage = async (file: File, maxSizeKB: number = 800): Promis
     
     img.onload = () => {
       // Calculer la nouvelle taille en maintenant le ratio
-      const maxWidth = 1200;
-      const maxHeight = 1200;
+      const maxWidth = config.maxWidth || 1200;
+      const maxHeight = config.maxHeight || 1200;
       
       let { width, height } = img;
       
@@ -31,7 +69,8 @@ export const compressImage = async (file: File, maxSizeKB: number = 800): Promis
       ctx?.drawImage(img, 0, 0, width, height);
       
       // Commencer avec une qualité élevée et réduire si nécessaire
-      let quality = 0.8;
+      let quality = config.quality || 0.8;
+      const maxSizeKB = config.maxSizeKB || 800;
       
       const tryCompress = () => {
         canvas.toBlob((blob) => {
