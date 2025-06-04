@@ -1,54 +1,36 @@
 
 import { useState } from "react";
-import { useOCRScanning } from "./useOCRScanning";
-import { useImageUpload } from "@/hooks/useImageUpload";
 
-interface UseImageProcessingProps {
-  onBarcodeScanned: (barcode: string, phone?: string, barcodeImageUrl?: string) => void;
-}
-
-export const useImageProcessing = ({ onBarcodeScanned }: UseImageProcessingProps) => {
+export const useImageProcessing = () => {
   const [isCompressing, setIsCompressing] = useState(false);
-  const [scannedImage, setScannedImage] = useState<string | null>(null);
-  
-  const { scanForBarcodeAndPhone } = useOCRScanning();
-  const { uploadBarcodeImage } = useImageUpload();
 
-  const handleImageUpload = async (file: File) => {
+  const compressImage = async (file: File): Promise<string> => {
     try {
       setIsCompressing(true);
-      console.log("🔍 IMAGE PROCESSING - Début traitement complet");
-
-      // 1. Créer preview de l'image
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setScannedImage(result);
-        console.log("✅ Aperçu image créé");
-      };
-      reader.readAsDataURL(file);
-
-      // 2. Scanner pour extraire barcode et téléphone avec upload automatique
-      console.log("🔍 Scan OCR pour extraction données...");
-      await scanForBarcodeAndPhone(file, onBarcodeScanned);
+      console.log("🔄 Compression de l'image pour aperçu");
       
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const result = event.target?.result as string;
+          console.log("✅ Image compressée pour aperçu");
+          resolve(result);
+        };
+        reader.onerror = () => {
+          reject(new Error("Erreur lors de la lecture du fichier"));
+        };
+        reader.readAsDataURL(file);
+      });
     } catch (error) {
-      console.error("❌ Erreur traitement image:", error);
-      onBarcodeScanned("", "");
+      console.error("❌ Erreur compression image:", error);
+      throw error;
     } finally {
       setIsCompressing(false);
     }
   };
 
-  const resetScan = () => {
-    console.log("🔄 Reset scan");
-    setScannedImage(null);
-  };
-
   return {
-    isCompressing,
-    scannedImage,
-    handleImageUpload,
-    resetScan
+    compressImage,
+    isCompressing
   };
 };
