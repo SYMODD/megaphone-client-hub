@@ -7,6 +7,48 @@ import { uploadClientPhoto as uploadToClientPhotos } from "@/utils/storageUtils"
 export const useImageUpload = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  const ensureBucketExists = async (bucketName: string) => {
+    try {
+      console.log(`🔍 Vérification existence bucket: ${bucketName}`);
+      
+      // Vérifier les buckets existants
+      const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+      
+      if (listError) {
+        console.error("❌ Erreur lors de la liste des buckets:", listError);
+        throw listError;
+      }
+
+      console.log("📋 Buckets trouvés:", buckets?.map(b => b.name) || []);
+      
+      const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
+      
+      if (bucketExists) {
+        console.log(`✅ Bucket ${bucketName} existe déjà`);
+        return true;
+      }
+
+      // Créer le bucket s'il n'existe pas
+      console.log(`📦 Création du bucket: ${bucketName}`);
+      const { error: createError } = await supabase.storage.createBucket(bucketName, {
+        public: true,
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+        fileSizeLimit: 10485760 // 10MB
+      });
+
+      if (createError) {
+        console.error(`❌ Erreur création bucket ${bucketName}:`, createError);
+        throw createError;
+      }
+
+      console.log(`✅ Bucket ${bucketName} créé avec succès`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Erreur gestion bucket ${bucketName}:`, error);
+      return false;
+    }
+  };
+
   const uploadClientPhoto = async (imageBase64: string, documentType: string = 'cin'): Promise<string | null> => {
     try {
       console.log("📤 useImageUpload - Upload vers client-photos");
@@ -29,45 +71,11 @@ export const useImageUpload = () => {
       
       setUploadProgress(0);
 
-      // Vérifier que le bucket existe et est accessible
-      console.log("🔍 Vérification de l'existence du bucket barcode-images...");
-      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-      
-      if (bucketsError) {
-        console.error("❌ Erreur vérification buckets:", bucketsError);
-        toast.error(`Erreur de configuration: ${bucketsError.message}`);
-        throw bucketsError;
-      }
-
-      console.log("📋 Buckets disponibles:", buckets.map(b => b.name));
-      const barcodeImagesBucket = buckets.find(bucket => bucket.name === 'barcode-images');
-      
-      if (!barcodeImagesBucket) {
-        console.error("❌ Bucket 'barcode-images' non trouvé dans:", buckets.map(b => b.name));
-        toast.error("Le bucket de stockage 'barcode-images' n'existe pas");
+      // S'assurer que le bucket existe
+      const bucketReady = await ensureBucketExists('barcode-images');
+      if (!bucketReady) {
+        toast.error("Impossible de préparer le stockage pour les images code-barres");
         return null;
-      }
-
-      console.log("✅ Bucket 'barcode-images' trouvé:", barcodeImagesBucket);
-
-      // Test d'accès au bucket
-      console.log("🔍 Test d'accès au bucket...");
-      try {
-        const { data: listData, error: listError } = await supabase.storage
-          .from('barcode-images')
-          .list('', { limit: 1 });
-        
-        if (listError) {
-          console.error("❌ Erreur d'accès au bucket:", listError);
-          toast.error(`Accès au bucket refusé: ${listError.message}`);
-          throw listError;
-        }
-        
-        console.log("✅ Accès au bucket confirmé");
-      } catch (accessError) {
-        console.error("❌ Impossible d'accéder au bucket:", accessError);
-        toast.error("Impossible d'accéder au stockage");
-        throw accessError;
       }
 
       // Générer un nom de fichier unique
