@@ -11,10 +11,14 @@ interface BarcodeImageSectionProps {
 
 export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSectionProps) => {
   const [currentImageUrl, setCurrentImageUrl] = useState(client.code_barre_image_url);
+  const [imageStatus, setImageStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
   
   // Synchroniser l'état local avec les props du client
   useEffect(() => {
     setCurrentImageUrl(client.code_barre_image_url);
+    if (client.code_barre_image_url) {
+      setImageStatus('loading');
+    }
   }, [client.code_barre_image_url]);
   
   console.log('🔍 BarcodeImageSection - Analyse des données client:', {
@@ -22,7 +26,8 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
     code_barre: client.code_barre,
     code_barre_image_url: currentImageUrl,
     client_image_url: client.code_barre_image_url,
-    nom_prenom: `${client.nom} ${client.prenom}`
+    nom_prenom: `${client.nom} ${client.prenom}`,
+    status: imageStatus
   });
 
   const hasBarcode = Boolean(client.code_barre?.trim());
@@ -35,8 +40,19 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
     hasBarcode, 
     hasBarcodeImage, 
     isCorrectBucket,
-    imageUrl: currentImageUrl 
+    imageUrl: currentImageUrl,
+    imageStatus
   });
+
+  const handleImageLoad = () => {
+    console.log('✅ BarcodeImageSection - Image du code-barres chargée avec succès:', currentImageUrl);
+    setImageStatus('loaded');
+  };
+
+  const handleImageError = () => {
+    console.error('❌ ERREUR chargement image code-barres:', currentImageUrl);
+    setImageStatus('error');
+  };
 
   return (
     <Card>
@@ -44,7 +60,7 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
         <CardTitle className="flex items-center gap-2 text-sm">
           <Barcode className="w-4 h-4" />
           Code-barres du client
-          {hasBarcodeImage && (
+          {hasBarcodeImage && imageStatus === 'loaded' && (
             isCorrectBucket ? (
               <CheckCircle className="w-4 h-4 text-green-600" />
             ) : (
@@ -54,9 +70,13 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
         </CardTitle>
         <CardDescription>
           {hasBarcodeImage ? (
-            isCorrectBucket ? 
-              'Code-barres avec image scannée (bucket: barcode-images)' : 
-              'Code-barres avec image scannée (ancien bucket)'
+            imageStatus === 'loaded' ? (
+              isCorrectBucket ? 
+                'Code-barres avec image scannée (bucket: barcode-images)' : 
+                'Code-barres avec image scannée (ancien bucket)'
+            ) : imageStatus === 'error' ? 
+              'Code-barres avec image (erreur de chargement)' :
+              'Code-barres avec image (chargement...)'
           ) : 'Code-barres sans image - Scan automatique lors de l\'ajout du client'}
         </CardDescription>
       </CardHeader>
@@ -75,44 +95,47 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
           {hasBarcodeImage && (
             <div className="space-y-2">
               <div className="flex items-center justify-center p-4 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg min-h-[140px]">
-                <img 
-                  src={currentImageUrl} 
-                  alt="Image du code-barres scanné" 
-                  className="max-w-full max-h-32 object-contain border border-gray-200 rounded"
-                  onError={(e) => {
-                    console.error('❌ ERREUR chargement image code-barres:', currentImageUrl);
-                    const target = e.currentTarget;
-                    const parent = target.parentElement;
-                    if (parent) {
-                      parent.innerHTML = `
-                        <div class="text-center">
-                          <p class="text-red-600 text-sm font-medium">❌ Image non disponible</p>
-                          <p class="text-xs text-gray-500 mt-1">URL: ${currentImageUrl}</p>
-                          <p class="text-xs text-gray-500">Bucket correct: ${isCorrectBucket ? 'Oui' : 'Non'}</p>
-                        </div>
-                      `;
-                    }
-                  }}
-                  onLoad={() => {
-                    console.log('✅ BarcodeImageSection - Image du code-barres chargée avec succès:', currentImageUrl);
-                    console.log(`📁 Bucket utilisé: ${isCorrectBucket ? 'barcode-images (correct)' : 'autre bucket'}`);
-                  }}
-                  key={currentImageUrl}
-                />
+                {imageStatus === 'loading' && (
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                    <p className="text-sm text-gray-600">Chargement de l'image...</p>
+                  </div>
+                )}
+                
+                {imageStatus === 'error' && (
+                  <div className="text-center">
+                    <p className="text-red-600 text-sm font-medium">❌ Image non disponible</p>
+                    <p className="text-xs text-gray-500 mt-1">URL: {currentImageUrl?.substring(0, 60)}...</p>
+                    <p className="text-xs text-gray-500">Bucket correct: {isCorrectBucket ? 'Oui' : 'Non'}</p>
+                  </div>
+                )}
+                
+                {hasBarcodeImage && (
+                  <img 
+                    src={currentImageUrl} 
+                    alt="Image du code-barres scanné" 
+                    className={`max-w-full max-h-32 object-contain border border-gray-200 rounded ${imageStatus === 'loaded' ? 'block' : 'hidden'}`}
+                    onError={handleImageError}
+                    onLoad={handleImageLoad}
+                    key={currentImageUrl}
+                  />
+                )}
               </div>
               
-              <div className="flex items-center gap-2 text-sm justify-center">
-                <Image className="w-4 h-4" />
-                <span className={isCorrectBucket ? "text-green-600" : "text-orange-600"}>
-                  {isCorrectBucket ? 
-                    "Image sauvegardée dans barcode-images" : 
-                    "Image dans un ancien bucket"
-                  }
-                </span>
-              </div>
+              {imageStatus === 'loaded' && (
+                <div className="flex items-center gap-2 text-sm justify-center">
+                  <Image className="w-4 h-4" />
+                  <span className={isCorrectBucket ? "text-green-600" : "text-orange-600"}>
+                    {isCorrectBucket ? 
+                      "Image sauvegardée dans barcode-images" : 
+                      "Image dans un ancien bucket"
+                    }
+                  </span>
+                </div>
+              )}
 
               {/* Informations de débogage pour les admins */}
-              {!isCorrectBucket && (
+              {!isCorrectBucket && imageStatus === 'loaded' && (
                 <div className="p-2 bg-orange-50 border border-orange-200 rounded text-xs">
                   <p className="text-orange-800">
                     <strong>Info technique :</strong> Cette image a été sauvegardée avant la mise à jour du système.

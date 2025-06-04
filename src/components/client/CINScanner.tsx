@@ -54,17 +54,19 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
       const extractedCINData = await scanImage(file, apiKey);
       
       if (extractedCINData) {
-        console.log("✅ OCR CIN terminé avec données complètes:", extractedCINData);
+        console.log("✅ OCR CIN terminé avec données complètes:", {
+          ...extractedCINData,
+          code_barre_present: extractedCINData.code_barre ? "✅ OUI" : "❌ NON",
+          image_url_presente: extractedCINData.code_barre_image_url ? "✅ OUI" : "❌ NON",
+          url_recue: extractedCINData.code_barre_image_url
+        });
         
-        // 🚨 VÉRIFICATION CRITIQUE : L'URL de l'image doit être présente
+        // 🚨 VÉRIFICATION CRITIQUE : S'assurer que l'URL est bien présente
         if (extractedCINData.code_barre_image_url) {
           console.log("🎉 CIN - Image code-barres CONFIRMÉE avec URL:", extractedCINData.code_barre_image_url);
         } else if (extractedCINData.code_barre) {
           console.warn("⚠️ CIN - Code-barres détecté MAIS PAS D'URL d'image!");
         }
-        
-        // Les données sont déjà complètes avec l'URL depuis useCINOCR
-        // Pas besoin de traitement supplémentaire ici
       } else {
         console.warn("⚠️ OCR terminé mais aucune donnée exploitable");
       }
@@ -76,13 +78,13 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
 
   const handleConfirmData = () => {
     if (extractedData) {
-      console.log("✅ Confirmation données CIN AVEC URL image:", {
+      console.log("✅ CIN SCANNER - Confirmation données CIN COMPLÈTES:", {
         ...extractedData,
-        image_barcode_incluse: extractedData.code_barre_image_url ? "✅ OUI" : "❌ NON",
-        url_transmise: extractedData.code_barre_image_url
+        image_barcode_url_finale: extractedData.code_barre_image_url,
+        confirmation_transmission: extractedData.code_barre_image_url ? "✅ URL PRÊTE" : "❌ PAS D'URL"
       });
       
-      // Transmettre les données complètes avec l'URL
+      // 🎯 TRANSMISSION CRITIQUE : S'assurer que TOUTES les données sont transmises
       onDataExtracted(extractedData);
       toast.success("Données CIN confirmées et appliquées avec image code-barres!");
     } else {

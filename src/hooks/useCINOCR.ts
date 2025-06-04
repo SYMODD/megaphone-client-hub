@@ -21,7 +21,6 @@ export const useCINOCR = () => {
       
       if (result.success && result.data) {
         console.log("✅ Données CIN extraites:", result.data);
-        let finalData = { ...result.data };
         setRawText(result.rawText || "");
 
         // 2. Upload automatique de l'image code-barres SI un code-barres a été détecté
@@ -34,19 +33,24 @@ export const useCINOCR = () => {
             if (barcodeImageUrl) {
               console.log("✅ CIN - Image code-barres uploadée automatiquement:", barcodeImageUrl);
               
-              // 🚨 CORRECTION CRITIQUE : Mettre à jour les données avec l'URL
-              finalData = {
+              // 🚨 CORRECTION CRITIQUE : Inclure IMMÉDIATEMENT l'URL dans les données
+              const finalData = {
                 ...result.data,
                 code_barre_image_url: barcodeImageUrl
               };
               
-              console.log("🎯 CIN - Données finales avec URL image:", finalData);
+              console.log("🎯 CIN - Données finales AVEC URL image confirmée:", {
+                code_barre: finalData.code_barre,
+                code_barre_image_url: finalData.code_barre_image_url,
+                url_valide: finalData.code_barre_image_url ? "✅ OUI" : "❌ NON"
+              });
               
-              // Mettre à jour l'état local immédiatement
+              // Mettre à jour l'état local avec les données complètes
               setExtractedData(finalData);
               
               toast.success("Données CIN et image code-barres extraites avec succès!");
               
+              // Retourner les données complètes avec l'URL
               return finalData;
             } else {
               console.warn("⚠️ CIN - Échec upload image code-barres, mais données CIN OK");

@@ -64,11 +64,25 @@ export const useBaseClientsLogic = () => {
     fetchClients();
   };
 
-  // Fonction pour forcer le rafraîchissement des données
+  // Fonction pour forcer le rafraîchissement des données avec vérification complète
   const forceRefresh = async () => {
-    console.log("🔄 Forçage du rafraîchissement des données clients...");
-    await fetchClients();
-    console.log("✅ Rafraîchissement terminé");
+    console.log("🔄 Forçage du rafraîchissement des données clients avec vérification images...");
+    
+    try {
+      await fetchClients();
+      console.log("✅ Rafraîchissement terminé - Vérification des images de code-barres...");
+      
+      // Log pour vérifier la présence des URLs d'images de code-barres
+      const clientsWithBarcodeImages = clients.filter(client => client.code_barre_image_url);
+      console.log(`📊 Clients avec images de code-barres: ${clientsWithBarcodeImages.length}/${clients.length}`);
+      
+      clientsWithBarcodeImages.forEach(client => {
+        console.log(`✅ Client ${client.prenom} ${client.nom} - Image code-barres: ${client.code_barre_image_url}`);
+      });
+      
+    } catch (error) {
+      console.error("❌ Erreur lors du rafraîchissement:", error);
+    }
   };
 
   return {
