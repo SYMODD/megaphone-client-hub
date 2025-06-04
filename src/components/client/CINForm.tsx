@@ -9,7 +9,6 @@ import { ContactInfoSection } from "./ContactInfoSection";
 import { RegistrationSection } from "./RegistrationSection";
 import { FormActions } from "./FormActions";
 import { CINScanner } from "./CINScanner";
-import { uploadClientPhoto } from "@/utils/storageUtils";
 
 interface CINFormData {
   nom: string;
@@ -19,6 +18,8 @@ interface CINFormData {
   numero_telephone: string;
   code_barre: string;
   scannedImage: string | null;
+  // 🆕 NOUVEAU : URL de la photo uploadée automatiquement
+  photo_url: string;
   observations: string;
   date_enregistrement: string;
 }
@@ -36,12 +37,28 @@ export const CINForm = () => {
     numero_telephone: "",
     code_barre: "",
     scannedImage: null,
+    photo_url: "",
     observations: "",
     date_enregistrement: new Date().toISOString().split('T')[0]
   });
 
   const handleInputChange = (field: keyof CINFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageScanned = (image: string, photoUrl?: string) => {
+    console.log("🖼️ CIN FORM - Image scannée avec URL:", { 
+      hasImage: !!image, 
+      hasPhotoUrl: !!photoUrl,
+      photoUrl 
+    });
+    
+    setFormData(prev => ({
+      ...prev,
+      scannedImage: image,
+      // 🚨 CRUCIAL: Sauvegarder l'URL de la photo uploadée automatiquement
+      photo_url: photoUrl || prev.photo_url
+    }));
   };
 
   const handleCINDataExtracted = (extractedData: any) => {
@@ -93,17 +110,12 @@ export const CINForm = () => {
     setIsLoading(true);
 
     try {
-      console.log("Données du formulaire à enregistrer:", formData);
+      console.log("💾 CIN FORM SUBMIT - Données avec photo_url:", {
+        ...formData,
+        photo_url_present: formData.photo_url ? "✅ OUI" : "❌ NON",
+        photo_url_value: formData.photo_url
+      });
       
-      let photoUrl = null;
-      
-      if (formData.scannedImage) {
-        photoUrl = await uploadClientPhoto(formData.scannedImage, 'cin');
-        if (!photoUrl) {
-          toast.error("Erreur lors du téléchargement de l'image. Enregistrement sans photo.");
-        }
-      }
-
       // Préparer les données pour l'insertion
       const clientData = {
         nom: formData.nom.trim(),
@@ -112,13 +124,14 @@ export const CINForm = () => {
         numero_passeport: formData.numero_passeport.trim(),
         numero_telephone: formData.numero_telephone.trim(),
         code_barre: formData.code_barre.trim(),
-        photo_url: photoUrl,
+        // 🚨 UTILISER l'URL de la photo déjà uploadée automatiquement
+        photo_url: formData.photo_url || null,
         observations: formData.observations,
         date_enregistrement: formData.date_enregistrement,
         agent_id: user.id
       };
 
-      console.log("Données client à insérer:", clientData);
+      console.log("💾 Données client à insérer avec photo_url:", clientData);
 
       const { error } = await supabase
         .from('clients')
@@ -134,6 +147,7 @@ export const CINForm = () => {
         return;
       }
 
+      console.log("✅ Client CIN enregistré avec photo_url:", clientData.photo_url);
       toast.success("Client avec CIN enregistré avec succès!");
       navigate("/");
     } catch (error) {
@@ -153,9 +167,18 @@ export const CINForm = () => {
     <form onSubmit={handleFormSubmit} className="space-y-4 sm:space-y-6">
       <CINScanner 
         scannedImage={formData.scannedImage}
-        onImageScanned={(image) => handleInputChange("scannedImage", image)}
+        onImageScanned={handleImageScanned}
         onDataExtracted={handleCINDataExtracted}
       />
+
+      {/* Affichage de l'état de l'upload automatique */}
+      {formData.photo_url && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <p className="text-sm text-green-800">
+            ✅ Photo automatiquement uploadée dans client-photos
+          </p>
+        </div>
+      )}
 
       <PersonalInfoSection 
         formData={formData}

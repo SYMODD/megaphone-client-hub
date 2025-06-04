@@ -5,7 +5,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ClientFormData } from "./types";
-import { useImageUpload } from "../useImageUpload";
 
 interface UseFormSubmissionProps {
   formData: ClientFormData;
@@ -15,7 +14,6 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const { uploadClientPhoto } = useImageUpload();
 
   const handleSubmit = async () => {
     if (!user || !profile) {
@@ -28,56 +26,21 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
       prenom: formData.prenom,
       code_barre: formData.code_barre,
       numero_telephone: formData.numero_telephone,
-      scannedImage_present: formData.scannedImage ? "✅ OUI (photo client)" : "❌ NON",
+      scannedImage_present: formData.scannedImage ? "✅ OUI (base64)" : "❌ NON",
+      photo_url_present: formData.photo_url ? "✅ OUI (déjà uploadée)" : "❌ NON",
+      photo_url_value: formData.photo_url,
       code_barre_image_url_present: formData.code_barre_image_url ? "✅ OUI (image barcode)" : "❌ NON",
       code_barre_image_url_value: formData.code_barre_image_url,
-      buckets_separes: "✅ client-photos + barcode-images"
+      upload_automatique: "✅ Photo client déjà dans client-photos"
     });
 
     setIsLoading(true);
 
     try {
-      let photoUrl = null;
-      
-      // 🚨 CORRECTION CRITIQUE : Upload de la photo du client vers client-photos
-      if (formData.scannedImage) {
-        console.log("📤 Upload photo CLIENT vers client-photos - DÉBUT");
-        console.log("🎯 Type: Photo du document d'identité du client");
-        
-        // Convertir base64 en File pour l'upload
-        const response = await fetch(formData.scannedImage);
-        const blob = await response.blob();
-        
-        // Créer un nom de fichier unique
-        const timestamp = Date.now();
-        const randomId = Math.random().toString(36).substr(2, 9);
-        const fileName = `client_${timestamp}_${randomId}.jpg`;
-        
-        console.log("📝 Nom de fichier photo client:", fileName);
-        
-        const { data, error } = await supabase.storage
-          .from('client-photos')
-          .upload(fileName, blob, {
-            contentType: 'image/jpeg',
-            upsert: false
-          });
+      // 🎉 PLUS BESOIN D'UPLOAD MANUEL - la photo est déjà uploadée automatiquement !
+      console.log("🚀 Photo client déjà uploadée automatiquement:", formData.photo_url);
 
-        if (error) {
-          console.error('❌ Erreur upload photo client:', error);
-          toast.error(`Erreur lors de l'upload de la photo: ${error.message}`);
-          // Continuer sans photo plutôt que d'arrêter tout le processus
-        } else {
-          const { data: publicURL } = supabase.storage
-            .from('client-photos')
-            .getPublicUrl(data.path);
-
-          photoUrl = publicURL.publicUrl;
-          console.log("✅ Photo client uploadée avec succès:", photoUrl);
-          toast.success("Photo du client uploadée avec succès!");
-        }
-      }
-
-      // Préparation des données avec SÉPARATION TOTALE des images
+      // Préparation des données avec LES DEUX IMAGES déjà uploadées
       const clientData = {
         nom: formData.nom,
         prenom: formData.prenom,
@@ -85,28 +48,25 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         numero_passeport: formData.numero_passeport,
         numero_telephone: formData.numero_telephone,
         code_barre: formData.code_barre,
-        // 🎯 Image du code-barres (déjà uploadée dans barcode-images par le scanner)
+        // 🎯 Image du code-barres (uploadée automatiquement par le scanner)
         code_barre_image_url: formData.code_barre_image_url || null,
-        // 🎯 Photo du client (uploadée maintenant dans client-photos)
-        photo_url: photoUrl,
+        // 🎯 Photo du client (uploadée automatiquement dès le scan)
+        photo_url: formData.photo_url || null,
         observations: formData.observations,
         date_enregistrement: formData.date_enregistrement,
         agent_id: user.id,
         document_type: formData.document_type
       };
 
-      console.log("💾 INSERTION CLIENT - Données finales avec DEUX IMAGES:", {
+      console.log("💾 INSERTION CLIENT - Données finales avec DEUX IMAGES AUTOMATIQUES:", {
         nom_complet: `${clientData.prenom} ${clientData.nom}`,
         code_barre: clientData.code_barre || "NON",
         telephone: clientData.numero_telephone || "NON",
-        photo_client: clientData.photo_url ? "✅ client-photos" : "❌ NON UPLOADÉE",
-        image_barcode: clientData.code_barre_image_url ? "✅ barcode-images" : "❌ NON",
+        photo_client: clientData.photo_url ? "✅ client-photos (AUTO)" : "❌ NON UPLOADÉE",
+        image_barcode: clientData.code_barre_image_url ? "✅ barcode-images (AUTO)" : "❌ NON",
         photo_client_url: clientData.photo_url,
         image_barcode_url: clientData.code_barre_image_url,
-        buckets_utilises: [
-          clientData.photo_url ? "client-photos" : null,
-          clientData.code_barre_image_url ? "barcode-images" : null
-        ].filter(Boolean).join(" + ") || "Aucun"
+        uploads_automatiques: "✅ Les deux images uploadées automatiquement"
       });
 
       const { error } = await supabase
@@ -123,22 +83,22 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         return;
       }
 
-      console.log("🎉 Client enregistré avec succès avec LES DEUX IMAGES!");
+      console.log("🎉 Client enregistré avec succès avec LES DEUX IMAGES AUTOMATIQUES!");
       
       // Message de succès adaptatif avec détails des deux images
       let successMessage = "Client enregistré avec succès";
       const elements = [];
       if (clientData.photo_url) {
         elements.push("photo du document");
-        console.log("✅ Photo client sauvegardée:", clientData.photo_url);
+        console.log("✅ Photo client sauvegardée (AUTO):", clientData.photo_url);
       }
       if (clientData.code_barre_image_url) {
         elements.push("image de code-barres");
-        console.log("✅ Image barcode sauvegardée:", clientData.code_barre_image_url);
+        console.log("✅ Image barcode sauvegardée (AUTO):", clientData.code_barre_image_url);
       }
       
       if (elements.length > 0) {
-        successMessage += ` avec ${elements.join(" et ")}!`;
+        successMessage += ` avec ${elements.join(" et ")} uploadées automatiquement !`;
       } else {
         successMessage += "!";
       }

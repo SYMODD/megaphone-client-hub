@@ -15,6 +15,8 @@ export const useFormState = () => {
     code_barre: "",
     code_barre_image_url: "",
     scannedImage: null,
+    // 🆕 NOUVEAU : URL de la photo client uploadée automatiquement
+    photo_url: "",
     observations: "",
     date_enregistrement: new Date().toISOString().split('T')[0]
   });

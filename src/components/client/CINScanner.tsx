@@ -8,10 +8,11 @@ import { AdminAPIKeySection } from "./AdminAPIKeySection";
 import { PassportImageCapture } from "./PassportImageCapture";
 import { CINDataDisplay } from "./CINDataDisplay";
 import { useCINOCR } from "@/hooks/useCINOCR";
+import { useImageUpload } from "@/hooks/useImageUpload";
 
 interface CINScannerProps {
   onDataExtracted: (data: any) => void;
-  onImageScanned: (image: string) => void;
+  onImageScanned: (image: string, photoUrl?: string) => void;
   scannedImage: string | null;
 }
 
@@ -21,17 +22,38 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
   const [showApiKey, setShowApiKey] = useState(false);
 
   const { isScanning, extractedData, rawText, scanImage, resetScan } = useCINOCR();
+  const { uploadClientPhoto } = useImageUpload();
 
   const handleImageCapture = async (file: File) => {
     if (!file) return;
 
+    console.log("📤 CIN SCANNER - Début upload automatique photo client");
+
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const result = event.target?.result as string;
-      onImageScanned(result);
+      
+      // 🚨 UPLOAD AUTOMATIQUE de la photo client vers client-photos
+      console.log("📤 Upload automatique photo CIN vers client-photos");
+      const photoUrl = await uploadClientPhoto(result);
+      
+      if (photoUrl) {
+        console.log("✅ Photo CIN uploadée automatiquement:", photoUrl);
+        toast.success("Photo CIN uploadée automatiquement dans client-photos!");
+        
+        // Transmettre l'image ET l'URL uploadée
+        onImageScanned(result, photoUrl);
+      } else {
+        console.error("❌ Échec upload automatique photo CIN");
+        toast.error("Erreur lors de l'upload automatique de la photo");
+        
+        // Transmettre quand même l'image pour prévisualisation
+        onImageScanned(result);
+      }
     };
     reader.readAsDataURL(file);
 
+    // Lancer l'OCR en parallèle
     await scanImage(file, apiKey);
   };
 
@@ -63,6 +85,10 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
           <CardTitle className="text-lg">📄 Scanner la CIN</CardTitle>
           <CardDescription>
             Prenez une photo ou téléversez une image de la carte d'identité nationale (recto)
+            <br />
+            <span className="text-green-600 font-medium">
+              ✅ La photo sera automatiquement uploadée dans client-photos dès le scan
+            </span>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
