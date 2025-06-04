@@ -72,16 +72,25 @@ export const BarcodeImageSection = ({
 
   const testImageUrl = () => {
     console.log("🔍 Test de l'URL de l'image code-barres:", currentImageUrl);
-    window.open(currentImageUrl, '_blank');
+    if (currentImageUrl) {
+      window.open(currentImageUrl, '_blank');
+    }
   };
 
   const handleImageUploaded = (imageUrl: string) => {
     console.log("✅ Nouvelle image uploadée:", imageUrl);
+    
+    // Mettre à jour l'état local immédiatement
     setCurrentImageUrl(imageUrl);
-    onImageUploaded(imageUrl);
-    setShowUpload(false);
     setImageError(false);
     setImageLoading(true);
+    
+    // Notifier les composants parents
+    onUpdate('code_barre_image_url', imageUrl);
+    onImageUploaded(imageUrl);
+    
+    // Fermer le dialogue d'upload
+    setShowUpload(false);
   };
 
   const handleCancelUpload = () => {

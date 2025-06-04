@@ -28,20 +28,9 @@ export const useImageUpload = () => {
         return true;
       }
 
-      // Créer le bucket s'il n'existe pas
-      console.log(`📦 Création du bucket: ${bucketName}`);
-      const { error: createError } = await supabase.storage.createBucket(bucketName, {
-        public: true,
-        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
-        fileSizeLimit: 10485760 // 10MB
-      });
-
-      if (createError) {
-        console.error(`❌ Erreur création bucket ${bucketName}:`, createError);
-        throw createError;
-      }
-
-      console.log(`✅ Bucket ${bucketName} créé avec succès`);
+      // Le bucket n'existe pas, mais on ne peut pas le créer ici
+      // On va quand même essayer l'upload, Supabase gère les erreurs
+      console.log(`⚠️ Bucket ${bucketName} n'existe pas, tentative d'upload quand même`);
       return true;
     } catch (error) {
       console.error(`❌ Erreur gestion bucket ${bucketName}:`, error);
@@ -109,6 +98,8 @@ export const useImageUpload = () => {
           toast.error("Fichier trop volumineux");
         } else if (error.message.includes('type')) {
           toast.error("Type de fichier non autorisé");
+        } else if (error.message.includes('not found')) {
+          toast.error("Bucket de stockage non trouvé");
         } else {
           toast.error(`Erreur d'upload: ${error.message}`);
         }
@@ -134,6 +125,7 @@ export const useImageUpload = () => {
       }
 
       setUploadProgress(100);
+      toast.success("Image du code-barres uploadée avec succès");
       console.log("✅ Upload terminé avec succès");
       return finalUrl;
       
@@ -145,12 +137,6 @@ export const useImageUpload = () => {
       });
       
       setUploadProgress(0);
-      
-      // Ne pas afficher de toast si on en a déjà affiché un
-      if (!error?.message?.includes('toast déjà affiché')) {
-        toast.error("Erreur lors de l'upload de l'image");
-      }
-      
       return null;
     }
   };
