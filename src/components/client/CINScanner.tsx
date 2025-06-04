@@ -27,19 +27,20 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
   const handleImageCapture = async (file: File) => {
     if (!file) return;
 
-    console.log("📤 CIN SCANNER - Début traitement image CIN COMPLET");
+    console.log("📤 CIN SCANNER - Début traitement image CIN avec upload automatique");
 
     const reader = new FileReader();
     reader.onload = async (event) => {
       const result = event.target?.result as string;
       
-      // Upload automatique de la photo client
-      console.log("📤 Upload automatique photo CIN vers client-photos");
-      const photoUrl = await uploadClientPhoto(result);
+      // 🎯 Upload automatique IMMÉDIAT de la photo client vers client-photos
+      console.log("📤 Upload automatique IMMÉDIAT photo CIN vers client-photos");
+      const photoUrl = await uploadClientPhoto(result, 'cin');
       
       if (photoUrl) {
-        console.log("✅ Photo CIN uploadée automatiquement:", photoUrl);
-        onImageScanned(result, photoUrl);
+        console.log("✅ Photo CIN uploadée automatiquement IMMÉDIATEMENT:", photoUrl);
+        onImageScanned(result, photoUrl); // 🔥 TRANSMISSION IMMÉDIATE DE L'URL
+        toast.success("📷 Photo CIN uploadée automatiquement !");
       } else {
         console.error("❌ Échec upload automatique photo CIN");
         toast.error("Erreur lors de l'upload automatique de la photo");
@@ -48,27 +49,17 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
     };
     reader.readAsDataURL(file);
 
-    // Lancer l'OCR avec upload automatique de l'image code-barres
+    // Lancer l'OCR en parallèle pour extraire les données
     try {
-      console.log("🔍 Démarrage OCR CIN COMPLET avec upload image code-barres automatique");
+      console.log("🔍 Démarrage OCR CIN en parallèle");
       const extractedCINData = await scanImage(file, apiKey);
       
       if (extractedCINData) {
-        console.log("✅ OCR CIN terminé avec données complètes:", {
+        console.log("✅ OCR CIN terminé avec données:", {
           ...extractedCINData,
           code_barre_present: extractedCINData.code_barre ? "✅ OUI" : "❌ NON",
-          image_url_presente: extractedCINData.code_barre_image_url ? "✅ OUI" : "❌ NON",
-          url_recue: extractedCINData.code_barre_image_url
+          image_url_presente: extractedCINData.code_barre_image_url ? "✅ OUI" : "❌ NON"
         });
-        
-        // 🚨 VÉRIFICATION CRITIQUE : S'assurer que l'URL est bien présente
-        if (extractedCINData.code_barre_image_url) {
-          console.log("🎉 CIN - Image code-barres CONFIRMÉE avec URL:", extractedCINData.code_barre_image_url);
-        } else if (extractedCINData.code_barre) {
-          console.warn("⚠️ CIN - Code-barres détecté MAIS PAS D'URL d'image!");
-        }
-      } else {
-        console.warn("⚠️ OCR terminé mais aucune donnée exploitable");
       }
     } catch (error) {
       console.error("❌ Erreur OCR CIN:", error);
@@ -84,7 +75,6 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
         confirmation_transmission: extractedData.code_barre_image_url ? "✅ URL PRÊTE" : "❌ PAS D'URL"
       });
       
-      // 🎯 TRANSMISSION CRITIQUE : S'assurer que TOUTES les données sont transmises
       onDataExtracted(extractedData);
       toast.success("Données CIN confirmées et appliquées avec image code-barres!");
     } else {
@@ -113,7 +103,7 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
         <CardHeader>
           <CardTitle className="text-lg">📄 Scanner la CIN</CardTitle>
           <CardDescription>
-            Prenez une photo claire de la carte d'identité nationale (recto) - L'image du code-barres sera automatiquement sauvegardée
+            Prenez une photo claire de la carte d'identité nationale (recto) - L'image sera automatiquement sauvegardée
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
