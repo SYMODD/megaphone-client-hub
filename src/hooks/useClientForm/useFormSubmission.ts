@@ -20,8 +20,20 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
       code_barre: formData.code_barre,
       code_barre_image_url: formData.code_barre_image_url,
       photo_url: formData.photo_url,
-      numero_telephone: formData.numero_telephone
+      numero_telephone: formData.numero_telephone,
+      url_longueur: formData.code_barre_image_url?.length || 0
     });
+
+    // 🔥 VÉRIFICATION PRÉALABLE CRITIQUE
+    if (formData.code_barre_image_url) {
+      console.log("✅ URL code-barres présente avant soumission:", {
+        url: formData.code_barre_image_url,
+        valide: formData.code_barre_image_url.startsWith('http'),
+        longueur: formData.code_barre_image_url.length
+      });
+    } else {
+      console.warn("⚠️ ATTENTION: Aucune URL de code-barres avant soumission");
+    }
 
     try {
       // Get current user ID for agent_id
@@ -45,10 +57,14 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
         date_enregistrement: formData.date_enregistrement,
         photo_url: formData.photo_url,
         document_type: formData.document_type,
-        agent_id: user.id // 🔥 AJOUT AGENT_ID REQUIS
+        agent_id: user.id
       };
 
-      console.log("💾 FORM SUBMISSION - Données à insérer en base:", dataToInsert);
+      console.log("💾 FORM SUBMISSION - Données à insérer en base:", {
+        ...dataToInsert,
+        code_barre_image_url_presente: dataToInsert.code_barre_image_url ? "✅ OUI" : "❌ NON",
+        code_barre_image_url_longueur: dataToInsert.code_barre_image_url?.length || 0
+      });
 
       const { data, error } = await supabase
         .from('clients')
@@ -63,14 +79,17 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
 
       console.log("✅ Client enregistré avec succès:", data);
 
-      // 🔥 VÉRIFICATION POST-INSERTION: Vérifier que l'URL a bien été sauvegardée
+      // 🔥 VÉRIFICATION POST-INSERTION RENFORCÉE
       if (data && data[0]) {
         const savedClient = data[0];
-        console.log("🔍 VÉRIFICATION POST-INSERTION:", {
+        console.log("🔍 VÉRIFICATION POST-INSERTION DÉTAILLÉE:", {
           client_id: savedClient.id,
           code_barre_sauvegarde: savedClient.code_barre,
           code_barre_image_url_sauvegarde: savedClient.code_barre_image_url,
-          url_correctement_sauvegardee: savedClient.code_barre_image_url ? "✅ OUI" : "❌ NON"
+          url_correctement_sauvegardee: savedClient.code_barre_image_url ? "✅ OUI" : "❌ NON",
+          url_originale_longueur: formData.code_barre_image_url?.length || 0,
+          url_sauvegardee_longueur: savedClient.code_barre_image_url?.length || 0,
+          urls_identiques: formData.code_barre_image_url === savedClient.code_barre_image_url ? "✅ OUI" : "❌ NON"
         });
 
         if (formData.code_barre_image_url && !savedClient.code_barre_image_url) {
@@ -78,10 +97,15 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
             url_originale: formData.code_barre_image_url,
             url_sauvegardee: savedClient.code_barre_image_url
           });
+          toast.error("⚠️ L'image du code-barres n'a pas été sauvegardée correctement");
+        } else if (formData.code_barre_image_url && savedClient.code_barre_image_url) {
+          console.log("✅ SUCCESS: URL image code-barres correctement sauvegardée!");
+          toast.success("✅ Client et image code-barres enregistrés avec succès !");
+        } else {
+          toast.success("✅ Client enregistré avec succès !");
         }
       }
 
-      toast.success("✅ Client enregistré avec succès !");
       resetForm();
     } catch (error) {
       console.error("❌ Erreur générale:", error);

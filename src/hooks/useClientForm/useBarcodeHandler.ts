@@ -18,11 +18,11 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
     setFormData(prev => {
       const updatedData = {
         ...prev,
-        // Champs de contact uniquement (section Informations de Contact)
-        code_barre: barcode || prev.code_barre,
-        numero_telephone: phone || prev.numero_telephone,
-        // 🔥 CORRECTION CRITIQUE: S'assurer que l'URL est bien assignée
-        code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url
+        // 🔥 CORRECTION CRITIQUE: Assignation directe sans l'opérateur ||
+        code_barre: barcode ? barcode : prev.code_barre,
+        numero_telephone: phone ? phone : prev.numero_telephone,
+        // 🔥 CORRECTION PRINCIPALE: Assignation directe de l'URL
+        code_barre_image_url: barcodeImageUrl ? barcodeImageUrl : prev.code_barre_image_url
       };
 
       console.log("🔄 BARCODE HANDLER - Mise à jour des champs de contact:", {
@@ -42,6 +42,8 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
           url_fournie: barcodeImageUrl,
           url_finale: updatedData.code_barre_image_url
         });
+      } else if (barcodeImageUrl && updatedData.code_barre_image_url === barcodeImageUrl) {
+        console.log("✅ URL image correctement assignée:", barcodeImageUrl);
       }
 
       return updatedData;

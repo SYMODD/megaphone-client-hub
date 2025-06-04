@@ -26,7 +26,7 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
         maxWidth: 1200,
         maxHeight: 1200,
         quality: 0.8,
-        maxSizeKB: 800 // Bien en dessous de la limite de 1024 KB
+        maxSizeKB: 800
       });
 
       console.log("✅ Image compressée pour OCR:", {
@@ -41,7 +41,7 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       if (!barcodeImageUrl) {
         console.error("❌ Échec upload image - abandon du processus");
         toast.error("❌ Impossible d'uploader l'image du code-barres");
-        onResult("", "");
+        onResult("", "", "");
         return;
       }
       
@@ -51,7 +51,7 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       console.log("🔍 ÉTAPE 3: Scan OCR avec le fichier compressé...");
       
       const formData = new FormData();
-      formData.append('file', compressedFileForOCR); // 🔥 UTILISATION DU FICHIER COMPRESSÉ
+      formData.append('file', compressedFileForOCR);
       formData.append('apikey', 'K87899883388957');
       formData.append('language', 'fre');
       formData.append('isOverlayRequired', 'false');
@@ -81,7 +81,7 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       const extractedText = data.ParsedResults?.[0]?.ParsedText || "";
       console.log("📝 Texte extrait:", extractedText);
 
-      // 4. Extraction du code-barres et du téléphone avec les nouveaux extracteurs
+      // 4. Extraction du code-barres et du téléphone
       console.log("🔍 ÉTAPE 4: Extraction avec nouveaux extracteurs...");
       
       const phone = extractPhoneNumber(extractedText);
@@ -100,13 +100,20 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
         });
       }
 
-      // 6. Retourner les résultats avec l'URL de l'image
+      // 6. 🔥 CORRECTION CRITIQUE: S'assurer que l'URL est toujours passée
+      console.log("📤 TRANSMISSION FINALE - Envoi des données avec URL:", {
+        barcode,
+        phone,
+        barcodeImageUrl,
+        url_presente: barcodeImageUrl ? "✅ OUI" : "❌ NON"
+      });
+
       onResult(barcode, phone, barcodeImageUrl);
 
     } catch (error) {
       console.error("❌ Erreur processus OCR complet:", error);
       toast.error("❌ Erreur lors du scan du code-barres");
-      onResult("", "");
+      onResult("", "", "");
     } finally {
       setIsScanning(false);
     }
