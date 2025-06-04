@@ -8,43 +8,35 @@ interface UseBarcodeHandlerProps {
 
 export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
   const handleBarcodeScanned = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
-    console.log("📊 BARCODE HANDLER - Réception données de contact:", {
+    console.log("🔥 BARCODE HANDLER - DÉBUT - Données reçues:", {
       barcode,
       phone,
       barcodeImageUrl,
-      section: "INFORMATIONS DE CONTACT UNIQUEMENT"
+      url_type: typeof barcodeImageUrl,
+      url_length: barcodeImageUrl?.length,
+      url_truthy: !!barcodeImageUrl
     });
 
     setFormData(prev => {
-      const updatedData = {
-        ...prev,
-        // 🔥 CORRECTION CRITIQUE: Assignation directe sans l'opérateur ||
-        code_barre: barcode ? barcode : prev.code_barre,
-        numero_telephone: phone ? phone : prev.numero_telephone,
-        // 🔥 CORRECTION PRINCIPALE: Assignation directe de l'URL
-        code_barre_image_url: barcodeImageUrl ? barcodeImageUrl : prev.code_barre_image_url
-      };
-
-      console.log("🔄 BARCODE HANDLER - Mise à jour des champs de contact:", {
+      console.log("🔥 BARCODE HANDLER - État précédent:", {
         code_barre_avant: prev.code_barre,
-        code_barre_apres: updatedData.code_barre,
-        telephone_avant: prev.numero_telephone,
-        telephone_apres: updatedData.numero_telephone,
-        url_avant: prev.code_barre_image_url,
-        url_apres: updatedData.code_barre_image_url,
-        url_image_fournie: barcodeImageUrl,
-        url_finale_assignee: updatedData.code_barre_image_url
+        code_barre_image_url_avant: prev.code_barre_image_url
       });
 
-      // 🔥 VÉRIFICATION CRITIQUE: Alerter si l'URL n'est pas assignée
-      if (barcodeImageUrl && !updatedData.code_barre_image_url) {
-        console.error("❌ ERREUR CRITIQUE: URL image fournie mais non assignée!", {
-          url_fournie: barcodeImageUrl,
-          url_finale: updatedData.code_barre_image_url
-        });
-      } else if (barcodeImageUrl && updatedData.code_barre_image_url === barcodeImageUrl) {
-        console.log("✅ URL image correctement assignée:", barcodeImageUrl);
-      }
+      const updatedData = {
+        ...prev,
+        code_barre: barcode || prev.code_barre,
+        numero_telephone: phone || prev.numero_telephone,
+        code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url
+      };
+
+      console.log("🔥 BARCODE HANDLER - APRÈS MISE À JOUR:", {
+        code_barre: updatedData.code_barre,
+        code_barre_image_url: updatedData.code_barre_image_url,
+        url_assignée: updatedData.code_barre_image_url === barcodeImageUrl ? "✅ OUI" : "❌ NON",
+        url_fournie: barcodeImageUrl,
+        url_finale: updatedData.code_barre_image_url
+      });
 
       return updatedData;
     });

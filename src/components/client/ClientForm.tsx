@@ -20,9 +20,27 @@ export const ClientForm = () => {
     handleBarcodeScanned
   } = useClientFormLogic();
 
+  const handleBarcodeScannedWithLogging = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
+    console.log("🔥 CLIENT FORM - RÉCEPTION BARCODE:", {
+      barcode,
+      phone,
+      barcodeImageUrl,
+      component: "ClientForm"
+    });
+    
+    handleBarcodeScanned(barcode, phone, barcodeImageUrl);
+  };
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleSubmit(e); // 🔥 CORRECTION: passer l'événement
+    
+    console.log("🔥 CLIENT FORM - SOUMISSION - État actuel du formulaire:", {
+      code_barre: formData.code_barre,
+      code_barre_image_url: formData.code_barre_image_url,
+      url_présente: formData.code_barre_image_url ? "✅ OUI" : "❌ NON"
+    });
+    
+    handleSubmit(e);
   };
 
   return (
@@ -37,7 +55,7 @@ export const ClientForm = () => {
         />
 
         <BarcodeScanner 
-          onBarcodeScanned={handleBarcodeScanned}
+          onBarcodeScanned={handleBarcodeScannedWithLogging}
           currentBarcode={formData.code_barre}
         />
 
@@ -60,7 +78,7 @@ export const ClientForm = () => {
 
             <FormActions 
               isLoading={isLoading}
-              onSubmit={() => handleSubmit} // 🔥 CORRECTION: retourner la fonction au lieu de l'appeler
+              onSubmit={() => {}} // La soumission se fait via le form onSubmit
             />
           </>
         )}
