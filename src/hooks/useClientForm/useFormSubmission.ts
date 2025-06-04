@@ -15,8 +15,10 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
     
     if (!user) {
       toast.error("Vous devez être connecté pour enregistrer un client");
