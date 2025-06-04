@@ -50,26 +50,6 @@ export const useImageUpload = () => {
 
       console.log("✅ Bucket 'barcode-images' trouvé:", barcodeImagesBucket);
 
-      // Test d'accès au bucket
-      console.log("🔍 Test d'accès au bucket...");
-      try {
-        const { data: listData, error: listError } = await supabase.storage
-          .from('barcode-images')
-          .list('', { limit: 1 });
-        
-        if (listError) {
-          console.error("❌ Erreur d'accès au bucket:", listError);
-          toast.error(`Accès au bucket refusé: ${listError.message}`);
-          throw listError;
-        }
-        
-        console.log("✅ Accès au bucket confirmé");
-      } catch (accessError) {
-        console.error("❌ Impossible d'accéder au bucket:", accessError);
-        toast.error("Impossible d'accéder au stockage");
-        throw accessError;
-      }
-
       // Générer un nom de fichier unique
       const timestamp = Date.now();
       const randomId = Math.random().toString(36).substr(2, 9);
@@ -78,7 +58,7 @@ export const useImageUpload = () => {
       
       console.log("📝 Nom de fichier généré:", filename);
 
-      // Tentative d'upload
+      // Upload du fichier vers Supabase Storage
       console.log("📤 Début de l'upload du fichier...");
       const { data, error } = await supabase.storage
         .from('barcode-images')
@@ -88,11 +68,7 @@ export const useImageUpload = () => {
         });
 
       if (error) {
-        console.error("❌ Erreur upload code-barres:", {
-          error: error,
-          message: error.message,
-          details: error
-        });
+        console.error("❌ Erreur upload code-barres:", error);
         
         // Messages d'erreur plus spécifiques
         if (error.message.includes('policy')) {
@@ -131,15 +107,9 @@ export const useImageUpload = () => {
       return finalUrl;
       
     } catch (error: any) {
-      console.error("❌ Erreur inattendue upload code-barres:", {
-        error: error,
-        message: error?.message,
-        stack: error?.stack
-      });
-      
+      console.error("❌ Erreur inattendue upload code-barres:", error);
       setUploadProgress(0);
       
-      // Ne pas afficher de toast si on en a déjà affiché un
       if (!error?.message?.includes('toast déjà affiché')) {
         toast.error("Erreur lors de l'upload de l'image");
       }

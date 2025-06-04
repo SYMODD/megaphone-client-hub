@@ -55,12 +55,18 @@ export const uploadClientPhoto = async (imageBase64: string, documentType: strin
       return null;
     }
 
+    // Convertir base64 en blob
     const response = await fetch(imageBase64);
     const blob = await response.blob();
-    const filename = `${documentType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.jpg`;
+    
+    // Générer un nom de fichier unique
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substr(2, 9);
+    const filename = `${documentType}-${timestamp}-${randomId}.jpg`;
     
     console.log(`📝 Nom du fichier généré: ${filename}`);
     
+    // Upload vers Supabase Storage
     const { data, error } = await supabase.storage
       .from('client-photos')
       .upload(filename, blob, { 
@@ -75,6 +81,7 @@ export const uploadClientPhoto = async (imageBase64: string, documentType: strin
 
     console.log('✅ Upload réussi vers client-photos:', data);
 
+    // Obtenir l'URL publique
     const { data: publicURL } = supabase.storage
       .from('client-photos')
       .getPublicUrl(data.path);
