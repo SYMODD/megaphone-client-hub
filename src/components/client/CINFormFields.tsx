@@ -2,18 +2,14 @@
 import { PersonalInfoSection } from "./PersonalInfoSection";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { RegistrationSection } from "./RegistrationSection";
+import { ClientFormData } from "@/hooks/useClientForm/types";
 
-interface CINFormData {
-  nom: string;
-  prenom: string;
-  nationalite: string;
-  numero_passeport: string;
-  numero_telephone: string;
-  code_barre: string;
-  scannedImage: string | null;
-  photo_url: string;
-  observations: string;
-  date_enregistrement: string;
+// Extend ClientFormData with CIN-specific fields for the component
+interface CINFormData extends ClientFormData {
+  cin: string;
+  date_naissance: string;
+  lieu_naissance: string;
+  adresse: string;
 }
 
 interface CINFormFieldsProps {

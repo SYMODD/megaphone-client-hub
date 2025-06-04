@@ -5,18 +5,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useImageUpload } from "@/hooks/useImageUpload";
+import { ClientFormData } from "@/hooks/useClientForm/types";
 
-interface CINFormData {
-  nom: string;
-  prenom: string;
+// Extend ClientFormData with CIN-specific fields
+interface CINFormData extends ClientFormData {
   cin: string;
   date_naissance: string;
   lieu_naissance: string;
   adresse: string;
-  scannedImage: string | null;
-  numero_telephone: string;
-  observations: string;
-  date_enregistrement: string;
 }
 
 export const useCINForm = () => {
@@ -28,14 +24,21 @@ export const useCINForm = () => {
   const [formData, setFormData] = useState<CINFormData>({
     nom: "",
     prenom: "",
+    nationalite: "Marocaine", // Default for CIN
+    numero_passeport: "", // Will store CIN number
+    numero_telephone: "",
+    code_barre: "",
+    code_barre_image_url: "",
+    scannedImage: null,
+    photo_url: "",
+    observations: "",
+    date_enregistrement: new Date().toISOString().split('T')[0],
+    document_type: 'cin',
+    // CIN-specific fields
     cin: "",
     date_naissance: "",
     lieu_naissance: "",
-    adresse: "",
-    scannedImage: null,
-    numero_telephone: "",
-    observations: "",
-    date_enregistrement: new Date().toISOString().split('T')[0]
+    adresse: ""
   });
 
   const handleInputChange = (field: keyof CINFormData, value: string) => {
@@ -55,6 +58,7 @@ export const useCINForm = () => {
       nom: extractedData.nom || prev.nom,
       prenom: extractedData.prenom || prev.prenom,
       cin: extractedData.cin || prev.cin,
+      numero_passeport: extractedData.cin || prev.numero_passeport, // Store CIN in passport field
       date_naissance: extractedData.date_naissance || prev.date_naissance,
       lieu_naissance: extractedData.lieu_naissance || prev.lieu_naissance,
       adresse: extractedData.adresse || prev.adresse
