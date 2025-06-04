@@ -1,92 +1,74 @@
 
 import { useState } from "react";
+import { extractCINData } from "@/services/cinOCRService";
 import { toast } from "sonner";
-import { CINData } from "@/types/cinTypes";
-import { extractCINData } from "@/utils/cinDataExtractor";
-import { performCINOCR } from "@/services/cinOCRService";
+import { useImageUpload } from "@/hooks/useImageUpload";
 
 export const useCINOCR = () => {
   const [isScanning, setIsScanning] = useState(false);
-  const [extractedData, setExtractedData] = useState<CINData | null>(null);
+  const [extractedData, setExtractedData] = useState<any>(null);
   const [rawText, setRawText] = useState<string>("");
+  const { uploadBarcodeImage } = useImageUpload();
 
-  const scanImage = async (file: File, apiKey: string): Promise<CINData | null> => {
+  const scanImage = async (file: File, apiKey: string) => {
     setIsScanning(true);
-    setExtractedData(null);
-    setRawText("");
+    console.log("🔍 CIN OCR - Début du scan avec upload automatique image code-barres");
     
     try {
-      console.log("🔍 DÉBUT SCAN CIN avec clé API:", apiKey.substring(0, 5) + "...");
-      console.log("📁 Fichier à analyser:", {
-        name: file.name,
-        size: (file.size / 1024).toFixed(1) + " KB",
-        type: file.type
-      });
+      // 1. Extraction OCR des données CIN
+      console.log("📄 Extraction des données CIN via OCR...");
+      const result = await extractCINData(file, apiKey);
       
-      // Toast de début
-      toast.info("🔍 Analyse OCR en cours...", { duration: 3000 });
-      
-      const result = await performCINOCR(file, apiKey);
-      console.log("📄 Réponse OCR brute:", result);
+      if (result.success && result.data) {
+        console.log("✅ Données CIN extraites:", result.data);
+        setExtractedData(result.data);
+        setRawText(result.rawText || "");
 
-      if (result.IsErroredOnProcessing || result.OCRExitCode !== 1) {
-        const errorMsg = result.ErrorMessage || "Erreur lors du traitement OCR";
-        console.error("❌ Erreur OCR:", errorMsg);
-        toast.error(`Erreur OCR: ${errorMsg}`);
-        return null;
-      }
-
-      const parsedText = result.ParsedResults[0]?.ParsedText || "";
-      console.log("📝 Texte OCR extrait:", parsedText);
-      
-      if (!parsedText.trim()) {
-        console.warn("⚠️ Aucun texte détecté");
-        toast.warning("❌ Aucun texte détecté dans l'image. Vérifiez la qualité de l'image.");
-        return null;
-      }
-
-      setRawText(parsedText);
-      
-      // Toast de progression
-      toast.info("📊 Extraction des données CIN...", { duration: 2000 });
-      
-      // Extraction des données CIN avec logging détaillé
-      console.log("🔍 DÉBUT extraction des données CIN...");
-      const cinData = extractCINData(parsedText);
-      console.log("📋 Données CIN extraites:", cinData);
-
-      // Vérification TRÈS permissive des données extraites
-      const extractedFields = [];
-      if (cinData.nom?.trim()) extractedFields.push("nom");
-      if (cinData.prenom?.trim()) extractedFields.push("prénom");
-      if (cinData.numero_cin?.trim()) extractedFields.push("numéro CIN");
-      if (cinData.date_naissance?.trim()) extractedFields.push("date de naissance");
-      if (cinData.lieu_naissance?.trim()) extractedFields.push("lieu de naissance");
-      
-      // TOUJOURS retourner les données même si partielles
-      setExtractedData(cinData);
-      console.log("✅ Extraction CIN terminée:", cinData);
-      
-      if (extractedFields.length > 0) {
-        // Message de succès détaillé
-        toast.success(`✅ Données extraites: ${extractedFields.join(", ")}`, { duration: 5000 });
-        return cinData;
+        // 2. Upload automatique de l'image code-barres SI un code-barres a été détecté
+        if (result.data.code_barre) {
+          console.log("📤 CIN - Upload automatique image code-barres détecté:", result.data.code_barre);
+          
+          try {
+            const barcodeImageUrl = await uploadBarcodeImage(file);
+            
+            if (barcodeImageUrl) {
+              console.log("✅ CIN - Image code-barres uploadée automatiquement:", barcodeImageUrl);
+              
+              // Ajouter l'URL de l'image code-barres aux données extraites
+              const updatedData = {
+                ...result.data,
+                code_barre_image_url: barcodeImageUrl
+              };
+              
+              setExtractedData(updatedData);
+              
+              toast.success("Données CIN et image code-barres extraites avec succès!");
+              console.log("🎉 CIN - Données complètes avec image:", updatedData);
+              
+              return updatedData;
+            } else {
+              console.warn("⚠️ CIN - Échec upload image code-barres, mais données CIN OK");
+              toast.success("Données CIN extraites (image code-barres non sauvegardée)");
+              return result.data;
+            }
+          } catch (barcodeError) {
+            console.error("❌ CIN - Erreur upload image code-barres:", barcodeError);
+            toast.success("Données CIN extraites (erreur sauvegarde image code-barres)");
+            return result.data;
+          }
+        } else {
+          console.log("ℹ️ CIN - Aucun code-barres détecté, pas d'upload d'image");
+          toast.success("Données CIN extraites (aucun code-barres détecté)");
+          return result.data;
+        }
       } else {
-        console.log("⚠️ Aucun champ extrait mais données retournées quand même");
-        toast.warning("⚠️ Texte analysé. Vérifiez les données extraites ci-dessous.");
-        return cinData; // Retourner quand même pour permettre la validation manuelle
+        console.error("❌ CIN OCR - Échec extraction:", result.error);
+        toast.error(result.error || "Impossible d'extraire les données CIN");
+        return null;
       }
     } catch (error) {
-      console.error("❌ Erreur lors du scan CIN:", error);
-      const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
-      
-      if (errorMessage.includes("Timeout")) {
-        toast.error("⏰ Timeout: L'analyse a pris trop de temps. Réessayez avec une image plus petite.");
-      } else if (errorMessage.includes("Failed to fetch")) {
-        toast.error("🌐 Erreur de connexion: Vérifiez votre connexion internet.");
-      } else {
-        toast.error(`❌ Erreur scan CIN: ${errorMessage}`);
-      }
+      console.error("❌ CIN OCR - Erreur générale:", error);
+      toast.error("Erreur lors du scan CIN");
       return null;
     } finally {
       setIsScanning(false);
@@ -94,7 +76,7 @@ export const useCINOCR = () => {
   };
 
   const resetScan = () => {
-    console.log("🔄 Reset CIN OCR");
+    console.log("🔄 Reset scan CIN");
     setExtractedData(null);
     setRawText("");
   };

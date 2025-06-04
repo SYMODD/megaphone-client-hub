@@ -12,6 +12,7 @@ interface CINFormData {
   numero_passeport: string;
   numero_telephone: string;
   code_barre: string;
+  code_barre_image_url: string;
   scannedImage: string | null;
   photo_url: string;
   observations: string;
@@ -19,17 +20,18 @@ interface CINFormData {
 }
 
 export const useCINForm = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState<CINFormData>({
     nom: "",
     prenom: "",
-    nationalite: "Maroc",
+    nationalite: "",
     numero_passeport: "",
     numero_telephone: "",
     code_barre: "",
+    code_barre_image_url: "",
     scannedImage: null,
     photo_url: "",
     observations: "",
@@ -41,10 +43,10 @@ export const useCINForm = () => {
   };
 
   const handleImageScanned = (image: string, photoUrl?: string) => {
-    console.log("🖼️ CIN FORM - Image scannée avec URL:", { 
-      hasImage: !!image, 
-      hasPhotoUrl: !!photoUrl,
-      photoUrl 
+    console.log("📸 CIN FORM - Image scannée reçue:", {
+      image_presente: image ? "✅ OUI" : "❌ NON",
+      photo_url_presente: photoUrl ? "✅ OUI" : "❌ NON",
+      photo_url: photoUrl
     });
     
     setFormData(prev => ({
@@ -54,139 +56,114 @@ export const useCINForm = () => {
     }));
   };
 
-  const handleCINDataExtracted = (extractedData: any) => {
-    console.log("📝 CIN FORM - Données CIN extraites reçues:", extractedData);
-    
-    if (!extractedData) {
-      console.warn("⚠️ Aucune donnée extraite reçue");
-      return;
-    }
-    
-    // Mapper les données extraites vers les champs du formulaire - TRÈS PERMISSIF
-    const updatedData: Partial<CINFormData> = {};
-    let fieldsExtracted: string[] = [];
-    
-    // Application IMMÉDIATE même avec des données partielles
-    console.log("📝 Application IMMÉDIATE des données:", extractedData);
-    
-    // Nom - accepter n'importe quelle chaîne
-    if (extractedData.nom) {
-      updatedData.nom = String(extractedData.nom).trim().toUpperCase();
-      fieldsExtracted.push("nom");
-      console.log("✅ Nom extrait et appliqué:", updatedData.nom);
-    }
-    
-    // Prénom - accepter n'importe quelle chaîne
-    if (extractedData.prenom) {
-      updatedData.prenom = String(extractedData.prenom).trim().toUpperCase();
-      fieldsExtracted.push("prénom");
-      console.log("✅ Prénom extrait et appliqué:", updatedData.prenom);
-    }
-    
-    // Nationalité
-    if (extractedData.nationalite) {
-      updatedData.nationalite = String(extractedData.nationalite).trim();
-      fieldsExtracted.push("nationalité");
-      console.log("✅ Nationalité extraite et appliquée:", updatedData.nationalite);
-    }
-    
-    // Numéro CIN → numéro passeport
-    if (extractedData.numero_cin) {
-      updatedData.numero_passeport = String(extractedData.numero_cin).trim();
-      fieldsExtracted.push("numéro CIN");
-      console.log("✅ Numéro CIN extrait et appliqué:", updatedData.numero_passeport);
-    }
+  const handleCINDataExtracted = (data: any) => {
+    console.log("📋 CIN FORM - Données CIN reçues:", {
+      ...data,
+      code_barre_present: data.code_barre ? "✅ OUI" : "❌ NON",
+      image_barcode_presente: data.code_barre_image_url ? "✅ OUI" : "❌ NON",
+      image_barcode_url: data.code_barre_image_url
+    });
 
-    // TOUJOURS appliquer les données
-    console.log("📝 Application forcée des données extraites:", updatedData);
-    
-    setFormData(prev => ({ ...prev, ...updatedData }));
-    
-    // Créer les informations d'extraction pour les observations
-    let observationsData = `=== EXTRACTION CIN AUTOMATIQUE ===\nDate: ${new Date().toLocaleString('fr-FR')}\nType: Carte d'Identité Nationale`;
-    
-    if (fieldsExtracted.length > 0) {
-      observationsData += `\nChamps extraits: ${fieldsExtracted.join(', ')}`;
-    }
-    
-    // Date de naissance (ajout dans les observations si disponible)
-    if (extractedData.date_naissance) {
-      observationsData += `\nDate de naissance: ${extractedData.date_naissance}`;
-      fieldsExtracted.push("date de naissance");
-    }
-    
-    // Lieu de naissance (ajout dans les observations si disponible)
-    if (extractedData.lieu_naissance) {
-      observationsData += `\nLieu de naissance: ${extractedData.lieu_naissance}`;
-      fieldsExtracted.push("lieu de naissance");
-    }
-    
+    const observations = `=== EXTRACTION CIN AUTOMATIQUE ===
+Date: ${new Date().toLocaleString('fr-FR')}
+Type: Carte d'Identité Nationale
+Champs extraits: ${Object.keys(data).filter(key => data[key] && key !== 'code_barre_image_url').join(', ')}
+${data.code_barre_image_url ? 'Image code-barres: Sauvegardée automatiquement' : ''}`;
+
     setFormData(prev => ({
       ...prev,
-      observations: prev.observations ? `${prev.observations}\n\n${observationsData}` : observationsData
+      nom: data.nom || prev.nom,
+      prenom: data.prenom || prev.prenom,
+      nationalite: data.nationalite || prev.nationalite,
+      numero_passeport: data.numero_cin || data.numero_passeport || prev.numero_passeport,
+      numero_telephone: data.numero_telephone || prev.numero_telephone,
+      code_barre: data.code_barre || prev.code_barre,
+      // 🎯 CRUCIAL: Inclure l'URL de l'image code-barres
+      code_barre_image_url: data.code_barre_image_url || prev.code_barre_image_url,
+      observations: observations
     }));
-    
-    // Message de succès - TOUJOURS affiché
-    toast.success(`🎉 Données CIN appliquées au formulaire!${fieldsExtracted.length > 0 ? `\nChamps: ${fieldsExtracted.join(", ")}` : ''}`, { 
-      duration: 5000 
-    });
-    console.log("✅ SUCCÈS - Données CIN appliquées au formulaire");
   };
 
   const handleSubmit = async () => {
-    if (!user) {
+    if (!user || !profile) {
       toast.error("Vous devez être connecté pour ajouter un client");
       return;
     }
 
-    if (!formData.nom || !formData.prenom || !formData.numero_passeport) {
-      toast.error("Veuillez remplir tous les champs obligatoires (nom, prénom, numéro de document)");
-      return;
-    }
+    console.log("📝 CIN FORM - SOUMISSION avec données complètes:", {
+      nom: formData.nom,
+      prenom: formData.prenom,
+      code_barre: formData.code_barre,
+      numero_telephone: formData.numero_telephone,
+      photo_client_presente: formData.photo_url ? "✅ OUI" : "❌ NON",
+      image_barcode_presente: formData.code_barre_image_url ? "✅ OUI" : "❌ NON",
+      photo_url: formData.photo_url,
+      code_barre_image_url: formData.code_barre_image_url
+    });
 
     setIsLoading(true);
 
     try {
-      console.log("💾 CIN FORM SUBMIT - Données avec photo_url:", {
-        ...formData,
-        photo_url_present: formData.photo_url ? "✅ OUI" : "❌ NON",
-        photo_url_value: formData.photo_url
-      });
-      
       const clientData = {
-        nom: formData.nom.trim(),
-        prenom: formData.prenom.trim(),
+        nom: formData.nom,
+        prenom: formData.prenom,
         nationalite: formData.nationalite,
-        numero_passeport: formData.numero_passeport.trim(),
-        numero_telephone: formData.numero_telephone.trim(),
-        code_barre: formData.code_barre.trim(),
+        numero_passeport: formData.numero_passeport,
+        numero_telephone: formData.numero_telephone,
+        code_barre: formData.code_barre,
+        // 🎯 CRUCIAL: Inclure l'URL de l'image code-barres
+        code_barre_image_url: formData.code_barre_image_url || null,
         photo_url: formData.photo_url || null,
         observations: formData.observations,
         date_enregistrement: formData.date_enregistrement,
-        agent_id: user.id
+        agent_id: user.id,
+        document_type: 'cin'
       };
 
-      console.log("💾 Données client à insérer avec photo_url:", clientData);
+      console.log("💾 CIN FORM - INSERTION avec DEUX IMAGES AUTOMATIQUES:", {
+        nom_complet: `${clientData.prenom} ${clientData.nom}`,
+        code_barre: clientData.code_barre || "NON",
+        telephone: clientData.numero_telephone || "NON",
+        photo_client: clientData.photo_url ? "✅ client-photos (AUTO)" : "❌ NON",
+        image_barcode: clientData.code_barre_image_url ? "✅ barcode-images (AUTO)" : "❌ NON",
+        les_deux_images: (clientData.photo_url && clientData.code_barre_image_url) ? "✅ OUI" : "❌ NON"
+      });
 
       const { error } = await supabase
         .from('clients')
         .insert(clientData);
 
       if (error) {
-        console.error('Error inserting client:', error);
+        console.error('❌ Erreur insertion client CIN:', error);
         if (error.code === '23505') {
-          toast.error("Ce numéro de document existe déjà dans la base de données");
+          toast.error("Ce numéro de document existe déjà");
         } else {
-          toast.error(`Erreur lors de l'enregistrement du client: ${error.message}`);
+          toast.error("Erreur lors de l'enregistrement du client");
         }
         return;
       }
 
-      console.log("✅ Client CIN enregistré avec photo_url:", clientData.photo_url);
-      toast.success("Client avec CIN enregistré avec succès!");
-      navigate("/");
+      console.log("🎉 Client CIN enregistré avec succès avec LES DEUX IMAGES!");
+      
+      let successMessage = "Client CIN enregistré avec succès";
+      const elements = [];
+      if (clientData.photo_url) {
+        elements.push("photo CIN");
+      }
+      if (clientData.code_barre_image_url) {
+        elements.push("image code-barres");
+      }
+      
+      if (elements.length > 0) {
+        successMessage += ` avec ${elements.join(" et ")} !`;
+      } else {
+        successMessage += "!";
+      }
+      
+      toast.success(successMessage);
+      navigate("/base-clients");
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Erreur inattendue CIN:', error);
       toast.error("Une erreur inattendue s'est produite");
     } finally {
       setIsLoading(false);
