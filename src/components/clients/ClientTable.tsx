@@ -53,7 +53,7 @@ export const ClientTable = ({ clients, onViewClient, onEditClient, onGenerateDoc
                     </div>
                   )}
                   
-                  {/* Image du code-barres */}
+                  {/* Image du code-barres - BADGE INDICATEUR AMÉLIORÉ */}
                   {client.code_barre_image_url ? (
                     <div className="group relative">
                       <img 
@@ -61,8 +61,13 @@ export const ClientTable = ({ clients, onViewClient, onEditClient, onGenerateDoc
                         alt="Image code-barres"
                         className="w-8 h-8 rounded border border-gray-200 object-cover cursor-pointer hover:w-16 hover:h-16 transition-all duration-200"
                         title="Image du code-barres scanné"
+                        onError={(e) => {
+                          console.error("❌ Erreur chargement miniature code-barres:", client.code_barre_image_url);
+                          const target = e.currentTarget;
+                          target.style.display = 'none';
+                        }}
                       />
-                      <div className="absolute -bottom-1 -right-1 bg-green-500 text-white rounded-full p-0.5">
+                      <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-0.5">
                         <Barcode className="w-2 h-2" />
                       </div>
                     </div>

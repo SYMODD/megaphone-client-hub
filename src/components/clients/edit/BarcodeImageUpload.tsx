@@ -46,9 +46,10 @@ export const BarcodeImageUpload = ({ clientId, onImageUploaded }: BarcodeImageUp
     console.log("🔄 BarcodeImageUpload - Début upload pour client:", clientId);
 
     try {
-      // Générer un nom de fichier unique
+      // Générer un nom de fichier unique avec timestamp pour éviter les problèmes de cache
       const fileExtension = file.name.split('.').pop();
-      const fileName = `barcode_${clientId}_${Date.now()}.${fileExtension}`;
+      const timestamp = new Date().getTime();
+      const fileName = `barcode_${clientId}_${timestamp}.${fileExtension}`;
 
       console.log("📤 Upload vers bucket barcode-images avec nom:", fileName);
 
@@ -56,8 +57,8 @@ export const BarcodeImageUpload = ({ clientId, onImageUploaded }: BarcodeImageUp
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('barcode-images')
         .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
+          cacheControl: '0', // Désactiver le cache pour forcer le rechargement
+          upsert: true // Remplacer si existe déjà
         });
 
       if (uploadError) {
@@ -67,13 +68,14 @@ export const BarcodeImageUpload = ({ clientId, onImageUploaded }: BarcodeImageUp
 
       console.log("✅ Upload réussi:", uploadData);
 
-      // Construire l'URL publique
+      // Construire l'URL publique avec un param timestamp pour éviter le cache
       const { data: urlData } = supabase.storage
         .from('barcode-images')
         .getPublicUrl(fileName);
 
-      const imageUrl = urlData.publicUrl;
-      console.log("🔗 URL publique générée:", imageUrl);
+      // Ajouter un paramètre t= pour éviter le cache navigateur
+      const imageUrl = `${urlData.publicUrl}?t=${timestamp}`;
+      console.log("🔗 URL publique générée avec anti-cache:", imageUrl);
 
       // Mettre à jour le client avec la nouvelle URL d'image
       const { error: updateError } = await supabase
@@ -91,16 +93,13 @@ export const BarcodeImageUpload = ({ clientId, onImageUploaded }: BarcodeImageUp
 
       console.log("✅ Client mis à jour avec URL image code-barres:", imageUrl);
 
-      // Appeler le callback IMMÉDIATEMENT pour informer le parent
-      onImageUploaded(imageUrl);
-
       toast.success("Image du code-barres uploadée avec succès!");
-
-      // Forcer un délai pour s'assurer que tous les callbacks sont traités
+      
+      // Appeler le callback avec un court délai pour s'assurer que la DB est mise à jour
       setTimeout(() => {
-        console.log("🔄 Délai de sécurité terminé après upload image code-barres");
+        onImageUploaded(imageUrl);
+        console.log("📣 Callback d'upload appelé avec la nouvelle URL");
       }, 100);
-
     } catch (error) {
       console.error("❌ Erreur complète upload image code-barres:", error);
       toast.error(`Erreur lors de l'upload: ${error.message}`);

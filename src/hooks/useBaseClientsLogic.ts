@@ -64,6 +64,13 @@ export const useBaseClientsLogic = () => {
     fetchClients();
   };
 
+  // Fonction pour forcer le rafraîchissement des données
+  const forceRefresh = async () => {
+    console.log("🔄 Forçage du rafraîchissement des données clients...");
+    await fetchClients();
+    console.log("✅ Rafraîchissement terminé");
+  };
+
   return {
     clients,
     loading,
@@ -92,6 +99,7 @@ export const useBaseClientsLogic = () => {
     setEditDialogOpen,
     setDocumentDialogOpen,
     setDeleteDialogOpen,
-    filterClients
+    filterClients,
+    forceRefresh
   };
 };

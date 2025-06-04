@@ -6,6 +6,7 @@ import { Client } from "@/hooks/useClientData/types";
 import { useClientEditForm } from "@/hooks/useClientEditForm";
 import { ClientEditForm } from "./edit/ClientEditForm";
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ClientEditDialogProps {
   client: Client | null;
@@ -25,8 +26,8 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
 
   const onSave = () => {
     handleSave(() => {
+      console.log("✅ ClientEditDialog - Sauvegarde réussie, notification du parent");
       onClientUpdated();
-      onOpenChange(false);
     });
   };
 
@@ -34,21 +35,24 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
     console.log("🔄 ClientEditDialog - Rafraîchissement des données client");
     
     // Rafraîchir les données du client
-    onClientUpdated();
-    
-    // Mettre à jour le client local pour que les changements soient visibles immédiatement
     if (client?.id) {
-      // On va refetch les données du client depuis la base
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data: updatedClient, error } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('id', client.id)
-        .single();
-      
-      if (!error && updatedClient) {
-        console.log("✅ Client mis à jour:", updatedClient);
-        setLocalClient(updatedClient);
+      try {
+        // On va refetch les données du client depuis la base
+        const { data: updatedClient, error } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('id', client.id)
+          .single();
+        
+        if (!error && updatedClient) {
+          console.log("✅ Client mis à jour localement:", updatedClient);
+          setLocalClient(updatedClient);
+          
+          // Notifier le parent pour rafraîchir la liste complète
+          onClientUpdated();
+        }
+      } catch (error) {
+        console.error("❌ Erreur lors du rafraîchissement du client:", error);
       }
     }
   };
