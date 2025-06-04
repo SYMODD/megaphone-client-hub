@@ -54,7 +54,7 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
         timestamp: new Date().toISOString()
       });
 
-      // 🎯 TRANSMISSION DIRECTE AVEC VALIDATION RIGOUREUSE
+      // 🎯 PRÉPARATION PAYLOAD AVEC VÉRIFICATION RIGOUREUSE
       const dataToInsert = {
         nom: formData.nom,
         prenom: formData.prenom,
@@ -62,7 +62,7 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
         numero_passeport: formData.numero_passeport,
         numero_telephone: formData.numero_telephone,
         code_barre: formData.code_barre,
-        code_barre_image_url: formData.code_barre_image_url, // 🔑 TRANSMISSION DIRECTE SANS MODIFICATION
+        code_barre_image_url: formData.code_barre_image_url, // 🔑 INCLUSION EXPLICITE SANS FILTRAGE
         observations: formData.observations,
         date_enregistrement: formData.date_enregistrement,
         photo_url: formData.photo_url,
@@ -70,35 +70,34 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
         agent_id: user.id
       };
 
-      console.log("🔥 PRÉPARATION INSERTION - Validation finale avant base:", {
+      // 🔥 LOG DU PAYLOAD EXACT ENVOYÉ À SUPABASE
+      console.log("🔥 PAYLOAD ENVOYÉ À SUPABASE - Validation finale:", {
         dataToInsert_complet: dataToInsert,
-        validation_finale_url: {
+        champs_critiques: {
           code_barre_image_url: dataToInsert.code_barre_image_url,
-          source_formData: formData.code_barre_image_url,
-          correspondance_exacte: formData.code_barre_image_url === dataToInsert.code_barre_image_url,
+          code_barre: dataToInsert.code_barre,
+          nom: dataToInsert.nom,
+          prenom: dataToInsert.prenom
+        },
+        validation_finale_url: {
+          valeur: dataToInsert.code_barre_image_url,
           type: typeof dataToInsert.code_barre_image_url,
           longueur: dataToInsert.code_barre_image_url?.length || 0,
-          validation_pre_insert: dataToInsert.code_barre_image_url ? "✅ URL PRÊTE POUR INSERTION" : "❌ URL VIDE SERA INSÉRÉE",
-          verification_transmission: "✅ Transmission directe sans altération"
+          sera_null_en_base: dataToInsert.code_barre_image_url === null || dataToInsert.code_barre_image_url === undefined,
+          sera_vide_en_base: dataToInsert.code_barre_image_url === "",
+          validation_pre_insert: dataToInsert.code_barre_image_url ? "✅ URL VALIDE POUR INSERTION" : "❌ URL NULL/VIDE SERA INSÉRÉE"
         },
+        aucun_filtrage_appliqué: "✅ Pas de Object.entries().filter() qui pourrait supprimer les valeurs vides",
         timestamp: new Date().toISOString()
       });
 
-      // 🔍 VÉRIFICATION FINALE CRITIQUE
-      if (!dataToInsert.code_barre_image_url || dataToInsert.code_barre_image_url.trim() === '') {
-        console.warn("⚠️ ALERTE CRITIQUE: URL vide avant insertion en base", {
-          formData_url: formData.code_barre_image_url,
-          dataToInsert_url: dataToInsert.code_barre_image_url,
-          possible_cause: "L'URL s'est perdue quelque part dans le flux",
-          timestamp: new Date().toISOString()
-        });
-      }
-
-      console.log("🔥 APPEL SUPABASE INSERT - Requête finale avec URL:", {
+      // 🔥 INSERTION SUPABASE AVEC TRACKING COMPLET
+      console.log("🔥 APPEL SUPABASE INSERT - Requête critique:", {
         table: "clients",
-        données_envoyées: dataToInsert,
-        url_envoyée: dataToInsert.code_barre_image_url,
-        statut_url: dataToInsert.code_barre_image_url ? "✅ URL PRÉSENTE POUR INSERTION" : "❌ URL VIDE POUR INSERTION",
+        action: "insert",
+        données_exactes: dataToInsert,
+        url_dans_payload: dataToInsert.code_barre_image_url,
+        payload_size: Object.keys(dataToInsert).length,
         timestamp: new Date().toISOString()
       });
 

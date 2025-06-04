@@ -35,13 +35,13 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         timestamp: new Date().toISOString()
       });
 
-      // 🎯 CORRECTION CRITIQUE : Assignation plus explicite
+      // 🎯 CORRECTION CRITIQUE : Utilisation de ?? au lieu de ||
       const updatedData = {
         ...prev,
         code_barre: barcode || prev.code_barre,
         numero_telephone: phone || prev.numero_telephone,
-        // 🔑 ASSIGNATION DIRECTE ET EXPLICITE - GARDE L'URL MÊME SI C'EST UNE CHAÎNE VIDE
-        code_barre_image_url: barcodeImageUrl !== undefined ? barcodeImageUrl : prev.code_barre_image_url
+        // 🔑 CHANGEMENT CLEF : barcodeImageUrl ?? prev.code_barre_image_url
+        code_barre_image_url: barcodeImageUrl ?? prev.code_barre_image_url
       };
 
       console.log("🔥 BARCODE HANDLER - NOUVELLES DONNÉES CALCULÉES:", {
@@ -55,8 +55,9 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         },
         logique_assignment: {
           barcodeImageUrl_reçu: barcodeImageUrl,
-          condition_utilisée: barcodeImageUrl !== undefined ? "URL reçue assignée" : "URL précédente conservée",
-          valeur_finale: updatedData.code_barre_image_url
+          condition_utilisée: barcodeImageUrl !== undefined && barcodeImageUrl !== null ? "URL reçue assignée avec ??" : "URL précédente conservée",
+          valeur_finale: updatedData.code_barre_image_url,
+          operator_used: "?? (nullish coalescing)"
         },
         timestamp: new Date().toISOString()
       });
@@ -74,6 +75,7 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
     console.log("🔥 BARCODE HANDLER - FIN DE FONCTION:", {
       fonction_terminée: "handleBarcodeScanned",
       setFormData_appelée: "✅ OUI",
+      correction_appliquée: "Utilisation de ?? au lieu de ||",
       timestamp: new Date().toISOString()
     });
   };
