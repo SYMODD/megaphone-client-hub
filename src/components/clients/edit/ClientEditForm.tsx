@@ -4,6 +4,7 @@ import { PersonalInfoFields } from "./PersonalInfoFields";
 import { ContactInfoFields } from "./ContactInfoFields";
 import { BarcodeImageSection } from "./BarcodeImageSection";
 import { Client } from "@/hooks/useClientData/types";
+import { useState, useEffect } from "react";
 
 interface ClientEditFormProps {
   client: Client;
@@ -22,9 +23,24 @@ interface ClientEditFormProps {
 }
 
 export const ClientEditForm = ({ client, formData, onUpdate, onClientUpdated }: ClientEditFormProps) => {
+  // État local pour l'URL de l'image du code-barres
+  const [currentBarcodeImageUrl, setCurrentBarcodeImageUrl] = useState(client.code_barre_image_url || "");
+
+  // Synchroniser avec les changements du client
+  useEffect(() => {
+    setCurrentBarcodeImageUrl(client.code_barre_image_url || "");
+  }, [client.code_barre_image_url]);
+
   const handleImageUploaded = (imageUrl: string) => {
     console.log("✅ Nouvelle image uploadée:", imageUrl);
+    
+    // Mettre à jour l'état local immédiatement
+    setCurrentBarcodeImageUrl(imageUrl);
+    
+    // Mettre à jour le formData
     onUpdate('code_barre_image_url', imageUrl);
+    
+    // Notifier le parent
     if (onClientUpdated) {
       onClientUpdated();
     }
@@ -56,7 +72,7 @@ export const ClientEditForm = ({ client, formData, onUpdate, onClientUpdated }: 
 
       <BarcodeImageSection 
         code_barre={formData.code_barre}
-        code_barre_image_url={client.code_barre_image_url || ""}
+        code_barre_image_url={currentBarcodeImageUrl}
         onUpdate={onUpdate}
         onImageUploaded={handleImageUploaded}
       />

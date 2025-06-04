@@ -13,6 +13,7 @@ interface FormData {
   code_barre: string;
   date_enregistrement: string;
   observations: string;
+  code_barre_image_url: string;
 }
 
 export const useClientEditForm = (client: Client | null) => {
@@ -26,7 +27,8 @@ export const useClientEditForm = (client: Client | null) => {
     numero_telephone: "",
     code_barre: "",
     date_enregistrement: "",
-    observations: ""
+    observations: "",
+    code_barre_image_url: ""
   });
 
   // Update form data when client changes
@@ -40,7 +42,8 @@ export const useClientEditForm = (client: Client | null) => {
         numero_telephone: client.numero_telephone || "",
         code_barre: client.code_barre || "",
         date_enregistrement: client.date_enregistrement,
-        observations: client.observations || ""
+        observations: client.observations || "",
+        code_barre_image_url: client.code_barre_image_url || ""
       });
     }
   }, [client]);
@@ -65,6 +68,7 @@ export const useClientEditForm = (client: Client | null) => {
           numero_passeport: formData.numero_passeport,
           numero_telephone: formData.numero_telephone || null,
           code_barre: formData.code_barre || null,
+          code_barre_image_url: formData.code_barre_image_url || null,
           date_enregistrement: formData.date_enregistrement,
           observations: formData.observations,
           updated_at: new Date().toISOString()
