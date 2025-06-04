@@ -21,19 +21,17 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
         type: file.type
       });
 
-      // 1. Upload de l'image vers barcode-images AVANT le scan OCR
-      console.log("📤 ÉTAPE 1: Upload de l'image code-barres...");
+      // 1. Upload de l'image vers barcode-images EN PREMIER
+      console.log("📤 ÉTAPE 1: Upload automatique de l'image code-barres...");
       const barcodeImageUrl = await uploadBarcodeImage(file);
       
       if (!barcodeImageUrl) {
-        console.error("❌ Échec upload image - abandon du processus");
-        onResult("", "", "");
-        return;
+        console.error("❌ Échec upload image code-barres - continuons quand même avec OCR");
+      } else {
+        console.log("✅ Image code-barres uploadée avec succès:", barcodeImageUrl);
       }
-      
-      console.log("✅ Image uploadée avec succès:", barcodeImageUrl);
 
-      // 2. Scan OCR de l'image avec paramètres optimisés
+      // 2. Scan OCR de l'image
       console.log("🔍 ÉTAPE 2: Scan OCR de l'image...");
       
       const formData = new FormData();
@@ -41,7 +39,7 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       formData.append('apikey', 'K87899883388957');
       formData.append('language', 'fre');
       formData.append('isOverlayRequired', 'false');
-      formData.append('detectOrientation', 'true'); // Amélioration: détection orientation
+      formData.append('detectOrientation', 'true');
       formData.append('scale', 'true');
       formData.append('isTable', 'false');
       formData.append('OCREngine', '2');
@@ -67,35 +65,28 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       const extractedText = data.ParsedResults?.[0]?.ParsedText || "";
       console.log("📝 Texte extrait:", extractedText);
 
-      // 3. Extraction améliorée du code-barres et du téléphone
+      // 3. Extraction du code-barres et du téléphone
       const barcodePatterns = [
-        // Pattern spécifique pour les codes P= (très courant sur CIN marocaines)
         /P\s*=\s*(\d{4,8})/gi,
-        // Pattern pour codes numériques longs
         /\b(\d{8,15})\b/g,
-        // Pattern pour codes avec tirets
         /\b([A-Z0-9]{3,15}\-[A-Z0-9]{2,10})\b/gi,
-        // Pattern général pour codes alphanumériques
         /\b([A-Z0-9]{6,20})\b/g
       ];
 
       const phonePatterns = [
-        // Numéros marocains avec préfixes internationaux
         /(?:\+212|0)[\s\-]?[5-7][\s\-]?\d{2}[\s\-]?\d{2}[\s\-]?\d{2}[\s\-]?\d{2}/g,
-        // Format compact
         /[05-7]\d{8}/g
       ];
 
       let barcode = "";
       let phone = "";
 
-      // Recherche du code-barres avec priorité
+      // Recherche du code-barres
       for (const pattern of barcodePatterns) {
         const match = extractedText.match(pattern);
         if (match) {
-          // Prendre le premier match qui semble valide
-          barcode = match[0].replace(/[P=\s\-]/g, ''); // Nettoyer le code
-          console.log("✅ Code-barres détecté avec pattern:", pattern, "→", barcode);
+          barcode = match[0].replace(/[P=\s\-]/g, '');
+          console.log("✅ Code-barres détecté:", barcode);
           break;
         }
       }
@@ -105,7 +96,6 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
         const match = extractedText.match(pattern);
         if (match) {
           phone = match[0].replace(/[\s\-\+]/g, '');
-          // Normaliser le format marocain
           if (phone.startsWith('212')) phone = '0' + phone.substring(3);
           if (phone.startsWith('0') && phone.length === 10) {
             console.log("✅ Téléphone détecté:", phone);
@@ -117,12 +107,11 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       console.log("🎯 Données extraites finales:", {
         barcode: barcode || "Non détecté",
         phone: phone || "Non détecté",
-        barcodeImageUrl: barcodeImageUrl,
-        url_sera_retournee: "✅ OUI"
+        barcodeImageUrl: barcodeImageUrl || "Non uploadée"
       });
 
-      // 4. Retourner les résultats avec l'URL de l'image
-      onResult(barcode, phone, barcodeImageUrl);
+      // 4. Retourner les résultats AVEC l'URL de l'image uploadée
+      onResult(barcode, phone, barcodeImageUrl || "");
 
     } catch (error) {
       console.error("❌ Erreur processus OCR complet:", error);

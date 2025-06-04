@@ -32,7 +32,7 @@ export const ClientTable = ({ clients, onViewClient, onEditClient, onGenerateDoc
         </TableHeader>
         <TableBody>
           {clients.map((client) => {
-            console.log(`🔍 CLIENT TABLE - Affichage client ${client.id}:`, {
+            console.log(`🔍 CLIENT TABLE - Client ${client.id}:`, {
               nom: client.nom,
               code_barre: client.code_barre,
               code_barre_image_url: client.code_barre_image_url,
@@ -43,7 +43,7 @@ export const ClientTable = ({ clients, onViewClient, onEditClient, onGenerateDoc
               <TableRow key={client.id}>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    {/* Photo du client (CIN/Passeport) */}
+                    {/* Photo du client */}
                     {client.photo_url ? (
                       <div className="group relative">
                         <img 
@@ -51,6 +51,8 @@ export const ClientTable = ({ clients, onViewClient, onEditClient, onGenerateDoc
                           alt="Photo client"
                           className="w-8 h-8 rounded border border-gray-200 object-cover cursor-pointer hover:w-16 hover:h-16 transition-all duration-200"
                           title="Photo du document d'identité"
+                          onLoad={() => console.log("✅ Photo client chargée:", client.photo_url)}
+                          onError={() => console.error("❌ Erreur photo client:", client.photo_url)}
                         />
                         <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-0.5">
                           <Image className="w-2 h-2" />
@@ -62,7 +64,7 @@ export const ClientTable = ({ clients, onViewClient, onEditClient, onGenerateDoc
                       </div>
                     )}
                     
-                    {/* 🎯 Image du code-barres avec logging */}
+                    {/* Image du code-barres */}
                     <BarcodeImageThumbnail 
                       imageUrl={client.code_barre_image_url}
                     />
@@ -92,7 +94,7 @@ export const ClientTable = ({ clients, onViewClient, onEditClient, onGenerateDoc
                       </span>
                       {client.code_barre_image_url && (
                         <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-300">
-                          ✅ Avec image
+                          ✅ Image
                         </Badge>
                       )}
                     </div>

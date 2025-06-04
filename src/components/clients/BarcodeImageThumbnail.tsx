@@ -7,12 +7,7 @@ interface BarcodeImageThumbnailProps {
 }
 
 export const BarcodeImageThumbnail = ({ imageUrl, className = "" }: BarcodeImageThumbnailProps) => {
-  // 🎯 Log pour debug
-  console.log("🖼️ BarcodeImageThumbnail - Rendu:", {
-    imageUrl,
-    url_presente: imageUrl ? "✅ OUI" : "❌ NON",
-    url_valide: imageUrl && imageUrl.trim() !== "" ? "✅ VALIDE" : "❌ INVALIDE"
-  });
+  console.log("🖼️ BarcodeImageThumbnail - Rendu avec URL:", imageUrl);
 
   if (!imageUrl || imageUrl.trim() === "") {
     return (
@@ -29,8 +24,11 @@ export const BarcodeImageThumbnail = ({ imageUrl, className = "" }: BarcodeImage
         alt="Image code-barres"
         className="w-8 h-8 rounded border border-blue-300 object-cover cursor-pointer hover:w-16 hover:h-16 transition-all duration-200 ring-2 ring-blue-200"
         title="Image du code-barres scanné"
+        onLoad={() => {
+          console.log("✅ Miniature code-barres chargée:", imageUrl);
+        }}
         onError={(e) => {
-          console.error("❌ Erreur chargement miniature code-barres:", imageUrl);
+          console.error("❌ Erreur chargement miniature:", imageUrl);
           const target = e.currentTarget;
           target.style.display = 'none';
           const parent = target.parentElement;
@@ -42,10 +40,6 @@ export const BarcodeImageThumbnail = ({ imageUrl, className = "" }: BarcodeImage
             parent.appendChild(errorDiv);
           }
         }}
-        onLoad={() => {
-          console.log("✅ Miniature code-barres chargée avec succès:", imageUrl);
-        }}
-        key={imageUrl}
       />
       <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full p-0.5">
         <Barcode className="w-2 h-2" />
