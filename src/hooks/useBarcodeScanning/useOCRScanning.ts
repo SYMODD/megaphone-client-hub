@@ -1,139 +1,93 @@
 
-import { toast } from "sonner";
+import { useState } from "react";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import { extractBarcode } from "@/services/ocr/barcodeExtractor";
-import { extractPhoneNumber } from "@/services/ocr/phoneExtractor";
 
-export const useOCRScanning = () => {
+interface UseOCRScanningProps {}
+
+export const useOCRScanning = (props?: UseOCRScanningProps) => {
+  const [isScanning, setIsScanning] = useState(false);
   const { uploadBarcodeImage } = useImageUpload();
-
-  const performOCR = async (file: File, apiKey: string = "K87783069388957") => {
-    console.log("🔍 BARCODE OCR - Début requête OCR.space");
-    
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('apikey', apiKey);
-    formData.append('language', 'eng');
-    formData.append('isOverlayRequired', 'false');
-    formData.append('detectOrientation', 'true');
-    formData.append('scale', 'true');
-    formData.append('OCREngine', '2');
-    formData.append('filetype', 'Auto');
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      console.log("⏰ TIMEOUT OCR - Annulation après 30 secondes");
-      controller.abort();
-    }, 30000);
-
-    try {
-      const response = await fetch('https://api.ocr.space/parse/image', {
-        method: 'POST',
-        body: formData,
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("❌ Erreur HTTP OCR:", response.status, errorText);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log("📋 Réponse OCR code-barres:", result);
-      
-      if (result.IsErroredOnProcessing || result.OCRExitCode !== 1) {
-        throw new Error(result.ErrorMessage || "Erreur lors du traitement OCR");
-      }
-
-      return result.ParsedResults[0]?.ParsedText || "";
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error.name === 'AbortError') {
-        throw new Error("Timeout: L'analyse OCR a pris trop de temps");
-      }
-      throw error;
-    }
-  };
 
   const scanForBarcodeAndPhone = async (
     file: File, 
-    onBarcodeScanned: (barcode: string, phone?: string, barcodeImageUrl?: string) => void
+    onResult: (barcode: string, phone?: string, barcodeImageUrl?: string) => void
   ) => {
     try {
-      console.log("🔍 OCR SCANNING - Début scan pour code-barres et téléphone");
+      setIsScanning(true);
+      console.log("🔍 OCR SCANNING - Début du scan avec upload automatique");
 
-      // 1. Upload l'image vers barcode-images en premier
-      console.log("📤 Upload vers BARCODE-IMAGES bucket...");
+      // 1. Upload de l'image vers barcode-images AVANT le scan OCR
+      console.log("📤 ÉTAPE 1: Upload de l'image code-barres...");
       const barcodeImageUrl = await uploadBarcodeImage(file);
       
       if (!barcodeImageUrl) {
-        console.error("❌ Échec upload image code-barres");
-        toast.error("Erreur lors de l'upload de l'image");
-        onBarcodeScanned("", "", "");
+        console.error("❌ Échec upload image - abandon du processus");
+        onResult("", "");
         return;
       }
-
+      
       console.log("✅ Image uploadée avec succès:", barcodeImageUrl);
 
-      // 2. Effectuer l'OCR directement avec OCR.space
-      console.log("🔍 Appel OCR.space pour extraction...");
+      // 2. Scan OCR de l'image
+      console.log("🔍 ÉTAPE 2: Scan OCR de l'image...");
       
-      try {
-        const extractedText = await performOCR(file);
-        
-        if (!extractedText.trim()) {
-          console.warn("⚠️ Aucun texte détecté dans l'image");
-          toast.info("Image uploadée, mais aucun texte détecté");
-          onBarcodeScanned("", "", barcodeImageUrl);
-          return;
-        }
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('apikey', 'K87899883388957');
+      formData.append('language', 'fre');
+      formData.append('isOverlayRequired', 'false');
+      formData.append('detectOrientation', 'false');
+      formData.append('scale', 'true');
+      formData.append('isTable', 'false');
+      formData.append('OCREngine', '2');
 
-        console.log("📄 Texte extrait:", extractedText.substring(0, 200) + "...");
+      const response = await fetch('https://api.ocr.space/parse/image', {
+        method: 'POST',
+        body: formData
+      });
 
-        // 3. Extraire le code-barres et téléphone du texte
-        const extractedPhone = extractPhoneNumber(extractedText);
-        const extractedBarcode = extractBarcode(extractedText, extractedPhone);
-
-        console.log("📊 Données extraites:", {
-          barcode: extractedBarcode,
-          phone: extractedPhone,
-          imageUrl: barcodeImageUrl
-        });
-
-        // 4. Transmettre TOUTES les données including l'URL
-        console.log("🎯 TRANSMISSION FINALE - Données complètes:", {
-          barcode: extractedBarcode,
-          phone: extractedPhone,
-          imageUrl: barcodeImageUrl,
-          confirmation: "Toutes les données transmises"
-        });
-
-        onBarcodeScanned(extractedBarcode, extractedPhone, barcodeImageUrl);
-        
-        if (extractedBarcode || extractedPhone) {
-          toast.success("Données extraites avec succès !");
-        } else {
-          toast.info("Image uploadée, mais aucune donnée détectée");
-        }
-
-      } catch (ocrError) {
-        console.error("❌ Erreur OCR:", ocrError);
-        toast.error("Erreur lors du traitement OCR, mais image sauvegardée");
-        // Même en cas d'erreur OCR, on transmet l'URL de l'image
-        onBarcodeScanned("", "", barcodeImageUrl);
+      if (!response.ok) {
+        console.error("❌ Erreur API OCR:", response.status, response.statusText);
+        throw new Error(`Erreur API OCR: ${response.status}`);
       }
 
+      const data = await response.json();
+      console.log("📄 Réponse OCR complète:", data);
+
+      if (data.IsErroredOnProcessing) {
+        console.error("❌ Erreur traitement OCR:", data.ErrorMessage);
+        throw new Error(data.ErrorMessage || "Erreur lors du traitement OCR");
+      }
+
+      const extractedText = data.ParsedResults?.[0]?.ParsedText || "";
+      console.log("📝 Texte extrait:", extractedText);
+
+      // 3. Extraction du code-barres et du téléphone
+      const barcodeMatch = extractedText.match(/[A-Z]{1,2}\d{4,}\s*<*/);
+      const phoneMatch = extractedText.match(/(?:\+212|0)[\s\-]?[5-7][\s\-]?\d{2}[\s\-]?\d{2}[\s\-]?\d{2}[\s\-]?\d{2}/);
+
+      const barcode = barcodeMatch ? barcodeMatch[0].replace(/[<\s]/g, '') : "";
+      const phone = phoneMatch ? phoneMatch[0].replace(/[\s\-]/g, '') : "";
+
+      console.log("🎯 Données extraites:", {
+        barcode: barcode || "Non détecté",
+        phone: phone || "Non détecté",
+        barcodeImageUrl: barcodeImageUrl
+      });
+
+      // 4. Retourner les résultats avec l'URL de l'image
+      onResult(barcode, phone, barcodeImageUrl);
+
     } catch (error) {
-      console.error("❌ Erreur inattendue OCR scanning:", error);
-      toast.error("Erreur lors du scan");
-      onBarcodeScanned("", "", "");
+      console.error("❌ Erreur processus OCR complet:", error);
+      onResult("", "");
+    } finally {
+      setIsScanning(false);
     }
   };
 
   return {
-    scanForBarcodeAndPhone
+    scanForBarcodeAndPhone,
+    isScanning
   };
 };
