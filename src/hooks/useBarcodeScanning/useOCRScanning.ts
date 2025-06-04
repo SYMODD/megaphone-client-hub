@@ -20,21 +20,47 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       setIsScanning(true);
       console.log("🔥 OCR SCANNING - DÉBUT du processus complet");
 
-      // 1. Upload de l'image IMMÉDIATEMENT
-      console.log("🔥 ÉTAPE 1: Upload immédiat de l'image...");
+      // 1. Upload de l'image IMMÉDIATEMENT avec logs détaillés
+      console.log("🔥 ÉTAPE 1: Upload immédiat de l'image...", {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        timestamp: new Date().toISOString()
+      });
+      
       const barcodeImageUrl = await uploadBarcodeImage(file);
       
+      console.log("🔥 RÉSULTAT UPLOAD - Analyse détaillée:", {
+        url_retournée: barcodeImageUrl,
+        url_type: typeof barcodeImageUrl,
+        url_length: barcodeImageUrl?.length || 0,
+        url_truthy: !!barcodeImageUrl,
+        url_valide: barcodeImageUrl && barcodeImageUrl.trim() !== "",
+        timestamp: new Date().toISOString()
+      });
+      
       if (!barcodeImageUrl) {
-        console.error("❌ ÉCHEC CRITIQUE: Impossible d'uploader l'image");
+        console.error("❌ ÉCHEC CRITIQUE: Impossible d'uploader l'image", {
+          file_info: {
+            name: file.name,
+            size: file.size,
+            type: file.type
+          },
+          url_retournée: barcodeImageUrl,
+          timestamp: new Date().toISOString()
+        });
         toast.error("❌ Impossible d'uploader l'image du code-barres");
         onResult("", "", "");
         return;
       }
       
-      console.log("🔥 UPLOAD RÉUSSI - URL obtenue:", {
+      console.log("✅ UPLOAD RÉUSSI - URL confirmée:", {
         url: barcodeImageUrl,
         longueur: barcodeImageUrl.length,
-        type: typeof barcodeImageUrl
+        type: typeof barcodeImageUrl,
+        starts_with: barcodeImageUrl.substring(0, 50) + "...",
+        url_complète_valide: "✅ URL UPLOADÉE AVEC SUCCÈS",
+        timestamp: new Date().toISOString()
       });
 
       // 2. Compression pour OCR
@@ -87,22 +113,47 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
         phone: phone || "Non détecté"
       });
 
-      // 5. TRANSMISSION FINALE avec URL GARANTIE
-      console.log("🔥 TRANSMISSION FINALE:", {
-        barcode,
-        phone, 
-        barcodeImageUrl,
-        url_garantie: "✅ URL UPLOADÉE AVEC SUCCÈS"
+      // 5. TRANSMISSION FINALE avec URL GARANTIE - Logs ultra-détaillés
+      console.log("🔥 TRANSMISSION FINALE - Préparation des données:", {
+        barcode_extrait: barcode,
+        phone_extrait: phone, 
+        barcodeImageUrl_final: barcodeImageUrl,
+        url_status: {
+          existe: !!barcodeImageUrl,
+          non_vide: barcodeImageUrl && barcodeImageUrl.trim() !== "",
+          longueur: barcodeImageUrl?.length || 0,
+          type: typeof barcodeImageUrl,
+          preview: barcodeImageUrl ? barcodeImageUrl.substring(0, 100) + "..." : "AUCUNE"
+        },
+        timestamp: new Date().toISOString()
       });
 
+      console.log("🔥 APPEL onResult - Paramètres exacts:", {
+        param1_barcode: barcode,
+        param2_phone: phone,
+        param3_barcodeImageUrl: barcodeImageUrl,
+        fonction_callback: "onResult appelée avec ces paramètres",
+        timestamp: new Date().toISOString()
+      });
+
+      // APPEL DE LA FONCTION CALLBACK
       onResult(barcode, phone, barcodeImageUrl);
+
+      console.log("✅ CALLBACK EXÉCUTÉE - onResult appelée avec succès", {
+        url_transmise: barcodeImageUrl,
+        verification_finale: "URL transmise au callback",
+        timestamp: new Date().toISOString()
+      });
 
       if (barcode || phone) {
         toast.success(`🎯 Scan réussi: ${barcode ? 'Code-barres ✓' : ''} ${phone ? 'Téléphone ✓' : ''} Image ✓`);
       }
 
     } catch (error) {
-      console.error("❌ Erreur processus OCR:", error);
+      console.error("❌ Erreur processus OCR:", error, {
+        timestamp: new Date().toISOString(),
+        context: "useOCRScanning.scanForBarcodeAndPhone"
+      });
       toast.error("❌ Erreur lors du scan");
       onResult("", "", "");
     } finally {
