@@ -6,6 +6,8 @@ export interface CINData {
   date_naissance?: string;
   lieu_naissance?: string;
   nationalite: string;
+  code_barre?: string;
+  code_barre_image_url?: string;
 }
 
 export interface CINOCRResult {
