@@ -31,24 +31,37 @@ export const useClientEditForm = (client: Client | null) => {
     code_barre_image_url: ""
   });
 
-  // Update form data when client changes
+  // Update form data when client changes, but preserve uploaded image URL
   useEffect(() => {
     if (client) {
-      setFormData({
-        nom: client.nom,
-        prenom: client.prenom,
-        nationalite: client.nationalite,
-        numero_passeport: client.numero_passeport,
-        numero_telephone: client.numero_telephone || "",
-        code_barre: client.code_barre || "",
-        date_enregistrement: client.date_enregistrement,
-        observations: client.observations || "",
-        code_barre_image_url: client.code_barre_image_url || ""
+      setFormData(prev => {
+        const newFormData = {
+          nom: client.nom,
+          prenom: client.prenom,
+          nationalite: client.nationalite,
+          numero_passeport: client.numero_passeport,
+          numero_telephone: client.numero_telephone || "",
+          code_barre: client.code_barre || "",
+          date_enregistrement: client.date_enregistrement,
+          observations: client.observations || "",
+          // 🎯 CRUCIAL: Préserver l'URL uploadée si elle existe, sinon utiliser celle du client
+          code_barre_image_url: prev.code_barre_image_url || client.code_barre_image_url || ""
+        };
+
+        console.log("🔄 useClientEditForm - Mise à jour formData:", {
+          client_url: client.code_barre_image_url,
+          previous_form_url: prev.code_barre_image_url,
+          final_url: newFormData.code_barre_image_url,
+          preservation: prev.code_barre_image_url ? "✅ URL PRÉSERVÉE" : "📥 URL CLIENT UTILISÉE"
+        });
+
+        return newFormData;
       });
     }
   }, [client]);
 
   const updateFormData = (field: keyof FormData, value: string) => {
+    console.log(`🔄 useClientEditForm - updateFormData: ${field} = ${value}`);
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
