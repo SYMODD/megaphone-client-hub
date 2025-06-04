@@ -22,11 +22,15 @@ export const BarcodeImageSection = ({
   const [imageLoading, setImageLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
 
-  console.log("📊 BarcodeImageSection - Données:", {
+  console.log("📊 BarcodeImageSection - Données reçues:", {
     code_barre,
     code_barre_image_url,
-    url_presente: code_barre_image_url ? "✅ OUI" : "❌ NON"
+    url_presente: code_barre_image_url ? "✅ OUI" : "❌ NON",
+    url_value: code_barre_image_url
   });
+
+  // Vérifier si nous avons vraiment une URL d'image valide
+  const hasValidImageUrl = code_barre_image_url && code_barre_image_url.trim() !== "";
 
   const handleImageLoad = () => {
     console.log("✅ Image code-barres chargée avec succès:", code_barre_image_url);
@@ -71,7 +75,7 @@ export const BarcodeImageSection = ({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Affichage de l'image actuelle */}
-        {code_barre_image_url ? (
+        {hasValidImageUrl ? (
           <div className="space-y-2">
             <Label className="text-sm font-medium">Image actuelle</Label>
             <div className="border rounded-lg p-4 bg-gray-50">
@@ -88,7 +92,7 @@ export const BarcodeImageSection = ({
                     <ImageIcon className="w-8 h-8" />
                     <p>Erreur de chargement</p>
                   </div>
-                  <p className="text-xs text-gray-500 mb-2">URL: {code_barre_image_url}</p>
+                  <p className="text-xs text-gray-500 mb-2 break-all">URL: {code_barre_image_url}</p>
                   <div className="flex gap-2 justify-center">
                     <button
                       onClick={() => {
@@ -128,10 +132,13 @@ export const BarcodeImageSection = ({
           </div>
         ) : (
           <div className="border rounded-lg p-4 bg-gray-50 text-center">
-            <div className="flex items-center justify-center gap-2 text-gray-500">
+            <div className="flex items-center justify-center gap-2 text-gray-500 mb-2">
               <QrCode className="w-8 h-8" />
               <p>Aucune image de code-barres disponible</p>
             </div>
+            <p className="text-xs text-gray-400">
+              URL reçue: {code_barre_image_url || "aucune"}
+            </p>
           </div>
         )}
 
@@ -143,7 +150,7 @@ export const BarcodeImageSection = ({
               className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800"
             >
               <Upload className="w-4 h-4" />
-              {code_barre_image_url ? "Remplacer l'image" : "Ajouter une image"}
+              {hasValidImageUrl ? "Remplacer l'image" : "Ajouter une image"}
             </button>
           </div>
         ) : (

@@ -17,6 +17,7 @@ interface ClientEditFormProps {
     code_barre: string;
     date_enregistrement: string;
     observations: string;
+    code_barre_image_url: string;
   };
   onUpdate: (field: string, value: string) => void;
   onClientUpdated?: () => void;
@@ -24,15 +25,21 @@ interface ClientEditFormProps {
 
 export const ClientEditForm = ({ client, formData, onUpdate, onClientUpdated }: ClientEditFormProps) => {
   // État local pour l'URL de l'image du code-barres
-  const [currentBarcodeImageUrl, setCurrentBarcodeImageUrl] = useState(client.code_barre_image_url || "");
+  const [currentBarcodeImageUrl, setCurrentBarcodeImageUrl] = useState("");
 
-  // Synchroniser avec les changements du client
+  // Synchroniser avec les changements du client ET du formData
   useEffect(() => {
-    setCurrentBarcodeImageUrl(client.code_barre_image_url || "");
-  }, [client.code_barre_image_url]);
+    const imageUrl = formData.code_barre_image_url || client.code_barre_image_url || "";
+    console.log("🔄 ClientEditForm - Synchronisation URL image:", {
+      formData_url: formData.code_barre_image_url,
+      client_url: client.code_barre_image_url,
+      final_url: imageUrl
+    });
+    setCurrentBarcodeImageUrl(imageUrl);
+  }, [client.code_barre_image_url, formData.code_barre_image_url]);
 
   const handleImageUploaded = (imageUrl: string) => {
-    console.log("✅ Nouvelle image uploadée:", imageUrl);
+    console.log("✅ ClientEditForm - Nouvelle image uploadée:", imageUrl);
     
     // Mettre à jour l'état local immédiatement
     setCurrentBarcodeImageUrl(imageUrl);
@@ -45,6 +52,14 @@ export const ClientEditForm = ({ client, formData, onUpdate, onClientUpdated }: 
       onClientUpdated();
     }
   };
+
+  console.log("📊 ClientEditForm - État actuel:", {
+    client_id: client.id,
+    client_code_barre_image_url: client.code_barre_image_url,
+    formData_code_barre_image_url: formData.code_barre_image_url,
+    currentBarcodeImageUrl,
+    code_barre: formData.code_barre
+  });
 
   return (
     <div className="space-y-6">
