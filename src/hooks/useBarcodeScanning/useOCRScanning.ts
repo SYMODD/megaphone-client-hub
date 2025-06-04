@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useImageUpload } from "@/hooks/useImageUpload";
+import { compressImage } from "@/utils/imageCompression";
 import { toast } from "sonner";
 
 interface UseOCRScanningProps {}
@@ -17,8 +18,22 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       setIsScanning(true);
       console.log("🔍 OCR SCANNING - Début du scan avec upload automatique");
 
-      // 1. Upload de l'image vers barcode-images AVANT le scan OCR (avec compression automatique)
-      console.log("📤 ÉTAPE 1: Upload et compression de l'image code-barres...");
+      // 1. Compression de l'image pour l'OCR (limite 1024 KB)
+      console.log("🗜️ ÉTAPE 1: Compression de l'image pour OCR...");
+      const compressedFileForOCR = await compressImage(file, {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.8,
+        maxSizeKB: 800 // Bien en dessous de la limite de 1024 KB
+      });
+
+      console.log("✅ Image compressée pour OCR:", {
+        taille_originale: (file.size / 1024).toFixed(1) + " KB",
+        taille_compressée: (compressedFileForOCR.size / 1024).toFixed(1) + " KB"
+      });
+
+      // 2. Upload de l'image vers barcode-images (utilise la compression interne)
+      console.log("📤 ÉTAPE 2: Upload de l'image vers Supabase...");
       const barcodeImageUrl = await uploadBarcodeImage(file);
       
       if (!barcodeImageUrl) {
@@ -30,11 +45,11 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       
       console.log("✅ Image uploadée avec succès:", barcodeImageUrl);
 
-      // 2. Scan OCR de l'image (avec le fichier original non compressé pour une meilleure qualité OCR)
-      console.log("🔍 ÉTAPE 2: Scan OCR de l'image...");
+      // 3. Scan OCR avec le fichier compressé
+      console.log("🔍 ÉTAPE 3: Scan OCR avec le fichier compressé...");
       
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', compressedFileForOCR); // 🔥 UTILISATION DU FICHIER COMPRESSÉ
       formData.append('apikey', 'K87899883388957');
       formData.append('language', 'fre');
       formData.append('isOverlayRequired', 'false');
@@ -64,7 +79,7 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       const extractedText = data.ParsedResults?.[0]?.ParsedText || "";
       console.log("📝 Texte extrait:", extractedText);
 
-      // 3. Extraction du code-barres et du téléphone
+      // 4. Extraction du code-barres et du téléphone
       const barcodeMatch = extractedText.match(/[A-Z]{1,2}\d{4,}\s*<*/);
       const phoneMatch = extractedText.match(/(?:\+212|0)[\s\-]?[5-7][\s\-]?\d{2}[\s\-]?\d{2}[\s\-]?\d{2}[\s\-]?\d{2}/);
 
@@ -77,14 +92,14 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
         barcodeImageUrl: barcodeImageUrl
       });
 
-      // 4. Message de succès pour l'extraction
+      // 5. Message de succès pour l'extraction
       if (barcode || phone) {
         toast.success(`🎯 Données extraites avec succès: ${barcode ? 'Code-barres ✓' : ''} ${phone ? 'Téléphone ✓' : ''}`, {
           duration: 4000
         });
       }
 
-      // 5. Retourner les résultats avec l'URL de l'image
+      // 6. Retourner les résultats avec l'URL de l'image
       onResult(barcode, phone, barcodeImageUrl);
 
     } catch (error) {
