@@ -1,169 +1,157 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Eye, Edit, FileText, Trash2, Image } from "lucide-react";
-import { formatBarcodeForDisplay } from "@/utils/barcodeUtils";
-import { useAuth } from "@/contexts/AuthContext";
+import { Eye, Edit, FileText, Trash2, Image, Barcode } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Client } from "@/hooks/useClientData/types";
 
 interface ClientTableProps {
   clients: Client[];
-  totalCount?: number;
-  currentPage?: number;
-  totalPages?: number;
-  onPageChange?: (page: number) => void;
   onViewClient: (client: Client) => void;
   onEditClient: (client: Client) => void;
   onGenerateDocument: (client: Client) => void;
-  onDeleteClient?: (client: Client) => void;
+  onDeleteClient: (client: Client) => void;
 }
 
-export const ClientTable = ({ 
-  clients, 
-  onViewClient, 
-  onEditClient, 
-  onGenerateDocument,
-  onDeleteClient 
-}: ClientTableProps) => {
-  const { profile } = useAuth();
-  const isAdmin = profile?.role === 'admin';
-
+export const ClientTable = ({ clients, onViewClient, onEditClient, onGenerateDocument, onDeleteClient }: ClientTableProps) => {
   return (
-    <TooltipProvider>
-      <div className="rounded-md border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[200px]">Nom complet</TableHead>
-              <TableHead className="hidden sm:table-cell">Nationalité</TableHead>
-              <TableHead className="hidden md:table-cell">N° Document</TableHead>
-              <TableHead className="hidden md:table-cell">Code-barres</TableHead>
-              <TableHead className="hidden lg:table-cell">Date d'enregistrement</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {clients.map((client) => {
-              // Vérification plus robuste de la présence d'une image de code-barres
-              const hasBarcodeImage = Boolean(
-                client.code_barre_image_url && 
-                client.code_barre_image_url.trim() !== '' &&
-                client.code_barre_image_url !== 'null' &&
-                client.code_barre_image_url !== 'undefined'
-              );
-
-              // Vérifier si l'image est dans le bon bucket barcode-images
-              const isFromScan = hasBarcodeImage && client.code_barre_image_url?.includes('barcode-images');
-
-              console.log(`🔍 Client ${client.nom} ${client.prenom}:`, {
-                code_barre_image_url: client.code_barre_image_url,
-                hasBarcodeImage,
-                isFromScan,
-                code_barre: client.code_barre
-              });
-
-              return (
-                <TableRow key={client.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      {client.photo_url && (
-                        <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                          <img 
-                            src={client.photo_url} 
-                            alt="Photo" 
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <div className="font-medium truncate">{client.prenom} {client.nom}</div>
-                        <div className="text-sm text-muted-foreground sm:hidden truncate">
-                          {client.nationalite}
-                        </div>
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Photos</TableHead>
+            <TableHead>Nom complet</TableHead>
+            <TableHead>Nationalité</TableHead>
+            <TableHead>N° Document</TableHead>
+            <TableHead>Téléphone</TableHead>
+            <TableHead>Code-barres</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {clients.map((client) => (
+            <TableRow key={client.id}>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  {/* Photo du client (CIN/Passeport) */}
+                  {client.photo_url ? (
+                    <div className="group relative">
+                      <img 
+                        src={client.photo_url} 
+                        alt="Photo client"
+                        className="w-8 h-8 rounded border border-gray-200 object-cover cursor-pointer hover:w-16 hover:h-16 transition-all duration-200"
+                        title="Photo du document d'identité"
+                      />
+                      <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-0.5">
+                        <Image className="w-2 h-2" />
                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">{client.nationalite}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <span className="font-mono text-sm">{client.numero_passeport}</span>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm">
-                        {client.code_barre ? formatBarcodeForDisplay(client.code_barre) : '-'}
-                      </span>
-                      {hasBarcodeImage && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Image 
-                              className={`w-4 h-4 flex-shrink-0 ${
-                                isFromScan ? 'text-blue-600' : 'text-gray-500'
-                              }`} 
-                            />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>
-                              {isFromScan 
-                                ? 'Image de code-barres scannée' 
-                                : 'Image de code-barres uploadée'
-                              }
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
+                  ) : (
+                    <div className="w-8 h-8 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
+                      <Image className="w-4 h-4 text-gray-400" />
                     </div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {client.date_enregistrement 
-                      ? new Date(client.date_enregistrement).toLocaleDateString('fr-FR')
-                      : '-'
-                    }
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onViewClient(client)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onEditClient(client)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onGenerateDocument(client)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <FileText className="h-4 w-4" />
-                      </Button>
-                      {isAdmin && onDeleteClient && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onDeleteClient(client)}
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                  )}
+                  
+                  {/* Image du code-barres */}
+                  {client.code_barre_image_url ? (
+                    <div className="group relative">
+                      <img 
+                        src={client.code_barre_image_url} 
+                        alt="Image code-barres"
+                        className="w-8 h-8 rounded border border-gray-200 object-cover cursor-pointer hover:w-16 hover:h-16 transition-all duration-200"
+                        title="Image du code-barres scanné"
+                      />
+                      <div className="absolute -bottom-1 -right-1 bg-green-500 text-white rounded-full p-0.5">
+                        <Barcode className="w-2 h-2" />
+                      </div>
                     </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
-    </TooltipProvider>
+                  ) : (
+                    <div className="w-8 h-8 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
+                      <Barcode className="w-4 h-4 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell className="font-medium">
+                {client.prenom} {client.nom}
+              </TableCell>
+              <TableCell>
+                <Badge variant="secondary">{client.nationalite}</Badge>
+              </TableCell>
+              <TableCell className="font-mono text-sm">
+                {client.numero_passeport}
+              </TableCell>
+              <TableCell>
+                {client.numero_telephone ? (
+                  <span className="font-mono text-sm">{client.numero_telephone}</span>
+                ) : (
+                  <span className="text-gray-400 text-sm">Non renseigné</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {client.code_barre ? (
+                  <div className="flex items-center gap-1">
+                    <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                      {client.code_barre}
+                    </span>
+                    {client.code_barre_image_url && (
+                      <Badge variant="outline" className="text-xs">
+                        Avec image
+                      </Badge>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-gray-400 text-sm">Non scanné</span>
+                )}
+              </TableCell>
+              <TableCell className="text-sm text-gray-600">
+                {new Date(client.date_enregistrement).toLocaleDateString('fr-FR')}
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onViewClient(client)}
+                    className="h-8 w-8"
+                    title="Voir les détails"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onEditClient(client)}
+                    className="h-8 w-8"
+                    title="Modifier"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onGenerateDocument(client)}
+                    className="h-8 w-8"
+                    title="Générer document"
+                  >
+                    <FileText className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onDeleteClient(client)}
+                    className="h-8 w-8 text-red-600 hover:text-red-700"
+                    title="Supprimer"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
