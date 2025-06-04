@@ -42,39 +42,56 @@ export const useCINForm = () => {
   };
 
   const handleImageScanned = async (image: string, photoUrl?: string) => {
-    console.log("📤 CIN FORM - Image scannée, upload automatique vers client-photos");
+    console.log("📤 CIN FORM - Image scannée avec URL photo reçue:", {
+      image_presente: !!image,
+      photo_url_recue: !!photoUrl,
+      photo_url: photoUrl
+    });
     
     // 1. Sauvegarder l'image scannée
     setFormData(prev => ({ ...prev, scannedImage: image }));
     
-    // 2. Upload automatique vers client-photos
-    let uploadedPhotoUrl = photoUrl;
-    if (!uploadedPhotoUrl && image) {
-      console.log("📤 Upload automatique image CIN vers client-photos");
-      uploadedPhotoUrl = await uploadClientPhoto(image, 'cin');
-      
-      if (uploadedPhotoUrl) {
-        console.log("✅ Image CIN uploadée automatiquement:", uploadedPhotoUrl);
-        toast.success("📷 Photo CIN uploadée automatiquement vers client-photos !");
-      } else {
-        console.error("❌ Échec upload automatique image CIN");
-        toast.error("Erreur lors de l'upload automatique de la photo");
-      }
-    }
-    
-    // 3. Sauvegarder l'URL de la photo uploadée
-    if (uploadedPhotoUrl) {
+    // 2. Si une URL photo est fournie, l'utiliser directement
+    if (photoUrl) {
+      console.log("✅ CIN FORM - URL photo reçue directement du scanner:", photoUrl);
       setFormData(prev => ({ 
         ...prev, 
         scannedImage: image,
-        photo_url: uploadedPhotoUrl 
+        photo_url: photoUrl 
       }));
-      console.log("✅ URL photo sauvegardée dans formData:", uploadedPhotoUrl);
+      toast.success("📷 Photo CIN reçue et sauvegardée automatiquement !");
+      return;
+    }
+    
+    // 3. Sinon, upload automatique vers client-photos (fallback)
+    if (image && !photoUrl) {
+      console.log("📤 CIN FORM - Fallback: Upload automatique image CIN vers client-photos");
+      const uploadedPhotoUrl = await uploadClientPhoto(image, 'cin');
+      
+      if (uploadedPhotoUrl) {
+        console.log("✅ CIN FORM - Fallback upload réussi:", uploadedPhotoUrl);
+        setFormData(prev => ({ 
+          ...prev, 
+          scannedImage: image,
+          photo_url: uploadedPhotoUrl 
+        }));
+        toast.success("📷 Photo CIN uploadée automatiquement via fallback !");
+      } else {
+        console.error("❌ CIN FORM - Échec fallback upload image CIN");
+        setFormData(prev => ({ 
+          ...prev, 
+          scannedImage: image
+        }));
+        toast.error("⚠️ Image scannée mais échec upload automatique");
+      }
     }
   };
 
   const handleCINDataExtracted = (data: any) => {
-    console.log("📄 CIN FORM - Données CIN extraites:", data);
+    console.log("📄 CIN FORM - Données CIN extraites avec photo URL:", {
+      data,
+      photo_url_dans_data: data.photo_url
+    });
     
     setFormData(prev => ({
       ...prev,
@@ -84,11 +101,15 @@ export const useCINForm = () => {
       numero_passeport: data.numero_cin || prev.numero_passeport,
       numero_telephone: data.numero_telephone || prev.numero_telephone,
       code_barre: data.code_barre || prev.code_barre,
-      // Garder la photo_url déjà uploadée automatiquement
-      photo_url: prev.photo_url
+      // 🔥 PRIORITÉ À L'URL PHOTO DES DONNÉES EXTRAITES
+      photo_url: data.photo_url || prev.photo_url
     }));
     
-    toast.success("Données CIN extraites et appliquées !");
+    console.log("✅ CIN FORM - Données appliquées avec photo URL:", {
+      photo_url_finale: data.photo_url || formData.photo_url
+    });
+    
+    toast.success("Données CIN extraites et appliquées avec photo !");
   };
 
   const handleSubmit = async () => {
@@ -97,12 +118,20 @@ export const useCINForm = () => {
       return;
     }
 
+    // 🔥 VÉRIFICATION OBLIGATOIRE DE LA PHOTO URL
+    if (!formData.photo_url) {
+      console.error("❌ CIN FORM - AUCUNE PHOTO URL DISPONIBLE POUR L'ENREGISTREMENT");
+      toast.error("❌ Erreur: Aucune photo disponible. Veuillez rescanner le document.");
+      return;
+    }
+
     setIsLoading(true);
-    console.log("🚀 SOUMISSION CIN CLIENT - Début avec photo uploadée automatiquement:", {
+    console.log("🚀 SOUMISSION CIN CLIENT - Début avec VÉRIFICATION photo obligatoire:", {
       nom: formData.nom,
       prenom: formData.prenom,
       photo_url: formData.photo_url,
-      photo_uploadee_automatiquement: formData.photo_url ? "✅ OUI" : "❌ NON"
+      photo_url_presente: !!formData.photo_url,
+      verification_critique: formData.photo_url ? "✅ PHOTO URL CONFIRMÉE" : "❌ PHOTO URL MANQUANTE"
     });
 
     try {
@@ -114,16 +143,16 @@ export const useCINForm = () => {
         numero_telephone: formData.numero_telephone?.trim() || null,
         code_barre: formData.code_barre?.trim() || null,
         code_barre_image_url: null,
-        photo_url: formData.photo_url || null, // 🔥 PHOTO UPLOADÉE AUTOMATIQUEMENT
+        photo_url: formData.photo_url, // 🔥 PHOTO URL OBLIGATOIRE VÉRIFIÉE
         observations: formData.observations?.trim() || null,
         date_enregistrement: formData.date_enregistrement,
         document_type: 'cin',
         agent_id: user.id
       };
 
-      console.log("💾 INSERTION CLIENT CIN - Données finales avec photo automatique:", {
+      console.log("💾 INSERTION CLIENT CIN - Données finales avec VÉRIFICATION photo obligatoire:", {
         ...clientData,
-        confirmation_photo_url: clientData.photo_url ? "✅ INCLUSE" : "❌ MANQUANTE"
+        verification_finale_photo_url: clientData.photo_url ? "✅ CONFIRMÉE POUR INSERTION" : "❌ CRITIQUE: MANQUANTE"
       });
 
       const { data, error } = await supabase
@@ -137,12 +166,12 @@ export const useCINForm = () => {
         throw error;
       }
 
-      console.log("✅ CLIENT CIN ENREGISTRÉ AVEC PHOTO AUTOMATIQUE:", {
+      console.log("✅ CLIENT CIN ENREGISTRÉ AVEC PHOTO URL VÉRIFIÉE:", {
         id: data.id,
         nom: data.nom,
         prenom: data.prenom,
         photo_url: data.photo_url,
-        verification_photo: data.photo_url ? "✅ SAUVÉE AUTOMATIQUEMENT" : "❌ MANQUANTE"
+        verification_finale: data.photo_url ? "✅ PHOTO SAUVEGARDÉE AVEC SUCCÈS" : "❌ CRITIQUE: PHOTO MANQUANTE EN BASE"
       });
 
       toast.success(`Client ${data.prenom} ${data.nom} enregistré avec succès et photo sauvegardée !`);

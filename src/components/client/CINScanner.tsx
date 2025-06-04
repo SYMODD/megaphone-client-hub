@@ -22,13 +22,14 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
   const [apiKey, setApiKey] = useState("K87783069388957");
   const [showApiKey, setShowApiKey] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
 
   const { isScanning, extractedData, rawText, scanImage, resetScan } = useCINOCR();
 
   const handleImageCapture = async (file: File) => {
     if (!file) return;
 
-    console.log("📤 CIN SCANNER - Début traitement image CIN avec compression et upload automatique");
+    console.log("📤 CIN SCANNER - Début traitement image CIN avec compression et upload automatique OBLIGATOIRE");
 
     try {
       setIsCompressing(true);
@@ -52,18 +53,29 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
       reader.onload = async (event) => {
         const result = event.target?.result as string;
         
-        // 3. Upload automatique IMMÉDIAT de la photo compressée vers client-photos
-        console.log("📤 Upload automatique IMMÉDIAT photo CIN compressée vers client-photos");
-        const photoUrl = await uploadClientPhoto(result, 'cin');
+        // 3. Upload OBLIGATOIRE et IMMÉDIAT de la photo compressée vers client-photos
+        console.log("📤 Upload OBLIGATOIRE et IMMÉDIAT photo CIN compressée vers client-photos");
         
-        if (photoUrl) {
-          console.log("✅ Photo CIN compressée uploadée automatiquement vers client-photos:", photoUrl);
-          onImageScanned(result, photoUrl); // 🔥 TRANSMISSION IMMÉDIATE DE L'URL
-          toast.success("📷 Photo CIN compressée et uploadée automatiquement !");
-        } else {
-          console.error("❌ Échec upload automatique photo CIN vers client-photos");
-          toast.error("Erreur lors de l'upload automatique vers client-photos");
-          onImageScanned(result); // Transmettre l'image même en cas d'échec upload
+        try {
+          const photoUrl = await uploadClientPhoto(result, 'cin');
+          
+          if (photoUrl) {
+            console.log("✅ Photo CIN compressée uploadée avec succès:", photoUrl);
+            setUploadedPhotoUrl(photoUrl);
+            
+            // 🔥 TRANSMISSION IMMÉDIATE ET OBLIGATOIRE DE L'URL
+            onImageScanned(result, photoUrl);
+            toast.success("📷 Photo CIN uploadée automatiquement avec succès !");
+          } else {
+            console.error("❌ ÉCHEC CRITIQUE upload photo CIN vers client-photos");
+            toast.error("❌ Erreur critique lors de l'upload de la photo CIN");
+            // Même en cas d'échec, on transmet l'image pour continuer le process
+            onImageScanned(result);
+          }
+        } catch (uploadError) {
+          console.error("❌ EXCEPTION lors de l'upload photo CIN:", uploadError);
+          toast.error("❌ Exception lors de l'upload de la photo CIN");
+          onImageScanned(result);
         }
       };
       reader.readAsDataURL(compressedFile);
@@ -75,7 +87,8 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
       if (extractedCINData) {
         console.log("✅ OCR CIN terminé avec données:", {
           ...extractedCINData,
-          code_barre_present: extractedCINData.code_barre ? "✅ OUI" : "❌ NON"
+          code_barre_present: extractedCINData.code_barre ? "✅ OUI" : "❌ NON",
+          photo_url_disponible: uploadedPhotoUrl ? "✅ OUI" : "❌ NON"
         });
       }
     } catch (error) {
@@ -88,9 +101,19 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
 
   const handleConfirmData = () => {
     if (extractedData) {
-      console.log("✅ CIN SCANNER - Confirmation données CIN:", extractedData);
-      onDataExtracted(extractedData);
-      toast.success("Données CIN confirmées et appliquées !");
+      console.log("✅ CIN SCANNER - Confirmation données CIN avec photo URL:", {
+        ...extractedData,
+        photo_url_confirmee: uploadedPhotoUrl
+      });
+      
+      // 🔥 AJOUT DE L'URL PHOTO DANS LES DONNÉES EXTRAITES
+      const dataWithPhoto = {
+        ...extractedData,
+        photo_url: uploadedPhotoUrl
+      };
+      
+      onDataExtracted(dataWithPhoto);
+      toast.success("Données CIN confirmées et appliquées avec photo !");
     } else {
       toast.error("Aucune donnée CIN à confirmer");
     }
@@ -98,6 +121,7 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
 
   const handleResetScan = () => {
     console.log("🔄 Reset scan CIN");
+    setUploadedPhotoUrl(null);
     resetScan();
     onImageScanned("");
   };
@@ -118,6 +142,11 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
           <CardTitle className="text-lg">📄 Scanner la CIN</CardTitle>
           <CardDescription>
             Prenez une photo claire de la carte d'identité nationale (recto) - L'image sera automatiquement compressée et uploadée vers client-photos
+            {uploadedPhotoUrl && (
+              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-800">
+                ✅ Photo uploadée avec succès dans client-photos
+              </div>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -131,7 +160,7 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
           {isCompressing && (
             <div className="flex items-center gap-2 text-blue-600 text-sm">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-              Compression et upload de l'image...
+              Compression et upload obligatoire de l'image...
             </div>
           )}
 
