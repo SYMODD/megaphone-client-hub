@@ -21,7 +21,7 @@ export const BarcodeImageSection = ({
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
-  const [currentImageUrl, setCurrentImageUrl] = useState(code_barre_image_url);
+  const [currentImageUrl, setCurrentImageUrl] = useState("");
 
   console.log("📊 BarcodeImageSection - Données reçues:", {
     code_barre,
@@ -30,27 +30,23 @@ export const BarcodeImageSection = ({
     url_presente: currentImageUrl ? "✅ OUI" : "❌ NON"
   });
 
-  // 🎯 CORRECTION : Synchronisation renforcée avec validation
+  // 🎯 SYNCHRONISATION SIMPLIFIÉE - Accepter toute URL non-null
   useEffect(() => {
-    const incomingUrl = code_barre_image_url?.trim();
-    const validUrl = incomingUrl && incomingUrl !== "" && incomingUrl !== "null" && incomingUrl !== "undefined" 
-      ? incomingUrl 
-      : "";
-
-    if (validUrl !== currentImageUrl) {
-      console.log("🔄 Mise à jour URL image avec validation:", {
+    const incomingUrl = code_barre_image_url || "";
+    
+    if (incomingUrl !== currentImageUrl) {
+      console.log("🔄 Mise à jour URL image:", {
         ancienne: currentImageUrl,
-        nouvelle: validUrl,
-        source: code_barre_image_url,
-        validation_ok: validUrl ? "✅ URL VALIDE" : "❌ URL INVALIDE"
+        nouvelle: incomingUrl,
+        source: code_barre_image_url
       });
-      setCurrentImageUrl(validUrl);
+      setCurrentImageUrl(incomingUrl);
       setImageError(false);
-      setImageLoading(!!validUrl); // Loading seulement si URL valide
+      setImageLoading(!!incomingUrl);
     }
   }, [code_barre_image_url, currentImageUrl]);
 
-  // Vérifier si nous avons vraiment une URL d'image valide
+  // Vérifier si nous avons une URL d'image valide
   const hasValidImageUrl = currentImageUrl && currentImageUrl.trim() !== "";
 
   const handleImageLoad = () => {
@@ -72,7 +68,6 @@ export const BarcodeImageSection = ({
     console.log("🔄 Retry chargement image:", currentImageUrl);
     setImageError(false);
     setImageLoading(true);
-    // Force reload by adding timestamp
     const urlWithTimestamp = currentImageUrl + (currentImageUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
     setCurrentImageUrl(urlWithTimestamp);
   };
@@ -83,15 +78,12 @@ export const BarcodeImageSection = ({
   };
 
   const handleImageUploaded = (imageUrl: string) => {
-    console.log("✅ Nouvelle image uploadée avec validation:", imageUrl);
-    const cleanUrl = imageUrl?.trim();
-    if (cleanUrl && cleanUrl !== "") {
-      setCurrentImageUrl(cleanUrl);
-      onImageUploaded(cleanUrl);
-      setShowUpload(false);
-      setImageError(false);
-      setImageLoading(true);
-    }
+    console.log("✅ Nouvelle image uploadée:", imageUrl);
+    setCurrentImageUrl(imageUrl);
+    onImageUploaded(imageUrl);
+    setShowUpload(false);
+    setImageError(false);
+    setImageLoading(true);
   };
 
   const handleCancelUpload = () => {
@@ -163,7 +155,7 @@ export const BarcodeImageSection = ({
               <br />
               <strong>Statut:</strong> {imageError ? "❌ Erreur" : imageLoading ? "⏳ Chargement" : "✅ Chargée"}
               <br />
-              <strong>Correction:</strong> ✅ Validation et synchronisation renforcées
+              <strong>Correction:</strong> ✅ Synchronisation directe sans validation excessive
             </div>
           </div>
         ) : (

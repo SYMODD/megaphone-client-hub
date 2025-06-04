@@ -32,11 +32,7 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
         return;
       }
 
-      // 🎯 VALIDATION CRITIQUE avant insertion
-      const imageUrlToSave = formData.code_barre_image_url && formData.code_barre_image_url.trim() !== "" 
-        ? formData.code_barre_image_url.trim() 
-        : null;
-
+      // 🎯 TRANSMISSION DIRECTE - Pas de validation qui peut bloquer
       const dataToInsert = {
         nom: formData.nom,
         prenom: formData.prenom,
@@ -44,7 +40,7 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
         numero_passeport: formData.numero_passeport,
         numero_telephone: formData.numero_telephone,
         code_barre: formData.code_barre,
-        code_barre_image_url: imageUrlToSave, // 🎯 URL validée et nettoyée
+        code_barre_image_url: formData.code_barre_image_url, // 🔑 TRANSMISSION DIRECTE
         observations: formData.observations,
         date_enregistrement: formData.date_enregistrement,
         photo_url: formData.photo_url,
@@ -55,8 +51,8 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
       console.log("🔥 INSERTION EN BASE - Données exactes à insérer:", {
         code_barre_image_url: dataToInsert.code_barre_image_url,
         code_barre: dataToInsert.code_barre,
-        verification_url: dataToInsert.code_barre_image_url ? "✅ URL PRÉSENTE POUR INSERTION" : "❌ PAS D'URL",
-        url_nettoyée: "✅ Validation et nettoyage appliqués"
+        verification_url: dataToInsert.code_barre_image_url ? "✅ URL PRÉSENTE POUR INSERTION" : "⚠️ URL VIDE MAIS TRANSMISE",
+        transmission_directe: "✅ Pas de nettoyage qui peut supprimer l'URL"
       });
 
       const { data, error } = await supabase
@@ -77,14 +73,12 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
         console.log("🔥 VÉRIFICATION POST-INSERTION:", {
           client_id: savedClient.id,
           code_barre_image_url_sauvé: savedClient.code_barre_image_url,
-          succès_sauvegarde: savedClient.code_barre_image_url ? "✅ URL SAUVÉE" : "❌ URL PERDUE",
-          correction_effective: savedClient.code_barre_image_url === imageUrlToSave ? "✅ CORRESPONDANCE" : "❌ DIVERGENCE"
+          succès_sauvegarde: savedClient.code_barre_image_url ? "✅ URL SAUVÉE" : "⚠️ URL VIDE EN BASE",
+          correspondance: savedClient.code_barre_image_url === dataToInsert.code_barre_image_url ? "✅ CORRESPONDANCE" : "❌ DIVERGENCE"
         });
 
-        if (imageUrlToSave && savedClient.code_barre_image_url) {
+        if (savedClient.code_barre_image_url) {
           toast.success("✅ Client et image sauvegardés avec succès !");
-        } else if (imageUrlToSave && !savedClient.code_barre_image_url) {
-          toast.error("⚠️ Client sauvé mais image perdue");
         } else {
           toast.success("✅ Client enregistré !");
         }

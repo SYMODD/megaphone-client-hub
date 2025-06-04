@@ -23,21 +23,20 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         code_barre_image_url_avant: prev.code_barre_image_url
       });
 
+      // 🎯 CORRECTION CRITIQUE : Assignment direct SANS condition
       const updatedData = {
         ...prev,
         code_barre: barcode || prev.code_barre,
         numero_telephone: phone || prev.numero_telephone,
-        // 🎯 CORRECTION CRITIQUE : Assignment direct sans fallback
-        code_barre_image_url: barcodeImageUrl ? barcodeImageUrl : prev.code_barre_image_url
+        code_barre_image_url: barcodeImageUrl || "" // 🔑 ASSIGNATION DIRECTE - pas de fallback sur prev
       };
 
       console.log("🔥 BARCODE HANDLER - APRÈS MISE À JOUR:", {
         code_barre: updatedData.code_barre,
         code_barre_image_url: updatedData.code_barre_image_url,
-        url_assignée: updatedData.code_barre_image_url === barcodeImageUrl ? "✅ OUI" : "❌ NON",
-        url_fournie: barcodeImageUrl,
+        url_assignée: barcodeImageUrl ? "✅ URL FOURNIE" : "⚠️ URL VIDE",
         url_finale: updatedData.code_barre_image_url,
-        correction_appliquée: "✅ Assignment conditionnel corrigé"
+        correction_appliquée: "✅ Assignment direct sans fallback sur prev"
       });
 
       return updatedData;
