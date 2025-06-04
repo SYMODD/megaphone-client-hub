@@ -6,9 +6,11 @@ import { useNationalities } from "@/hooks/useNationalities";
 import { Client } from "@/hooks/useClientData/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useCallback } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useBaseClientsLogic = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const {
     clients,
     loading,
@@ -58,7 +60,7 @@ export const useBaseClientsLogic = () => {
       await fetchClients();
       console.log("✅ BaseClientsLogic - Données rafraîchies après mise à jour client");
     }
-  }, [fetchClients, user]);
+  }, [fetchClients, user, setViewDialogOpen, setEditDialogOpen, setDocumentDialogOpen]);
 
   // CORRECTION DÉFINITIVE: Fonction de suppression qui force le rechargement
   const handleConfirmDeleteClient = async () => {
