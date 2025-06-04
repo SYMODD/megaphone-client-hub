@@ -11,7 +11,7 @@ import { FormActions } from "./FormActions";
 import { PassportSection } from "./PassportSection";
 import { DocumentType } from "@/types/documentTypes";
 import { useBarcodeScanning } from "@/hooks/useBarcodeScanning";
-import { useClientForm } from "@/hooks/useClientForm";
+import { useClientFormLogic } from "@/hooks/useClientForm";
 import { uploadClientPhoto } from "@/utils/storageUtils";
 
 export const PassportMarocainForm = () => {
@@ -25,13 +25,11 @@ export const PassportMarocainForm = () => {
     handleInputChange,
     handleMRZDataExtracted,
     handleSubmit: submitForm
-  } = useClientForm();
+  } = useClientFormLogic();
 
   const {
-    currentBarcode,
     isScanning: isBarcodeScanning,
-    scannedBarcodeImage,
-    handleBarcodeScanned,
+    scannedImage: scannedBarcodeImage,
     handleImageUpload,
     resetScan: resetBarcodesScan
   } = useBarcodeScanning({
