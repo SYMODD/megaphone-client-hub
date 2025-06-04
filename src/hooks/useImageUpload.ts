@@ -23,7 +23,7 @@ export const useImageUpload = () => {
       
       setUploadProgress(0);
 
-      // Vérifier si le bucket existe
+      // Vérifier que le bucket existe et est accessible
       const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
       if (bucketsError) {
         console.error("❌ Erreur vérification buckets:", bucketsError);
@@ -33,17 +33,21 @@ export const useImageUpload = () => {
       const barcodeImagesBucket = buckets.find(bucket => bucket.name === 'barcode-images');
       if (!barcodeImagesBucket) {
         console.error("❌ Bucket 'barcode-images' non trouvé");
-        toast.error("Bucket de stockage non trouvé");
+        toast.error("Configuration de stockage manquante");
         return null;
       }
 
+      console.log("✅ Bucket 'barcode-images' trouvé et accessible");
+
+      // Générer un nom de fichier unique
       const filename = `barcode-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.jpg`;
       console.log("📝 Nom de fichier généré pour code-barres:", filename);
 
+      // Upload du fichier
       const { data, error } = await supabase.storage
         .from('barcode-images')
         .upload(filename, file, {
-          contentType: 'image/jpeg',
+          contentType: file.type || 'image/jpeg',
           upsert: false
         });
 
@@ -54,12 +58,25 @@ export const useImageUpload = () => {
 
       console.log("✅ Upload code-barres réussi:", data);
 
+      // Obtenir l'URL publique
       const { data: publicURL } = supabase.storage
         .from('barcode-images')
         .getPublicUrl(data.path);
 
       const finalUrl = publicURL.publicUrl;
       console.log("🌐 URL publique code-barres générée:", finalUrl);
+
+      // Vérifier que l'URL est accessible
+      try {
+        const testResponse = await fetch(finalUrl, { method: 'HEAD' });
+        if (testResponse.ok) {
+          console.log("✅ URL code-barres vérifiée et accessible");
+        } else {
+          console.warn("⚠️ URL générée mais non accessible immédiatement");
+        }
+      } catch (testError) {
+        console.warn("⚠️ Test d'accessibilité URL échoué:", testError);
+      }
 
       setUploadProgress(100);
       return finalUrl;

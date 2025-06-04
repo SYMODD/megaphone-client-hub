@@ -1,9 +1,9 @@
 
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { QrCode, Upload, Image as ImageIcon } from "lucide-react";
+import { QrCode, Upload, Image as ImageIcon, RefreshCw } from "lucide-react";
 import { BarcodeImageUpload } from "./BarcodeImageUpload";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface BarcodeImageSectionProps {
   code_barre: string;
@@ -21,41 +21,67 @@ export const BarcodeImageSection = ({
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
+  const [currentImageUrl, setCurrentImageUrl] = useState(code_barre_image_url);
 
   console.log("📊 BarcodeImageSection - Données reçues:", {
     code_barre,
     code_barre_image_url,
-    url_presente: code_barre_image_url ? "✅ OUI" : "❌ NON",
-    url_value: code_barre_image_url
+    currentImageUrl,
+    url_presente: currentImageUrl ? "✅ OUI" : "❌ NON"
   });
 
+  // Synchroniser l'URL locale avec les props
+  useEffect(() => {
+    if (code_barre_image_url !== currentImageUrl) {
+      console.log("🔄 Mise à jour URL image:", {
+        ancienne: currentImageUrl,
+        nouvelle: code_barre_image_url
+      });
+      setCurrentImageUrl(code_barre_image_url);
+      setImageError(false);
+      setImageLoading(true);
+    }
+  }, [code_barre_image_url]);
+
   // Vérifier si nous avons vraiment une URL d'image valide
-  const hasValidImageUrl = code_barre_image_url && code_barre_image_url.trim() !== "";
+  const hasValidImageUrl = currentImageUrl && currentImageUrl.trim() !== "";
 
   const handleImageLoad = () => {
-    console.log("✅ Image code-barres chargée avec succès:", code_barre_image_url);
+    console.log("✅ Image code-barres chargée avec succès:", currentImageUrl);
     setImageLoading(false);
     setImageError(false);
   };
 
   const handleImageError = (e: any) => {
     console.error("❌ Erreur chargement image code-barres:", {
-      url: code_barre_image_url,
+      url: currentImageUrl,
       error: e
     });
     setImageError(true);
     setImageLoading(false);
   };
 
+  const retryImageLoad = () => {
+    console.log("🔄 Retry chargement image:", currentImageUrl);
+    setImageError(false);
+    setImageLoading(true);
+    // Force reload by adding timestamp
+    const urlWithTimestamp = currentImageUrl + (currentImageUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+    setCurrentImageUrl(urlWithTimestamp);
+  };
+
   const testImageUrl = () => {
-    console.log("🔍 Test de l'URL de l'image code-barres:", code_barre_image_url);
-    window.open(code_barre_image_url, '_blank');
+    console.log("🔍 Test de l'URL de l'image code-barres:", currentImageUrl);
+    window.open(currentImageUrl, '_blank');
   };
 
   const handleImageUploaded = (imageUrl: string) => {
     console.log("✅ Nouvelle image uploadée:", imageUrl);
+    setCurrentImageUrl(imageUrl);
     onImageUploaded(imageUrl);
     setShowUpload(false);
+    setImageError(false);
+    setImageLoading(true);
   };
 
   const handleCancelUpload = () => {
@@ -92,15 +118,13 @@ export const BarcodeImageSection = ({
                     <ImageIcon className="w-8 h-8" />
                     <p>Erreur de chargement</p>
                   </div>
-                  <p className="text-xs text-gray-500 mb-2 break-all">URL: {code_barre_image_url}</p>
-                  <div className="flex gap-2 justify-center">
+                  <p className="text-xs text-gray-500 mb-2 break-all">URL: {currentImageUrl}</p>
+                  <div className="flex gap-2 justify-center flex-wrap">
                     <button
-                      onClick={() => {
-                        setImageError(false);
-                        setImageLoading(true);
-                      }}
-                      className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                      onClick={retryImageLoad}
+                      className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center gap-1"
                     >
+                      <RefreshCw className="w-3 h-3" />
                       Réessayer
                     </button>
                     <button
@@ -113,19 +137,19 @@ export const BarcodeImageSection = ({
                 </div>
               ) : (
                 <img 
-                  src={code_barre_image_url} 
+                  src={currentImageUrl} 
                   alt="Image du code-barres"
                   className={`max-w-full h-auto max-h-32 rounded-lg shadow-md mx-auto ${imageLoading ? 'hidden' : 'block'}`}
                   onLoad={handleImageLoad}
                   onError={handleImageError}
-                  key={code_barre_image_url}
+                  key={currentImageUrl}
                 />
               )}
             </div>
             
             {/* Informations de debug */}
             <div className="text-xs text-gray-400 bg-gray-100 p-2 rounded">
-              <strong>URL:</strong> {code_barre_image_url}
+              <strong>URL:</strong> {currentImageUrl}
               <br />
               <strong>Statut:</strong> {imageError ? "❌ Erreur" : imageLoading ? "⏳ Chargement" : "✅ Chargée"}
             </div>
@@ -155,7 +179,7 @@ export const BarcodeImageSection = ({
           </div>
         ) : (
           <BarcodeImageUpload 
-            currentImageUrl={code_barre_image_url}
+            currentImageUrl={currentImageUrl}
             onImageUploaded={handleImageUploaded}
             onCancel={handleCancelUpload}
           />

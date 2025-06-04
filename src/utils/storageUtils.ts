@@ -20,7 +20,24 @@ export const ensureStorageBucket = async (bucketName: string = 'client-photos') 
     }
 
     console.log(`✅ Bucket ${bucketName} trouvé et accessible`);
-    return true;
+    
+    // Test d'accès au bucket en tentant de lister les fichiers
+    try {
+      const { error: listError } = await supabase.storage
+        .from(bucketName)
+        .list('', { limit: 1 });
+      
+      if (listError) {
+        console.warn(`⚠️ Bucket ${bucketName} trouvé mais pas accessible:`, listError);
+        return false;
+      }
+      
+      console.log(`✅ Bucket ${bucketName} accessible et fonctionnel`);
+      return true;
+    } catch (accessError) {
+      console.warn(`⚠️ Test d'accès au bucket ${bucketName} échoué:`, accessError);
+      return false;
+    }
   } catch (error) {
     console.error(`❌ Erreur lors de la vérification du bucket ${bucketName}:`, error);
     return false;
