@@ -19,9 +19,9 @@ export const ClientForm = () => {
     handleBarcodeScanned
   } = useClientFormLogic();
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    await handleSubmit();
+    handleSubmit(e);
   };
 
   return (

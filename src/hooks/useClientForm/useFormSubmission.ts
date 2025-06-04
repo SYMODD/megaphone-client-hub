@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { ClientFormData } from "./types";
+import { useImageUpload } from "@/hooks/useImageUpload";
 
 interface UseFormSubmissionProps {
   formData: ClientFormData;
@@ -14,6 +15,7 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { uploadClientPhoto } = useImageUpload();
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) {
@@ -26,18 +28,38 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
     }
 
     setIsLoading(true);
-    console.log("🚀 SOUMISSION CLIENT - Début avec photo déjà uploadée:", {
+    console.log("🚀 SOUMISSION CLIENT - Début avec données complètes:", {
       nom: formData.nom,
       prenom: formData.prenom,
       code_barre: formData.code_barre,
       code_barre_image_url: formData.code_barre_image_url,
       photo_url: formData.photo_url,
-      photo_deja_uploadee: formData.photo_url ? "✅ OUI" : "❌ NON",
-      url_barcode_presente: formData.code_barre_image_url ? "✅ OUI" : "❌ NON"
+      scannedImage: formData.scannedImage ? "✅ PRÉSENTE" : "❌ ABSENTE",
+      url_barcode_presente: formData.code_barre_image_url ? "✅ OUI" : "❌ NON",
+      url_photo_presente: formData.photo_url ? "✅ OUI" : "❌ NON"
     });
 
     try {
-      // 🎯 DONNÉES COMPLÈTES POUR INSERTION (photo déjà uploadée automatiquement)
+      let finalPhotoUrl = formData.photo_url;
+
+      // 🔥 UPLOAD AUTOMATIQUE DE L'IMAGE SCANNÉE
+      if (formData.scannedImage && !finalPhotoUrl) {
+        console.log("📤 UPLOAD IMAGE SCANNÉE - Début upload vers client-photos");
+        
+        const uploadedPhotoUrl = await uploadClientPhoto(
+          formData.scannedImage, 
+          formData.document_type || 'cin'
+        );
+        
+        if (uploadedPhotoUrl) {
+          finalPhotoUrl = uploadedPhotoUrl;
+          console.log("✅ IMAGE SCANNÉE UPLOADÉE:", uploadedPhotoUrl);
+        } else {
+          console.warn("⚠️ Échec upload image scannée, continuons sans photo");
+        }
+      }
+
+      // 🎯 DONNÉES COMPLÈTES POUR INSERTION
       const clientData = {
         nom: formData.nom.trim(),
         prenom: formData.prenom.trim(),
@@ -46,17 +68,18 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         numero_telephone: formData.numero_telephone?.trim() || null,
         code_barre: formData.code_barre?.trim() || null,
         code_barre_image_url: formData.code_barre_image_url || null,
-        photo_url: formData.photo_url || null, // 🔥 PHOTO DÉJÀ UPLOADÉE AUTOMATIQUEMENT
+        photo_url: finalPhotoUrl || null, // 🔥 PHOTO FINALE (uploadée ou existante)
         observations: formData.observations?.trim() || null,
         date_enregistrement: formData.date_enregistrement,
         document_type: formData.document_type || 'cin',
         agent_id: user.id
       };
 
-      console.log("💾 INSERTION CLIENT - Données finales avec photo automatique:", {
+      console.log("💾 INSERTION CLIENT - Données finales:", {
         ...clientData,
+        confirmation_barcode_url: clientData.code_barre_image_url ? "✅ INCLUSE" : "❌ MANQUANTE",
         confirmation_photo_url: clientData.photo_url ? "✅ INCLUSE" : "❌ MANQUANTE",
-        confirmation_barcode_url: clientData.code_barre_image_url ? "✅ INCLUSE" : "❌ MANQUANTE"
+        photo_source: formData.scannedImage && !formData.photo_url ? "📤 UPLOADÉE" : "🔗 EXISTANTE"
       });
 
       const { data, error } = await supabase
@@ -70,7 +93,7 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         throw error;
       }
 
-      console.log("✅ CLIENT ENREGISTRÉ AVEC PHOTO AUTOMATIQUE:", {
+      console.log("✅ CLIENT ENREGISTRÉ AVEC SUCCÈS:", {
         id: data.id,
         nom: data.nom,
         prenom: data.prenom,
@@ -78,12 +101,12 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         code_barre_image_url: data.code_barre_image_url,
         photo_url: data.photo_url,
         verification_urls: {
-          photo_ok: data.photo_url ? "✅ SAUVÉE AUTOMATIQUEMENT" : "❌ MANQUANTE",
-          barcode_ok: data.code_barre_image_url ? "✅ SAUVÉE" : "❌ MANQUANTE"
+          barcode_ok: data.code_barre_image_url ? "✅ SAUVÉE" : "❌ MANQUANTE",
+          photo_ok: data.photo_url ? "✅ SAUVÉE" : "❌ MANQUANTE"
         }
       });
 
-      toast.success(`Client ${data.prenom} ${data.nom} enregistré avec succès et photo sauvegardée !`);
+      toast.success(`Client ${data.prenom} ${data.nom} enregistré avec succès!`);
       
       // Rediriger vers la liste des clients
       navigate("/base-clients");

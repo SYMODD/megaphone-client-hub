@@ -18,8 +18,8 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
     setFormData(prev => {
       const updatedData = {
         ...prev,
-        code_barre: barcode,
-        code_barre_image_url: barcodeImageUrl || "", // 🎯 SAUVEGARDE CRITIQUE
+        code_barre: barcode || prev.code_barre,
+        code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url,
         ...(phone && { numero_telephone: phone })
       };
 
@@ -28,6 +28,7 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         nouveau_code: updatedData.code_barre,
         ancienne_url: prev.code_barre_image_url,
         nouvelle_url: updatedData.code_barre_image_url,
+        telephone_mis_a_jour: phone ? "✅ OUI" : "❌ NON",
         url_confirmee: updatedData.code_barre_image_url ? "✅ DÉFINIE" : "❌ VIDE"
       });
 
