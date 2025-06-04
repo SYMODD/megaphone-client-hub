@@ -21,7 +21,7 @@ export const useCINOCR = () => {
       
       if (result.success && result.data) {
         console.log("✅ Données CIN extraites:", result.data);
-        setExtractedData(result.data);
+        let finalData = { ...result.data };
         setRawText(result.rawText || "");
 
         // 2. Upload automatique de l'image code-barres SI un code-barres a été détecté
@@ -34,37 +34,35 @@ export const useCINOCR = () => {
             if (barcodeImageUrl) {
               console.log("✅ CIN - Image code-barres uploadée automatiquement:", barcodeImageUrl);
               
-              // 🚨 CORRECTION CRITIQUE : Mettre à jour les données extraites avec l'URL
-              const updatedData = {
+              // 🚨 CORRECTION CRITIQUE : Mettre à jour les données avec l'URL
+              finalData = {
                 ...result.data,
                 code_barre_image_url: barcodeImageUrl
               };
               
-              console.log("🎯 CIN - Mise à jour des données avec URL image:", {
-                ancien_code_barre: result.data.code_barre,
-                nouveau_code_barre: updatedData.code_barre,
-                url_image_ajoutee: updatedData.code_barre_image_url,
-                donnees_completes: updatedData
-              });
+              console.log("🎯 CIN - Données finales avec URL image:", finalData);
               
-              setExtractedData(updatedData);
+              // Mettre à jour l'état local immédiatement
+              setExtractedData(finalData);
               
               toast.success("Données CIN et image code-barres extraites avec succès!");
-              console.log("🎉 CIN - Données complètes avec image:", updatedData);
               
-              return updatedData;
+              return finalData;
             } else {
               console.warn("⚠️ CIN - Échec upload image code-barres, mais données CIN OK");
+              setExtractedData(result.data);
               toast.success("Données CIN extraites (image code-barres non sauvegardée)");
               return result.data;
             }
           } catch (barcodeError) {
             console.error("❌ CIN - Erreur upload image code-barres:", barcodeError);
+            setExtractedData(result.data);
             toast.success("Données CIN extraites (erreur sauvegarde image code-barres)");
             return result.data;
           }
         } else {
           console.log("ℹ️ CIN - Aucun code-barres détecté, pas d'upload d'image");
+          setExtractedData(result.data);
           toast.success("Données CIN extraites (aucun code-barres détecté)");
           return result.data;
         }

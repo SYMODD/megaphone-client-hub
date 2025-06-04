@@ -54,12 +54,17 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
       const extractedCINData = await scanImage(file, apiKey);
       
       if (extractedCINData) {
-        console.log("✅ OCR CIN terminé avec succès (avec image code-barres):", extractedCINData);
+        console.log("✅ OCR CIN terminé avec données complètes:", extractedCINData);
         
-        // Les données incluent maintenant code_barre_image_url si un code-barres a été détecté
+        // 🚨 VÉRIFICATION CRITIQUE : L'URL de l'image doit être présente
         if (extractedCINData.code_barre_image_url) {
-          console.log("🎉 CIN - Image code-barres incluse dans les données:", extractedCINData.code_barre_image_url);
+          console.log("🎉 CIN - Image code-barres CONFIRMÉE avec URL:", extractedCINData.code_barre_image_url);
+        } else if (extractedCINData.code_barre) {
+          console.warn("⚠️ CIN - Code-barres détecté MAIS PAS D'URL d'image!");
         }
+        
+        // Les données sont déjà complètes avec l'URL depuis useCINOCR
+        // Pas besoin de traitement supplémentaire ici
       } else {
         console.warn("⚠️ OCR terminé mais aucune donnée exploitable");
       }
@@ -71,10 +76,13 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
 
   const handleConfirmData = () => {
     if (extractedData) {
-      console.log("✅ Confirmation données CIN COMPLÈTES:", {
+      console.log("✅ Confirmation données CIN AVEC URL image:", {
         ...extractedData,
-        image_barcode_incluse: extractedData.code_barre_image_url ? "✅ OUI" : "❌ NON"
+        image_barcode_incluse: extractedData.code_barre_image_url ? "✅ OUI" : "❌ NON",
+        url_transmise: extractedData.code_barre_image_url
       });
+      
+      // Transmettre les données complètes avec l'URL
       onDataExtracted(extractedData);
       toast.success("Données CIN confirmées et appliquées avec image code-barres!");
     } else {

@@ -53,21 +53,24 @@ export const ClientTable = ({ clients, onViewClient, onEditClient, onGenerateDoc
                     </div>
                   )}
                   
-                  {/* Image du code-barres - BADGE INDICATEUR AMÉLIORÉ */}
+                  {/* Image du code-barres - INDICATEUR VISUEL AMÉLIORÉ */}
                   {client.code_barre_image_url ? (
                     <div className="group relative">
                       <img 
                         src={client.code_barre_image_url} 
                         alt="Image code-barres"
-                        className="w-8 h-8 rounded border border-gray-200 object-cover cursor-pointer hover:w-16 hover:h-16 transition-all duration-200"
+                        className="w-8 h-8 rounded border border-blue-300 object-cover cursor-pointer hover:w-16 hover:h-16 transition-all duration-200 ring-2 ring-blue-200"
                         title="Image du code-barres scanné"
                         onError={(e) => {
                           console.error("❌ Erreur chargement miniature code-barres:", client.code_barre_image_url);
                           const target = e.currentTarget;
                           target.style.display = 'none';
                         }}
+                        onLoad={() => {
+                          console.log("✅ Miniature code-barres chargée:", client.code_barre_image_url);
+                        }}
                       />
-                      <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-0.5">
+                      <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full p-0.5">
                         <Barcode className="w-2 h-2" />
                       </div>
                     </div>
@@ -101,8 +104,8 @@ export const ClientTable = ({ clients, onViewClient, onEditClient, onGenerateDoc
                       {client.code_barre}
                     </span>
                     {client.code_barre_image_url && (
-                      <Badge variant="outline" className="text-xs">
-                        Avec image
+                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-300">
+                        ✅ Avec image
                       </Badge>
                     )}
                   </div>
