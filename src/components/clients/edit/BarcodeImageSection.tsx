@@ -20,6 +20,7 @@ export const BarcodeImageSection = ({
 }: BarcodeImageSectionProps) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+  const [showUpload, setShowUpload] = useState(false);
 
   console.log("📊 BarcodeImageSection - Données:", {
     code_barre,
@@ -45,6 +46,16 @@ export const BarcodeImageSection = ({
   const testImageUrl = () => {
     console.log("🔍 Test de l'URL de l'image code-barres:", code_barre_image_url);
     window.open(code_barre_image_url, '_blank');
+  };
+
+  const handleImageUploaded = (imageUrl: string) => {
+    console.log("✅ Nouvelle image uploadée:", imageUrl);
+    onImageUploaded(imageUrl);
+    setShowUpload(false);
+  };
+
+  const handleCancelUpload = () => {
+    setShowUpload(false);
   };
 
   return (
@@ -125,16 +136,23 @@ export const BarcodeImageSection = ({
         )}
 
         {/* Section d'upload */}
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2 text-sm font-medium">
-            <Upload className="w-4 h-4" />
-            {code_barre_image_url ? "Remplacer l'image" : "Ajouter une image"}
-          </Label>
+        {!showUpload ? (
+          <div className="space-y-2">
+            <button
+              onClick={() => setShowUpload(true)}
+              className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+            >
+              <Upload className="w-4 h-4" />
+              {code_barre_image_url ? "Remplacer l'image" : "Ajouter une image"}
+            </button>
+          </div>
+        ) : (
           <BarcodeImageUpload 
-            code_barre={code_barre}
-            onImageUploaded={onImageUploaded}
+            currentImageUrl={code_barre_image_url}
+            onImageUploaded={handleImageUploaded}
+            onCancel={handleCancelUpload}
           />
-        </div>
+        )}
       </CardContent>
     </Card>
   );
