@@ -55,31 +55,26 @@ export const useCINOCR = () => {
       const cinData = extractCINData(parsedText);
       console.log("📋 Données CIN extraites:", cinData);
 
-      // Vérification plus flexible des données extraites
+      // Vérification TRÈS permissive des données extraites
       const extractedFields = [];
-      if (cinData.nom && cinData.nom.trim()) extractedFields.push("nom");
-      if (cinData.prenom && cinData.prenom.trim()) extractedFields.push("prénom");
-      if (cinData.numero_cin && cinData.numero_cin.trim()) extractedFields.push("numéro CIN");
-      if (cinData.date_naissance && cinData.date_naissance.trim()) extractedFields.push("date de naissance");
-      if (cinData.lieu_naissance && cinData.lieu_naissance.trim()) extractedFields.push("lieu de naissance");
+      if (cinData.nom?.trim()) extractedFields.push("nom");
+      if (cinData.prenom?.trim()) extractedFields.push("prénom");
+      if (cinData.numero_cin?.trim()) extractedFields.push("numéro CIN");
+      if (cinData.date_naissance?.trim()) extractedFields.push("date de naissance");
+      if (cinData.lieu_naissance?.trim()) extractedFields.push("lieu de naissance");
+      
+      // TOUJOURS retourner les données même si partielles
+      setExtractedData(cinData);
+      console.log("✅ Extraction CIN terminée:", cinData);
       
       if (extractedFields.length > 0) {
-        setExtractedData(cinData);
-        console.log("✅ Extraction CIN réussie:", cinData);
-        
         // Message de succès détaillé
         toast.success(`✅ Données extraites: ${extractedFields.join(", ")}`, { duration: 5000 });
         return cinData;
       } else {
-        console.warn("⚠️ Aucune donnée CIN valide extraite");
-        toast.warning("⚠️ Image analysée mais aucune donnée CIN claire détectée. Essayez avec une image plus nette.");
-        
-        // Donner plus d'informations sur le texte détecté
-        if (parsedText.length > 0) {
-          console.log("📄 Texte détecté mais non reconnu comme CIN:", parsedText.substring(0, 200));
-          toast.info("💡 Texte détecté mais format CIN non reconnu. Vérifiez que c'est bien une CIN marocaine.");
-        }
-        return null;
+        console.log("⚠️ Aucun champ extrait mais données retournées quand même");
+        toast.warning("⚠️ Texte analysé. Vérifiez les données extraites ci-dessous.");
+        return cinData; // Retourner quand même pour permettre la validation manuelle
       }
     } catch (error) {
       console.error("❌ Erreur lors du scan CIN:", error);

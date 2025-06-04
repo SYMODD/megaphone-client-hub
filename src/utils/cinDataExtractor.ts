@@ -13,77 +13,79 @@ export const extractCINData = (text: string): CINData => {
   };
 
   const fullText = text.toUpperCase();
-  console.log("🔤 Texte en majuscules pour analyse:", fullText.substring(0, 200) + "...");
+  console.log("🔤 Texte en majuscules pour analyse:", fullText);
   
-  // 1. EXTRACTION DU NOM ET PRÉNOM - Patterns améliorés
+  // 1. EXTRACTION DU NOM ET PRÉNOM - Plus permissif
   console.log("🔤 === DÉBUT RECHERCHE NOM ET PRÉNOM ===");
   
-  // Patterns pour trouver nom et prénom
+  // Patterns plus simples et permissifs
   const nomPrenomPatterns = [
-    // Patterns explicites avec mots-clés
-    /(?:NOM|SURNAME|FAMILY\s*NAME)\s*:?\s*([A-Z][A-Z\s]{1,30})/gi,
-    /(?:PRENOM|PRÉNOM|GIVEN\s*NAME|FIRST\s*NAME)\s*:?\s*([A-Z][A-Z\s]{1,30})/gi,
-    // Patterns EL + nom (courant au Maroc)
-    /\bEL\s+([A-Z]{2,20})\b/gi,
-    // Patterns avec structure CIN marocaine
-    /([A-Z]{2,20})\s+([A-Z]{2,20})\s*(?=\d|$)/gm,
-    // Mots isolés en majuscules (potentiels noms)
-    /\b([A-Z]{3,20})\b/g
+    // Mots en majuscules de 3+ caractères (noms typiques)
+    /\b([A-Z]{3,20})\b/g,
+    // Patterns avec structure nom prénom
+    /([A-Z]+)\s+([A-Z]+)/g,
+    // Patterns EL + nom
+    /\bEL\s+([A-Z]{2,20})/gi,
+    // Patterns avec mots-clés
+    /(?:NOM|SURNAME)\s*:?\s*([A-Z][A-Z\s]{2,30})/gi,
+    /(?:PRENOM|PRÉNOM|GIVEN)\s*:?\s*([A-Z][A-Z\s]{2,30})/gi
   ];
 
-  const candidateNames = new Set<string>();
+  const candidateNames = [];
   
-  // Collecter tous les candidats possibles
+  // Collecter tous les mots en majuscules comme candidats
   for (const pattern of nomPrenomPatterns) {
     const matches = Array.from(text.matchAll(pattern));
-    console.log(`🔍 Pattern ${pattern.source} trouvé ${matches.length} résultats`);
+    console.log(`🔍 Pattern ${pattern.source} - ${matches.length} résultats`);
     
     for (const match of matches) {
-      if (match[1]) {
-        const candidate = match[1].trim().replace(/[^A-Z\s]/g, '');
-        if (isValidName(candidate)) {
-          candidateNames.add(candidate);
-          console.log("📝 Candidat nom/prénom ajouté:", candidate);
-        }
+      const candidate = match[1] ? match[1].trim() : match[0].trim();
+      if (candidate && isValidNameCandidate(candidate)) {
+        candidateNames.push(candidate);
+        console.log("📝 Candidat nom/prénom:", candidate);
       }
     }
   }
 
-  // Convertir en array et filtrer
-  const validCandidates = Array.from(candidateNames).filter(name => isValidName(name));
-  console.log("👥 Candidats noms valides:", validCandidates);
+  // Filtrer et assigner les meilleurs candidats
+  const validNames = candidateNames
+    .filter(name => isValidNameCandidate(name))
+    .filter(name => !isExcludedWord(name))
+    .slice(0, 3); // Prendre les 3 premiers
 
-  // Assigner nom et prénom
-  if (validCandidates.length >= 1) {
-    cinData.nom = validCandidates[0];
+  console.log("👥 Candidats noms valides:", validNames);
+
+  if (validNames.length >= 1) {
+    cinData.nom = validNames[0];
     console.log("✅ Nom assigné:", cinData.nom);
   }
-  if (validCandidates.length >= 2) {
-    cinData.prenom = validCandidates[1];
+  if (validNames.length >= 2) {
+    cinData.prenom = validNames[1];
     console.log("✅ Prénom assigné:", cinData.prenom);
   }
 
-  // 2. EXTRACTION DU NUMÉRO CIN - Patterns améliorés
+  // 2. EXTRACTION DU NUMÉRO CIN - Plus permissif
   console.log("🔢 === DÉBUT RECHERCHE NUMÉRO CIN ===");
   
   const cinPatterns = [
-    // Format CIN classique marocain
-    /(?:CIN|N[°O])\s*:?\s*([A-Z]{0,3}\d{6,12})/gi,
-    /\b([A-Z]{1,2}\d{6,10})\b/g,
-    /\b(\d{8,12})\b/g,
-    // Patterns avec lettres et chiffres
-    /\b([A-Z]\d{7,11})\b/g,
-    /\b([A-Z]{2}\d{6,10})\b/g
+    // Patterns CIN marocains plus flexibles
+    /\b([A-Z]{1,3}\d{5,12})\b/g,
+    /\b(\d{6,12})\b/g,
+    /(?:CIN|N[°O])\s*:?\s*([A-Z0-9]{6,15})/gi,
+    // Patterns plus génériques
+    /([A-Z]\d{6,11})/g,
+    /([A-Z]{2}\d{5,10})/g
   ];
 
   for (const pattern of cinPatterns) {
     const matches = Array.from(text.matchAll(pattern));
-    console.log(`🔍 Pattern CIN ${pattern.source} trouvé ${matches.length} résultats`);
+    console.log(`🔍 Pattern CIN ${pattern.source} - ${matches.length} résultats`);
     
     for (const match of matches) {
       if (match[1]) {
         const cleanCIN = match[1].replace(/[^A-Z0-9]/g, '');
-        if (isValidCIN(cleanCIN)) {
+        console.log("🔍 Candidat CIN:", cleanCIN);
+        if (isValidCINCandidate(cleanCIN)) {
           cinData.numero_cin = cleanCIN;
           console.log("✅ Numéro CIN assigné:", cleanCIN);
           break;
@@ -93,18 +95,20 @@ export const extractCINData = (text: string): CINData => {
     if (cinData.numero_cin) break;
   }
 
-  // 3. EXTRACTION DE LA DATE DE NAISSANCE - Patterns améliorés
+  // 3. EXTRACTION DE LA DATE DE NAISSANCE - Plus permissif
   console.log("📅 === DÉBUT RECHERCHE DATE DE NAISSANCE ===");
   
   const datePatterns = [
     /(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/g,
     /(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/g,
+    /(\d{1,2})\s*[\/\-\.]\s*(\d{1,2})\s*[\/\-\.]\s*(\d{4})/g,
+    // Dates en format texte
     /(?:NE|BORN|NAISSANCE)\s*(?:LE)?\s*:?\s*(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/gi,
   ];
 
   for (const pattern of datePatterns) {
     const matches = Array.from(text.matchAll(pattern));
-    console.log(`🔍 Pattern date ${pattern.source} trouvé ${matches.length} résultats`);
+    console.log(`🔍 Pattern date ${pattern.source} - ${matches.length} résultats`);
     
     for (const match of matches) {
       const dateResult = parseDate(match);
@@ -117,19 +121,20 @@ export const extractCINData = (text: string): CINData => {
     if (cinData.date_naissance) break;
   }
 
-  // 4. EXTRACTION DU LIEU DE NAISSANCE
+  // 4. EXTRACTION DU LIEU DE NAISSANCE - Plus permissif
   console.log("📍 === DÉBUT RECHERCHE LIEU DE NAISSANCE ===");
   
   const lieuPatterns = [
-    /(?:NE|BORN)\s*A\s*:?\s*([A-Z][A-Z\s]{2,30})/gi,
-    /(?:LIEU|PLACE)\s*:?\s*([A-Z][A-Z\s]{2,30})/gi,
-    // Villes marocaines courantes
-    /(AGADIR|CASABLANCA|RABAT|FES|FEZ|MARRAKECH|TANGER|MEKNES|OUJDA|KENITRA|TETOUAN|SALE|MOHAMMEDIA|BENI\s*MELLAL|EL\s*JADIDA)/gi,
+    // Villes marocaines courantes d'abord
+    /(AGADIR|CASABLANCA|RABAT|FES|FEZ|MARRAKECH|TANGER|MEKNES|OUJDA|KENITRA|TETOUAN|SALE|MOHAMMEDIA|BENI\s*MELLAL|EL\s*JADIDA|ESSAOUIRA|NADOR|KHOURIBGA|SETTAT|BERKANE)/gi,
+    // Patterns génériques
+    /(?:NE|BORN)\s*A\s*:?\s*([A-Z][A-Z\s]{2,25})/gi,
+    /(?:LIEU|PLACE)\s*:?\s*([A-Z][A-Z\s]{2,25})/gi,
   ];
 
   for (const pattern of lieuPatterns) {
     const matches = Array.from(text.matchAll(pattern));
-    console.log(`🔍 Pattern lieu ${pattern.source} trouvé ${matches.length} résultats`);
+    console.log(`🔍 Pattern lieu ${pattern.source} - ${matches.length} résultats`);
     
     for (const match of matches) {
       if (match[1]) {
@@ -147,7 +152,7 @@ export const extractCINData = (text: string): CINData => {
   console.log("📋 === RÉSULTAT FINAL EXTRACTION CIN ===");
   console.log("📋 Données extraites:", cinData);
   
-  // Compter les champs extraits
+  // Compter les champs extraits (plus permissif)
   const extractedFieldsCount = Object.values(cinData).filter(value => 
     value && value !== "Maroc" && value.toString().trim().length > 0
   ).length;
@@ -157,18 +162,9 @@ export const extractCINData = (text: string): CINData => {
   return cinData;
 };
 
-// Fonctions utilitaires pour validation
-function isValidName(name: string): boolean {
-  if (!name || name.length < 2 || name.length > 30) return false;
-  
-  // Exclure les mots courants qui ne sont pas des noms
-  const excludedWords = [
-    'ROYAUME', 'MAROC', 'MOROCCO', 'CARTE', 'IDENTITE', 'NATIONALE', 
-    'KINGDOM', 'CARD', 'IDENTITY', 'NATIONAL', 'DU', 'DE', 'LA', 'LE',
-    'AND', 'ET', 'OU', 'OR', 'THE', 'FOR', 'WITH', 'WITHOUT'
-  ];
-  
-  if (excludedWords.includes(name.trim())) return false;
+// Fonctions utilitaires pour validation - PLUS PERMISSIVES
+function isValidNameCandidate(name: string): boolean {
+  if (!name || name.length < 2) return false;
   
   // Doit contenir uniquement des lettres et espaces
   if (!/^[A-Z\s]+$/.test(name)) return false;
@@ -176,22 +172,34 @@ function isValidName(name: string): boolean {
   return true;
 }
 
-function isValidCIN(cin: string): boolean {
-  if (!cin || cin.length < 6 || cin.length > 12) return false;
+function isExcludedWord(word: string): boolean {
+  const excludedWords = [
+    'ROYAUME', 'MAROC', 'MOROCCO', 'CARTE', 'IDENTITE', 'NATIONALE', 
+    'KINGDOM', 'CARD', 'IDENTITY', 'NATIONAL', 'DU', 'DE', 'LA', 'LE',
+    'AND', 'ET', 'OU', 'OR', 'THE', 'FOR', 'WITH', 'WITHOUT', 'DATE',
+    'SEXE', 'SEX', 'MALE', 'FEMALE', 'LIEU', 'PLACE', 'BORN', 'NAISSANCE'
+  ];
   
-  // Doit contenir au moins 6 chiffres
+  return excludedWords.includes(word.trim());
+}
+
+function isValidCINCandidate(cin: string): boolean {
+  if (!cin || cin.length < 5) return false;
+  
+  // Doit contenir au moins quelques chiffres
   const digitCount = (cin.match(/\d/g) || []).length;
-  if (digitCount < 6) return false;
+  if (digitCount < 4) return false;
   
   return true;
 }
 
 function isValidPlace(place: string): boolean {
-  if (!place || place.length < 3 || place.length > 50) return false;
+  if (!place || place.length < 3 || place.length > 30) return false;
   
   // Exclure les mots génériques
   const excludedWords = [
-    'CARTE', 'IDENTITE', 'NATIONALE', 'KINGDOM', 'MOROCCO', 'MAROC'
+    'CARTE', 'IDENTITE', 'NATIONALE', 'KINGDOM', 'MOROCCO', 'MAROC',
+    'DATE', 'SEXE', 'MALE', 'FEMALE'
   ];
   
   if (excludedWords.includes(place.trim())) return false;
@@ -219,14 +227,14 @@ function parseDate(match: RegExpMatchArray): string | null {
     return null;
   }
   
-  // Validation de la date
+  // Validation de la date plus permissive
   const dayNum = parseInt(day);
   const monthNum = parseInt(month);
   const yearNum = parseInt(year);
   
   if (dayNum < 1 || dayNum > 31 || 
       monthNum < 1 || monthNum > 12 || 
-      yearNum < 1900 || yearNum > 2024) {
+      yearNum < 1940 || yearNum > 2024) {
     return null;
   }
   

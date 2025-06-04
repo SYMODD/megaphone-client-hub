@@ -66,84 +66,75 @@ export const CINForm = () => {
       return;
     }
     
-    // Mapper les données extraites vers les champs du formulaire - PLUS PERMISSIF
+    // Mapper les données extraites vers les champs du formulaire - TRÈS PERMISSIF
     const updatedData: Partial<CINFormData> = {};
     let fieldsExtracted: string[] = [];
     
-    // Nom - accepter même des chaînes courtes
-    if (extractedData.nom && typeof extractedData.nom === 'string' && extractedData.nom.trim().length > 0) {
-      updatedData.nom = extractedData.nom.trim().toUpperCase();
+    // Application IMMÉDIATE même avec des données partielles
+    console.log("📝 Application IMMÉDIATE des données:", extractedData);
+    
+    // Nom - accepter n'importe quelle chaîne
+    if (extractedData.nom) {
+      updatedData.nom = String(extractedData.nom).trim().toUpperCase();
       fieldsExtracted.push("nom");
       console.log("✅ Nom extrait et appliqué:", updatedData.nom);
     }
     
-    // Prénom - accepter même des chaînes courtes
-    if (extractedData.prenom && typeof extractedData.prenom === 'string' && extractedData.prenom.trim().length > 0) {
-      updatedData.prenom = extractedData.prenom.trim().toUpperCase();
+    // Prénom - accepter n'importe quelle chaîne
+    if (extractedData.prenom) {
+      updatedData.prenom = String(extractedData.prenom).trim().toUpperCase();
       fieldsExtracted.push("prénom");
       console.log("✅ Prénom extrait et appliqué:", updatedData.prenom);
     }
     
     // Nationalité
-    if (extractedData.nationalite && typeof extractedData.nationalite === 'string' && extractedData.nationalite.trim().length > 0) {
-      updatedData.nationalite = extractedData.nationalite.trim();
+    if (extractedData.nationalite) {
+      updatedData.nationalite = String(extractedData.nationalite).trim();
       fieldsExtracted.push("nationalité");
       console.log("✅ Nationalité extraite et appliquée:", updatedData.nationalite);
     }
     
     // Numéro CIN → numéro passeport
-    if (extractedData.numero_cin && typeof extractedData.numero_cin === 'string' && extractedData.numero_cin.trim().length > 0) {
-      updatedData.numero_passeport = extractedData.numero_cin.trim();
+    if (extractedData.numero_cin) {
+      updatedData.numero_passeport = String(extractedData.numero_cin).trim();
       fieldsExtracted.push("numéro CIN");
       console.log("✅ Numéro CIN extrait et appliqué:", updatedData.numero_passeport);
     }
-    
-    // Date de naissance (ajout dans les observations si disponible)
-    let dateInfo = "";
-    if (extractedData.date_naissance && typeof extractedData.date_naissance === 'string' && extractedData.date_naissance.trim().length > 0) {
-      dateInfo = `Date de naissance: ${extractedData.date_naissance.trim()}`;
-      fieldsExtracted.push("date de naissance");
-      console.log("✅ Date de naissance extraite:", extractedData.date_naissance);
-    }
-    
-    // Lieu de naissance (ajout dans les observations si disponible)
-    let lieuInfo = "";
-    if (extractedData.lieu_naissance && typeof extractedData.lieu_naissance === 'string' && extractedData.lieu_naissance.trim().length > 0) {
-      lieuInfo = `Lieu de naissance: ${extractedData.lieu_naissance.trim()}`;
-      fieldsExtracted.push("lieu de naissance");
-      console.log("✅ Lieu de naissance extrait:", extractedData.lieu_naissance);
-    }
 
-    // TOUJOURS appliquer les données, même si partielles
-    console.log("📝 Application des données extraites:", updatedData);
-    console.log("📊 Champs extraits:", fieldsExtracted);
+    // TOUJOURS appliquer les données
+    console.log("📝 Application forcée des données extraites:", updatedData);
     
     setFormData(prev => ({ ...prev, ...updatedData }));
     
     // Créer les informations d'extraction pour les observations
-    const scanInfo = `=== EXTRACTION CIN AUTOMATIQUE ===\nDate: ${new Date().toLocaleString('fr-FR')}\nType: Carte d'Identité Nationale\nChamps extraits: ${fieldsExtracted.join(', ')}`;
+    let observationsData = `=== EXTRACTION CIN AUTOMATIQUE ===\nDate: ${new Date().toLocaleString('fr-FR')}\nType: Carte d'Identité Nationale`;
     
-    let observationsData = scanInfo;
-    if (dateInfo) observationsData += `\n${dateInfo}`;
-    if (lieuInfo) observationsData += `\n${lieuInfo}`;
+    if (fieldsExtracted.length > 0) {
+      observationsData += `\nChamps extraits: ${fieldsExtracted.join(', ')}`;
+    }
+    
+    // Date de naissance (ajout dans les observations si disponible)
+    if (extractedData.date_naissance) {
+      observationsData += `\nDate de naissance: ${extractedData.date_naissance}`;
+      fieldsExtracted.push("date de naissance");
+    }
+    
+    // Lieu de naissance (ajout dans les observations si disponible)
+    if (extractedData.lieu_naissance) {
+      observationsData += `\nLieu de naissance: ${extractedData.lieu_naissance}`;
+      fieldsExtracted.push("lieu de naissance");
+    }
     
     setFormData(prev => ({
       ...prev,
       observations: prev.observations ? `${prev.observations}\n\n${observationsData}` : observationsData
     }));
     
-    // Message de succès - TOUJOURS affiché même avec données partielles
-    if (fieldsExtracted.length > 0) {
-      toast.success(`🎉 Données CIN extraites avec succès!\nChamps: ${fieldsExtracted.join(", ")}`, { 
-        duration: 5000 
-      });
-      console.log("✅ SUCCÈS - Données CIN appliquées au formulaire");
-    } else {
-      toast.warning("⚠️ Données reçues mais aucun champ valide détecté", { 
-        duration: 4000 
-      });
-      console.log("⚠️ ATTENTION - Données reçues mais non applicables:", extractedData);
-    }
+    // Message de succès - TOUJOURS affiché
+    toast.success(`🎉 Données CIN appliquées au formulaire!${fieldsExtracted.length > 0 ? `\nChamps: ${fieldsExtracted.join(", ")}` : ''}`, { 
+      duration: 5000 
+    });
+    console.log("✅ SUCCÈS - Données CIN appliquées au formulaire");
   };
 
   const handleSubmit = async () => {
@@ -152,7 +143,6 @@ export const CINForm = () => {
       return;
     }
 
-    // Validation des champs obligatoires
     if (!formData.nom || !formData.prenom || !formData.numero_passeport) {
       toast.error("Veuillez remplir tous les champs obligatoires (nom, prénom, numéro de document)");
       return;
@@ -167,7 +157,6 @@ export const CINForm = () => {
         photo_url_value: formData.photo_url
       });
       
-      // Préparer les données pour l'insertion
       const clientData = {
         nom: formData.nom.trim(),
         prenom: formData.prenom.trim(),
