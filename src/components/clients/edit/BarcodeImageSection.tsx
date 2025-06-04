@@ -2,7 +2,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Image, Barcode, CheckCircle, AlertCircle } from "lucide-react";
 import { Client } from "@/hooks/useClientData/types";
-import { BarcodeImageUpload } from "./BarcodeImageUpload";
 import { useState, useEffect } from "react";
 
 interface BarcodeImageSectionProps {
@@ -39,25 +38,6 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
     imageUrl: currentImageUrl 
   });
 
-  const handleImageUploaded = async (newImageUrl: string) => {
-    console.log("🔄 BarcodeImageSection - Nouvelle image uploadée:", {
-      url: newImageUrl,
-      bucket: newImageUrl.includes('barcode-images') ? 'barcode-images' : 'autre'
-    });
-    
-    // Mise à jour immédiate de l'état local pour affichage instantané
-    setCurrentImageUrl(newImageUrl);
-    
-    // Délai court pour s'assurer que la DB est mise à jour
-    setTimeout(async () => {
-      console.log("📞 BarcodeImageSection - Appel du callback onClientUpdated");
-      if (onClientUpdated) {
-        await onClientUpdated();
-        console.log("✅ BarcodeImageSection - Callback onClientUpdated terminé");
-      }
-    }, 300);
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -77,7 +57,7 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
             isCorrectBucket ? 
               'Code-barres avec image scannée (bucket: barcode-images)' : 
               'Code-barres avec image scannée (ancien bucket)'
-          ) : 'Code-barres sans image - Utilisez le scanner ou uploadez une image'}
+          ) : 'Code-barres sans image - Scan automatique lors de l\'ajout du client'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -117,7 +97,6 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
                     console.log('✅ BarcodeImageSection - Image du code-barres chargée avec succès:', currentImageUrl);
                     console.log(`📁 Bucket utilisé: ${isCorrectBucket ? 'barcode-images (correct)' : 'autre bucket'}`);
                   }}
-                  // Ajouter une clé pour forcer le rechargement de l'image
                   key={currentImageUrl}
                 />
               </div>
@@ -151,23 +130,22 @@ export const BarcodeImageSection = ({ client, onClientUpdated }: BarcodeImageSec
                 Code-barres enregistré sans image associée
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                Utilisez le scanner de code-barres pour ajouter une image
+                L'image est automatiquement sauvegardée lors du scan CIN
               </p>
             </div>
           )}
-          
-          {/* Section d'upload d'image pour tous les clients (avec ou sans image) */}
-          <div className="border-t pt-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">
-                {hasBarcodeImage ? "Remplacer l'image" : "Ajouter une image"}
-              </span>
+
+          {/* Message si aucun code-barres */}
+          {!hasBarcode && (
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-center">
+              <p className="text-sm text-gray-600">
+                Aucun code-barres enregistré pour ce client
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Le code-barres est automatiquement extrait lors du scan CIN
+              </p>
             </div>
-            <BarcodeImageUpload 
-              clientId={client.id} 
-              onImageUploaded={handleImageUploaded}
-            />
-          </div>
+          )}
         </div>
       </CardContent>
     </Card>
