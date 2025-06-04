@@ -13,17 +13,7 @@ interface BarcodeScannerProps {
 
 export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScannerProps) => {
   const { isScanning, isCompressing, scannedImage, handleImageUpload, resetScan } = useBarcodeScanning({
-    onBarcodeScanned: (barcode: string, phone?: string, barcodeImageUrl?: string) => {
-      console.log("📱 BarcodeScanner - Résultats reçus du scan:", {
-        barcode,
-        phone,
-        barcodeImageUrl,
-        url_presente: barcodeImageUrl ? "✅ OUI" : "❌ NON"
-      });
-
-      // 🎯 CORRECTION: S'assurer que tous les paramètres sont transmis
-      onBarcodeScanned(barcode || "", phone || "", barcodeImageUrl || "");
-    }
+    onBarcodeScanned
   });
 
   return (

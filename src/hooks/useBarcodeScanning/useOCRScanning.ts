@@ -15,21 +15,18 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
     try {
       setIsScanning(true);
       console.log("🔍 OCR SCANNING - Début du scan avec upload automatique");
-      console.log("📄 Fichier à traiter:", {
-        nom: file.name,
-        taille: file.size,
-        type: file.type
-      });
 
-      // 1. Upload de l'image vers barcode-images EN PREMIER
-      console.log("📤 ÉTAPE 1: Upload automatique de l'image code-barres...");
+      // 1. Upload de l'image vers barcode-images AVANT le scan OCR
+      console.log("📤 ÉTAPE 1: Upload de l'image code-barres...");
       const barcodeImageUrl = await uploadBarcodeImage(file);
       
       if (!barcodeImageUrl) {
-        console.error("❌ Échec upload image code-barres - continuons quand même avec OCR");
-      } else {
-        console.log("✅ Image code-barres uploadée avec succès:", barcodeImageUrl);
+        console.error("❌ Échec upload image - abandon du processus");
+        onResult("", "");
+        return;
       }
+      
+      console.log("✅ Image uploadée avec succès:", barcodeImageUrl);
 
       // 2. Scan OCR de l'image
       console.log("🔍 ÉTAPE 2: Scan OCR de l'image...");
@@ -39,7 +36,7 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       formData.append('apikey', 'K87899883388957');
       formData.append('language', 'fre');
       formData.append('isOverlayRequired', 'false');
-      formData.append('detectOrientation', 'true');
+      formData.append('detectOrientation', 'false');
       formData.append('scale', 'true');
       formData.append('isTable', 'false');
       formData.append('OCREngine', '2');
@@ -66,56 +63,24 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       console.log("📝 Texte extrait:", extractedText);
 
       // 3. Extraction du code-barres et du téléphone
-      const barcodePatterns = [
-        /P\s*=\s*(\d{4,8})/gi,
-        /\b(\d{8,15})\b/g,
-        /\b([A-Z0-9]{3,15}\-[A-Z0-9]{2,10})\b/gi,
-        /\b([A-Z0-9]{6,20})\b/g
-      ];
+      const barcodeMatch = extractedText.match(/[A-Z]{1,2}\d{4,}\s*<*/);
+      const phoneMatch = extractedText.match(/(?:\+212|0)[\s\-]?[5-7][\s\-]?\d{2}[\s\-]?\d{2}[\s\-]?\d{2}[\s\-]?\d{2}/);
 
-      const phonePatterns = [
-        /(?:\+212|0)[\s\-]?[5-7][\s\-]?\d{2}[\s\-]?\d{2}[\s\-]?\d{2}[\s\-]?\d{2}/g,
-        /[05-7]\d{8}/g
-      ];
+      const barcode = barcodeMatch ? barcodeMatch[0].replace(/[<\s]/g, '') : "";
+      const phone = phoneMatch ? phoneMatch[0].replace(/[\s\-]/g, '') : "";
 
-      let barcode = "";
-      let phone = "";
-
-      // Recherche du code-barres
-      for (const pattern of barcodePatterns) {
-        const match = extractedText.match(pattern);
-        if (match) {
-          barcode = match[0].replace(/[P=\s\-]/g, '');
-          console.log("✅ Code-barres détecté:", barcode);
-          break;
-        }
-      }
-
-      // Recherche du téléphone
-      for (const pattern of phonePatterns) {
-        const match = extractedText.match(pattern);
-        if (match) {
-          phone = match[0].replace(/[\s\-\+]/g, '');
-          if (phone.startsWith('212')) phone = '0' + phone.substring(3);
-          if (phone.startsWith('0') && phone.length === 10) {
-            console.log("✅ Téléphone détecté:", phone);
-            break;
-          }
-        }
-      }
-
-      console.log("🎯 Données extraites finales:", {
+      console.log("🎯 Données extraites:", {
         barcode: barcode || "Non détecté",
         phone: phone || "Non détecté",
-        barcodeImageUrl: barcodeImageUrl || "Non uploadée"
+        barcodeImageUrl: barcodeImageUrl
       });
 
-      // 4. Retourner les résultats AVEC l'URL de l'image uploadée
-      onResult(barcode, phone, barcodeImageUrl || "");
+      // 4. Retourner les résultats avec l'URL de l'image
+      onResult(barcode, phone, barcodeImageUrl);
 
     } catch (error) {
       console.error("❌ Erreur processus OCR complet:", error);
-      onResult("", "", "");
+      onResult("", "");
     } finally {
       setIsScanning(false);
     }

@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Client } from "./useClientData/types";
+import { Client } from "@/hooks/useClientData/types";
 
 interface FormData {
   nom: string;
@@ -17,6 +17,7 @@ interface FormData {
 }
 
 export const useClientEditForm = (client: Client | null) => {
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     nom: "",
@@ -30,66 +31,48 @@ export const useClientEditForm = (client: Client | null) => {
     code_barre_image_url: ""
   });
 
+  // Update form data when client changes, but preserve uploaded image URL
   useEffect(() => {
     if (client) {
-      console.log("🔄 useClientEditForm - Initialisation avec client:", {
-        id: client.id,
-        nom: client.nom,
-        prenom: client.prenom,
-        code_barre_image_url: client.code_barre_image_url,
-        url_presente: client.code_barre_image_url ? "✅ OUI" : "❌ NON"
-      });
+      setFormData(prev => {
+        const newFormData = {
+          nom: client.nom,
+          prenom: client.prenom,
+          nationalite: client.nationalite,
+          numero_passeport: client.numero_passeport,
+          numero_telephone: client.numero_telephone || "",
+          code_barre: client.code_barre || "",
+          date_enregistrement: client.date_enregistrement,
+          observations: client.observations || "",
+          // 🎯 CRUCIAL: Préserver l'URL uploadée si elle existe, sinon utiliser celle du client
+          code_barre_image_url: prev.code_barre_image_url || client.code_barre_image_url || ""
+        };
 
-      setFormData({
-        nom: client.nom || "",
-        prenom: client.prenom || "",
-        nationalite: client.nationalite || "",
-        numero_passeport: client.numero_passeport || "",
-        numero_telephone: client.numero_telephone || "",
-        code_barre: client.code_barre || "",
-        date_enregistrement: client.date_enregistrement || "",
-        observations: client.observations || "",
-        code_barre_image_url: client.code_barre_image_url || ""
+        console.log("🔄 useClientEditForm - Mise à jour formData:", {
+          client_url: client.code_barre_image_url,
+          previous_form_url: prev.code_barre_image_url,
+          final_url: newFormData.code_barre_image_url,
+          preservation: prev.code_barre_image_url ? "✅ URL PRÉSERVÉE" : "📥 URL CLIENT UTILISÉE"
+        });
+
+        return newFormData;
       });
     }
   }, [client]);
 
-  const updateFormData = (field: string, value: string) => {
-    console.log(`📝 useClientEditForm - Mise à jour ${field}:`, value);
-    
-    setFormData(prev => {
-      const newData = { ...prev, [field]: value };
-      
-      if (field === 'code_barre_image_url') {
-        console.log("🎯 MISE À JOUR URL IMAGE CODE-BARRES:", {
-          ancienne_url: prev.code_barre_image_url,
-          nouvelle_url: value,
-          client_id: client?.id
-        });
-      }
-      
-      return newData;
-    });
+  const updateFormData = (field: keyof FormData, value: string) => {
+    console.log(`🔄 useClientEditForm - updateFormData: ${field} = ${value}`);
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = async (onSuccess?: () => void) => {
-    if (!client) {
-      console.error("❌ Aucun client à sauvegarder");
-      return;
-    }
-
-    setLoading(true);
+  const handleSave = async (onSuccess: () => void) => {
+    if (!client) return;
 
     try {
-      console.log("💾 useClientEditForm - SAUVEGARDE CLIENT:", {
-        client_id: client.id,
-        formData: {
-          ...formData,
-          code_barre_image_url_present: formData.code_barre_image_url ? "✅ OUI" : "❌ NON"
-        }
-      });
+      setLoading(true);
+      console.log('Mise à jour du client:', client.id, formData);
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('clients')
         .update({
           nom: formData.nom,
@@ -98,33 +81,31 @@ export const useClientEditForm = (client: Client | null) => {
           numero_passeport: formData.numero_passeport,
           numero_telephone: formData.numero_telephone || null,
           code_barre: formData.code_barre || null,
-          observations: formData.observations || null,
+          code_barre_image_url: formData.code_barre_image_url || null,
           date_enregistrement: formData.date_enregistrement,
-          code_barre_image_url: formData.code_barre_image_url || null
+          observations: formData.observations,
+          updated_at: new Date().toISOString()
         })
-        .eq('id', client.id)
-        .select()
-        .single();
+        .eq('id', client.id);
 
       if (error) {
-        console.error("❌ Erreur sauvegarde:", error);
+        console.error('Erreur lors de la mise à jour:', error);
         throw error;
       }
 
-      // 🎯 LOG DE CONFIRMATION DEMANDÉ
-      if (data?.code_barre_image_url) {
-        console.log("🎊 CONFIRMATION EDIT - URL code-barres sauvegardée:", data.code_barre_image_url);
-      }
+      toast({
+        title: "Client mis à jour",
+        description: `Les informations de ${formData.prenom} ${formData.nom} ont été mises à jour avec succès.`,
+      });
 
-      console.log("✅ Client sauvegardé avec succès");
-      toast.success("Client modifié avec succès");
-      
-      if (onSuccess) {
-        onSuccess();
-      }
+      onSuccess();
     } catch (error) {
-      console.error("❌ Erreur lors de la sauvegarde:", error);
-      toast.error("Erreur lors de la sauvegarde");
+      console.error('Erreur lors de la sauvegarde:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le client. Veuillez réessayer.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

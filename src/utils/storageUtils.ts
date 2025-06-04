@@ -12,26 +12,11 @@ export const ensureStorageBucket = async (bucketName: string = 'client-photos') 
       return false;
     }
 
-    console.log("📋 Buckets disponibles:", buckets?.map(b => b.name) || []);
-
-    const bucket = buckets?.find(bucket => bucket.name === bucketName);
+    const bucket = buckets.find(bucket => bucket.name === bucketName);
     
     if (!bucket) {
-      console.warn(`⚠️ Bucket ${bucketName} non trouvé, tentative de création...`);
-      
-      // Tenter de créer le bucket
-      const { error: createError } = await supabase.storage.createBucket(bucketName, {
-        public: true,
-        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
-        fileSizeLimit: 10485760 // 10MB
-      });
-
-      if (createError) {
-        console.error(`❌ Impossible de créer le bucket ${bucketName}:`, createError);
-        return false;
-      }
-
-      console.log(`✅ Bucket ${bucketName} créé avec succès`);
+      console.warn(`⚠️ Bucket ${bucketName} non trouvé.`);
+      return false;
     }
 
     console.log(`✅ Bucket ${bucketName} trouvé et accessible`);
@@ -63,7 +48,7 @@ export const uploadClientPhoto = async (imageBase64: string, documentType: strin
   try {
     console.log("📤 UPLOAD PHOTO CLIENT - Début de l'upload vers client-photos");
     
-    // Vérifier que le bucket existe (et le créer si nécessaire)
+    // Vérifier que le bucket existe
     const bucketExists = await ensureStorageBucket('client-photos');
     if (!bucketExists) {
       console.error('❌ Le bucket client-photos n\'existe pas ou n\'est pas accessible');

@@ -7,37 +7,9 @@ import { uploadClientPhoto as uploadToClientPhotos } from "@/utils/storageUtils"
 export const useImageUpload = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const ensureBucketExists = async (bucketName: string) => {
-    try {
-      console.log(`🔍 Vérification existence bucket: ${bucketName}`);
-      
-      const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-      
-      if (listError) {
-        console.error("❌ Erreur lors de la liste des buckets:", listError);
-        throw listError;
-      }
-
-      console.log("📋 Buckets trouvés:", buckets?.map(b => b.name) || []);
-      
-      const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
-      
-      if (bucketExists) {
-        console.log(`✅ Bucket ${bucketName} existe`);
-        return true;
-      }
-
-      console.log(`⚠️ Bucket ${bucketName} n'existe pas, tentative d'upload quand même`);
-      return true;
-    } catch (error) {
-      console.error(`❌ Erreur gestion bucket ${bucketName}:`, error);
-      return false;
-    }
-  };
-
   const uploadClientPhoto = async (imageBase64: string, documentType: string = 'cin'): Promise<string | null> => {
     try {
-      console.log("📤 Upload photo client vers client-photos");
+      console.log("📤 useImageUpload - Upload vers client-photos");
       return await uploadToClientPhotos(imageBase64, documentType);
     } catch (error) {
       console.error("❌ Erreur upload photo client:", error);
@@ -47,23 +19,56 @@ export const useImageUpload = () => {
 
   const uploadBarcodeImage = async (file: File): Promise<string | null> => {
     try {
-      console.log("📤 DÉBUT Upload image code-barres vers barcode-images");
-      console.log("📄 Fichier:", {
+      console.log("📤 useImageUpload - DÉBUT Upload image code-barres vers barcode-images");
+      console.log("📄 Détails du fichier:", {
         name: file.name,
         size: file.size,
-        type: file.type
+        type: file.type,
+        lastModified: file.lastModified
       });
       
-      setUploadProgress(10);
+      setUploadProgress(0);
 
-      // S'assurer que le bucket existe
-      const bucketReady = await ensureBucketExists('barcode-images');
-      if (!bucketReady) {
-        console.error("❌ Bucket barcode-images non disponible");
+      // Vérifier que le bucket existe et est accessible
+      console.log("🔍 Vérification de l'existence du bucket barcode-images...");
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      
+      if (bucketsError) {
+        console.error("❌ Erreur vérification buckets:", bucketsError);
+        toast.error(`Erreur de configuration: ${bucketsError.message}`);
+        throw bucketsError;
+      }
+
+      console.log("📋 Buckets disponibles:", buckets.map(b => b.name));
+      const barcodeImagesBucket = buckets.find(bucket => bucket.name === 'barcode-images');
+      
+      if (!barcodeImagesBucket) {
+        console.error("❌ Bucket 'barcode-images' non trouvé dans:", buckets.map(b => b.name));
+        toast.error("Le bucket de stockage 'barcode-images' n'existe pas");
         return null;
       }
 
-      setUploadProgress(30);
+      console.log("✅ Bucket 'barcode-images' trouvé:", barcodeImagesBucket);
+
+      // Test d'accès au bucket
+      console.log("🔍 Test d'accès au bucket...");
+      try {
+        const { data: listData, error: listError } = await supabase.storage
+          .from('barcode-images')
+          .list('', { limit: 1 });
+        
+        if (listError) {
+          console.error("❌ Erreur d'accès au bucket:", listError);
+          toast.error(`Accès au bucket refusé: ${listError.message}`);
+          throw listError;
+        }
+        
+        console.log("✅ Accès au bucket confirmé");
+      } catch (accessError) {
+        console.error("❌ Impossible d'accéder au bucket:", accessError);
+        toast.error("Impossible d'accéder au stockage");
+        throw accessError;
+      }
 
       // Générer un nom de fichier unique
       const timestamp = Date.now();
@@ -73,10 +78,8 @@ export const useImageUpload = () => {
       
       console.log("📝 Nom de fichier généré:", filename);
 
-      setUploadProgress(50);
-
-      // Upload du fichier
-      console.log("📤 Upload en cours...");
+      // Tentative d'upload
+      console.log("📤 Début de l'upload du fichier...");
       const { data, error } = await supabase.storage
         .from('barcode-images')
         .upload(filename, file, {
@@ -85,13 +88,27 @@ export const useImageUpload = () => {
         });
 
       if (error) {
-        console.error("❌ Erreur upload:", error);
-        setUploadProgress(0);
-        return null;
+        console.error("❌ Erreur upload code-barres:", {
+          error: error,
+          message: error.message,
+          details: error
+        });
+        
+        // Messages d'erreur plus spécifiques
+        if (error.message.includes('policy')) {
+          toast.error("Permissions insuffisantes pour l'upload");
+        } else if (error.message.includes('size')) {
+          toast.error("Fichier trop volumineux");
+        } else if (error.message.includes('type')) {
+          toast.error("Type de fichier non autorisé");
+        } else {
+          toast.error(`Erreur d'upload: ${error.message}`);
+        }
+        
+        throw error;
       }
 
-      setUploadProgress(80);
-      console.log("✅ Upload réussi:", data);
+      console.log("✅ Upload code-barres réussi:", data);
 
       // Obtenir l'URL publique
       const { data: publicURL } = supabase.storage
@@ -99,22 +116,33 @@ export const useImageUpload = () => {
         .getPublicUrl(data.path);
 
       const finalUrl = publicURL.publicUrl;
-      console.log("🌐 URL publique générée:", finalUrl);
+      console.log("🌐 URL publique code-barres générée:", finalUrl);
 
-      // Vérification de l'URL
+      // Vérifier que l'URL est bien formée
       if (!finalUrl || !finalUrl.includes('barcode-images')) {
         console.warn("⚠️ URL générée suspecte:", finalUrl);
-        setUploadProgress(0);
+        toast.error("URL d'image générée incorrecte");
         return null;
       }
 
       setUploadProgress(100);
-      console.log("✅ SUCCÈS Upload image code-barres:", finalUrl);
+      console.log("✅ Upload terminé avec succès");
       return finalUrl;
       
     } catch (error: any) {
-      console.error("❌ Erreur inattendue upload:", error);
+      console.error("❌ Erreur inattendue upload code-barres:", {
+        error: error,
+        message: error?.message,
+        stack: error?.stack
+      });
+      
       setUploadProgress(0);
+      
+      // Ne pas afficher de toast si on en a déjà affiché un
+      if (!error?.message?.includes('toast déjà affiché')) {
+        toast.error("Erreur lors de l'upload de l'image");
+      }
+      
       return null;
     }
   };

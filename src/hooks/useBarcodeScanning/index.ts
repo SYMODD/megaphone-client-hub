@@ -7,25 +7,25 @@ interface UseBarcodeScanning {
 }
 
 export const useBarcodeScanning = ({ onBarcodeScanned }: UseBarcodeScanning) => {
-  const { 
-    isCompressing, 
-    scannedImage, 
-    handleImageUpload: processImageUpload, 
-    resetScan 
-  } = useImageProcessing({ onBarcodeScanned });
+  const [isScanning, setIsScanning] = useState(false);
   
-  const [isScanning] = useState(false); // Keep for compatibility
+  const { isCompressing, scannedImage, handleImageUpload, resetScan } = useImageProcessing({
+    onBarcodeScanned: (barcode: string, phone?: string, barcodeImageUrl?: string) => {
+      setIsScanning(false);
+      onBarcodeScanned(barcode, phone, barcodeImageUrl);
+    }
+  });
 
-  const handleImageUpload = async (file: File) => {
-    console.log("📤 useBarcodeScanning - Début traitement image");
-    await processImageUpload(file);
+  const handleImageUploadWithScanning = async (file: File) => {
+    setIsScanning(true);
+    await handleImageUpload(file);
   };
 
   return {
-    scannedImage,
     isScanning,
     isCompressing,
-    handleImageUpload,
+    scannedImage,
+    handleImageUpload: handleImageUploadWithScanning,
     resetScan
   };
 };

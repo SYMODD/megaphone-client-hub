@@ -31,123 +31,112 @@ export const ClientTable = ({ clients, onViewClient, onEditClient, onGenerateDoc
           </TableRow>
         </TableHeader>
         <TableBody>
-          {clients.map((client) => {
-            console.log(`🔍 CLIENT TABLE - Client ${client.id}:`, {
-              nom: client.nom,
-              code_barre: client.code_barre,
-              code_barre_image_url: client.code_barre_image_url,
-              url_presente: client.code_barre_image_url ? "✅ OUI" : "❌ NON"
-            });
-
-            return (
-              <TableRow key={client.id}>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    {/* Photo du client */}
-                    {client.photo_url ? (
-                      <div className="group relative">
-                        <img 
-                          src={client.photo_url} 
-                          alt="Photo client"
-                          className="w-8 h-8 rounded border border-gray-200 object-cover cursor-pointer hover:w-16 hover:h-16 transition-all duration-200"
-                          title="Photo du document d'identité"
-                          onLoad={() => console.log("✅ Photo client chargée:", client.photo_url)}
-                          onError={() => console.error("❌ Erreur photo client:", client.photo_url)}
-                        />
-                        <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-0.5">
-                          <Image className="w-2 h-2" />
-                        </div>
+          {clients.map((client) => (
+            <TableRow key={client.id}>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  {/* Photo du client (CIN/Passeport) */}
+                  {client.photo_url ? (
+                    <div className="group relative">
+                      <img 
+                        src={client.photo_url} 
+                        alt="Photo client"
+                        className="w-8 h-8 rounded border border-gray-200 object-cover cursor-pointer hover:w-16 hover:h-16 transition-all duration-200"
+                        title="Photo du document d'identité"
+                      />
+                      <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-0.5">
+                        <Image className="w-2 h-2" />
                       </div>
-                    ) : (
-                      <div className="w-8 h-8 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
-                        <Image className="w-4 h-4 text-gray-400" />
-                      </div>
-                    )}
-                    
-                    {/* Image du code-barres */}
-                    <BarcodeImageThumbnail 
-                      imageUrl={client.code_barre_image_url}
-                    />
-                  </div>
-                </TableCell>
-                <TableCell className="font-medium">
-                  {client.prenom} {client.nom}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{client.nationalite}</Badge>
-                </TableCell>
-                <TableCell className="font-mono text-sm">
-                  {client.numero_passeport}
-                </TableCell>
-                <TableCell>
-                  {client.numero_telephone ? (
-                    <span className="font-mono text-sm">{client.numero_telephone}</span>
-                  ) : (
-                    <span className="text-gray-400 text-sm">Non renseigné</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {client.code_barre ? (
-                    <div className="flex items-center gap-1">
-                      <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
-                        {client.code_barre}
-                      </span>
-                      {client.code_barre_image_url && (
-                        <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-300">
-                          ✅ Image
-                        </Badge>
-                      )}
                     </div>
                   ) : (
-                    <span className="text-gray-400 text-sm">Non scanné</span>
+                    <div className="w-8 h-8 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
+                      <Image className="w-4 h-4 text-gray-400" />
+                    </div>
                   )}
-                </TableCell>
-                <TableCell className="text-sm text-gray-600">
-                  {new Date(client.date_enregistrement).toLocaleDateString('fr-FR')}
-                </TableCell>
-                <TableCell>
+                  
+                  {/* 🎯 Image du code-barres - COMPOSANT DÉDIÉ AMÉLIORÉ */}
+                  <BarcodeImageThumbnail 
+                    imageUrl={client.code_barre_image_url}
+                  />
+                </div>
+              </TableCell>
+              <TableCell className="font-medium">
+                {client.prenom} {client.nom}
+              </TableCell>
+              <TableCell>
+                <Badge variant="secondary">{client.nationalite}</Badge>
+              </TableCell>
+              <TableCell className="font-mono text-sm">
+                {client.numero_passeport}
+              </TableCell>
+              <TableCell>
+                {client.numero_telephone ? (
+                  <span className="font-mono text-sm">{client.numero_telephone}</span>
+                ) : (
+                  <span className="text-gray-400 text-sm">Non renseigné</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {client.code_barre ? (
                   <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onViewClient(client)}
-                      className="h-8 w-8"
-                      title="Voir les détails"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onEditClient(client)}
-                      className="h-8 w-8"
-                      title="Modifier"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onGenerateDocument(client)}
-                      className="h-8 w-8"
-                      title="Générer document"
-                    >
-                      <FileText className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onDeleteClient(client)}
-                      className="h-8 w-8 text-red-600 hover:text-red-700"
-                      title="Supprimer"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                      {client.code_barre}
+                    </span>
+                    {client.code_barre_image_url && (
+                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-300">
+                        ✅ Avec image
+                      </Badge>
+                    )}
                   </div>
-                </TableCell>
-              </TableRow>
-            );
-          })}
+                ) : (
+                  <span className="text-gray-400 text-sm">Non scanné</span>
+                )}
+              </TableCell>
+              <TableCell className="text-sm text-gray-600">
+                {new Date(client.date_enregistrement).toLocaleDateString('fr-FR')}
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onViewClient(client)}
+                    className="h-8 w-8"
+                    title="Voir les détails"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onEditClient(client)}
+                    className="h-8 w-8"
+                    title="Modifier"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onGenerateDocument(client)}
+                    className="h-8 w-8"
+                    title="Générer document"
+                  >
+                    <FileText className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onDeleteClient(client)}
+                    className="h-8 w-8 text-red-600 hover:text-red-700"
+                    title="Supprimer"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </div>
