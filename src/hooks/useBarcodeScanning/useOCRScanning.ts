@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { compressImage } from "@/utils/imageCompression";
+import { extractBarcode } from "@/services/ocr/barcodeExtractor";
+import { extractPhoneNumber } from "@/services/ocr/phoneExtractor";
 import { toast } from "sonner";
 
 interface UseOCRScanningProps {}
@@ -79,14 +81,13 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
       const extractedText = data.ParsedResults?.[0]?.ParsedText || "";
       console.log("📝 Texte extrait:", extractedText);
 
-      // 4. Extraction du code-barres et du téléphone
-      const barcodeMatch = extractedText.match(/[A-Z]{1,2}\d{4,}\s*<*/);
-      const phoneMatch = extractedText.match(/(?:\+212|0)[\s\-]?[5-7][\s\-]?\d{2}[\s\-]?\d{2}[\s\-]?\d{2}[\s\-]?\d{2}/);
+      // 4. Extraction du code-barres et du téléphone avec les nouveaux extracteurs
+      console.log("🔍 ÉTAPE 4: Extraction avec nouveaux extracteurs...");
+      
+      const phone = extractPhoneNumber(extractedText);
+      const barcode = extractBarcode(extractedText, phone);
 
-      const barcode = barcodeMatch ? barcodeMatch[0].replace(/[<\s]/g, '') : "";
-      const phone = phoneMatch ? phoneMatch[0].replace(/[\s\-]/g, '') : "";
-
-      console.log("🎯 Données extraites:", {
+      console.log("🎯 Données extraites avec nouveaux extracteurs:", {
         barcode: barcode || "Non détecté",
         phone: phone || "Non détecté",
         barcodeImageUrl: barcodeImageUrl
