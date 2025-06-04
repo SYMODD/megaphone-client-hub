@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { useOCRScanning } from "./useOCRScanning";
-import { useImageUpload } from "@/hooks/useImageUpload";
 
 interface UseImageProcessingProps {
   onBarcodeScanned: (barcode: string, phone?: string, barcodeImageUrl?: string) => void;
@@ -12,7 +11,6 @@ export const useImageProcessing = ({ onBarcodeScanned }: UseImageProcessingProps
   const [scannedImage, setScannedImage] = useState<string | null>(null);
   
   const { scanForBarcodeAndPhone } = useOCRScanning();
-  const { uploadBarcodeImage } = useImageUpload();
 
   const handleImageUpload = async (file: File) => {
     try {
