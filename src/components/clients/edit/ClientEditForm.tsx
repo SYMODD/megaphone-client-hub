@@ -22,8 +22,9 @@ interface ClientEditFormProps {
 }
 
 export const ClientEditForm = ({ client, formData, onUpdate, onClientUpdated }: ClientEditFormProps) => {
-  const handleClientUpdated = () => {
-    console.log("🔄 ClientEditForm - Client mis à jour, rafraîchissement...");
+  const handleImageUploaded = (imageUrl: string) => {
+    console.log("✅ Nouvelle image uploadée:", imageUrl);
+    onUpdate('code_barre_image_url', imageUrl);
     if (onClientUpdated) {
       onClientUpdated();
     }
@@ -54,8 +55,10 @@ export const ClientEditForm = ({ client, formData, onUpdate, onClientUpdated }: 
       />
 
       <BarcodeImageSection 
-        client={client} 
-        onClientUpdated={handleClientUpdated}
+        code_barre={formData.code_barre}
+        code_barre_image_url={client.code_barre_image_url || ""}
+        onUpdate={onUpdate}
+        onImageUploaded={handleImageUploaded}
       />
     </div>
   );

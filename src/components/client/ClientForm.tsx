@@ -21,7 +21,7 @@ export const ClientForm = () => {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleSubmit();
+    handleSubmit(e);
   };
 
   return (
@@ -59,7 +59,7 @@ export const ClientForm = () => {
 
             <FormActions 
               isLoading={isLoading}
-              onSubmit={handleSubmit}
+              onSubmit={() => handleSubmit()}
             />
           </>
         )}
