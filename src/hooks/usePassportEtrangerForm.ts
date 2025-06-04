@@ -1,142 +1,152 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { useImageUpload } from "@/hooks/useImageUpload";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-interface PassportEtrangerFormData {
+interface FormData {
   nom: string;
   prenom: string;
   nationalite: string;
   numero_passeport: string;
   numero_telephone: string;
   code_barre: string;
-  scannedImage: string | null;
-  observations: string;
   date_enregistrement: string;
+  observations: string;
+  scannedImage: string | null;
+  code_barre_image_url: string; // 🎯 AJOUT: URL de l'image du code-barres
 }
 
 export const usePassportEtrangerForm = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   const { uploadClientPhoto } = useImageUpload();
-  
-  const [formData, setFormData] = useState<PassportEtrangerFormData>({
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [formData, setFormData] = useState<FormData>({
     nom: "",
     prenom: "",
     nationalite: "",
     numero_passeport: "",
     numero_telephone: "",
     code_barre: "",
-    scannedImage: null,
+    date_enregistrement: new Date().toISOString().split('T')[0],
     observations: "",
-    date_enregistrement: new Date().toISOString().split('T')[0]
+    scannedImage: null,
+    code_barre_image_url: "" // 🎯 AJOUT: Initialisation
   });
 
-  const handleInputChange = (field: keyof PassportEtrangerFormData, value: string) => {
+  const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleImageScanned = (imageData: string) => {
-    console.log("🖼️ Image passeport étranger scannée reçue");
     setFormData(prev => ({ ...prev, scannedImage: imageData }));
   };
 
-  const handlePassportDataExtracted = (extractedData: any) => {
-    console.log("📄 Données passeport étranger extraites:", extractedData);
-    
-    setFormData(prev => ({
-      ...prev,
-      nom: extractedData.nom || prev.nom,
-      prenom: extractedData.prenom || prev.prenom,
-      nationalite: extractedData.nationalite || prev.nationalite,
-      numero_passeport: extractedData.numero_passeport || prev.numero_passeport,
-    }));
+  const handlePassportDataExtracted = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
+    console.log("🎯 PASSEPORT ÉTRANGER - Données extraites:", {
+      barcode,
+      phone,
+      barcodeImageUrl,
+      barcodeImageUrl_present: barcodeImageUrl ? "✅ OUI" : "❌ NON"
+    });
 
-    const extractionInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: Passeport étranger`;
     setFormData(prev => ({
       ...prev,
-      observations: prev.observations ? `${prev.observations}\n\n${extractionInfo}` : extractionInfo
+      code_barre: barcode || "",
+      numero_telephone: phone || "",
+      code_barre_image_url: barcodeImageUrl || "", // 🎯 CRUCIAL: Sauvegarder l'URL
+      observations: prev.observations || `Données extraites automatiquement via OCR le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')} - Type de document: Passeport étranger`
     }));
   };
 
   const handleSubmit = async () => {
-    if (!user) {
-      toast.error("Vous devez être connecté pour ajouter un client");
-      return;
-    }
+    console.log("🚀 SOUMISSION PASSEPORT ÉTRANGER - Début avec données:", {
+      nom: formData.nom,
+      prenom: formData.prenom,
+      numero_passeport: formData.numero_passeport,
+      nationalite: formData.nationalite,
+      scannedImage: formData.scannedImage ? "✅ PRÉSENTE" : "❌ ABSENTE",
+      code_barre_image_url: formData.code_barre_image_url || "❌ ABSENTE" // 🎯 LOG pour debug
+    });
 
-    if (!formData.nom || !formData.prenom || !formData.numero_passeport) {
-      toast.error("Veuillez remplir tous les champs obligatoires (nom, prénom, numéro de passeport)");
+    if (!formData.nom || !formData.prenom || !formData.numero_passeport || !formData.nationalite) {
+      toast({
+        title: "Erreur de validation",
+        description: "Veuillez remplir tous les champs obligatoires.",
+        variant: "destructive",
+      });
       return;
     }
 
     setIsLoading(true);
 
     try {
-      console.log("🚀 SOUMISSION PASSEPORT ÉTRANGER - Début avec données:", {
-        nom: formData.nom,
-        prenom: formData.prenom,
-        numero_passeport: formData.numero_passeport,
-        nationalite: formData.nationalite,
-        scannedImage: formData.scannedImage ? "✅ PRÉSENTE" : "❌ ABSENTE"
-      });
-      
+      // Upload de l'image du passeport si présente
       let photoUrl = null;
-      
-      // 🔥 UPLOAD AUTOMATIQUE DE L'IMAGE SCANNÉE vers client-photos
       if (formData.scannedImage) {
         console.log("📤 UPLOAD IMAGE PASSEPORT ÉTRANGER vers client-photos");
-        photoUrl = await uploadClientPhoto(formData.scannedImage, 'passeport_etranger');
         
-        if (!photoUrl) {
-          toast.error("Erreur lors du téléchargement de l'image. Enregistrement sans photo.");
-        } else {
-          console.log("✅ Image passeport étranger uploadée:", photoUrl);
-        }
+        const blob = await fetch(formData.scannedImage).then(r => r.blob());
+        const file = new File([blob], `passeport_etranger_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        
+        photoUrl = await uploadClientPhoto(file);
+        console.log("✅ Image passeport étranger uploadée:", photoUrl);
       }
 
-      const clientData = {
-        nom: formData.nom.trim(),
-        prenom: formData.prenom.trim(),
-        nationalite: formData.nationalite.trim(),
-        numero_passeport: formData.numero_passeport.trim(),
-        numero_telephone: formData.numero_telephone.trim() || null,
-        code_barre: formData.code_barre?.trim() || null,
-        photo_url: photoUrl || null,
-        observations: formData.observations?.trim() || null,
+      // Récupérer l'ID de l'agent connecté
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Utilisateur non connecté");
+      }
+
+      // Préparer les données finales pour l'insertion
+      const finalData = {
+        nom: formData.nom,
+        prenom: formData.prenom,
+        nationalite: formData.nationalite,
+        numero_passeport: formData.numero_passeport,
+        numero_telephone: formData.numero_telephone || null,
+        code_barre: formData.code_barre || null,
+        photo_url: photoUrl,
+        observations: formData.observations || `Données extraites automatiquement via OCR le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')} - Type de document: Passeport étranger`,
         date_enregistrement: formData.date_enregistrement,
         document_type: 'passeport_etranger',
-        agent_id: user.id
+        agent_id: user.id,
+        code_barre_image_url: formData.code_barre_image_url || null // 🎯 CRUCIAL: Inclure l'URL
       };
 
       console.log("💾 INSERTION CLIENT PASSEPORT ÉTRANGER - Données finales:", {
-        ...clientData,
-        photo_incluse: clientData.photo_url ? "✅ INCLUSE" : "❌ MANQUANTE"
+        ...finalData,
+        photo_incluse: photoUrl ? "✅ INCLUSE" : "❌ ABSENTE",
+        code_barre_image_incluse: finalData.code_barre_image_url ? "✅ INCLUSE" : "❌ ABSENTE" // 🎯 LOG pour debug
       });
 
+      // Insertion en base de données
       const { error } = await supabase
         .from('clients')
-        .insert(clientData);
+        .insert([finalData]);
 
       if (error) {
-        console.error('❌ Erreur insertion client passeport étranger:', error);
-        if (error.code === '23505') {
-          toast.error("Ce numéro de passeport existe déjà dans la base de données");
-        } else {
-          toast.error(`Erreur lors de l'enregistrement du client: ${error.message}`);
-        }
-        return;
+        console.error('❌ Erreur insertion:', error);
+        throw error;
       }
 
-      toast.success(`Client passeport étranger ${formData.prenom} ${formData.nom} enregistré avec succès!`);
-      navigate("/base-clients");
+      toast({
+        title: "Client enregistré avec succès",
+        description: `${formData.prenom} ${formData.nom} a été ajouté à la base de données.`,
+      });
+
+      navigate('/base-clients');
     } catch (error) {
-      console.error('❌ Erreur:', error);
-      toast.error("Une erreur inattendue s'est produite");
+      console.error('❌ Erreur lors de l\'enregistrement:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'enregistrer le client. Veuillez réessayer.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -151,5 +161,3 @@ export const usePassportEtrangerForm = () => {
     handleSubmit
   };
 };
-
-export type { PassportEtrangerFormData };
