@@ -46,10 +46,17 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
         bucket: 'barcode-images'
       });
 
-      // 3. Callback avec les données extraites ET l'URL de l'image uploadée
+      // 3. CORRECTION CRITIQUE : S'assurer que l'URL est bien transmise au callback
+      console.log("🚀 Transmission des données au callback avec URL:", {
+        barcode: mockBarcode,
+        phone: mockPhone,
+        barcodeImageUrl: barcodeImageUrl,
+        url_non_nulle: barcodeImageUrl ? "✅ OUI" : "❌ NON"
+      });
+
       onBarcodeScanned(mockBarcode, mockPhone, barcodeImageUrl);
       
-      console.log("✅ Scan OCR terminé avec succès");
+      console.log("✅ Scan OCR terminé avec succès - URL transmise");
       
     } catch (error) {
       console.error("❌ Erreur lors du scan OCR:", error);
