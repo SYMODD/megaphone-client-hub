@@ -1,10 +1,9 @@
 
 import { useState } from "react";
-import { DocumentType } from "@/types/documentTypes";
 import { ClientFormData } from "./types";
 
 export const useFormState = () => {
-  const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType | null>(null);
+  const [selectedDocumentType, setSelectedDocumentType] = useState<string>("");
   
   const [formData, setFormData] = useState<ClientFormData>({
     nom: "",
@@ -13,19 +12,31 @@ export const useFormState = () => {
     numero_passeport: "",
     numero_telephone: "",
     code_barre: "",
-    code_barre_image_url: "",
-    scannedImage: null,
-    // 🆕 NOUVEAU : URL de la photo client uploadée automatiquement
-    photo_url: "",
+    code_barre_image_url: "", // 🎯 INITIALISATION
     observations: "",
-    date_enregistrement: new Date().toISOString().split('T')[0]
+    date_enregistrement: new Date().toISOString().split('T')[0],
+    document_type: "",
+    photo_url: "",
+    scannedImage: null
   });
 
   const handleInputChange = (field: keyof ClientFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      
+      console.log(`🔄 FORM STATE - Mise à jour ${field}:`, {
+        ancien_valeur: prev[field],
+        nouvelle_valeur: value,
+        champ: field,
+        special_tracking: field === 'code_barre_image_url' ? "🎯 URL CODE-BARRES" : ""
+      });
+      
+      return updated;
+    });
   };
 
-  const handleDocumentTypeSelect = (documentType: DocumentType) => {
+  const handleDocumentTypeSelect = (documentType: string) => {
+    console.log("📄 TYPE DOCUMENT sélectionné:", documentType);
     setSelectedDocumentType(documentType);
     setFormData(prev => ({ ...prev, document_type: documentType }));
   };

@@ -1,6 +1,4 @@
 
-import { DocumentType } from "@/types/documentTypes";
-
 export interface ClientFormData {
   nom: string;
   prenom: string;
@@ -8,11 +6,10 @@ export interface ClientFormData {
   numero_passeport: string;
   numero_telephone: string;
   code_barre: string;
-  code_barre_image_url: string;
-  scannedImage: string | null;
-  // 🆕 NOUVEAU : URL de la photo client uploadée automatiquement
-  photo_url: string;
+  code_barre_image_url: string; // 🎯 AJOUT CRUCIAL
   observations: string;
   date_enregistrement: string;
-  document_type?: DocumentType;
+  document_type: string;
+  photo_url: string;
+  scannedImage: string | null;
 }

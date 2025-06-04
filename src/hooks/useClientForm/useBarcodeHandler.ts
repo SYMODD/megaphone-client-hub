@@ -19,7 +19,7 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
       const updatedData = {
         ...prev,
         code_barre: barcode || prev.code_barre,
-        code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url,
+        code_barre_image_url: barcodeImageUrl || prev.code_barre_image_url, // 🎯 CRUCIAL
         ...(phone && { numero_telephone: phone })
       };
 

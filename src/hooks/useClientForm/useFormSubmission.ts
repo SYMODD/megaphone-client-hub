@@ -59,7 +59,7 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         }
       }
 
-      // 🎯 DONNÉES COMPLÈTES POUR INSERTION
+      // 🎯 DONNÉES COMPLÈTES POUR INSERTION - INCLUANT L'URL DU CODE-BARRES
       const clientData = {
         nom: formData.nom.trim(),
         prenom: formData.prenom.trim(),
@@ -67,8 +67,8 @@ export const useFormSubmission = ({ formData }: UseFormSubmissionProps) => {
         numero_passeport: formData.numero_passeport.trim(),
         numero_telephone: formData.numero_telephone?.trim() || null,
         code_barre: formData.code_barre?.trim() || null,
-        code_barre_image_url: formData.code_barre_image_url || null,
-        photo_url: finalPhotoUrl || null, // 🔥 PHOTO FINALE (uploadée ou existante)
+        code_barre_image_url: formData.code_barre_image_url || null, // 🔥 CRUCIAL
+        photo_url: finalPhotoUrl || null,
         observations: formData.observations?.trim() || null,
         date_enregistrement: formData.date_enregistrement,
         document_type: formData.document_type || 'cin',

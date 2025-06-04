@@ -1,192 +1,89 @@
 
-import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useImageUpload } from "../useImageUpload";
-import { useDataExtraction } from "./useDataExtraction";
+import { useImageUpload } from "@/hooks/useImageUpload";
 
-interface UseOCRScanningProps {}
-
-export const useOCRScanning = (props?: UseOCRScanningProps) => {
-  const [isScanning, setIsScanning] = useState(false);
+export const useOCRScanning = () => {
   const { uploadBarcodeImage } = useImageUpload();
-  const { extractBarcodeAndPhone } = useDataExtraction();
-
-  // Fonction pour compresser l'image
-  const compressImage = (file: File, maxSizeKB: number = 800): Promise<File> => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      
-      img.onload = () => {
-        // Calculer les nouvelles dimensions pour respecter la limite de taille
-        let { width, height } = img;
-        const aspectRatio = width / height;
-        
-        // Réduire progressivement jusqu'à obtenir une taille acceptable
-        let quality = 0.8;
-        let compressedFile: File;
-        
-        const compress = () => {
-          // Ajuster les dimensions si nécessaire
-          if (width > 1500) {
-            width = 1500;
-            height = width / aspectRatio;
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          
-          ctx!.drawImage(img, 0, 0, width, height);
-          
-          canvas.toBlob((blob) => {
-            if (blob) {
-              compressedFile = new File([blob], file.name, {
-                type: 'image/jpeg',
-                lastModified: Date.now()
-              });
-              
-              console.log(`🗜️ Compression: ${(file.size / 1024).toFixed(1)}KB → ${(compressedFile.size / 1024).toFixed(1)}KB`);
-              
-              // Si encore trop gros, réduire la qualité
-              if (compressedFile.size > maxSizeKB * 1024 && quality > 0.3) {
-                quality -= 0.1;
-                width *= 0.9;
-                height *= 0.9;
-                compress();
-              } else {
-                resolve(compressedFile);
-              }
-            }
-          }, 'image/jpeg', quality);
-        };
-        
-        compress();
-      };
-      
-      img.src = URL.createObjectURL(file);
-    });
-  };
-
-  const performOCRExtraction = async (file: File): Promise<{ barcode?: string; phone?: string }> => {
-    console.log("🔍 Début de l'extraction OCR avec compression...");
-    
-    // Compresser l'image avant l'OCR
-    const compressedFile = await compressImage(file);
-    
-    const formData = new FormData();
-    formData.append('file', compressedFile);
-    formData.append('apikey', 'K87783069388957');
-    formData.append('language', 'fre');
-    formData.append('isOverlayRequired', 'true');
-    formData.append('detectOrientation', 'true');
-    formData.append('scale', 'true');
-    formData.append('OCREngine', '2');
-
-    try {
-      const response = await fetch('https://api.ocr.space/parse/image', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log("📄 Réponse OCR complète:", result);
-
-      if (result.ParsedResults && result.ParsedResults.length > 0) {
-        const extractedText = result.ParsedResults[0].ParsedText;
-        console.log("📝 Texte extrait par OCR:", extractedText);
-
-        // Utiliser le service d'extraction pour analyser le texte
-        const extractedData = extractBarcodeAndPhone(extractedText);
-        console.log("🎯 Données extraites:", extractedData);
-
-        return extractedData;
-      } else {
-        console.warn("⚠️ Aucun texte extrait par OCR");
-        return {};
-      }
-    } catch (error) {
-      console.error("❌ Erreur OCR:", error);
-      // En cas d'erreur, utiliser la simulation comme fallback
-      console.log("🔄 Fallback vers simulation...");
-      return {
-        barcode: `BC${Date.now().toString().slice(-6)}`,
-        phone: undefined
-      };
-    }
-  };
 
   const scanForBarcodeAndPhone = async (
-    file: File,
+    file: File, 
     onBarcodeScanned: (barcode: string, phone?: string, barcodeImageUrl?: string) => void
   ) => {
-    console.log("🔍 DÉBUT SCAN OCR pour code-barres - Upload vers barcode-images");
-    setIsScanning(true);
-
     try {
-      // 1. Upload de l'image vers barcode-images en PREMIER
-      console.log("📤 Upload de l'image de code-barres vers barcode-images...");
+      console.log("🔍 OCR SCANNING - Début scan pour code-barres et téléphone");
+
+      // 1. Upload l'image vers barcode-images en premier
+      console.log("📤 Upload vers BARCODE-IMAGES bucket...");
       const barcodeImageUrl = await uploadBarcodeImage(file);
       
       if (!barcodeImageUrl) {
-        console.error("❌ Échec de l'upload de l'image de code-barres");
-        toast.error("Impossible d'uploader l'image de code-barres");
-        setIsScanning(false);
+        console.error("❌ Échec upload image code-barres");
+        toast.error("Erreur lors de l'upload de l'image");
+        onBarcodeScanned("", "", "");
         return;
       }
 
-      console.log("✅ Image de code-barres uploadée avec succès:", barcodeImageUrl);
+      console.log("✅ Image uploadée avec succès:", barcodeImageUrl);
 
-      // 2. Extraction OCR réelle avec compression
-      console.log("🔍 Démarrage de l'extraction OCR avec compression...");
-      const extractedData = await performOCRExtraction(file);
+      // 2. Appeler l'API OCR pour extraire les données
+      const formData = new FormData();
+      formData.append('image', file);
+
+      console.log("🔍 Appel API OCR pour extraction...");
       
-      console.log("📊 Données extraites par OCR:", {
-        barcode: extractedData.barcode,
-        phone: extractedData.phone,
-        imageUrl: barcodeImageUrl,
-        bucket: 'barcode-images'
+      const { data, error } = await supabase.functions.invoke('ocr-processing', {
+        body: formData,
       });
 
-      // 3. S'assurer que l'état scanning est mis à false AVANT d'appeler le callback
-      setIsScanning(false);
-      
-      console.log("🚀 Transmission des données au callback avec URL:", {
-        barcode: extractedData.barcode,
-        phone: extractedData.phone,
-        barcodeImageUrl: barcodeImageUrl,
-        url_non_nulle: barcodeImageUrl ? "✅ OUI" : "❌ NON"
-      });
-
-      // 4. Appeler le callback avec les données extraites
-      onBarcodeScanned(extractedData.barcode || "", extractedData.phone, barcodeImageUrl);
-      
-      console.log("✅ Scan OCR terminé avec succès - URL transmise");
-      
-      // Message de succès personnalisé
-      const extractedItems = [];
-      if (extractedData.barcode) extractedItems.push("code-barres");
-      if (extractedData.phone) extractedItems.push("numéro de téléphone");
-      
-      if (extractedItems.length > 0) {
-        toast.success(`✅ ${extractedItems.join(" et ")} extraits avec succès !`);
-      } else {
-        toast.info("Image analysée - aucune donnée textuelle détectée");
+      if (error) {
+        console.error("❌ Erreur API OCR:", error);
+        toast.error("Erreur lors du traitement OCR");
+        // Même en cas d'erreur OCR, on transmet l'URL de l'image
+        onBarcodeScanned("", "", barcodeImageUrl);
+        return;
       }
+
+      console.log("📊 Résultat OCR reçu:", data);
+
+      // 3. Extraire le code-barres et téléphone des résultats OCR
+      let extractedBarcode = "";
+      let extractedPhone = "";
+
+      if (data?.barcode) {
+        extractedBarcode = data.barcode;
+        console.log("✅ Code-barres extrait:", extractedBarcode);
+      }
+
+      if (data?.phone) {
+        extractedPhone = data.phone;
+        console.log("✅ Téléphone extrait:", extractedPhone);
+      }
+
+      // 4. Transmettre TOUTES les données including l'URL
+      console.log("🎯 TRANSMISSION FINALE - Données complètes:", {
+        barcode: extractedBarcode,
+        phone: extractedPhone,
+        imageUrl: barcodeImageUrl,
+        confirmation: "Toutes les données transmises"
+      });
+
+      onBarcodeScanned(extractedBarcode, extractedPhone, barcodeImageUrl);
       
+      if (extractedBarcode || extractedPhone) {
+        toast.success("Données extraites avec succès !");
+      } else {
+        toast.info("Image uploadée, mais aucune donnée détectée");
+      }
+
     } catch (error) {
-      console.error("❌ Erreur lors du scan OCR:", error);
-      toast.error("Erreur lors du scan de l'image");
-      setIsScanning(false);
+      console.error("❌ Erreur inattendue OCR scanning:", error);
+      toast.error("Erreur lors du scan");
+      onBarcodeScanned("", "", "");
     }
   };
 
   return {
-    scanForBarcodeAndPhone,
-    isScanning
+    scanForBarcodeAndPhone
   };
 };
