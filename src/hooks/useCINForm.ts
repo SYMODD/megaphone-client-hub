@@ -1,111 +1,150 @@
+
 import { useState } from "react";
-import { useFormSubmission } from "./useClientForm/useFormSubmission";
-import { useImageUpload } from "./useImageUpload";
-import { DocumentType } from "@/types/documentTypes";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useImageUpload } from "@/hooks/useImageUpload";
+
+interface CINFormData {
+  nom: string;
+  prenom: string;
+  cin: string;
+  date_naissance: string;
+  lieu_naissance: string;
+  adresse: string;
+  scannedImage: string | null;
+  numero_telephone: string;
+  observations: string;
+  date_enregistrement: string;
+}
 
 export const useCINForm = () => {
-  const [formData, setFormData] = useState({
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const { uploadClientPhoto } = useImageUpload();
+  
+  const [formData, setFormData] = useState<CINFormData>({
     nom: "",
     prenom: "",
-    nationalite: "",
-    numero_passeport: "",
+    cin: "",
+    date_naissance: "",
+    lieu_naissance: "",
+    adresse: "",
+    scannedImage: null,
     numero_telephone: "",
-    code_barre: "",
-    date_enregistrement: new Date().toISOString().split('T')[0],
     observations: "",
-    scannedImage: null as string | null,
-    photo_url: "",
-    code_barre_image_url: "",
-    document_type: "cin" as DocumentType
+    date_enregistrement: new Date().toISOString().split('T')[0]
   });
 
-  const { isLoading, handleSubmit: submitForm } = useFormSubmission({ formData });
-
-  const handleInputChange = (field: string, value: string) => {
-    console.log(`🔄 CIN FORM - Mise à jour champ ${field}:`, value);
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const handleInputChange = (field: keyof CINFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleImageScanned = (image: string, photoUrl?: string) => {
-    console.log("📷 CIN FORM - Image scannée:", {
-      image_presente: !!image,
-      photo_url: photoUrl
-    });
+  const handleImageScanned = (imageData: string) => {
+    console.log("🖼️ Image CIN scannée reçue");
+    setFormData(prev => ({ ...prev, scannedImage: imageData }));
+  };
+
+  const handleCINDataExtracted = (extractedData: any) => {
+    console.log("📄 Données CIN extraites:", extractedData);
     
     setFormData(prev => ({
       ...prev,
-      scannedImage: image,
-      ...(photoUrl && { photo_url: photoUrl })
+      nom: extractedData.nom || prev.nom,
+      prenom: extractedData.prenom || prev.prenom,
+      cin: extractedData.cin || prev.cin,
+      date_naissance: extractedData.date_naissance || prev.date_naissance,
+      lieu_naissance: extractedData.lieu_naissance || prev.lieu_naissance,
+      adresse: extractedData.adresse || prev.adresse
+    }));
+
+    // Ajouter info d'extraction automatique dans les observations
+    const extractionInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: CIN`;
+    setFormData(prev => ({
+      ...prev,
+      observations: prev.observations ? `${prev.observations}\n\n${extractionInfo}` : extractionInfo
     }));
   };
 
-  const handleCINDataExtracted = (data: any) => {
-    console.log("📋 CIN FORM - Réception données CIN AVEC VÉRIFICATION URL:", {
-      ...data,
-      code_barre_present: data.code_barre ? "✅ OUI" : "❌ NON",
-      image_url_presente: data.code_barre_image_url ? "✅ OUI" : "❌ NON",
-      url_recue: data.code_barre_image_url,
-      verification_critique: data.code_barre_image_url ? "✅ URL PRÉSENTE!" : "❌ AUCUNE URL!"
-    });
+  const handleSubmit = async () => {
+    if (!user) {
+      toast.error("Vous devez être connecté pour ajouter un client");
+      return;
+    }
 
-    // 🎯 MISE À JOUR COMPLÈTE des données CIN sans soumission automatique
-    setFormData(prev => {
-      const updatedData = {
-        ...prev,
-        nom: data.nom || prev.nom,
-        prenom: data.prenom || prev.prenom,
-        nationalite: data.nationalite || prev.nationalite,
-        numero_passeport: data.numero_cin || data.numero_passeport || prev.numero_passeport,
-        // 🚨 CRITIQUE : Préserver l'URL de l'image code-barres
-        code_barre: data.code_barre || prev.code_barre,
-        code_barre_image_url: data.code_barre_image_url || prev.code_barre_image_url,
-        // Mise à jour des observations automatiques
-        observations: `=== EXTRACTION CIN AUTOMATIQUE ===
-Date: ${new Date().toLocaleString('fr-FR')}
-Type: Carte d'Identité Nationale
-Champs extraits: ${Object.keys(data).join(', ')}
-Image code-barres: ${data.code_barre_image_url ? "✅ Disponible" : "❌ Non disponible"}`
+    // Validation des champs obligatoires
+    if (!formData.nom || !formData.prenom || !formData.cin) {
+      toast.error("Veuillez remplir tous les champs obligatoires (nom, prénom, CIN)");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      console.log("🚀 SOUMISSION CIN - Début avec données:", {
+        nom: formData.nom,
+        prenom: formData.prenom,
+        cin: formData.cin,
+        scannedImage: formData.scannedImage ? "✅ PRÉSENTE" : "❌ ABSENTE"
+      });
+      
+      let photoUrl = null;
+      
+      // 🔥 UPLOAD AUTOMATIQUE DE L'IMAGE SCANNÉE
+      if (formData.scannedImage) {
+        console.log("📤 UPLOAD IMAGE CIN vers client-photos");
+        photoUrl = await uploadClientPhoto(formData.scannedImage, 'cin');
+        
+        if (!photoUrl) {
+          toast.error("Erreur lors du téléchargement de l'image. Enregistrement sans photo.");
+        } else {
+          console.log("✅ Image CIN uploadée:", photoUrl);
+        }
+      }
+
+      // Préparer les données pour l'insertion
+      const clientData = {
+        nom: formData.nom.trim(),
+        prenom: formData.prenom.trim(),
+        nationalite: "Marocaine", // Par défaut pour CIN
+        numero_passeport: formData.cin.trim(), // CIN dans le champ passeport
+        numero_telephone: formData.numero_telephone.trim(),
+        photo_url: photoUrl, // 🔥 PHOTO UPLOADÉE
+        observations: formData.observations,
+        date_enregistrement: formData.date_enregistrement,
+        document_type: 'cin',
+        agent_id: user.id
       };
 
-      console.log("💾 CIN FORM - MISE À JOUR FINALE avec URL VÉRIFIÉE:", {
-        code_barre: updatedData.code_barre,
-        code_barre_image_url: updatedData.code_barre_image_url,
-        url_preservee: updatedData.code_barre_image_url ? "✅ CONSERVÉE!" : "❌ PERDUE!",
-        donnees_completes: updatedData.code_barre_image_url ? "✅ PARFAIT" : "⚠️ MANQUANTES"
+      console.log("💾 INSERTION CLIENT CIN - Données finales:", {
+        ...clientData,
+        photo_incluse: clientData.photo_url ? "✅ INCLUSE" : "❌ MANQUANTE"
       });
 
-      return updatedData;
-    });
-  };
+      const { error } = await supabase
+        .from('clients')
+        .insert(clientData);
 
-  // 🎯 NOUVELLE FONCTION : Soumission manuelle uniquement
-  const handleSubmit = () => {
-    console.log("📝 CIN FORM - SOUMISSION FINALE avec vérification COMPLÈTE:", {
-      nom: formData.nom,
-      prenom: formData.prenom,
-      code_barre: formData.code_barre,
-      numero_telephone: formData.numero_telephone,
-      photo_client_url: formData.photo_url,
-      code_barre_image_url: formData.code_barre_image_url,
-      url_image_presente: formData.code_barre_image_url ? "✅ PRÉSENTE" : "❌ MANQUANTE - PROBLÈME!",
-      validation_finale: formData.code_barre_image_url ? "✅ DONNÉES COMPLÈTES" : "⚠️ DONNÉES INCOMPLÈTES"
-    });
+      if (error) {
+        console.error('❌ Erreur insertion client CIN:', error);
+        if (error.code === '23505') {
+          toast.error("Ce numéro CIN existe déjà dans la base de données");
+        } else {
+          toast.error(`Erreur lors de l'enregistrement du client: ${error.message}`);
+        }
+        return;
+      }
 
-    console.log("💾 INSERTION EN BASE - Données FINALES pour insertion:", {
-      nom_complet: `${formData.prenom} ${formData.nom}`,
-      code_barre: formData.code_barre || "NON",
-      telephone: formData.numero_telephone || "NON", 
-      photo_client: formData.photo_url ? "✅ Présente" : "❌ Manquante",
-      image_barcode: formData.code_barre_image_url ? "✅ Présente" : "❌ MANQUANTE",
-      url_finale: formData.code_barre_image_url || null,
-      insertion_status: formData.code_barre_image_url ? "✅ COMPLÈTE" : "⚠️ URL MANQUANTE"
-    });
-
-    // Appel de la soumission réelle
-    submitForm();
+      toast.success(`Client CIN ${formData.prenom} ${formData.nom} enregistré avec succès!`);
+      navigate("/base-clients");
+    } catch (error) {
+      console.error('❌ Erreur:', error);
+      toast.error("Une erreur inattendue s'est produite");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return {
