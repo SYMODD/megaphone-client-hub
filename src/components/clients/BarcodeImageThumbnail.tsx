@@ -21,7 +21,7 @@ export const BarcodeImageThumbnail = ({ imageUrl, className = "" }: BarcodeImage
         src={imageUrl} 
         alt="Image code-barres"
         className="w-8 h-8 rounded border border-blue-300 object-cover cursor-pointer hover:w-16 hover:h-16 transition-all duration-200 ring-2 ring-blue-200"
-        title="Image du code-barres scanné"
+        title="Image du code-barres scanné - Cliquez pour agrandir"
         onError={(e) => {
           console.error("❌ Erreur chargement miniature code-barres:", imageUrl);
           const target = e.currentTarget;
@@ -37,9 +37,13 @@ export const BarcodeImageThumbnail = ({ imageUrl, className = "" }: BarcodeImage
           }
         }}
         onLoad={() => {
-          console.log("✅ Miniature code-barres chargée:", imageUrl);
+          console.log("✅ Miniature code-barres chargée avec succès:", imageUrl);
         }}
         key={imageUrl}
+        onClick={() => {
+          // Ouvrir l'image en grand dans un nouvel onglet
+          window.open(imageUrl, '_blank');
+        }}
       />
       <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full p-0.5">
         <Barcode className="w-2 h-2" />

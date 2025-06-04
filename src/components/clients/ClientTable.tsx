@@ -42,7 +42,24 @@ export const ClientTable = ({ clients, onViewClient, onEditClient, onGenerateDoc
                         src={client.photo_url} 
                         alt="Photo client"
                         className="w-8 h-8 rounded border border-gray-200 object-cover cursor-pointer hover:w-16 hover:h-16 transition-all duration-200"
-                        title="Photo du document d'identité"
+                        title="Photo du document d'identité - Cliquez pour agrandir"
+                        onClick={() => window.open(client.photo_url, '_blank')}
+                        onLoad={() => {
+                          console.log("✅ Photo client chargée avec succès:", client.photo_url);
+                        }}
+                        onError={(e) => {
+                          console.error("❌ Erreur chargement photo client:", client.photo_url);
+                          const target = e.currentTarget;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent && !parent.querySelector('.photo-error-placeholder')) {
+                            const errorDiv = document.createElement('div');
+                            errorDiv.className = 'photo-error-placeholder w-8 h-8 bg-red-100 rounded border border-red-300 flex items-center justify-center';
+                            errorDiv.innerHTML = '<div class="w-4 h-4 text-red-500 text-xs">❌</div>';
+                            errorDiv.title = 'Erreur de chargement de la photo';
+                            parent.appendChild(errorDiv);
+                          }
+                        }}
                       />
                       <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-0.5">
                         <Image className="w-2 h-2" />
@@ -54,7 +71,7 @@ export const ClientTable = ({ clients, onViewClient, onEditClient, onGenerateDoc
                     </div>
                   )}
                   
-                  {/* 🎯 Image du code-barres - COMPOSANT DÉDIÉ AMÉLIORÉ */}
+                  {/* Image du code-barres */}
                   <BarcodeImageThumbnail 
                     imageUrl={client.code_barre_image_url}
                   />

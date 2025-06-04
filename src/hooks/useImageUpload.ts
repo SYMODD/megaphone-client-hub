@@ -127,6 +127,7 @@ export const useImageUpload = () => {
 
       setUploadProgress(100);
       console.log("✅ Upload terminé avec succès");
+      toast.success("Image du code-barres uploadée avec succès");
       return finalUrl;
       
     } catch (error: any) {
