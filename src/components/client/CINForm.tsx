@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,57 +59,90 @@ export const CINForm = () => {
   };
 
   const handleCINDataExtracted = (extractedData: any) => {
-    console.log("📝 CIN FORM - Données CIN extraites:", extractedData);
+    console.log("📝 CIN FORM - Données CIN extraites reçues:", extractedData);
     
-    // Mapper les données extraites vers les champs du formulaire avec validation
+    if (!extractedData) {
+      console.warn("⚠️ Aucune donnée extraite reçue");
+      return;
+    }
+    
+    // Mapper les données extraites vers les champs du formulaire - PLUS PERMISSIF
     const updatedData: Partial<CINFormData> = {};
+    let fieldsExtracted: string[] = [];
     
-    if (extractedData.nom && extractedData.nom.trim()) {
-      updatedData.nom = extractedData.nom.trim();
-      console.log("✅ Nom extrait:", updatedData.nom);
+    // Nom - accepter même des chaînes courtes
+    if (extractedData.nom && typeof extractedData.nom === 'string' && extractedData.nom.trim().length > 0) {
+      updatedData.nom = extractedData.nom.trim().toUpperCase();
+      fieldsExtracted.push("nom");
+      console.log("✅ Nom extrait et appliqué:", updatedData.nom);
     }
     
-    if (extractedData.prenom && extractedData.prenom.trim()) {
-      updatedData.prenom = extractedData.prenom.trim();
-      console.log("✅ Prénom extrait:", updatedData.prenom);
+    // Prénom - accepter même des chaînes courtes
+    if (extractedData.prenom && typeof extractedData.prenom === 'string' && extractedData.prenom.trim().length > 0) {
+      updatedData.prenom = extractedData.prenom.trim().toUpperCase();
+      fieldsExtracted.push("prénom");
+      console.log("✅ Prénom extrait et appliqué:", updatedData.prenom);
     }
     
-    if (extractedData.nationalite && extractedData.nationalite.trim()) {
+    // Nationalité
+    if (extractedData.nationalite && typeof extractedData.nationalite === 'string' && extractedData.nationalite.trim().length > 0) {
       updatedData.nationalite = extractedData.nationalite.trim();
-      console.log("✅ Nationalité extraite:", updatedData.nationalite);
+      fieldsExtracted.push("nationalité");
+      console.log("✅ Nationalité extraite et appliquée:", updatedData.nationalite);
     }
     
-    // Utiliser numero_cin pour le champ numero_passeport
-    if (extractedData.numero_cin && extractedData.numero_cin.trim()) {
+    // Numéro CIN → numéro passeport
+    if (extractedData.numero_cin && typeof extractedData.numero_cin === 'string' && extractedData.numero_cin.trim().length > 0) {
       updatedData.numero_passeport = extractedData.numero_cin.trim();
-      console.log("✅ Numéro CIN extrait:", updatedData.numero_passeport);
+      fieldsExtracted.push("numéro CIN");
+      console.log("✅ Numéro CIN extrait et appliqué:", updatedData.numero_passeport);
     }
     
-    // Extraire le code-barres s'il est disponible
-    if (extractedData.code_barre && extractedData.code_barre.trim()) {
-      updatedData.code_barre = extractedData.code_barre.trim();
-      console.log("✅ Code-barres extrait:", updatedData.code_barre);
+    // Date de naissance (ajout dans les observations si disponible)
+    let dateInfo = "";
+    if (extractedData.date_naissance && typeof extractedData.date_naissance === 'string' && extractedData.date_naissance.trim().length > 0) {
+      dateInfo = `Date de naissance: ${extractedData.date_naissance.trim()}`;
+      fieldsExtracted.push("date de naissance");
+      console.log("✅ Date de naissance extraite:", extractedData.date_naissance);
+    }
+    
+    // Lieu de naissance (ajout dans les observations si disponible)
+    let lieuInfo = "";
+    if (extractedData.lieu_naissance && typeof extractedData.lieu_naissance === 'string' && extractedData.lieu_naissance.trim().length > 0) {
+      lieuInfo = `Lieu de naissance: ${extractedData.lieu_naissance.trim()}`;
+      fieldsExtracted.push("lieu de naissance");
+      console.log("✅ Lieu de naissance extrait:", extractedData.lieu_naissance);
     }
 
-    // Appliquer les données extraites au formulaire
-    if (Object.keys(updatedData).length > 0) {
-      setFormData(prev => ({ ...prev, ...updatedData }));
-      
-      console.log("📝 Données appliquées au formulaire:", updatedData);
-      
-      // Ajouter l'information d'extraction aux observations
-      const extractedFields = Object.keys(updatedData).join(', ');
-      const scanInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: CIN - Champs: ${extractedFields}`;
-      
-      setFormData(prev => ({
-        ...prev,
-        observations: prev.observations ? `${prev.observations}\n\n${scanInfo}` : scanInfo
-      }));
-      
-      toast.success(`Données CIN extraites et appliquées: ${extractedFields}`);
+    // TOUJOURS appliquer les données, même si partielles
+    console.log("📝 Application des données extraites:", updatedData);
+    console.log("📊 Champs extraits:", fieldsExtracted);
+    
+    setFormData(prev => ({ ...prev, ...updatedData }));
+    
+    // Créer les informations d'extraction pour les observations
+    const scanInfo = `=== EXTRACTION CIN AUTOMATIQUE ===\nDate: ${new Date().toLocaleString('fr-FR')}\nType: Carte d'Identité Nationale\nChamps extraits: ${fieldsExtracted.join(', ')}`;
+    
+    let observationsData = scanInfo;
+    if (dateInfo) observationsData += `\n${dateInfo}`;
+    if (lieuInfo) observationsData += `\n${lieuInfo}`;
+    
+    setFormData(prev => ({
+      ...prev,
+      observations: prev.observations ? `${prev.observations}\n\n${observationsData}` : observationsData
+    }));
+    
+    // Message de succès - TOUJOURS affiché même avec données partielles
+    if (fieldsExtracted.length > 0) {
+      toast.success(`🎉 Données CIN extraites avec succès!\nChamps: ${fieldsExtracted.join(", ")}`, { 
+        duration: 5000 
+      });
+      console.log("✅ SUCCÈS - Données CIN appliquées au formulaire");
     } else {
-      console.warn("⚠️ Aucune donnée valide extraite de la CIN");
-      toast.warning("Données CIN extraites mais aucun champ valide détecté");
+      toast.warning("⚠️ Données reçues mais aucun champ valide détecté", { 
+        duration: 4000 
+      });
+      console.log("⚠️ ATTENTION - Données reçues mais non applicables:", extractedData);
     }
   };
 
