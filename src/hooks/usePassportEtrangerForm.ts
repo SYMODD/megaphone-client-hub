@@ -100,6 +100,12 @@ export const usePassportEtrangerForm = () => {
         throw new Error("Utilisateur non connecté");
       }
 
+      // 🎯 CRUCIAL: S'assurer que l'URL du code-barres est bien présente
+      console.log("💾 VÉRIFICATION AVANT INSERTION - URL code-barres:", {
+        code_barre_image_url_from_form: formData.code_barre_image_url,
+        is_valid: formData.code_barre_image_url ? "✅ VALIDE" : "❌ MANQUANTE"
+      });
+
       // Préparer les données finales pour l'insertion
       const finalData = {
         nom: formData.nom,
