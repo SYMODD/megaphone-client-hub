@@ -22,7 +22,7 @@ export const ClientForm = () => {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleSubmit(e);
+    handleSubmit(e); // 🔥 CORRECTION: passer l'événement
   };
 
   return (
@@ -60,7 +60,7 @@ export const ClientForm = () => {
 
             <FormActions 
               isLoading={isLoading}
-              onSubmit={() => handleSubmit()}
+              onSubmit={() => handleSubmit} // 🔥 CORRECTION: retourner la fonction au lieu de l'appeler
             />
           </>
         )}

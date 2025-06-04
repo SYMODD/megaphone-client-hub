@@ -41,11 +41,31 @@ export const useFormState = () => {
     setFormData(prev => ({ ...prev, document_type: documentType }));
   };
 
+  const resetForm = () => {
+    console.log("🔄 Reset formulaire");
+    setFormData({
+      nom: "",
+      prenom: "",
+      nationalite: "",
+      numero_passeport: "",
+      numero_telephone: "",
+      code_barre: "",
+      code_barre_image_url: "",
+      observations: "",
+      date_enregistrement: new Date().toISOString().split('T')[0],
+      document_type: "",
+      photo_url: "",
+      scannedImage: null
+    });
+    setSelectedDocumentType("");
+  };
+
   return {
     formData,
     setFormData,
     selectedDocumentType,
     handleInputChange,
-    handleDocumentTypeSelect
+    handleDocumentTypeSelect,
+    resetForm
   };
 };

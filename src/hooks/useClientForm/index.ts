@@ -10,16 +10,17 @@ export const useClientFormLogic = () => {
     setFormData,
     selectedDocumentType,
     handleInputChange,
-    handleDocumentTypeSelect
+    handleDocumentTypeSelect,
+    resetForm
   } = useFormState();
 
   const { handleMRZDataExtracted } = useMRZHandler({ formData, setFormData });
   const { handleBarcodeScanned } = useBarcodeHandler({ setFormData });
-  const { isLoading, handleSubmit } = useFormSubmission({ formData });
+  const { isSubmitting, handleSubmit } = useFormSubmission({ formData, resetForm });
 
   return {
     formData,
-    isLoading,
+    isLoading: isSubmitting, // 🔥 CORRECTION: utiliser isLoading au lieu de isSubmitting pour l'API
     selectedDocumentType,
     handleInputChange,
     handleSubmit,

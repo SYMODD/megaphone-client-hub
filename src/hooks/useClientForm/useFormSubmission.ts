@@ -24,6 +24,14 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
     });
 
     try {
+      // Get current user ID for agent_id
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Erreur: Utilisateur non authentifié");
+        return;
+      }
+
       // 🔥 VÉRIFICATION CRITIQUE: S'assurer que toutes les URLs sont présentes
       const dataToInsert = {
         nom: formData.nom,
@@ -35,7 +43,9 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
         code_barre_image_url: formData.code_barre_image_url, // 🔥 INCLUSION EXPLICITE
         observations: formData.observations,
         date_enregistrement: formData.date_enregistrement,
-        photo_url: formData.photo_url
+        photo_url: formData.photo_url,
+        document_type: formData.document_type,
+        agent_id: user.id // 🔥 AJOUT AGENT_ID REQUIS
       };
 
       console.log("💾 FORM SUBMISSION - Données à insérer en base:", dataToInsert);
