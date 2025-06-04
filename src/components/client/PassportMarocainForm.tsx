@@ -29,7 +29,7 @@ export const PassportMarocainForm = () => {
 
   const {
     isScanning: isBarcodeScanning,
-    scannedImage: scannedBarcodeImage,
+    scannedImage,
     handleImageUpload,
     resetScan: resetBarcodesScan
   } = useBarcodeScanning({
