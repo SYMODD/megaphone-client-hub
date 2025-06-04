@@ -39,8 +39,8 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
         timestamp: new Date().toISOString()
       });
       
-      if (!barcodeImageUrl) {
-        console.error("❌ ÉCHEC CRITIQUE: Impossible d'uploader l'image", {
+      if (!barcodeImageUrl || barcodeImageUrl.trim() === "") {
+        console.error("❌ ÉCHEC CRITIQUE: URL vide ou invalide après upload", {
           file_info: {
             name: file.name,
             size: file.size,
@@ -113,14 +113,15 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
         phone: phone || "Non détecté"
       });
 
-      // 5. TRANSMISSION FINALE avec URL GARANTIE - Logs ultra-détaillés
-      console.log("🔥 TRANSMISSION FINALE - Préparation des données:", {
+      // 5. TRANSMISSION FINALE avec URL GARANTIE - Validation rigoureuse
+      console.log("🔥 TRANSMISSION FINALE - Validation avant envoi:", {
         barcode_extrait: barcode,
         phone_extrait: phone, 
-        barcodeImageUrl_final: barcodeImageUrl,
-        url_status: {
-          existe: !!barcodeImageUrl,
-          non_vide: barcodeImageUrl && barcodeImageUrl.trim() !== "",
+        barcodeImageUrl_à_envoyer: barcodeImageUrl,
+        validations: {
+          url_existe: !!barcodeImageUrl,
+          url_non_vide: barcodeImageUrl && barcodeImageUrl.trim() !== "",
+          url_est_string: typeof barcodeImageUrl === 'string',
           longueur: barcodeImageUrl?.length || 0,
           type: typeof barcodeImageUrl,
           preview: barcodeImageUrl ? barcodeImageUrl.substring(0, 100) + "..." : "AUCUNE"
@@ -128,20 +129,34 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
         timestamp: new Date().toISOString()
       });
 
-      console.log("🔥 APPEL onResult - Paramètres exacts:", {
+      // SÉCURITÉ : Vérification finale avant envoi
+      if (!barcodeImageUrl || typeof barcodeImageUrl !== 'string' || barcodeImageUrl.trim() === '') {
+        console.error("❌ PROBLÈME CRITIQUE: URL invalide avant transmission finale", {
+          barcodeImageUrl,
+          type: typeof barcodeImageUrl,
+          evaluation: "URL considérée comme invalide",
+          timestamp: new Date().toISOString()
+        });
+        toast.error("❌ Problème avec l'URL de l'image uploadée");
+        onResult("", "", "");
+        return;
+      }
+
+      console.log("🔥 APPEL onResult - Paramètres validés et confirmés:", {
         param1_barcode: barcode,
         param2_phone: phone,
         param3_barcodeImageUrl: barcodeImageUrl,
-        fonction_callback: "onResult appelée avec ces paramètres",
+        function_call: "onResult() sera appelée avec ces paramètres validés",
         timestamp: new Date().toISOString()
       });
 
-      // APPEL DE LA FONCTION CALLBACK
+      // APPEL DE LA FONCTION CALLBACK AVEC URL VALIDÉE
       onResult(barcode, phone, barcodeImageUrl);
 
       console.log("✅ CALLBACK EXÉCUTÉE - onResult appelée avec succès", {
         url_transmise: barcodeImageUrl,
-        verification_finale: "URL transmise au callback",
+        verification_finale: "URL validée et transmise au callback",
+        success: "TRANSMISSION RÉUSSIE",
         timestamp: new Date().toISOString()
       });
 

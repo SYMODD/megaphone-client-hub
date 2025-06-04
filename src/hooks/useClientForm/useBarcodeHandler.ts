@@ -8,7 +8,7 @@ interface UseBarcodeHandlerProps {
 
 export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
   const handleBarcodeScanned = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
-    console.log("🔥 BARCODE HANDLER - RÉCEPTION - Données complètes reçues:", {
+    console.log("🔥 BARCODE HANDLER - RÉCEPTION - Données reçues:", {
       barcode_reçu: barcode,
       phone_reçu: phone,
       barcodeImageUrl_reçu: barcodeImageUrl,
@@ -35,12 +35,13 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
         timestamp: new Date().toISOString()
       });
 
-      // 🎯 CORRECTION CRITIQUE : Assignment direct SANS condition
+      // 🎯 CORRECTION CRITIQUE : Assignation plus explicite
       const updatedData = {
         ...prev,
         code_barre: barcode || prev.code_barre,
         numero_telephone: phone || prev.numero_telephone,
-        code_barre_image_url: barcodeImageUrl || "" // 🔑 ASSIGNATION DIRECTE - pas de fallback sur prev
+        // 🔑 ASSIGNATION DIRECTE ET EXPLICITE - GARDE L'URL MÊME SI C'EST UNE CHAÎNE VIDE
+        code_barre_image_url: barcodeImageUrl !== undefined ? barcodeImageUrl : prev.code_barre_image_url
       };
 
       console.log("🔥 BARCODE HANDLER - NOUVELLES DONNÉES CALCULÉES:", {
@@ -52,15 +53,11 @@ export const useBarcodeHandler = ({ setFormData }: UseBarcodeHandlerProps) => {
           telephone_modifié: prev.numero_telephone !== updatedData.numero_telephone,
           url_modifiée: prev.code_barre_image_url !== updatedData.code_barre_image_url
         },
-        timestamp: new Date().toISOString()
-      });
-
-      console.log("🔥 BARCODE HANDLER - VÉRIFICATION URL FINALE:", {
-        url_source: barcodeImageUrl,
-        url_assignée: updatedData.code_barre_image_url,
-        logique_assignment: barcodeImageUrl ? "URL fournie assignée" : "Chaîne vide assignée",
-        correspondance: barcodeImageUrl === updatedData.code_barre_image_url ? "✅ CORRESPONDANCE" : "❌ DIVERGENCE",
-        correction_appliquée: "✅ Assignment direct sans fallback sur prev",
+        logique_assignment: {
+          barcodeImageUrl_reçu: barcodeImageUrl,
+          condition_utilisée: barcodeImageUrl !== undefined ? "URL reçue assignée" : "URL précédente conservée",
+          valeur_finale: updatedData.code_barre_image_url
+        },
         timestamp: new Date().toISOString()
       });
 

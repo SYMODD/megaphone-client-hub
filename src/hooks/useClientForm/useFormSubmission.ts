@@ -16,14 +16,15 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
     e.preventDefault();
     setIsSubmitting(true);
 
-    console.log("🔥 FORM SUBMISSION - DÉBUT SOUMISSION - État complet du formulaire:", {
+    console.log("🔥 FORM SUBMISSION - DÉBUT SOUMISSION - Validation complète:", {
       formData_complet: formData,
-      focus_url: {
+      validation_url: {
         code_barre_image_url: formData.code_barre_image_url,
         type: typeof formData.code_barre_image_url,
         longueur: formData.code_barre_image_url?.length || 0,
         truthy: !!formData.code_barre_image_url,
         non_vide: formData.code_barre_image_url && formData.code_barre_image_url.trim() !== "",
+        est_string_valide: typeof formData.code_barre_image_url === 'string' && formData.code_barre_image_url.length > 0,
         preview: formData.code_barre_image_url ? formData.code_barre_image_url.substring(0, 100) + "..." : "AUCUNE URL"
       },
       autres_données: {
@@ -53,7 +54,7 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
         timestamp: new Date().toISOString()
       });
 
-      // 🎯 TRANSMISSION DIRECTE - Pas de validation qui peut bloquer
+      // 🎯 TRANSMISSION DIRECTE AVEC VALIDATION RIGOUREUSE
       const dataToInsert = {
         nom: formData.nom,
         prenom: formData.prenom,
@@ -61,7 +62,7 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
         numero_passeport: formData.numero_passeport,
         numero_telephone: formData.numero_telephone,
         code_barre: formData.code_barre,
-        code_barre_image_url: formData.code_barre_image_url, // 🔑 TRANSMISSION DIRECTE
+        code_barre_image_url: formData.code_barre_image_url, // 🔑 TRANSMISSION DIRECTE SANS MODIFICATION
         observations: formData.observations,
         date_enregistrement: formData.date_enregistrement,
         photo_url: formData.photo_url,
@@ -69,25 +70,35 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
         agent_id: user.id
       };
 
-      console.log("🔥 PRÉPARATION INSERTION - Données exactes préparées:", {
+      console.log("🔥 PRÉPARATION INSERTION - Validation finale avant base:", {
         dataToInsert_complet: dataToInsert,
-        focus_url_insertion: {
+        validation_finale_url: {
           code_barre_image_url: dataToInsert.code_barre_image_url,
           source_formData: formData.code_barre_image_url,
-          correspondance: formData.code_barre_image_url === dataToInsert.code_barre_image_url ? "✅ IDENTIQUE" : "❌ DIFFÉRENT",
+          correspondance_exacte: formData.code_barre_image_url === dataToInsert.code_barre_image_url,
           type: typeof dataToInsert.code_barre_image_url,
           longueur: dataToInsert.code_barre_image_url?.length || 0,
-          verification_transmission: "✅ Transmission directe sans modification"
+          validation_pre_insert: dataToInsert.code_barre_image_url ? "✅ URL PRÊTE POUR INSERTION" : "❌ URL VIDE SERA INSÉRÉE",
+          verification_transmission: "✅ Transmission directe sans altération"
         },
         timestamp: new Date().toISOString()
       });
 
-      console.log("🔥 APPEL SUPABASE INSERT - Requête finale:", {
+      // 🔍 VÉRIFICATION FINALE CRITIQUE
+      if (!dataToInsert.code_barre_image_url || dataToInsert.code_barre_image_url.trim() === '') {
+        console.warn("⚠️ ALERTE CRITIQUE: URL vide avant insertion en base", {
+          formData_url: formData.code_barre_image_url,
+          dataToInsert_url: dataToInsert.code_barre_image_url,
+          possible_cause: "L'URL s'est perdue quelque part dans le flux",
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      console.log("🔥 APPEL SUPABASE INSERT - Requête finale avec URL:", {
         table: "clients",
         données_envoyées: dataToInsert,
         url_envoyée: dataToInsert.code_barre_image_url,
-        statut_url: dataToInsert.code_barre_image_url ? "✅ URL PRÉSENTE POUR INSERTION" : "⚠️ URL VIDE MAIS TRANSMISE",
-        transmission_directe: "✅ Pas de nettoyage qui peut supprimer l'URL",
+        statut_url: dataToInsert.code_barre_image_url ? "✅ URL PRÉSENTE POUR INSERTION" : "❌ URL VIDE POUR INSERTION",
         timestamp: new Date().toISOString()
       });
 
@@ -109,7 +120,7 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
         return;
       }
 
-      console.log("🔥 INSERTION RÉUSSIE - Analyse du résultat:", {
+      console.log("🔥 INSERTION RÉUSSIE - Vérification du résultat:", {
         data_retournée: data,
         nombre_enregistrements: data?.length || 0,
         timestamp: new Date().toISOString()
@@ -118,16 +129,17 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
       if (data && data[0]) {
         const savedClient = data[0];
         
-        console.log("🔥 VÉRIFICATION POST-INSERTION - Analyse complète:", {
+        console.log("🔥 VÉRIFICATION POST-INSERTION - Analyse critique finale:", {
           client_id: savedClient.id,
           données_sauvées: savedClient,
-          focus_url_sauvée: {
+          validation_url_sauvée: {
             code_barre_image_url_en_base: savedClient.code_barre_image_url,
             url_envoyée_originale: dataToInsert.code_barre_image_url,
             url_du_formulaire: formData.code_barre_image_url,
             correspondance_envoi_base: savedClient.code_barre_image_url === dataToInsert.code_barre_image_url ? "✅ CORRESPONDANCE PARFAITE" : "❌ DIVERGENCE DÉTECTÉE",
             correspondance_form_base: savedClient.code_barre_image_url === formData.code_barre_image_url ? "✅ FORM = BASE" : "❌ FORM ≠ BASE",
-            statut_final: savedClient.code_barre_image_url ? "✅ URL SAUVÉE EN BASE" : "❌ URL VIDE EN BASE"
+            statut_final: savedClient.code_barre_image_url ? "✅ URL SAUVÉE EN BASE" : "❌ URL VIDE EN BASE",
+            analyse_critique: savedClient.code_barre_image_url ? "SUCCESS COMPLET" : "ÉCHEC - URL PERDUE"
           },
           autres_champs_sauvés: {
             code_barre: savedClient.code_barre,
@@ -139,20 +151,22 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
         });
 
         if (savedClient.code_barre_image_url) {
-          console.log("✅ SUCCÈS COMPLET:", {
+          console.log("✅ SUCCÈS COMPLET - URL SAUVÉE:", {
             message: "Client et image sauvegardés avec succès",
             url_confirmée: savedClient.code_barre_image_url,
+            résolution: "PROBLÈME RÉSOLU",
             timestamp: new Date().toISOString()
           });
           toast.success("✅ Client et image sauvegardés avec succès !");
         } else {
-          console.log("⚠️ SUCCÈS PARTIEL:", {
-            message: "Client enregistré mais URL image vide",
+          console.log("❌ ÉCHEC CRITIQUE - URL PERDUE:", {
+            message: "Client enregistré mais URL image nulle en base",
             données_client: savedClient,
-            investigation_requise: "Vérifier pourquoi l'URL n'a pas été sauvée",
+            investigation_requise: "URL s'est perdue lors de l'insertion Supabase",
+            urgence: "PROBLÈME NON RÉSOLU",
             timestamp: new Date().toISOString()
           });
-          toast.success("✅ Client enregistré !");
+          toast.error("⚠️ Client enregistré mais image non sauvegardée");
         }
       }
 
