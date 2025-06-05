@@ -42,6 +42,7 @@ export const useBaseClientsLogic = () => {
     setDeleteDialogOpen
   } = useClientActions();
 
+  // Fix: Pass clients array instead of totalCount to useClientExport
   const { handleExport } = useClientExport(clients);
 
   // Fonction de rafraîchissement forcé après suppression
