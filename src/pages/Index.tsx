@@ -2,6 +2,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { AdminFilters } from "@/components/dashboard/AdminFilters";
+import { DateFilters } from "@/components/dashboard/DateFilters";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { WelcomeSection } from "@/components/dashboard/WelcomeSection";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
@@ -76,7 +77,8 @@ const Index = () => {
     nationalityData: agentData.nationalityData.length,
     registrationData: agentData.registrationData.length,
     recentClients: agentData.recentClients.length,
-    filters: adminFilters.filters
+    filters: adminFilters.filters,
+    loading: agentData.loading
   });
 
   return (
@@ -90,13 +92,18 @@ const Index = () => {
 
         {/* Admin Filters - Improved Mobile Layout */}
         {isAdminOrSuperviseur && (
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto space-y-4">
             <AdminFilters
               selectedPoint={adminFilters.selectedPoint}
               selectedCategory={adminFilters.selectedCategory}
               onPointChange={adminFilters.handlePointChange}
               onCategoryChange={adminFilters.handleCategoryChange}
               onClearFilters={adminFilters.clearFilters}
+            />
+            
+            <DateFilters
+              dateRange={adminFilters.dateRange}
+              onDateRangeChange={adminFilters.handleDateRangeChange}
             />
           </div>
         )}
@@ -107,7 +114,16 @@ const Index = () => {
         </div>
 
         {/* Dashboard Statistics */}
-        <DashboardStats agentData={agentData} />
+        {agentData.loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-slate-600">Chargement des données...</p>
+            </div>
+          </div>
+        ) : (
+          <DashboardStats agentData={agentData} />
+        )}
       </main>
     </div>
   );

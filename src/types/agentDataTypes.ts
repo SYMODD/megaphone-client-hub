@@ -1,13 +1,17 @@
 
+import { DateRange } from "react-day-picker";
+
 export interface ClientData {
-  id: number;
+  id: string;
   nom: string;
   prenom: string;
   nationalite: string;
   dateEnregistrement: string;
-  photo?: string | null;
   pointOperation: string;
-  code_barre?: string | null;
+  numeroPasseport: string;
+  numeroTelephone?: string;
+  codeBarre?: string;
+  observations?: string;
 }
 
 export interface NationalityData {
@@ -16,21 +20,10 @@ export interface NationalityData {
   color: string;
 }
 
-export interface RegistrationData {
-  month: string;
-  clients: number;
-}
-
 export interface AdminFilters {
-  selectedPoint?: string | null;
   selectedCategory?: string | null;
-}
-
-export interface AgentDataStatistics {
-  totalClients: number;
-  newThisMonth: number;
-  contractsGenerated: number;
-  nationalities: number;
+  selectedPoint?: string | null;
+  dateRange?: DateRange | undefined;
 }
 
 export interface AgentDataResult {
@@ -40,6 +33,7 @@ export interface AgentDataResult {
   contractsGenerated: number;
   nationalities: number;
   nationalityData: NationalityData[];
-  registrationData: RegistrationData[];
+  registrationData: any[];
   recentClients: ClientData[];
+  loading?: boolean;
 }

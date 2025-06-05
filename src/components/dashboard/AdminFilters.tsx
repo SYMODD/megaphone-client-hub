@@ -75,7 +75,7 @@ export const AdminFilters = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Filter className="w-5 h-5 text-blue-600" />
-          Filtres de données
+          Filtres par point d'opération
         </CardTitle>
         <CardDescription>
           Filtrez les données par point d'opération ou catégorie
