@@ -4,6 +4,21 @@ import { extractCINData } from "@/services/cinOCRService";
 import { toast } from "sonner";
 import { useImageUpload } from "@/hooks/useImageUpload";
 
+// Fonction pour normaliser la nationalité
+const normalizeNationality = (nationality: string | undefined): string => {
+  if (!nationality) return "Maroc";
+  
+  const normalized = nationality.trim().toLowerCase();
+  
+  // Si c'est une variante de "marocaine", convertir en "Maroc"
+  if (normalized.includes("marocain") || normalized === "maroc") {
+    return "Maroc";
+  }
+  
+  // Sinon, garder la valeur originale mais avec la première lettre en majuscule
+  return nationality.charAt(0).toUpperCase() + nationality.slice(1).toLowerCase();
+};
+
 export const useCINOCR = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [extractedData, setExtractedData] = useState<any>(null);
@@ -20,15 +35,28 @@ export const useCINOCR = () => {
       const result = await extractCINData(file, apiKey);
       
       if (result.success && result.data) {
-        console.log("✅ Données CIN extraites:", result.data);
+        console.log("✅ Données CIN extraites (avant normalisation):", result.data);
+        
+        // 🎯 NORMALISATION DE LA NATIONALITÉ
+        const normalizedData = {
+          ...result.data,
+          nationalite: normalizeNationality(result.data.nationalite)
+        };
+        
+        console.log("✅ Données CIN après normalisation:", {
+          nationalite_originale: result.data.nationalite,
+          nationalite_normalisee: normalizedData.nationalite,
+          autres_donnees: normalizedData
+        });
+        
         setRawText(result.rawText || "");
-        setExtractedData(result.data);
+        setExtractedData(normalizedData);
 
         toast.success("✅ Données CIN extraites avec succès !", {
           duration: 4000
         });
 
-        return result.data;
+        return normalizedData;
         
       } else {
         console.error("❌ CIN OCR - Échec extraction:", result.error);
