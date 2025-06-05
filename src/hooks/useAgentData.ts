@@ -126,7 +126,7 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
     // Clients nouveaux ce mois (basé sur les données filtrées)
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
-    const newThisMonth = filteredClients.filter(client => {
+    const newThisMonth = clients.filter(client => {
       const clientDate = new Date(client.date_enregistrement);
       return clientDate.getMonth() === currentMonth && clientDate.getFullYear() === currentYear;
     }).length;
@@ -136,11 +136,11 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
 
     console.log("📈 Statistiques calculées (filtrées):", { totalClients, newThisMonth, contractsGenerated });
     return { totalClients, newThisMonth, contractsGenerated };
-  }, [clientsCount, filteredClients]);
+  }, [clientsCount, clients]);
 
   // Données de nationalités basées sur les données filtrées
   const nationalityData = useMemo(() => {
-    const nationalityCounts = filteredClients.reduce((acc, client) => {
+    const nationalityCounts = clients.reduce((acc, client) => {
       const nationality = client.nationalite || "Non spécifiée";
       acc[nationality] = (acc[nationality] || 0) + 1;
       return acc;
@@ -156,11 +156,11 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
 
     console.log("🌍 Données nationalités (filtrées):", data);
     return data;
-  }, [clientsCount, refreshKey]);
+  }, [clients, refreshKey]);
 
   // Clients récents basés sur les données filtrées
   const recentClients = useMemo(() => {
-    return filteredClients
+    return clients
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 5)
       .map(client => ({
@@ -172,14 +172,14 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
         pointOperation: client.point_operation || "Non défini",
         numeroPasseport: client.numero_passeport || "Non spécifié"
       } as ClientData));
-  }, [clientsCount, refreshKey]);
+  }, [clients, refreshKey]);
 
   // Nombre de nationalités basé sur les données filtrées
   const nationalitiesCount = useMemo(() => {
-    const count = new Set(filteredClients.map(client => client.nationalite)).size;
+    const count = new Set(clients.map(client => client.nationalite)).size;
     console.log("🌍 Nombre de nationalités (filtrées):", count);
     return count;
-  }, [clientsCount, refreshKey]);
+  }, [clients, refreshKey]);
 
   console.log("🚀 RETOUR useAgentData FINAL:", {
     userRole: profile?.role,
