@@ -16,8 +16,8 @@ export const useCINForm = () => {
   const [formData, setFormData] = useState<ClientFormData>({
     nom: "",
     prenom: "",
-    nationalite: "Marocaine", // Default for CIN
-    numero_passeport: "", // Will store CIN number
+    nationalite: "Maroc", // Default exact match avec la liste
+    numero_passeport: "",
     numero_telephone: "",
     code_barre: "",
     code_barre_image_url: "",
@@ -38,9 +38,9 @@ export const useCINForm = () => {
     setFormData(prev => ({ ...prev, scannedImage: imageData }));
   };
 
-  // Helper function to normalize nationality for CIN - CORRECTION
+  // ✅ CORRECTION: Normalisation pour correspondre exactement à la liste des nationalités
   const normalizeNationality = (nationality: string): string => {
-    if (!nationality) return "Marocaine";
+    if (!nationality) return "Maroc";
     
     const normalizedNationality = nationality.toLowerCase().trim();
     
@@ -49,13 +49,14 @@ export const useCINForm = () => {
       entrée_normalisée: normalizedNationality
     });
     
-    // Mapping spécifique pour les CIN marocaines
+    // ✅ CORRECTION: Mapping pour correspondre exactement à nationalities.ts
     if (normalizedNationality === "maroc" || 
         normalizedNationality === "marocaine" || 
+        normalizedNationality === "marocain" ||
         normalizedNationality === "moroccan" ||
         normalizedNationality === "morocco") {
-      console.log("✅ Nationalité reconnue comme marocaine, retour: Marocaine");
-      return "Marocaine";
+      console.log("✅ Nationalité reconnue comme marocaine, retour: Maroc");
+      return "Maroc"; // ✅ EXACTEMENT comme dans nationalities.ts
     }
     
     // Pour les autres nationalités, capitaliser la première lettre
@@ -67,7 +68,7 @@ export const useCINForm = () => {
   const handleCINDataExtracted = (extractedData: any) => {
     console.log("📄 DÉBUT - Données CIN extraites reçues:", extractedData);
     
-    // Normalize the nationality specifically for CIN
+    // ✅ Normalisation corrigée pour correspondre à la liste des nationalités
     const normalizedNationality = normalizeNationality(extractedData.nationalite);
     
     console.log("🔄 AVANT MISE À JOUR - État actuel du formulaire:", {
@@ -80,7 +81,7 @@ export const useCINForm = () => {
       ...formData,
       nom: extractedData.nom || formData.nom,
       prenom: extractedData.prenom || formData.prenom,
-      nationalite: normalizedNationality, // ✅ FORCE LA MISE À JOUR DIRECTE
+      nationalite: normalizedNationality, // ✅ MAINTENANT "Maroc" au lieu de "Marocaine"
       numero_passeport: extractedData.cin || extractedData.numero_cin || formData.numero_passeport,
       code_barre: extractedData.code_barre || formData.code_barre,
       code_barre_image_url: extractedData.code_barre_image_url || formData.code_barre_image_url
@@ -124,6 +125,7 @@ export const useCINForm = () => {
         cin: formData.numero_passeport,
         telephone: formData.numero_telephone,
         code_barre: formData.code_barre,
+        nationalite: formData.nationalite, // ✅ Log pour vérifier
         scannedImage: formData.scannedImage ? "✅ PRÉSENTE" : "❌ ABSENTE"
       });
       
@@ -144,7 +146,7 @@ export const useCINForm = () => {
       const clientData = {
         nom: formData.nom.trim(),
         prenom: formData.prenom.trim(),
-        nationalite: formData.nationalite,
+        nationalite: formData.nationalite, // ✅ Maintenant "Maroc" exactement
         numero_passeport: formData.numero_passeport.trim(),
         numero_telephone: formData.numero_telephone.trim() || null,
         code_barre: formData.code_barre?.trim() || null,
@@ -158,6 +160,7 @@ export const useCINForm = () => {
 
       console.log("💾 INSERTION CLIENT CIN COMPLÈTE - Données finales:", {
         ...clientData,
+        nationalite_finale: clientData.nationalite, // ✅ Verification finale
         photo_incluse: clientData.photo_url ? "✅ INCLUSE" : "❌ MANQUANTE"
       });
 
