@@ -116,9 +116,12 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
     return clients;
   }, [clients, profile?.role]);
 
+  // Store length as a separate value to avoid deep type issues
+  const clientsCount = filteredClients.length;
+
   // Calcul des statistiques basées sur les données filtrées
   const statistics = useMemo(() => {
-    const totalClients = filteredClients.length;
+    const totalClients = clientsCount;
     
     // Clients nouveaux ce mois (basé sur les données filtrées)
     const currentMonth = new Date().getMonth();
@@ -133,7 +136,7 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
 
     console.log("📈 Statistiques calculées (filtrées):", { totalClients, newThisMonth, contractsGenerated });
     return { totalClients, newThisMonth, contractsGenerated };
-  }, [filteredClients.length]);
+  }, [clientsCount, filteredClients]);
 
   // Données de nationalités basées sur les données filtrées
   const nationalityData = useMemo(() => {
@@ -153,7 +156,7 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
 
     console.log("🌍 Données nationalités (filtrées):", data);
     return data;
-  }, [filteredClients.length]);
+  }, [clientsCount, filteredClients]);
 
   // Clients récents basés sur les données filtrées
   const recentClients = useMemo(() => {
@@ -169,14 +172,14 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
         pointOperation: client.point_operation || "Non défini",
         numeroPasseport: client.numero_passeport || "Non spécifié"
       } as ClientData));
-  }, [filteredClients.length]);
+  }, [clientsCount, filteredClients]);
 
   // Nombre de nationalités basé sur les données filtrées
   const nationalitiesCount = useMemo(() => {
     const count = new Set(filteredClients.map(client => client.nationalite)).size;
     console.log("🌍 Nombre de nationalités (filtrées):", count);
     return count;
-  }, [filteredClients.length]);
+  }, [clientsCount, filteredClients]);
 
   console.log("🚀 RETOUR useAgentData FINAL:", {
     userRole: profile?.role,
