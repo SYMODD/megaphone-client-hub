@@ -64,6 +64,18 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
           console.log("📅 Filtre date fin:", toDate);
         }
 
+        // 🎯 FILTRAGE PAR CATÉGORIE - Utiliser la nouvelle colonne categorie
+        if (filters?.selectedCategory && filters.selectedCategory !== "all") {
+          query = query.eq('categorie', filters.selectedCategory);
+          console.log("📂 Filtre catégorie appliqué:", filters.selectedCategory);
+        }
+
+        // 🎯 FILTRAGE PAR POINT D'OPÉRATION - Utiliser la nouvelle colonne point_operation
+        if (filters?.selectedPoint && filters.selectedPoint !== "all") {
+          query = query.eq('point_operation', filters.selectedPoint);
+          console.log("📍 Filtre point d'opération appliqué:", filters.selectedPoint);
+        }
+
         const { data, error } = await query;
 
         if (error) {
@@ -84,7 +96,7 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
     fetchRealClients();
   }, [profile, refreshKey]);
 
-  // 🎯 FILTRAGE AMÉLIORÉ - Respecter TOUS les filtres pour les graphiques
+  // Les clients sont déjà filtrés par la base de données, pas besoin de filtrage côté client
   const filteredClients = useMemo(() => {
     if (!profile) return [];
 
@@ -94,31 +106,9 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
       return [];
     }
 
-    let result = [...clients];
-
-    // 🎯 FILTRAGE PAR POINT D'OPÉRATION
-    if (filters?.selectedPoint && filters.selectedPoint !== "all") {
-      result = result.filter(client => {
-        // Ici, on pourrait avoir une logique plus sophistiquée avec une vraie table de mapping
-        // Pour l'instant, on utilise une logique basée sur l'agent_id ou un champ point_operation si disponible
-        console.log("📍 Filtrage par point d'opération:", filters.selectedPoint);
-        // TODO: Implémenter le filtrage réel quand les colonnes point_operation seront ajoutées
-        return true; // Temporaire - à corriger avec les vraies colonnes
-      });
-    }
-
-    // 🎯 FILTRAGE PAR CATÉGORIE
-    if (filters?.selectedCategory && filters.selectedCategory !== "all") {
-      result = result.filter(client => {
-        console.log("📂 Filtrage par catégorie:", filters.selectedCategory);
-        // TODO: Implémenter le filtrage réel quand les colonnes catégorie seront ajoutées
-        return true; // Temporaire - à corriger avec les vraies colonnes
-      });
-    }
-
-    console.log("📊 Clients filtrés pour les graphiques:", result.length, "sur", clients.length);
-    return result;
-  }, [clients, profile, filters?.selectedCategory, filters?.selectedPoint]);
+    console.log("📊 Clients depuis la base de données (déjà filtrés):", clients.length);
+    return clients;
+  }, [clients, profile]);
 
   // Calcul des statistiques basées sur les données filtrées
   const statistics = useMemo(() => {
@@ -170,10 +160,10 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
         prenom: client.prenom,
         nationalite: client.nationalite,
         dateEnregistrement: client.date_enregistrement,
-        pointOperation: profile?.point_operation || "Non défini",
+        pointOperation: client.point_operation || "Non défini",
         numeroPasseport: client.numero_passeport || "Non spécifié"
       } as ClientData));
-  }, [filteredClients, profile?.point_operation]);
+  }, [filteredClients]);
 
   // Nombre de nationalités basé sur les données filtrées
   const nationalitiesCount = useMemo(() => {
@@ -201,7 +191,7 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
       prenom: client.prenom,
       nationalite: client.nationalite,
       dateEnregistrement: client.date_enregistrement,
-      pointOperation: profile?.point_operation || "Non défini",
+      pointOperation: client.point_operation || "Non défini",
       numeroPasseport: client.numero_passeport || "Non spécifié",
       numeroTelephone: client.numero_telephone,
       codeBarre: client.code_barre,

@@ -12,6 +12,7 @@ export interface ClientData {
   numeroTelephone?: string;
   codeBarre?: string;
   observations?: string;
+  categorie?: string; // 🎯 AJOUT DE LA CATÉGORIE
 }
 
 export interface NationalityData {
