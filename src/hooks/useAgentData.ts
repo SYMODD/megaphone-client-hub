@@ -21,7 +21,7 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
     setRefreshKey(prev => prev + 1);
   }, [filters?.selectedCategory, filters?.selectedPoint, filters?.dateRange?.from, filters?.dateRange?.to]);
 
-  // Fetch des clients réels depuis Supabase avec filtrage par date
+  // Fetch des clients réels depuis Supabase avec filtrage
   useEffect(() => {
     const fetchRealClients = async () => {
       if (!profile) return;
@@ -35,6 +35,11 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
           .select('*')
           .order('created_at', { ascending: false });
 
+        // Filtrage par rôle - agents ne voient que leurs clients
+        if (profile.role === "agent") {
+          query = query.eq('agent_id', profile.id);
+        }
+
         // Filtrage par date
         if (filters?.dateRange?.from) {
           const fromDate = filters.dateRange.from.toISOString().split('T')[0];
@@ -46,6 +51,18 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
           const toDate = filters.dateRange.to.toISOString().split('T')[0];
           query = query.lte('date_enregistrement', toDate);
           console.log("📅 Filtre date fin:", toDate);
+        }
+
+        // 🔥 NEW: Filtrage par catégorie
+        if (filters?.selectedCategory && filters.selectedCategory !== "all") {
+          query = query.eq('categorie', filters.selectedCategory);
+          console.log("📂 Filtre par catégorie:", filters.selectedCategory);
+        }
+
+        // 🔥 NEW: Filtrage par point d'opération
+        if (filters?.selectedPoint && filters.selectedPoint !== "all") {
+          query = query.eq('point_operation', filters.selectedPoint);
+          console.log("📍 Filtre par point d'opération:", filters.selectedPoint);
         }
 
         const { data, error } = await query;
@@ -68,57 +85,46 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
     fetchRealClients();
   }, [profile, refreshKey]);
 
-  // Filtrage des clients selon le rôle et les filtres admin
-  const filteredClients = useMemo(() => {
-    if (!profile) return [];
-
-    let result = [...clients];
-
-    // Filtrage par rôle
-    if (profile.role === "agent") {
-      // Les agents ne voient que leurs propres clients
-      result = result.filter(client => client.agent_id === profile.id);
-    } else if (profile.role === "admin" || profile.role === "superviseur") {
-      // Admin et superviseur peuvent voir tous les clients, avec filtres optionnels
-      
-      // Filtrage par point d'opération (basé sur agent_id pour l'instant)
-      if (filters?.selectedPoint && filters.selectedPoint !== "all") {
-        // Pour l'instant, on utilise une logique simple - à améliorer avec une vraie table de mapping
-        console.log("📍 Filtre par point d'opération:", filters.selectedPoint);
-      }
-
-      // Filtrage par catégorie
-      if (filters?.selectedCategory && filters.selectedCategory !== "all") {
-        console.log("📂 Filtre par catégorie:", filters.selectedCategory);
-      }
-    }
-
-    console.log("📊 Clients filtrés:", result.length, "sur", clients.length);
-    return result;
-  }, [clients, profile, filters?.selectedCategory, filters?.selectedPoint]);
+  // Conversion des données clients vers le format attendu
+  const formattedClients = useMemo(() => {
+    return clients.map(client => ({
+      id: client.id,
+      nom: client.nom,
+      prenom: client.prenom,
+      nationalite: client.nationalite,
+      dateEnregistrement: client.date_enregistrement,
+      pointOperation: client.point_operation || "Non défini",
+      numeroPasseport: client.numero_passeport || "Non spécifié",
+      numeroTelephone: client.numero_telephone,
+      codeBarre: client.code_barre,
+      observations: client.observations,
+      categorie: client.categorie, // 🔥 NEW
+      point_operation: client.point_operation // 🔥 NEW
+    } as ClientData));
+  }, [clients]);
 
   // Calcul des statistiques
   const statistics = useMemo(() => {
-    const totalClients = filteredClients.length;
+    const totalClients = formattedClients.length;
     
     // Clients nouveaux ce mois
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
-    const newThisMonth = filteredClients.filter(client => {
-      const clientDate = new Date(client.date_enregistrement);
+    const newThisMonth = formattedClients.filter(client => {
+      const clientDate = new Date(client.dateEnregistrement);
       return clientDate.getMonth() === currentMonth && clientDate.getFullYear() === currentYear;
     }).length;
 
-    // Contrats générés (pour l'instant, on estime 76% des clients)
+    // Contrats générés (estimation 76% des clients)
     const contractsGenerated = Math.ceil(totalClients * 0.76);
 
     console.log("📈 Statistiques calculées:", { totalClients, newThisMonth, contractsGenerated });
     return { totalClients, newThisMonth, contractsGenerated };
-  }, [filteredClients]);
+  }, [formattedClients]);
 
   // Données de nationalités
   const nationalityData = useMemo(() => {
-    const nationalityCounts = filteredClients.reduce((acc, client) => {
+    const nationalityCounts = formattedClients.reduce((acc, client) => {
       const nationality = client.nationalite || "Non spécifiée";
       acc[nationality] = (acc[nationality] || 0) + 1;
       return acc;
@@ -134,33 +140,24 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
 
     console.log("🌍 Données nationalités:", data);
     return data;
-  }, [filteredClients]);
+  }, [formattedClients]);
 
   // Clients récents
   const recentClients = useMemo(() => {
-    return filteredClients
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 5)
-      .map(client => ({
-        id: client.id,
-        nom: client.nom,
-        prenom: client.prenom,
-        nationalite: client.nationalite,
-        dateEnregistrement: client.date_enregistrement,
-        pointOperation: profile?.point_operation || "Non défini",
-        numeroPasseport: client.numero_passeport || "Non spécifié"
-      } as ClientData));
-  }, [filteredClients, profile?.point_operation]);
+    return formattedClients
+      .sort((a, b) => new Date(b.dateEnregistrement).getTime() - new Date(a.dateEnregistrement).getTime())
+      .slice(0, 5);
+  }, [formattedClients]);
 
   // Nombre de nationalités
   const nationalitiesCount = useMemo(() => {
-    const count = new Set(filteredClients.map(client => client.nationalite)).size;
+    const count = new Set(formattedClients.map(client => client.nationalite)).size;
     console.log("🌍 Nombre de nationalités:", count);
     return count;
-  }, [filteredClients]);
+  }, [formattedClients]);
 
   console.log("🚀 RETOUR useAgentData FINAL:", {
-    clientsCount: filteredClients.length,
+    clientsCount: formattedClients.length,
     totalClients: statistics.totalClients,
     nationalitiesCount,
     refreshKey,
@@ -170,18 +167,7 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
   });
 
   return {
-    clients: filteredClients.map(client => ({
-      id: client.id,
-      nom: client.nom,
-      prenom: client.prenom,
-      nationalite: client.nationalite,
-      dateEnregistrement: client.date_enregistrement,
-      pointOperation: profile?.point_operation || "Non défini",
-      numeroPasseport: client.numero_passeport || "Non spécifié",
-      numeroTelephone: client.numero_telephone,
-      codeBarre: client.code_barre,
-      observations: client.observations
-    } as ClientData)),
+    clients: formattedClients,
     totalClients: statistics.totalClients,
     newThisMonth: statistics.newThisMonth,
     contractsGenerated: statistics.contractsGenerated,

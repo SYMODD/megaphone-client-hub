@@ -2,7 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, User, Globe, FileText, Phone, BarChart3, Image, Barcode } from "lucide-react";
+import { Calendar, User, Globe, FileText, Phone, BarChart3, Image, Barcode, MapPin, Building } from "lucide-react";
 import { Client } from "@/hooks/useClientData/types";
 
 interface ClientViewDialogProps {
@@ -90,7 +90,7 @@ export const ClientViewDialog = ({ client, open, onOpenChange }: ClientViewDialo
 
           <Separator />
 
-          {/* Informations personnelles */}
+          {/* Informations personnelles et localisation */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
               <h3 className="font-semibold text-lg flex items-center gap-2">
@@ -119,6 +119,36 @@ export const ClientViewDialog = ({ client, open, onOpenChange }: ClientViewDialo
               </div>
             </div>
 
+            {/* 🔥 NEW: Section Point d'opération et Catégorie */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-lg flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                Localisation et service
+              </h3>
+              
+              <div className="space-y-2">
+                <div>
+                  <span className="text-sm font-medium text-gray-600">Point d'opération :</span>
+                  <Badge variant="outline" className="mt-1 flex items-center gap-1 w-fit">
+                    <Building className="w-3 h-3" />
+                    {client.point_operation || "Non défini"}
+                  </Badge>
+                </div>
+                
+                <div>
+                  <span className="text-sm font-medium text-gray-600">Catégorie :</span>
+                  <Badge variant="secondary" className="mt-1 capitalize">
+                    {client.categorie || "Non définie"}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Documents et contact */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
               <h3 className="font-semibold text-lg flex items-center gap-2">
                 <FileText className="w-4 h-4" />
@@ -182,10 +212,10 @@ export const ClientViewDialog = ({ client, open, onOpenChange }: ClientViewDialo
               </div>
             </div>
 
-            {/* Résumé des images */}
+            {/* Résumé des informations */}
             <div className="mt-4 p-3 bg-white rounded border">
-              <p className="text-sm font-medium text-gray-700 mb-2">État des images :</p>
-              <div className="flex gap-4 text-xs">
+              <p className="text-sm font-medium text-gray-700 mb-2">Résumé du dossier :</p>
+              <div className="grid grid-cols-2 gap-4 text-xs">
                 <div className={`flex items-center gap-1 ${client.photo_url ? 'text-green-600' : 'text-gray-400'}`}>
                   <Image className="w-3 h-3" />
                   <span>Photo document : {client.photo_url ? '✅ Disponible' : '❌ Manquante'}</span>
@@ -193,6 +223,14 @@ export const ClientViewDialog = ({ client, open, onOpenChange }: ClientViewDialo
                 <div className={`flex items-center gap-1 ${client.code_barre_image_url ? 'text-green-600' : 'text-gray-400'}`}>
                   <Barcode className="w-3 h-3" />
                   <span>Image code-barres : {client.code_barre_image_url ? '✅ Disponible' : '❌ Manquante'}</span>
+                </div>
+                <div className={`flex items-center gap-1 ${client.point_operation ? 'text-green-600' : 'text-gray-400'}`}>
+                  <Building className="w-3 h-3" />
+                  <span>Point d'opération : {client.point_operation ? '✅ Défini' : '❌ Non défini'}</span>
+                </div>
+                <div className={`flex items-center gap-1 ${client.categorie ? 'text-green-600' : 'text-gray-400'}`}>
+                  <MapPin className="w-3 h-3" />
+                  <span>Catégorie : {client.categorie ? '✅ Définie' : '❌ Non définie'}</span>
                 </div>
               </div>
             </div>

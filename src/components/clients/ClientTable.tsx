@@ -33,7 +33,8 @@ export const ClientTable = ({
               <th className="px-3 py-3">Client</th>
               <th className="px-3 py-3 hidden md:table-cell">Nationalité</th>
               <th className="px-3 py-3 hidden lg:table-cell">Document</th>
-              <th className="px-3 py-3 hidden xl:table-cell">Code barre</th>
+              <th className="px-3 py-3 hidden xl:table-cell">Point/Catégorie</th>
+              <th className="px-3 py-3 hidden 2xl:table-cell">Code barre</th>
               <th className="px-3 py-3 text-right">Actions</th>
             </tr>
           </thead>
@@ -66,6 +67,16 @@ export const ClientTable = ({
                     </div>
                   </td>
                   <td className="px-3 py-3 hidden xl:table-cell">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium text-slate-700">
+                        {client.point_operation || "Non défini"}
+                      </span>
+                      <span className="text-xs text-slate-500 capitalize">
+                        {client.categorie || "Non définie"}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-3 py-3 hidden 2xl:table-cell">
                     <BarcodeImageThumbnail client={client} />
                   </td>
                   <td className="px-3 py-3">
@@ -112,7 +123,7 @@ export const ClientTable = ({
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-gray-500">
+                <td colSpan={7} className="px-3 py-8 text-center text-gray-500">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <XCircle className="h-5 w-5 text-gray-400" />
                     <div>

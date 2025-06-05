@@ -1,3 +1,4 @@
+
 export interface Client {
   id: string;
   nom: string;
@@ -7,13 +8,15 @@ export interface Client {
   numero_telephone?: string;
   code_barre?: string;
   code_barre_image_url?: string;
+  observations?: string;
   date_enregistrement: string;
   photo_url?: string;
-  observations?: string;
+  document_type: 'cin' | 'passport_marocain' | 'passport_etranger' | 'carte_sejour';
+  agent_id: string;
   created_at: string;
   updated_at: string;
-  agent_id: string;
-  document_type?: 'cin' | 'passport_marocain' | 'passport_etranger' | 'carte_sejour';
+  point_operation?: string; // 🔥 NEW: Ajout du champ point_operation
+  categorie?: string; // 🔥 NEW: Ajout du champ categorie
 }
 
 export interface ClientFilters {
@@ -21,10 +24,4 @@ export interface ClientFilters {
   nationality: string;
   dateFrom: Date | null;
   dateTo: Date | null;
-}
-
-export interface PaginationState {
-  currentPage: number;
-  totalCount: number;
-  totalPages: number;
 }

@@ -12,6 +12,8 @@ export interface ClientData {
   numeroTelephone?: string;
   codeBarre?: string;
   observations?: string;
+  categorie?: string; // 🔥 NEW: Ajout du champ categorie
+  point_operation?: string; // 🔥 NEW: Ajout du champ point_operation
 }
 
 export interface NationalityData {

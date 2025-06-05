@@ -36,6 +36,7 @@ export type Database = {
       clients: {
         Row: {
           agent_id: string
+          categorie: string | null
           code_barre: string | null
           code_barre_image_url: string | null
           created_at: string | null
@@ -48,11 +49,13 @@ export type Database = {
           numero_telephone: string | null
           observations: string | null
           photo_url: string | null
+          point_operation: string | null
           prenom: string
           updated_at: string | null
         }
         Insert: {
           agent_id: string
+          categorie?: string | null
           code_barre?: string | null
           code_barre_image_url?: string | null
           created_at?: string | null
@@ -65,11 +68,13 @@ export type Database = {
           numero_telephone?: string | null
           observations?: string | null
           photo_url?: string | null
+          point_operation?: string | null
           prenom: string
           updated_at?: string | null
         }
         Update: {
           agent_id?: string
+          categorie?: string | null
           code_barre?: string | null
           code_barre_image_url?: string | null
           created_at?: string | null
@@ -82,6 +87,7 @@ export type Database = {
           numero_telephone?: string | null
           observations?: string | null
           photo_url?: string | null
+          point_operation?: string | null
           prenom?: string
           updated_at?: string | null
         }
