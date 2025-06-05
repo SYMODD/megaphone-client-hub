@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,7 +53,7 @@ export const useCINForm = () => {
   };
 
   const handleCINDataExtracted = (extractedData: any) => {
-    console.log("📄 Données CIN extraites:", extractedData);
+    console.log("📄 Données CIN extraites et appliquées au formulaire:", extractedData);
     
     // Normalize the nationality specifically for CIN
     const normalizedNationality = normalizeNationality(extractedData.nationalite);
@@ -61,7 +62,7 @@ export const useCINForm = () => {
       ...prev,
       nom: extractedData.nom || prev.nom,
       prenom: extractedData.prenom || prev.prenom,
-      nationalite: normalizedNationality, // Use normalized nationality
+      nationalite: normalizedNationality,
       numero_passeport: extractedData.cin || extractedData.numero_cin || prev.numero_passeport,
       code_barre: extractedData.code_barre || prev.code_barre,
       code_barre_image_url: extractedData.code_barre_image_url || prev.code_barre_image_url
@@ -77,6 +78,10 @@ export const useCINForm = () => {
       ...prev,
       observations: prev.observations ? `${prev.observations}\n\n${extractionInfo}` : extractionInfo
     }));
+
+    // ✅ CORRECTION: Ne plus soumettre automatiquement le formulaire
+    // L'utilisateur peut maintenant compléter le reste des champs
+    console.log("✅ Données CIN appliquées au formulaire - L'utilisateur peut compléter le reste");
   };
 
   const handleSubmit = async () => {
@@ -93,10 +98,12 @@ export const useCINForm = () => {
     setIsLoading(true);
 
     try {
-      console.log("🚀 SOUMISSION CIN - Début avec données:", {
+      console.log("🚀 SOUMISSION CIN MANUELLE - Début avec données complètes:", {
         nom: formData.nom,
         prenom: formData.prenom,
         cin: formData.numero_passeport,
+        telephone: formData.numero_telephone,
+        code_barre: formData.code_barre,
         scannedImage: formData.scannedImage ? "✅ PRÉSENTE" : "❌ ABSENTE"
       });
       
@@ -129,7 +136,7 @@ export const useCINForm = () => {
         agent_id: user.id
       };
 
-      console.log("💾 INSERTION CLIENT CIN - Données finales:", {
+      console.log("💾 INSERTION CLIENT CIN COMPLÈTE - Données finales:", {
         ...clientData,
         photo_incluse: clientData.photo_url ? "✅ INCLUSE" : "❌ MANQUANTE"
       });
