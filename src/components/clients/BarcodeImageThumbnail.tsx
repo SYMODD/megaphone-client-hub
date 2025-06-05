@@ -1,40 +1,45 @@
 
 import { Image, Barcode } from "lucide-react";
+import { Client } from "@/hooks/useClientData/types";
 
 interface BarcodeImageThumbnailProps {
-  imageUrl: string | null | undefined;
+  imageUrl?: string | null;
+  client?: Client;
   className?: string;
 }
 
-export const BarcodeImageThumbnail = ({ imageUrl, className = "" }: BarcodeImageThumbnailProps) => {
+export const BarcodeImageThumbnail = ({ imageUrl, client, className = "" }: BarcodeImageThumbnailProps) => {
+  // Use client.code_barre_image_url if client is provided and imageUrl is not
+  const effectiveImageUrl = imageUrl || (client?.code_barre_image_url);
+  
   console.log("🔍 BarcodeImageThumbnail - ANALYSE COMPLÈTE:", {
-    imageUrl_reçue: imageUrl,
-    type: typeof imageUrl,
-    length: imageUrl?.length || 0,
-    truthy: !!imageUrl,
-    string_vide: imageUrl === "",
-    null_check: imageUrl === null,
-    undefined_check: imageUrl === undefined,
-    string_null: imageUrl === "null",
-    string_undefined: imageUrl === "undefined",
-    trimmed: imageUrl?.trim(),
-    condition_finale: imageUrl && imageUrl.trim() !== "" && imageUrl !== "null" && imageUrl !== "undefined"
+    imageUrl_reçue: effectiveImageUrl,
+    type: typeof effectiveImageUrl,
+    length: effectiveImageUrl?.length || 0,
+    truthy: !!effectiveImageUrl,
+    string_vide: effectiveImageUrl === "",
+    null_check: effectiveImageUrl === null,
+    undefined_check: effectiveImageUrl === undefined,
+    string_null: effectiveImageUrl === "null",
+    string_undefined: effectiveImageUrl === "undefined",
+    trimmed: effectiveImageUrl?.trim(),
+    condition_finale: effectiveImageUrl && effectiveImageUrl.trim() !== "" && effectiveImageUrl !== "null" && effectiveImageUrl !== "undefined"
   });
   
   // 🎯 CONDITION SIMPLIFIÉE ET CLAIRE
-  const isValidUrl = imageUrl && 
-                     typeof imageUrl === 'string' && 
-                     imageUrl.trim() !== "" && 
-                     imageUrl !== "null" && 
-                     imageUrl !== "undefined";
+  const isValidUrl = effectiveImageUrl && 
+                     typeof effectiveImageUrl === 'string' && 
+                     effectiveImageUrl.trim() !== "" && 
+                     effectiveImageUrl !== "null" && 
+                     effectiveImageUrl !== "undefined";
   
   if (!isValidUrl) {
     console.log("❌ BarcodeImageThumbnail - URL invalide, affichage placeholder:", {
-      raison: !imageUrl ? "URL null/undefined" : 
-              typeof imageUrl !== 'string' ? "Type non-string" :
-              imageUrl.trim() === "" ? "String vide" :
-              imageUrl === "null" ? "String 'null'" : 
-              imageUrl === "undefined" ? "String 'undefined'" : "Autre"
+      raison: !effectiveImageUrl ? "URL null/undefined" : 
+              typeof effectiveImageUrl !== 'string' ? "Type non-string" :
+              effectiveImageUrl.trim() === "" ? "String vide" :
+              effectiveImageUrl === "null" ? "String 'null'" : 
+              effectiveImageUrl === "undefined" ? "String 'undefined'" : "Autre"
     });
     
     return (
@@ -45,21 +50,21 @@ export const BarcodeImageThumbnail = ({ imageUrl, className = "" }: BarcodeImage
   }
 
   console.log("✅ BarcodeImageThumbnail - URL VALIDE, affichage image:", {
-    url_finale: imageUrl,
-    longueur: imageUrl.length,
-    preview: imageUrl.substring(0, 100) + "..."
+    url_finale: effectiveImageUrl,
+    longueur: effectiveImageUrl.length,
+    preview: effectiveImageUrl.substring(0, 100) + "..."
   });
 
   return (
     <div className={`group relative ${className}`}>
       <img 
-        src={imageUrl} 
+        src={effectiveImageUrl} 
         alt="Image code-barres"
         className="w-8 h-8 rounded border border-blue-300 object-cover cursor-pointer hover:w-16 hover:h-16 transition-all duration-200 ring-2 ring-blue-200"
         title="Image du code-barres scanné - Cliquez pour agrandir"
         onError={(e) => {
           console.error("❌ BarcodeImageThumbnail - ERREUR CHARGEMENT:", {
-            url_tentée: imageUrl,
+            url_tentée: effectiveImageUrl,
             error_event: e,
             target_src: e.currentTarget.src,
             timestamp: new Date().toISOString()
@@ -72,21 +77,21 @@ export const BarcodeImageThumbnail = ({ imageUrl, className = "" }: BarcodeImage
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-placeholder w-8 h-8 bg-red-100 rounded border border-red-300 flex items-center justify-center';
             errorDiv.innerHTML = '<div class="w-4 h-4 text-red-500 text-xs">❌</div>';
-            errorDiv.title = `Erreur de chargement: ${imageUrl}`;
+            errorDiv.title = `Erreur de chargement: ${effectiveImageUrl}`;
             parent.appendChild(errorDiv);
           }
         }}
         onLoad={() => {
           console.log("✅ BarcodeImageThumbnail - IMAGE CHARGÉE AVEC SUCCÈS:", {
-            url: imageUrl,
+            url: effectiveImageUrl,
             timestamp: new Date().toISOString(),
             statut: "AFFICHAGE RÉUSSI"
           });
         }}
-        key={`barcode-${imageUrl}-${Date.now()}`} // Key unique pour forcer le rechargement
+        key={`barcode-${effectiveImageUrl}-${Date.now()}`} // Key unique pour forcer le rechargement
         onClick={() => {
-          console.log("🔍 BarcodeImageThumbnail - Ouverture image:", imageUrl);
-          window.open(imageUrl, '_blank');
+          console.log("🔍 BarcodeImageThumbnail - Ouverture image:", effectiveImageUrl);
+          window.open(effectiveImageUrl, '_blank');
         }}
       />
       <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full p-0.5">

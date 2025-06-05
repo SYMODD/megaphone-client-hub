@@ -1,4 +1,3 @@
-
 export interface Client {
   id: string;
   nom: string;
@@ -14,6 +13,7 @@ export interface Client {
   created_at: string;
   updated_at: string;
   agent_id: string;
+  document_type?: 'cin' | 'passport_marocain' | 'passport_etranger' | 'carte_sejour';
 }
 
 export interface ClientFilters {
