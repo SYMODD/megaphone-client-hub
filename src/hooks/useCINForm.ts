@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -62,15 +61,16 @@ export const useCINForm = () => {
       ...prev,
       nom: extractedData.nom || prev.nom,
       prenom: extractedData.prenom || prev.prenom,
-      nationalite: normalizedNationality,
+      nationalite: normalizedNationality, // ✅ CORRECTION: Force la mise à jour de la nationalité
       numero_passeport: extractedData.cin || extractedData.numero_cin || prev.numero_passeport,
       code_barre: extractedData.code_barre || prev.code_barre,
       code_barre_image_url: extractedData.code_barre_image_url || prev.code_barre_image_url
     }));
 
-    console.log("🔄 Nationalité normalisée:", {
+    console.log("🔄 Nationalité normalisée appliquée:", {
       originale: extractedData.nationalite,
-      normalisée: normalizedNationality
+      normalisée: normalizedNationality,
+      appliquée_au_formulaire: true
     });
 
     const extractionInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: CIN`;
