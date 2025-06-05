@@ -1,4 +1,5 @@
 
+import { CINScanner } from "./CINScanner";
 import { PersonalInfoSection } from "./PersonalInfoSection";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { RegistrationSection } from "./RegistrationSection";
@@ -11,6 +12,8 @@ export const CINForm = () => {
     formData,
     isLoading,
     handleInputChange,
+    handleImageScanned,
+    handleCINDataExtracted,
     handleSubmit
   } = useCINForm();
 
@@ -42,6 +45,12 @@ export const CINForm = () => {
 
   return (
     <form onSubmit={handleFormSubmit} className="space-y-4 sm:space-y-6">
+      <CINScanner 
+        scannedImage={formData.scannedImage}
+        onImageScanned={handleImageScanned}
+        onDataExtracted={handleCINDataExtracted}
+      />
+
       <BarcodeScanner 
         onBarcodeScanned={handleBarcodeScanned}
         currentBarcode={formData.code_barre}

@@ -1,15 +1,11 @@
 
 import { ClientFormData } from "../types";
-import { normalizeNationalityForSubmission } from "../validation/formValidation";
 
 export const prepareSubmissionPayload = (formData: ClientFormData, userId: string) => {
-  // 🎯 NORMALISATION FINALE DE LA NATIONALITÉ AVANT SAUVEGARDE
-  const normalizedNationality = normalizeNationalityForSubmission(formData.nationalite);
-  
   const dataToInsert = {
     nom: formData.nom,
     prenom: formData.prenom,
-    nationalite: normalizedNationality, // 🎯 UTILISATION DE LA NATIONALITÉ NORMALISÉE
+    nationalite: formData.nationalite,
     numero_passeport: formData.numero_passeport,
     numero_telephone: formData.numero_telephone,
     code_barre: formData.code_barre,
@@ -20,12 +16,6 @@ export const prepareSubmissionPayload = (formData: ClientFormData, userId: strin
     document_type: formData.document_type,
     agent_id: userId
   };
-
-  console.log("📋 PAYLOAD FINAL - Vérification nationalité:", {
-    nationalite_formulaire: formData.nationalite,
-    nationalite_finale: normalizedNationality,
-    payload_complet: dataToInsert
-  });
 
   return dataToInsert;
 };
