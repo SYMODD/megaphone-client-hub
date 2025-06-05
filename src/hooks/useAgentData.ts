@@ -15,11 +15,17 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Create stable dependency values to avoid deep type issues
+  const selectedCategory = filters?.selectedCategory;
+  const selectedPoint = filters?.selectedPoint;
+  const dateFromTime = filters?.dateRange?.from?.getTime();
+  const dateToTime = filters?.dateRange?.to?.getTime();
+
   // Force un re-render quand les filtres changent
   useEffect(() => {
     console.log("🔄 FILTERS CHANGED - Force refresh", filters);
     setRefreshKey(prev => prev + 1);
-  }, [filters?.selectedCategory, filters?.selectedPoint, filters?.dateRange?.from, filters?.dateRange?.to]);
+  }, [selectedCategory, selectedPoint, dateFromTime, dateToTime]);
 
   // Fetch des clients réels depuis Supabase UNIQUEMENT pour admin et superviseur
   useEffect(() => {
