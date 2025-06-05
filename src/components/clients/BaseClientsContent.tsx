@@ -5,7 +5,7 @@ import { ClientStatistics } from "@/components/clients/ClientStatistics";
 import { ClientFilters } from "@/components/clients/ClientFilters";
 import { ClientTable } from "@/components/clients/ClientTable";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { Client } from "@/hooks/useClientData/types";
 
 interface BaseClientsContentProps {
@@ -42,9 +42,24 @@ export const BaseClientsContent = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedNationality, setSelectedNationality] = useState("");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Utilise le filtrage optimisé côté serveur
   const filteredClients = filterClients(searchTerm, selectedNationality, dateRange);
+
+  // 🔥 SOLUTION 5 : Handler pour le rafraîchissement manuel
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    console.log('🔄 Rafraîchissement manuel déclenché par l\'utilisateur');
+    
+    // Déclenche un nouveau filtrage avec les paramètres actuels
+    filterClients(searchTerm, selectedNationality, dateRange);
+    
+    // Simule un délai pour l'animation
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 1000);
+  };
 
   return (
     <div className="space-y-6">
@@ -54,6 +69,25 @@ export const BaseClientsContent = ({
         clients={clients}
         nationalities={nationalities}
       />
+
+      {/* Header avec bouton de rafraîchissement */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900">
+          Liste des clients ({totalCount} total)
+        </h2>
+        
+        {/* 🔥 SOLUTION 5 : Bouton de rafraîchissement avec animation */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleManualRefresh}
+          disabled={isRefreshing}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? 'Actualisation...' : 'Actualiser'}
+        </Button>
+      </div>
 
       {/* Filtres et recherche optimisés */}
       <ClientFilters
@@ -66,6 +100,16 @@ export const BaseClientsContent = ({
         nationalities={nationalitiesLoading ? [] : nationalities}
         onExport={onExport}
       />
+
+      {/* 🔥 SOLUTION 5 : Indicateur de chargement pendant le rafraîchissement */}
+      {isRefreshing && (
+        <div className="flex items-center justify-center py-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center gap-2 text-blue-700">
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            <span className="text-sm font-medium">Actualisation des données en cours...</span>
+          </div>
+        </div>
+      )}
 
       {/* Liste des clients */}
       <ClientTable

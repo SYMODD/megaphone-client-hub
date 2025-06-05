@@ -1,7 +1,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2, AlertTriangle } from "lucide-react";
+import { Trash2, AlertTriangle, Loader2 } from "lucide-react";
 import { Client } from "@/hooks/useClientData/types";
 
 interface ClientDeleteDialogProps {
@@ -54,6 +54,16 @@ export const ClientDeleteDialog = ({
             </div>
           </div>
 
+          {/* 🔥 SOLUTION 5 : Indicateur de progression pendant la suppression */}
+          {isDeleting && (
+            <div className="flex items-center justify-center py-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="flex items-center gap-2 text-orange-700">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm font-medium">Suppression en cours...</span>
+              </div>
+            </div>
+          )}
+
           <p className="text-sm text-gray-600 text-center">
             Êtes-vous sûr de vouloir supprimer ce client ?
           </p>
@@ -74,8 +84,17 @@ export const ClientDeleteDialog = ({
             disabled={isDeleting}
             className="w-full sm:w-auto order-1 sm:order-2"
           >
-            <Trash2 className="w-4 h-4 mr-2" />
-            {isDeleting ? "Suppression..." : "Supprimer définitivement"}
+            {isDeleting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Suppression...
+              </>
+            ) : (
+              <>
+                <Trash2 className="w-4 h-4 mr-2" />
+                Supprimer définitivement
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
