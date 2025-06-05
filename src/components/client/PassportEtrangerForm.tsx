@@ -12,7 +12,7 @@ export const PassportEtrangerForm = () => {
     isLoading,
     handleInputChange,
     handleSubmit,
-    handleDataExtracted
+    handlePassportDataExtracted
   } = usePassportEtrangerForm();
 
   // Fonction pour gérer l'image scannée
@@ -52,7 +52,7 @@ export const PassportEtrangerForm = () => {
       <AutoDocumentScanner 
         scannedImage={formData.scannedImage}
         onImageScanned={handleImageScanned}
-        onDataExtracted={handleDataExtracted}
+        onDataExtracted={handlePassportDataExtracted}
         onBarcodeScanned={handleBarcodeScanned}
         currentBarcode={formData.code_barre}
       />

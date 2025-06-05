@@ -12,7 +12,7 @@ export const CarteSejourForm = () => {
     isLoading,
     handleInputChange,
     handleSubmit,
-    handleDataExtracted
+    handleCarteDataExtracted
   } = useCarteSejourForm();
 
   // Fonction pour gérer l'image scannée
@@ -52,7 +52,7 @@ export const CarteSejourForm = () => {
       <AutoDocumentScanner 
         scannedImage={formData.scannedImage}
         onImageScanned={handleImageScanned}
-        onDataExtracted={handleDataExtracted}
+        onDataExtracted={handleCarteDataExtracted}
         onBarcodeScanned={handleBarcodeScanned}
         currentBarcode={formData.code_barre}
       />

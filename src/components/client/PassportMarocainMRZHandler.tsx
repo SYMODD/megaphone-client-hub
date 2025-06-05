@@ -1,10 +1,10 @@
 
 import { toast } from "sonner";
-import { PassportMarocainFormData } from "@/hooks/usePassportMarocainForm";
+import { ClientFormData } from "@/hooks/useClientForm/types";
 
 interface PassportMarocainMRZHandlerProps {
-  formData: PassportMarocainFormData;
-  onInputChange: (field: keyof PassportMarocainFormData, value: string) => void;
+  formData: ClientFormData;
+  onInputChange: (field: keyof ClientFormData, value: string) => void;
   onConfirmData: (data: any) => void;
   resetConfirmation: () => void;
 }
@@ -20,7 +20,7 @@ export const usePassportMarocainMRZHandler = ({
     console.log("Données MRZ extraites:", extractedData);
     
     // Mapper les données extraites vers les champs du formulaire
-    const updatedData: Partial<PassportMarocainFormData> = {};
+    const updatedData: Partial<ClientFormData> = {};
     
     if (extractedData.nom) {
       updatedData.nom = extractedData.nom;
@@ -43,7 +43,7 @@ export const usePassportMarocainMRZHandler = ({
 
     // Mettre à jour les champs un par un
     Object.entries(updatedData).forEach(([field, value]) => {
-      onInputChange(field as keyof PassportMarocainFormData, value);
+      onInputChange(field as keyof ClientFormData, String(value));
     });
 
     // Ajouter l'information d'extraction aux observations
