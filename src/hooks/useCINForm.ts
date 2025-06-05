@@ -28,6 +28,7 @@ export const useCINForm = () => {
   });
 
   const handleInputChange = (field: keyof ClientFormData, value: string) => {
+    console.log(`📝 CIN FORM - Changement de champ:`, { field, value });
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -36,41 +37,61 @@ export const useCINForm = () => {
     setFormData(prev => ({ ...prev, scannedImage: imageData }));
   };
 
-  // Helper function to normalize nationality for CIN
+  // Helper function to normalize nationality for CIN - CORRECTION
   const normalizeNationality = (nationality: string): string => {
     if (!nationality) return "Marocaine";
     
     const normalizedNationality = nationality.toLowerCase().trim();
     
-    // Mapping for CIN nationality values
-    if (normalizedNationality === "maroc" || normalizedNationality === "marocaine" || normalizedNationality === "moroccan") {
+    console.log("🔄 Normalisation nationalité CIN:", {
+      entrée: nationality,
+      entrée_normalisée: normalizedNationality
+    });
+    
+    // Mapping spécifique pour les CIN marocaines
+    if (normalizedNationality === "maroc" || 
+        normalizedNationality === "marocaine" || 
+        normalizedNationality === "moroccan" ||
+        normalizedNationality === "morocco") {
+      console.log("✅ Nationalité reconnue comme marocaine, retour: Marocaine");
       return "Marocaine";
     }
     
-    // For other nationalities, capitalize first letter
-    return nationality.charAt(0).toUpperCase() + nationality.slice(1).toLowerCase();
+    // Pour les autres nationalités, capitaliser la première lettre
+    const result = nationality.charAt(0).toUpperCase() + nationality.slice(1).toLowerCase();
+    console.log("🔄 Autre nationalité, résultat:", result);
+    return result;
   };
 
   const handleCINDataExtracted = (extractedData: any) => {
-    console.log("📄 Données CIN extraites et appliquées au formulaire:", extractedData);
+    console.log("📄 DÉBUT - Données CIN extraites reçues:", extractedData);
     
     // Normalize the nationality specifically for CIN
     const normalizedNationality = normalizeNationality(extractedData.nationalite);
     
-    setFormData(prev => ({
-      ...prev,
-      nom: extractedData.nom || prev.nom,
-      prenom: extractedData.prenom || prev.prenom,
-      nationalite: normalizedNationality, // ✅ CORRECTION: Force la mise à jour de la nationalité
-      numero_passeport: extractedData.cin || extractedData.numero_cin || prev.numero_passeport,
-      code_barre: extractedData.code_barre || prev.code_barre,
-      code_barre_image_url: extractedData.code_barre_image_url || prev.code_barre_image_url
-    }));
+    console.log("🔄 AVANT MISE À JOUR - État actuel du formulaire:", {
+      nationalite_actuelle: formData.nationalite,
+      nationalite_à_appliquer: normalizedNationality
+    });
 
-    console.log("🔄 Nationalité normalisée appliquée:", {
-      originale: extractedData.nationalite,
-      normalisée: normalizedNationality,
-      appliquée_au_formulaire: true
+    setFormData(prev => {
+      const newFormData = {
+        ...prev,
+        nom: extractedData.nom || prev.nom,
+        prenom: extractedData.prenom || prev.prenom,
+        nationalite: normalizedNationality, // ✅ FORCE LA MISE À JOUR
+        numero_passeport: extractedData.cin || extractedData.numero_cin || prev.numero_passeport,
+        code_barre: extractedData.code_barre || prev.code_barre,
+        code_barre_image_url: extractedData.code_barre_image_url || prev.code_barre_image_url
+      };
+      
+      console.log("✅ APRÈS MISE À JOUR - Nouveau state du formulaire:", {
+        nationalite_avant: prev.nationalite,
+        nationalite_après: newFormData.nationalite,
+        données_complètes: newFormData
+      });
+      
+      return newFormData;
     });
 
     const extractionInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: CIN`;
@@ -79,9 +100,7 @@ export const useCINForm = () => {
       observations: prev.observations ? `${prev.observations}\n\n${extractionInfo}` : extractionInfo
     }));
 
-    // ✅ CORRECTION: Ne plus soumettre automatiquement le formulaire
-    // L'utilisateur peut maintenant compléter le reste des champs
-    console.log("✅ Données CIN appliquées au formulaire - L'utilisateur peut compléter le reste");
+    console.log("✅ TERMINÉ - Données CIN appliquées au formulaire avec nationalité:", normalizedNationality);
   };
 
   const handleSubmit = async () => {

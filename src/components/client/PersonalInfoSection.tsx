@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Globe, FileText } from "lucide-react";
 import { NationalityCombobox } from "./NationalityCombobox";
 import { getDocumentFieldLabel, getDocumentFieldPlaceholder } from "./DocumentFields";
+import { useEffect } from "react";
 
 interface PersonalInfoSectionProps {
   formData: {
@@ -21,6 +22,25 @@ export const PersonalInfoSection = ({ formData, onInputChange }: PersonalInfoSec
   const documentType = formData.document_type as any;
   const documentFieldLabel = getDocumentFieldLabel(documentType);
   const documentFieldPlaceholder = getDocumentFieldPlaceholder(documentType);
+
+  // Debug - Log quand les données changent
+  useEffect(() => {
+    console.log("🔍 PERSONAL INFO SECTION - Données reçues:", {
+      nom: formData.nom,
+      prenom: formData.prenom,
+      nationalite: formData.nationalite,
+      numero_passeport: formData.numero_passeport,
+      timestamp: new Date().toISOString()
+    });
+  }, [formData]);
+
+  const handleNationalityChange = (value: string) => {
+    console.log("🌍 PERSONAL INFO - Changement nationalité:", {
+      ancienne: formData.nationalite,
+      nouvelle: value
+    });
+    onInputChange("nationalite", value);
+  };
 
   return (
     <Card className="border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
@@ -91,7 +111,7 @@ export const PersonalInfoSection = ({ formData, onInputChange }: PersonalInfoSec
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {/* Nationalité */}
+          {/* Nationalité avec debug */}
           <div className="space-y-3 group">
             <Label 
               htmlFor="nationalite" 
@@ -105,12 +125,16 @@ export const PersonalInfoSection = ({ formData, onInputChange }: PersonalInfoSec
               <div className="pl-12">
                 <NationalityCombobox
                   value={formData.nationalite}
-                  onValueChange={(value) => onInputChange("nationalite", value)}
+                  onValueChange={handleNationalityChange}
                 />
               </div>
               <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
                 <Globe className="w-4 h-4 text-slate-500" />
               </div>
+            </div>
+            {/* Debug info */}
+            <div className="text-xs text-gray-500">
+              Valeur actuelle: "{formData.nationalite}"
             </div>
           </div>
           
