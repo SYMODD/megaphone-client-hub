@@ -1,10 +1,9 @@
 
+import { useCallback } from "react";
 import { useClientData } from "@/hooks/useClientData";
 import { useClientActions } from "@/hooks/useClientActions";
-import { useNationalities } from "@/hooks/useNationalities";
 import { useClientExport } from "@/hooks/useClientExport";
-import { useClientUpdate } from "@/hooks/useClientUpdate";
-import { useClientDelete } from "@/hooks/useClientDelete";
+import { useNationalities } from "@/hooks/useNationalities";
 
 export const useBaseClientsLogic = () => {
   const {
@@ -17,15 +16,20 @@ export const useBaseClientsLogic = () => {
     setCurrentPage,
     fetchClients,
     filterClients,
+    applyServerFilters
   } = useClientData();
 
-  const { nationalities, loading: nationalitiesLoading } = useNationalities();
+  const {
+    nationalities,
+    loading: nationalitiesLoading
+  } = useNationalities();
 
   const {
     handleViewClient,
     handleEditClient,
     handleGenerateDocument,
     handleDeleteClient,
+    confirmDeleteClient,
     selectedClient,
     viewDialogOpen,
     editDialogOpen,
@@ -38,82 +42,80 @@ export const useBaseClientsLogic = () => {
     setDeleteDialogOpen
   } = useClientActions();
 
-  const { handleExport } = useClientExport(totalCount);
+  const { handleExport } = useClientExport(clients);
 
-  const { handleClientUpdated } = useClientUpdate({
-    fetchClients,
-    setViewDialogOpen,
-    setEditDialogOpen,
-    setDocumentDialogOpen
-  });
-
-  const { handleConfirmDeleteClient } = useClientDelete({
-    selectedClient,
-    setDeleteDialogOpen,
-    fetchClients,
-    currentPage,
-    setCurrentPage,
-    clients
-  });
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const handleRetry = () => {
-    fetchClients();
-  };
-
-  // Fonction pour forcer le rafraîchissement des données avec vérification complète
-  const forceRefresh = async () => {
-    console.log("🔄 Forçage du rafraîchissement des données clients avec vérification images...");
-    
+  // Fonction de rafraîchissement forcé après suppression
+  const forceRefresh = useCallback(async () => {
+    console.log('🔄 FORCE REFRESH - Rafraîchissement forcé des données');
     try {
       await fetchClients();
-      console.log("✅ Rafraîchissement terminé - Vérification des images de code-barres...");
-      
-      // Log pour vérifier la présence des URLs d'images de code-barres
-      const clientsWithBarcodeImages = clients.filter(client => client.code_barre_image_url);
-      console.log(`📊 Clients avec images de code-barres: ${clientsWithBarcodeImages.length}/${clients.length}`);
-      
-      clientsWithBarcodeImages.forEach(client => {
-        console.log(`✅ Client ${client.prenom} ${client.nom} - Image code-barres: ${client.code_barre_image_url}`);
-      });
-      
+      console.log('✅ FORCE REFRESH - Données rafraîchies avec succès');
     } catch (error) {
-      console.error("❌ Erreur lors du rafraîchissement:", error);
+      console.error('❌ FORCE REFRESH - Erreur lors du rafraîchissement:', error);
     }
-  };
+  }, [fetchClients]);
+
+  // Wrapper pour la suppression avec rafraîchissement forcé
+  const handleConfirmDeleteWithRefresh = useCallback(async () => {
+    console.log('🗑️ SUPPRESSION - Début de la suppression avec rafraîchissement');
+    await confirmDeleteClient(forceRefresh);
+  }, [confirmDeleteClient, forceRefresh]);
+
+  const handlePageChange = useCallback((page: number) => {
+    console.log('📄 Changement de page vers:', page);
+    setCurrentPage(page);
+  }, [setCurrentPage]);
+
+  const handleClientUpdated = useCallback(async () => {
+    console.log('📝 Client mis à jour - Rafraîchissement des données');
+    await forceRefresh();
+  }, [forceRefresh]);
+
+  const handleRetry = useCallback(async () => {
+    console.log('🔄 Nouvelle tentative de chargement');
+    await forceRefresh();
+  }, [forceRefresh]);
 
   return {
+    // Données des clients
     clients,
     loading,
     error,
     currentPage,
     totalCount,
     totalPages,
+    
+    // Nationalités
     nationalities,
     nationalitiesLoading,
+    
+    // Actions sur les clients
+    handleViewClient,
+    handleEditClient,
+    handleGenerateDocument,
+    handleDeleteClient,
+    
+    // États des dialogs
     selectedClient,
     viewDialogOpen,
     editDialogOpen,
     documentDialogOpen,
     deleteDialogOpen,
     isDeleting,
-    handlePageChange,
-    handleClientUpdated,
-    handleExport,
-    handleRetry,
-    handleViewClient,
-    handleEditClient,
-    handleGenerateDocument,
-    handleDeleteClient,
-    confirmDeleteClient: handleConfirmDeleteClient,
     setViewDialogOpen,
     setEditDialogOpen,
     setDocumentDialogOpen,
     setDeleteDialogOpen,
+    
+    // Actions et callbacks
+    handlePageChange,
+    handleClientUpdated,
+    handleExport,
+    handleRetry,
     filterClients,
-    forceRefresh
+    forceRefresh,
+    
+    // CORRECTION : Utilise la fonction avec rafraîchissement forcé
+    confirmDeleteClient: handleConfirmDeleteWithRefresh
   };
 };

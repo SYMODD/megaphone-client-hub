@@ -37,11 +37,12 @@ export const useClientActions = () => {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDeleteClient = async (onSuccess?: () => void) => {
+  const confirmDeleteClient = async (onSuccess: () => void) => {
     if (!selectedClient) return;
 
     setIsDeleting(true);
     try {
+      console.log('=== DÉBUT SUPPRESSION CLIENT ===');
       console.log('Tentative de suppression du client:', selectedClient.id);
       
       const { error } = await supabase
@@ -54,22 +55,24 @@ export const useClientActions = () => {
         throw error;
       }
 
-      console.log('Client supprimé avec succès de la base de données');
+      console.log('✅ Client supprimé avec succès de la base de données');
+
+      // Fermer le dialog immédiatement
+      setDeleteDialogOpen(false);
+      setSelectedClient(null);
 
       toast({
         title: "Client supprimé",
         description: `Le client ${selectedClient.prenom} ${selectedClient.nom} a été supprimé avec succès.`,
       });
 
-      setDeleteDialogOpen(false);
-      setSelectedClient(null);
+      // OBLIGATOIRE : Appeler le callback de succès pour forcer le rafraîchissement
+      console.log('🔄 Appel du callback de rafraîchissement...');
+      onSuccess();
       
-      // Appeler le callback de succès au lieu de recharger la page
-      if (onSuccess) {
-        onSuccess();
-      }
+      console.log('=== FIN SUPPRESSION CLIENT (SUCCÈS) ===');
     } catch (error) {
-      console.error('Erreur lors de la suppression:', error);
+      console.error('❌ Erreur lors de la suppression:', error);
       toast({
         title: "Erreur de suppression",
         description: "Impossible de supprimer le client. Veuillez réessayer.",
