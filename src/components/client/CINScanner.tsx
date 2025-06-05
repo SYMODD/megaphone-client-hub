@@ -208,7 +208,7 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
                           {key.replace(/_/g, ' ')}
                         </Label>
                         <p className="font-medium text-gray-900 bg-white px-3 py-2 rounded border">
-                          {value || "Non détecté"}
+                          {String(value) || "Non détecté"}
                         </p>
                       </div>
                     ))}
