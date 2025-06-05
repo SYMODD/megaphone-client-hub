@@ -80,7 +80,14 @@ export const useClientFetcher = () => {
       });
       
       console.log(`🔄 [${cacheBuster}] Mise à jour de l'état`);
-      setClients(data || []);
+      
+      // Type assertion to ensure document_type conforms to the union type
+      const typedClients: Client[] = (data || []).map(client => ({
+        ...client,
+        document_type: client.document_type as 'cin' | 'passport_marocain' | 'passport_etranger' | 'carte_sejour'
+      }));
+      
+      setClients(typedClients);
       setTotalCount(count || 0);
       
       // Vérification page vide après suppression

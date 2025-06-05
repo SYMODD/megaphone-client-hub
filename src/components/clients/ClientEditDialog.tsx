@@ -46,7 +46,12 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
         
         if (!error && updatedClient) {
           console.log("✅ Client mis à jour localement:", updatedClient);
-          setLocalClient(updatedClient);
+          // Type assertion to ensure document_type conforms to the union type
+          const typedClient: Client = {
+            ...updatedClient,
+            document_type: updatedClient.document_type as 'cin' | 'passport_marocain' | 'passport_etranger' | 'carte_sejour'
+          };
+          setLocalClient(typedClient);
           
           // Notifier le parent pour rafraîchir la liste complète
           onClientUpdated();
