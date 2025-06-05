@@ -20,6 +20,11 @@ export interface NationalityData {
   color: string;
 }
 
+export interface RegistrationData {
+  month: string;
+  clients: number;
+}
+
 export interface AdminFilters {
   selectedCategory?: string | null;
   selectedPoint?: string | null;
@@ -33,7 +38,7 @@ export interface AgentDataResult {
   contractsGenerated: number;
   nationalities: number;
   nationalityData: NationalityData[];
-  registrationData: any[];
+  registrationData: RegistrationData[];
   recentClients: ClientData[];
   loading?: boolean;
 }

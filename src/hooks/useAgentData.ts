@@ -2,7 +2,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useMemo, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminFilters, AgentDataResult } from "@/types/agentDataTypes";
+import { AdminFilters, AgentDataResult, ClientData } from "@/types/agentDataTypes";
 import { DateRange } from "react-day-picker";
 
 interface AgentDataFilters extends AdminFilters {
@@ -128,7 +128,7 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
     
     const data = Object.entries(nationalityCounts).map(([name, value], index) => ({
       name,
-      value,
+      value: value as number,
       color: baseColors[index % baseColors.length]
     }));
 
@@ -147,8 +147,9 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
         prenom: client.prenom,
         nationalite: client.nationalite,
         dateEnregistrement: client.date_enregistrement,
-        pointOperation: profile?.point_operation || "Non défini"
-      }));
+        pointOperation: profile?.point_operation || "Non défini",
+        numeroPasseport: client.numero_passeport || "Non spécifié"
+      } as ClientData));
   }, [filteredClients, profile?.point_operation]);
 
   // Nombre de nationalités
@@ -169,7 +170,18 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
   });
 
   return {
-    clients: filteredClients,
+    clients: filteredClients.map(client => ({
+      id: client.id,
+      nom: client.nom,
+      prenom: client.prenom,
+      nationalite: client.nationalite,
+      dateEnregistrement: client.date_enregistrement,
+      pointOperation: profile?.point_operation || "Non défini",
+      numeroPasseport: client.numero_passeport || "Non spécifié",
+      numeroTelephone: client.numero_telephone,
+      codeBarre: client.code_barre,
+      observations: client.observations
+    } as ClientData)),
     totalClients: statistics.totalClients,
     newThisMonth: statistics.newThisMonth,
     contractsGenerated: statistics.contractsGenerated,

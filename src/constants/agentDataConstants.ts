@@ -1,102 +1,115 @@
+
 import { ClientData, RegistrationData } from "@/types/agentDataTypes";
 
 // Mock client data with operation points
 export const mockClients: ClientData[] = [
   {
-    id: 1,
+    id: "1",
     nom: "Dubois",
     prenom: "Marie",
     nationalite: "France",
     dateEnregistrement: "2024-11-15",
-    pointOperation: "aeroport_marrakech"
+    pointOperation: "aeroport_marrakech",
+    numeroPasseport: "FR123456789"
   },
   {
-    id: 2,
+    id: "2",
     nom: "Benali",
     prenom: "Ahmed",
     nationalite: "Algérie",
     dateEnregistrement: "2024-12-14",
-    pointOperation: "aeroport_casablanca"
+    pointOperation: "aeroport_casablanca",
+    numeroPasseport: "DZ987654321"
   },
   {
-    id: 3,
+    id: "3",
     nom: "Smith",
     prenom: "John",
     nationalite: "États-Unis",
     dateEnregistrement: "2024-10-20",
-    pointOperation: "aeroport_agadir"
+    pointOperation: "aeroport_agadir",
+    numeroPasseport: "US555666777"
   },
   {
-    id: 4,
+    id: "4",
     nom: "Garcia",
     prenom: "Carlos",
     nationalite: "Espagne",
     dateEnregistrement: "2024-09-25",
-    pointOperation: "navire_atlas"
+    pointOperation: "navire_atlas",
+    numeroPasseport: "ES111222333"
   },
   {
-    id: 5,
+    id: "5",
     nom: "Müller",
     prenom: "Hans",
     nationalite: "Allemagne",
     dateEnregistrement: "2025-01-10",
-    pointOperation: "navire_meridien"
+    pointOperation: "navire_meridien",
+    numeroPasseport: "DE444555666"
   },
   {
-    id: 6,
+    id: "6",
     nom: "Rossi",
     prenom: "Giuseppe",
     nationalite: "Italie",
     dateEnregistrement: "2025-02-05",
-    pointOperation: "agence_centrale"
+    pointOperation: "agence_centrale",
+    numeroPasseport: "IT777888999"
   },
   {
-    id: 7,
+    id: "7",
     nom: "Kone",
     prenom: "Mamadou",
     nationalite: "Sénégal",
     dateEnregistrement: "2025-03-09",
-    pointOperation: "aeroport_casablanca"
+    pointOperation: "aeroport_casablanca",
+    numeroPasseport: "SN123789456"
   },
   {
-    id: 8,
+    id: "8",
     nom: "Johnson",
     prenom: "Emily",
     nationalite: "Royaume-Uni",
     dateEnregistrement: "2025-04-15",
-    pointOperation: "aeroport_marrakech"
+    pointOperation: "aeroport_marrakech",
+    numeroPasseport: "GB654321987"
   },
   {
-    id: 9,
+    id: "9",
     nom: "Silva",
     prenom: "João",
     nationalite: "Portugal",
     dateEnregistrement: "2025-05-12",
-    pointOperation: "navire_atlas"
+    pointOperation: "navire_atlas",
+    numeroPasseport: "PT369258147"
   },
   {
-    id: 10,
+    id: "10",
     nom: "Wang",
     prenom: "Li",
     nationalite: "Chine",
     dateEnregistrement: "2025-05-20",
-    pointOperation: "agence_centrale"
+    pointOperation: "agence_centrale",
+    numeroPasseport: "CN741852963"
   },
   {
-    id: 11,
+    id: "11",
     nom: "Yamamoto",
     prenom: "Hiroshi",
     nationalite: "Japon",
     dateEnregistrement: "2025-05-28",
-    pointOperation: "aeroport_agadir"
+    pointOperation: "aeroport_agadir",
+    numeroPasseport: "JP159753486"
   },
   {
-    id: 12,
+    id: "12",
     nom: "Abdellah",
     prenom: "Karim",
     nationalite: "Algérie",
     dateEnregistrement: "2025-06-01",
-    pointOperation: "aeroport_casablanca"
+    pointOperation: "aeroport_casablanca",
+    numeroPasseport: "DZ852741963"
   }
 ];
 
