@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,14 @@ interface NationalityComboboxProps {
 
 export const NationalityCombobox = ({ value, onValueChange }: NationalityComboboxProps) => {
   const [open, setOpen] = useState(false);
+
+  // Debug - Log quand la valeur change
+  useEffect(() => {
+    console.log("🌍 NATIONALITY COMBOBOX - Valeur reçue:", {
+      value,
+      timestamp: new Date().toISOString()
+    });
+  }, [value]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

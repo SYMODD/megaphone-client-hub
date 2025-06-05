@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -74,25 +75,25 @@ export const useCINForm = () => {
       nationalite_à_appliquer: normalizedNationality
     });
 
-    setFormData(prev => {
-      const newFormData = {
-        ...prev,
-        nom: extractedData.nom || prev.nom,
-        prenom: extractedData.prenom || prev.prenom,
-        nationalite: normalizedNationality, // ✅ FORCE LA MISE À JOUR
-        numero_passeport: extractedData.cin || extractedData.numero_cin || prev.numero_passeport,
-        code_barre: extractedData.code_barre || prev.code_barre,
-        code_barre_image_url: extractedData.code_barre_image_url || prev.code_barre_image_url
-      };
-      
-      console.log("✅ APRÈS MISE À JOUR - Nouveau state du formulaire:", {
-        nationalite_avant: prev.nationalite,
-        nationalite_après: newFormData.nationalite,
-        données_complètes: newFormData
-      });
-      
-      return newFormData;
+    // Mise à jour DIRECTE et FORCÉE de tous les champs
+    const updatedFormData = {
+      ...formData,
+      nom: extractedData.nom || formData.nom,
+      prenom: extractedData.prenom || formData.prenom,
+      nationalite: normalizedNationality, // ✅ FORCE LA MISE À JOUR DIRECTE
+      numero_passeport: extractedData.cin || extractedData.numero_cin || formData.numero_passeport,
+      code_barre: extractedData.code_barre || formData.code_barre,
+      code_barre_image_url: extractedData.code_barre_image_url || formData.code_barre_image_url
+    };
+
+    console.log("✅ MISE À JOUR DIRECTE - Nouveau state complet:", {
+      nationalite_avant: formData.nationalite,
+      nationalite_après: updatedFormData.nationalite,
+      données_complètes: updatedFormData
     });
+
+    // Application directe du nouvel état
+    setFormData(updatedFormData);
 
     const extractionInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: CIN`;
     setFormData(prev => ({
