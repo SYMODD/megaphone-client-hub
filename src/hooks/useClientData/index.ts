@@ -17,7 +17,7 @@ export const useClientData = () => {
     totalCount,
     fetchClients
   } = useClientFetcher();
-  const { currentPage, totalPages, handlePageChange } = usePagination(totalCount);
+  const { currentPage, totalPages, handlePageChange, setCurrentPage } = usePagination(totalCount);
   const [nationalities, setNationalities] = useState<string[]>([]);
 
   // Fonction optimisée avec filtrage côté serveur
@@ -27,19 +27,40 @@ export const useClientData = () => {
     dateFrom?: Date | null;
     dateTo?: Date | null;
     page?: number;
+    forceRefresh?: boolean;
   }) => {
     if (!user) return;
 
     const currentFilters = filters || serverFilters;
     const page = filters?.page || currentPage;
+    const forceRefresh = filters?.forceRefresh || false;
     
-    await fetchClients(user.id, {
+    console.log('🔄 fetchClientsWithFilters called with:', { 
+      page, 
+      forceRefresh, 
+      totalCurrentClients: clients.length 
+    });
+
+    const result = await fetchClients(user.id, {
       searchTerm: currentFilters.searchTerm || "",
       nationality: currentFilters.nationality || "",
       dateFrom: currentFilters.dateFrom,
       dateTo: currentFilters.dateTo
-    }, page);
-  }, [user, serverFilters, currentPage, fetchClients]);
+    }, page, forceRefresh);
+
+    // Si on doit revenir à la page précédente (page vide après suppression)
+    if (result && result.shouldGoToPreviousPage && result.newPage) {
+      console.log('📄 Changement automatique vers la page', result.newPage);
+      setCurrentPage(result.newPage);
+      // Re-fetch avec la nouvelle page
+      await fetchClients(user.id, {
+        searchTerm: currentFilters.searchTerm || "",
+        nationality: currentFilters.nationality || "",
+        dateFrom: currentFilters.dateFrom,
+        dateTo: currentFilters.dateTo
+      }, result.newPage, true);
+    }
+  }, [user, serverFilters, currentPage, fetchClients, clients.length, setCurrentPage]);
 
   const applyFiltersAndFetch = useCallback((
     searchTerm: string,
@@ -52,6 +73,25 @@ export const useClientData = () => {
     
     fetchClientsWithFilters({ ...newFilters, page: 1 });
   }, [applyServerFilters, fetchClientsWithFilters]);
+
+  // Fonction de rafraîchissement forcé améliorée
+  const forceRefreshClients = useCallback(async () => {
+    console.log('🚀 FORCE REFRESH - Démarrage du rafraîchissement forcé');
+    if (!user) {
+      console.log('❌ FORCE REFRESH - Pas d\'utilisateur connecté');
+      return;
+    }
+    
+    try {
+      await fetchClientsWithFilters({ 
+        page: currentPage, 
+        forceRefresh: true 
+      });
+      console.log('✅ FORCE REFRESH - Rafraîchissement terminé avec succès');
+    } catch (error) {
+      console.error('❌ FORCE REFRESH - Erreur:', error);
+    }
+  }, [user, currentPage, fetchClientsWithFilters]);
 
   // Fetch nationalities separately
   useEffect(() => {
@@ -118,6 +158,7 @@ export const useClientData = () => {
     setCurrentPage: handlePageChange,
     fetchClients: fetchClientsWithFilters,
     filterClients,
-    applyServerFilters: applyFiltersAndFetch
+    applyServerFilters: applyFiltersAndFetch,
+    forceRefreshClients // Export the force refresh function
   };
 };

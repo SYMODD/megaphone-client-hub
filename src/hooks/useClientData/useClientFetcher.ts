@@ -15,12 +15,20 @@ export const useClientFetcher = () => {
   const fetchClients = useCallback(async (
     userId: string,
     filters: ClientFilters,
-    page: number = 1
+    page: number = 1,
+    forceRefresh: boolean = false
   ) => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Fetching clients with server-side filtering...');
+      console.log('🔄 Fetching clients with server-side filtering...', { forceRefresh, page });
+      
+      // Force refresh: clear current data first
+      if (forceRefresh) {
+        console.log('🧹 FORCE REFRESH - Clearing current data');
+        setClients([]);
+        setTotalCount(0);
+      }
       
       // Construction de la requête avec filtres côté serveur
       let query = supabase
@@ -58,9 +66,16 @@ export const useClientFetcher = () => {
         throw error;
       }
       
-      console.log('Clients fetched successfully:', data?.length, 'of', count);
+      console.log('✅ Clients fetched successfully:', data?.length, 'of', count, 'total');
       setClients(data || []);
       setTotalCount(count || 0);
+      
+      // Vérifier si on est sur une page vide après suppression
+      if (forceRefresh && (data?.length === 0) && page > 1 && count && count > 0) {
+        console.log('📄 Page vide détectée après suppression, retour à la page précédente');
+        // On va retourner une indication pour revenir à la page précédente
+        return { shouldGoToPreviousPage: true, newPage: page - 1 };
+      }
       
       if (data && data.length > 0) {
         toast({
@@ -73,6 +88,8 @@ export const useClientFetcher = () => {
           description: "Aucun client ne correspond aux critères de recherche.",
         });
       }
+
+      return { shouldGoToPreviousPage: false };
     } catch (error) {
       console.error('Error fetching clients:', error);
       setError('Erreur lors du chargement des clients');
@@ -81,6 +98,7 @@ export const useClientFetcher = () => {
         description: "Impossible de charger les clients. Vérifiez votre connexion.",
         variant: "destructive",
       });
+      return { shouldGoToPreviousPage: false };
     } finally {
       setLoading(false);
     }

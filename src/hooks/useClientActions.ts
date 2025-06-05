@@ -42,35 +42,50 @@ export const useClientActions = () => {
 
     setIsDeleting(true);
     try {
-      console.log('=== DÉBUT SUPPRESSION CLIENT ===');
+      console.log('=== DÉBUT SUPPRESSION CLIENT AMÉLIORÉE ===');
       console.log('Tentative de suppression du client:', selectedClient.id);
       
-      const { error } = await supabase
+      // 🔥 ÉTAPE 1 : Suppression côté base de données avec vérification
+      const { error, count } = await supabase
         .from('clients')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('id', selectedClient.id);
 
       if (error) {
-        console.error('Erreur Supabase lors de la suppression:', error);
+        console.error('❌ Erreur Supabase lors de la suppression:', error);
         throw error;
       }
 
-      console.log('✅ Client supprimé avec succès de la base de données');
+      console.log(`✅ Client supprimé avec succès - ${count} ligne(s) affectée(s)`);
 
-      // Fermer le dialog immédiatement
+      if (count === 0) {
+        console.warn('⚠️ Aucune ligne supprimée - le client n\'existait peut-être plus');
+        toast({
+          title: "Information",
+          description: "Le client semble avoir déjà été supprimé.",
+        });
+      }
+
+      // 🔥 ÉTAPE 2 : Fermer le dialog AVANT le rafraîchissement
+      console.log('🚪 Fermeture du dialog de suppression');
       setDeleteDialogOpen(false);
       setSelectedClient(null);
 
+      // 🔥 ÉTAPE 3 : Message de succès
       toast({
         title: "Client supprimé",
         description: `Le client ${selectedClient.prenom} ${selectedClient.nom} a été supprimé avec succès.`,
       });
 
-      // OBLIGATOIRE : Appeler le callback de succès pour forcer le rafraîchissement
-      console.log('🔄 Appel du callback de rafraîchissement...');
-      onSuccess();
+      // 🔥 ÉTAPE 4 : Attendre un court délai pour s'assurer que la suppression est propagée
+      console.log('⏱️ Attente de 100ms pour la propagation...');
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // 🔥 ÉTAPE 5 : OBLIGATOIRE - Appeler le callback de succès pour forcer le rafraîchissement
+      console.log('🔄 Appel du callback de rafraîchissement forcé...');
+      await onSuccess();
       
-      console.log('=== FIN SUPPRESSION CLIENT (SUCCÈS) ===');
+      console.log('=== FIN SUPPRESSION CLIENT AMÉLIORÉE (SUCCÈS) ===');
     } catch (error) {
       console.error('❌ Erreur lors de la suppression:', error);
       toast({

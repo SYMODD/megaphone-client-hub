@@ -16,7 +16,8 @@ export const useBaseClientsLogic = () => {
     setCurrentPage,
     fetchClients,
     filterClients,
-    applyServerFilters
+    applyServerFilters,
+    forceRefreshClients // Use the improved force refresh
   } = useClientData();
 
   const {
@@ -45,22 +46,16 @@ export const useBaseClientsLogic = () => {
   // Fix: Pass clients array instead of totalCount to useClientExport
   const { handleExport } = useClientExport(clients);
 
-  // Fonction de rafraîchissement forcé après suppression
-  const forceRefresh = useCallback(async () => {
-    console.log('🔄 FORCE REFRESH - Rafraîchissement forcé des données');
-    try {
-      await fetchClients();
-      console.log('✅ FORCE REFRESH - Données rafraîchies avec succès');
-    } catch (error) {
-      console.error('❌ FORCE REFRESH - Erreur lors du rafraîchissement:', error);
-    }
-  }, [fetchClients]);
-
-  // Wrapper pour la suppression avec rafraîchissement forcé
+  // Wrapper pour la suppression avec rafraîchissement forcé amélioré
   const handleConfirmDeleteWithRefresh = useCallback(async () => {
-    console.log('🗑️ SUPPRESSION - Début de la suppression avec rafraîchissement');
-    await confirmDeleteClient(forceRefresh);
-  }, [confirmDeleteClient, forceRefresh]);
+    console.log('🗑️ SUPPRESSION - Début de la suppression avec rafraîchissement amélioré');
+    try {
+      await confirmDeleteClient(forceRefreshClients);
+      console.log('✅ SUPPRESSION - Suppression et rafraîchissement terminés');
+    } catch (error) {
+      console.error('❌ SUPPRESSION - Erreur lors de la suppression:', error);
+    }
+  }, [confirmDeleteClient, forceRefreshClients]);
 
   const handlePageChange = useCallback((page: number) => {
     console.log('📄 Changement de page vers:', page);
@@ -69,13 +64,13 @@ export const useBaseClientsLogic = () => {
 
   const handleClientUpdated = useCallback(async () => {
     console.log('📝 Client mis à jour - Rafraîchissement des données');
-    await forceRefresh();
-  }, [forceRefresh]);
+    await forceRefreshClients();
+  }, [forceRefreshClients]);
 
   const handleRetry = useCallback(async () => {
     console.log('🔄 Nouvelle tentative de chargement');
-    await forceRefresh();
-  }, [forceRefresh]);
+    await forceRefreshClients();
+  }, [forceRefreshClients]);
 
   return {
     // Données des clients
@@ -114,9 +109,9 @@ export const useBaseClientsLogic = () => {
     handleExport,
     handleRetry,
     filterClients,
-    forceRefresh,
+    forceRefresh: forceRefreshClients, // Use the improved version
     
-    // CORRECTION : Utilise la fonction avec rafraîchissement forcé
+    // CORRECTION : Utilise la fonction avec rafraîchissement forcé amélioré
     confirmDeleteClient: handleConfirmDeleteWithRefresh
   };
 };
