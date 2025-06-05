@@ -1,8 +1,9 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2, AlertTriangle, Loader2 } from "lucide-react";
+import { Trash2, AlertTriangle, Loader2, ShieldAlert } from "lucide-react";
 import { Client } from "@/hooks/useClientData/types";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ClientDeleteDialogProps {
   client: Client | null;
@@ -19,7 +20,41 @@ export const ClientDeleteDialog = ({
   onConfirm,
   isDeleting 
 }: ClientDeleteDialogProps) => {
+  const { profile } = useAuth();
+  const canDeleteClients = profile?.role === 'admin' || profile?.role === 'superviseur';
+  
   if (!client) return null;
+
+  if (!canDeleteClients) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md mx-2 sm:mx-auto">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="flex items-center gap-2 text-lg text-amber-600">
+              <ShieldAlert className="w-5 h-5" />
+              Permission refusée
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-amber-800 text-center">
+              Seuls les administrateurs et superviseurs peuvent supprimer des clients.
+            </p>
+          </div>
+
+          <DialogFooter className="pt-4">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="w-full"
+            >
+              Fermer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -54,7 +89,6 @@ export const ClientDeleteDialog = ({
             </div>
           </div>
 
-          {/* 🔥 SOLUTION 5 : Indicateur de progression pendant la suppression */}
           {isDeleting && (
             <div className="flex items-center justify-center py-3 bg-orange-50 border border-orange-200 rounded-lg">
               <div className="flex items-center gap-2 text-orange-700">

@@ -54,13 +54,16 @@ const App = () => {
                 </ProtectedRoute>
               } />
               
-              {/* Pages protégées - accessible à tous les utilisateurs authentifiés */}
+              {/* Base Clients - accessible uniquement aux admin et superviseur */}
               <Route path="/base-clients" element={
                 <ProtectedRoute>
-                  <BaseClients />
+                  <RoleProtectedRoute allowedRoles={['admin', 'superviseur']} redirectTo="/nouveau-client">
+                    <BaseClients />
+                  </RoleProtectedRoute>
                 </ProtectedRoute>
               } />
               
+              {/* Pages protégées - accessible à tous les utilisateurs authentifiés */}
               <Route path="/nouveau-client" element={
                 <ProtectedRoute>
                   <NewClient />

@@ -1,10 +1,9 @@
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Eye, FileText, Pencil, Trash2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit, FileText, Trash2, Image } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Client } from "@/hooks/useClientData/types";
 import { BarcodeImageThumbnail } from "./BarcodeImageThumbnail";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ClientTableProps {
   clients: Client[];
@@ -14,159 +13,119 @@ interface ClientTableProps {
   onDeleteClient: (client: Client) => void;
 }
 
-export const ClientTable = ({ clients, onViewClient, onEditClient, onGenerateDocument, onDeleteClient }: ClientTableProps) => {
-  // Log pour déboguer les URLs d'images de code-barres
-  console.log("📊 ClientTable - Vérification des URLs de code-barres:");
-  clients.forEach((client, index) => {
-    console.log(`Client ${index + 1} (${client.prenom} ${client.nom}):`, {
-      id: client.id,
-      code_barre: client.code_barre,
-      code_barre_image_url: client.code_barre_image_url,
-      url_valide: client.code_barre_image_url ? "✅ OUI" : "❌ NON"
-    });
-  });
+export const ClientTable = ({
+  clients,
+  onViewClient,
+  onEditClient,
+  onGenerateDocument,
+  onDeleteClient
+}: ClientTableProps) => {
+  const { profile } = useAuth();
+  const canDeleteClients = profile?.role === 'admin' || profile?.role === 'superviseur';
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Photos</TableHead>
-            <TableHead>Nom complet</TableHead>
-            <TableHead>Nationalité</TableHead>
-            <TableHead>N° Document</TableHead>
-            <TableHead>Téléphone</TableHead>
-            <TableHead>Code-barres</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {clients.map((client) => (
-            <TableRow key={client.id}>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  {/* Photo du client (CIN/Passeport) */}
-                  {client.photo_url ? (
-                    <div className="group relative">
-                      <img 
-                        src={client.photo_url} 
-                        alt="Photo client"
-                        className="w-8 h-8 rounded border border-gray-200 object-cover cursor-pointer hover:w-16 hover:h-16 transition-all duration-200"
-                        title="Photo du document d'identité - Cliquez pour agrandir"
-                        onClick={() => window.open(client.photo_url, '_blank')}
-                        onLoad={() => {
-                          console.log("✅ Photo client chargée avec succès:", client.photo_url);
-                        }}
-                        onError={(e) => {
-                          console.error("❌ Erreur chargement photo client:", client.photo_url);
-                          const target = e.currentTarget;
-                          target.style.display = 'none';
-                          const parent = target.parentElement;
-                          if (parent && !parent.querySelector('.photo-error-placeholder')) {
-                            const errorDiv = document.createElement('div');
-                            errorDiv.className = 'photo-error-placeholder w-8 h-8 bg-red-100 rounded border border-red-300 flex items-center justify-center';
-                            errorDiv.innerHTML = '<div class="w-4 h-4 text-red-500 text-xs">❌</div>';
-                            errorDiv.title = 'Erreur de chargement de la photo';
-                            parent.appendChild(errorDiv);
-                          }
-                        }}
-                      />
-                      <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-0.5">
-                        <Image className="w-2 h-2" />
-                      </div>
+    <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-left">
+          <thead className="text-xs text-slate-700 uppercase bg-slate-50 border-b">
+            <tr>
+              <th className="px-3 py-3 hidden sm:table-cell">Date</th>
+              <th className="px-3 py-3">Client</th>
+              <th className="px-3 py-3 hidden md:table-cell">Nationalité</th>
+              <th className="px-3 py-3 hidden lg:table-cell">Document</th>
+              <th className="px-3 py-3 hidden xl:table-cell">Code barre</th>
+              <th className="px-3 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {clients.length > 0 ? (
+              clients.map(client => (
+                <tr key={client.id} className="border-b hover:bg-slate-50">
+                  <td className="px-3 py-3 hidden sm:table-cell text-xs text-slate-500">
+                    {new Date(client.date_enregistrement).toLocaleDateString('fr-FR')}
+                  </td>
+                  <td className="px-3 py-3">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-slate-900">{client.prenom} {client.nom}</span>
+                      <span className="text-xs text-slate-500">{client.numero_telephone || "Aucun téléphone"}</span>
                     </div>
-                  ) : (
-                    <div className="w-8 h-8 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
-                      <Image className="w-4 h-4 text-gray-400" />
+                  </td>
+                  <td className="px-3 py-3 hidden md:table-cell">
+                    {client.nationalite}
+                  </td>
+                  <td className="px-3 py-3 hidden lg:table-cell">
+                    <div className="flex flex-col">
+                      <span>{client.numero_passeport}</span>
+                      <span className="text-xs text-slate-500">
+                        {client.document_type === 'cin' && "CIN"}
+                        {client.document_type === 'passport_marocain' && "Passeport Marocain"}
+                        {client.document_type === 'passport_etranger' && "Passeport Étranger"}
+                        {client.document_type === 'carte_sejour' && "Carte de Séjour"}
+                        {!client.document_type && "Document"}
+                      </span>
                     </div>
-                  )}
-                  
-                  {/* Image du code-barres avec log de debug */}
-                  <BarcodeImageThumbnail 
-                    imageUrl={client.code_barre_image_url}
-                  />
-                </div>
-              </TableCell>
-              <TableCell className="font-medium">
-                {client.prenom} {client.nom}
-              </TableCell>
-              <TableCell>
-                <Badge variant="secondary">{client.nationalite}</Badge>
-              </TableCell>
-              <TableCell className="font-mono text-sm">
-                {client.numero_passeport}
-              </TableCell>
-              <TableCell>
-                {client.numero_telephone ? (
-                  <span className="font-mono text-sm">{client.numero_telephone}</span>
-                ) : (
-                  <span className="text-gray-400 text-sm">Non renseigné</span>
-                )}
-              </TableCell>
-              <TableCell>
-                {client.code_barre ? (
-                  <div className="flex items-center gap-1">
-                    <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
-                      {client.code_barre}
-                    </span>
-                    {client.code_barre_image_url && (
-                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-300">
-                        ✅ Avec image
-                      </Badge>
-                    )}
+                  </td>
+                  <td className="px-3 py-3 hidden xl:table-cell">
+                    <BarcodeImageThumbnail client={client} />
+                  </td>
+                  <td className="px-3 py-3">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        onClick={() => onViewClient(client)}
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        onClick={() => onEditClient(client)}
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        onClick={() => onGenerateDocument(client)}
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                      >
+                        <FileText className="h-4 w-4" />
+                      </Button>
+                      
+                      {/* Only show delete button for admins and supervisors */}
+                      {canDeleteClients && (
+                        <Button
+                          onClick={() => onDeleteClient(client)}
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-100"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="px-3 py-8 text-center text-gray-500">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <XCircle className="h-5 w-5 text-gray-400" />
+                    <div>
+                      <p>Aucun client ne correspond aux critères de recherche</p>
+                      <p className="text-xs">Essayez de modifier vos filtres</p>
+                    </div>
                   </div>
-                ) : (
-                  <span className="text-gray-400 text-sm">Non scanné</span>
-                )}
-              </TableCell>
-              <TableCell className="text-sm text-gray-600">
-                {new Date(client.date_enregistrement).toLocaleDateString('fr-FR')}
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onViewClient(client)}
-                    className="h-8 w-8"
-                    title="Voir les détails"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onEditClient(client)}
-                    className="h-8 w-8"
-                    title="Modifier"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onGenerateDocument(client)}
-                    className="h-8 w-8"
-                    title="Générer document"
-                  >
-                    <FileText className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onDeleteClient(client)}
-                    className="h-8 w-8 text-red-600 hover:text-red-700"
-                    title="Supprimer"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

@@ -3,15 +3,20 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Client } from "./useClientData/types";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useClientActions = () => {
   const { toast } = useToast();
+  const { profile } = useAuth();
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Check if user can delete clients (admin or superviseur only)
+  const canDeleteClients = profile?.role === 'admin' || profile?.role === 'superviseur';
 
   const handleViewClient = (client: Client) => {
     console.log('Voir client:', client);
@@ -32,13 +37,23 @@ export const useClientActions = () => {
   };
 
   const handleDeleteClient = (client: Client) => {
+    // Only admins and superviseurs can delete clients
+    if (!canDeleteClients) {
+      toast({
+        title: "Permission refusée",
+        description: "Seuls les administrateurs et superviseurs peuvent supprimer des clients.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     console.log('Supprimer client:', client);
     setSelectedClient(client);
     setDeleteDialogOpen(true);
   };
 
   const confirmDeleteClient = async (onSuccess: () => void) => {
-    if (!selectedClient) return;
+    if (!selectedClient || !canDeleteClients) return;
 
     const deletionId = Date.now() + Math.random();
     setIsDeleting(true);
@@ -124,6 +139,7 @@ export const useClientActions = () => {
     documentDialogOpen,
     deleteDialogOpen,
     isDeleting,
+    canDeleteClients,
     setViewDialogOpen,
     setEditDialogOpen,
     setDocumentDialogOpen,
