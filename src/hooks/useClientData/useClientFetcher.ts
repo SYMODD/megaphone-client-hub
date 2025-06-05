@@ -22,29 +22,27 @@ export const useClientFetcher = () => {
       setLoading(true);
       setError(null);
       
-      // 🔥 SOLUTION 1 : Cache busting avec timestamp unique
       const cacheBuster = Date.now() + Math.random();
-      console.log(`🔄 [${cacheBuster}] Fetching clients with server-side filtering...`, { 
+      console.log(`🔄 [${cacheBuster}] Chargement des clients avec RLS...`, { 
         forceRefresh, 
         page, 
         userId: userId.substring(0, 8) + '...',
         filters 
       });
       
-      // Force refresh: clear current data first
       if (forceRefresh) {
-        console.log(`🧹 [${cacheBuster}] FORCE REFRESH - Clearing current data`);
+        console.log(`🧹 [${cacheBuster}] FORCE REFRESH - Nettoyage des données`);
         setClients([]);
         setTotalCount(0);
       }
       
-      // 🔥 SOLUTION 4 : Construction de la requête avec cache busting
+      // Construction de la requête avec RLS automatique
       let query = supabase
         .from('clients')
-        .select('*', { count: 'exact' })
-        .eq('agent_id', userId); // Assure-toi de bien filtrer par agent
+        .select('*', { count: 'exact' });
+        // RLS s'occupe automatiquement du filtrage par agent_id
 
-      // Applique les filtres de recherche côté serveur (inclut maintenant code_barre)
+      // Application des filtres de recherche
       if (filters.searchTerm) {
         const searchTerm = filters.searchTerm.toLowerCase();
         query = query.or(`nom.ilike.%${searchTerm}%,prenom.ilike.%${searchTerm}%,numero_passeport.ilike.%${searchTerm}%,code_barre.ilike.%${searchTerm}%`);
@@ -68,31 +66,26 @@ export const useClientFetcher = () => {
         .order('created_at', { ascending: false })
         .range(from, to);
 
-      // 🔥 SOLUTION 1 : Ajouter un paramètre unique pour éviter le cache
       const { data, error, count } = await query;
 
       if (error) {
-        console.error(`❌ [${cacheBuster}] Supabase error:`, error);
+        console.error(`❌ [${cacheBuster}] Erreur Supabase:`, error);
         throw error;
       }
       
-      // 🔥 SOLUTION 2 : Logs détaillés pour tracer le problème
-      console.log(`✅ [${cacheBuster}] Supabase response:`, {
+      console.log(`✅ [${cacheBuster}] Données chargées:`, {
         dataLength: data?.length || 0,
         totalCount: count || 0,
-        firstClient: data?.[0] ? `${data[0].prenom} ${data[0].nom} (${data[0].id.substring(0, 8)}...)` : 'Aucun',
-        allClientIds: data?.map(c => c.id.substring(0, 8) + '...') || []
+        firstClient: data?.[0] ? `${data[0].prenom} ${data[0].nom}` : 'Aucun'
       });
       
-      // 🔥 SOLUTION 3 : Mise à jour propre du state
-      console.log(`🔄 [${cacheBuster}] Updating state - Before: ${clients.length} clients`);
+      console.log(`🔄 [${cacheBuster}] Mise à jour de l'état`);
       setClients(data || []);
       setTotalCount(count || 0);
-      console.log(`✅ [${cacheBuster}] State updated - After: ${data?.length || 0} clients`);
       
-      // Vérifier si on est sur une page vide après suppression
+      // Vérification page vide après suppression
       if (forceRefresh && (data?.length === 0) && page > 1 && count && count > 0) {
-        console.log(`📄 [${cacheBuster}] Page vide détectée après suppression, retour à la page précédente`);
+        console.log(`📄 [${cacheBuster}] Page vide détectée, retour à la page précédente`);
         return { shouldGoToPreviousPage: true, newPage: page - 1 };
       }
       
@@ -110,7 +103,7 @@ export const useClientFetcher = () => {
 
       return { shouldGoToPreviousPage: false };
     } catch (error) {
-      console.error(`❌ Error fetching clients:`, error);
+      console.error(`❌ Erreur lors du chargement:`, error);
       setError('Erreur lors du chargement des clients');
       toast({
         title: "Erreur",
@@ -121,7 +114,7 @@ export const useClientFetcher = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast, clients.length]);
+  }, [toast]);
 
   return {
     clients,
