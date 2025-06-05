@@ -1,13 +1,16 @@
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, Upload, RotateCcw, CheckCircle, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { CheckCircle } from "lucide-react";
 import { useCINOCR } from "@/hooks/useCINOCR";
 import { AdminAPIKeySection } from "./AdminAPIKeySection";
+import { CINImageCapture } from "./cin/CINImageCapture";
+import { CINScanResults } from "./cin/CINScanResults";
+import { CINDataConfirmation } from "./cin/CINDataConfirmation";
+import { CINScanError } from "./cin/CINScanError";
 
 interface CINScannerProps {
   onDataExtracted: (data: any) => void;
@@ -89,184 +92,37 @@ export const CINScanner = ({ onDataExtracted, onImageScanned, scannedImage }: CI
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Image capture section */}
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="flex-1">
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleImageCapture(file);
-                  }}
-                  className="hidden"
-                  id="camera-input"
-                  disabled={isScanning}
-                />
-                <label htmlFor="camera-input">
-                  <Button
-                    type="button"
-                    variant="default"
-                    className="w-full"
-                    disabled={isScanning}
-                    asChild
-                  >
-                    <span>
-                      <Camera className="w-4 h-4 mr-2" />
-                      Prendre une photo
-                    </span>
-                  </Button>
-                </label>
-              </div>
-
-              <div className="flex-1">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleImageCapture(file);
-                  }}
-                  className="hidden"
-                  id="upload-input"
-                  disabled={isScanning}
-                />
-                <label htmlFor="upload-input">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    disabled={isScanning}
-                    asChild
-                  >
-                    <span>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Téléverser une image
-                    </span>
-                  </Button>
-                </label>
-              </div>
-
-              {scannedImage && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleResetScan}
-                  disabled={isScanning}
-                >
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Recommencer
-                </Button>
-              )}
-            </div>
-
-            {isScanning && (
-              <div className="flex items-center justify-center py-8 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center gap-3 text-blue-700">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                  <div className="text-center">
-                    <p className="font-medium">Analyse de la CIN en cours...</p>
-                    <p className="text-sm opacity-80">Extraction des données via OCR</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {scannedImage && (
-              <div className="space-y-4">
-                <div className="text-center">
-                  <img
-                    src={scannedImage}
-                    alt="CIN scannée"
-                    className="max-w-full h-auto mx-auto rounded-lg border border-gray-200 shadow-sm"
-                    style={{ maxHeight: "300px" }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+          <CINImageCapture
+            isScanning={isScanning}
+            scannedImage={scannedImage}
+            onImageCapture={handleImageCapture}
+            onResetScan={handleResetScan}
+          />
 
           {scannedImage && (
             <>
               <Separator />
               
-              {extractedData && !isScanning && (
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <h4 className="font-semibold text-green-800 mb-3 flex items-center justify-center gap-2">
-                      <CheckCircle className="w-5 h-5" />
-                      Données extraites de la CIN
-                    </h4>
-                  </div>
+              <CINScanResults
+                extractedData={extractedData}
+                rawText={rawText}
+                showRawText={showRawText}
+                onToggleRawText={() => setShowRawText(!showRawText)}
+                isScanning={isScanning}
+              />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    {Object.entries(extractedData).map(([key, value]) => (
-                      <div key={key} className="space-y-1">
-                        <Label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
-                          {key.replace(/_/g, ' ')}
-                        </Label>
-                        <p className="font-medium text-gray-900 bg-white px-3 py-2 rounded border">
-                          {String(value) || "Non détecté"}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+              <CINDataConfirmation
+                extractedData={extractedData}
+                dataConfirmed={dataConfirmed}
+                isScanning={isScanning}
+                onConfirmData={handleConfirmData}
+              />
 
-                  {!dataConfirmed ? (
-                    <div className="text-center space-y-3">
-                      <p className="text-sm text-gray-600">
-                        Vérifiez les données extraites ci-dessus. Vous pourrez compléter le formulaire après confirmation.
-                      </p>
-                      <Button
-                        type="button"
-                        onClick={handleConfirmData}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Confirmer les données
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="text-center p-4 bg-green-100 border border-green-300 rounded-lg">
-                      <div className="flex items-center justify-center gap-2 text-green-800">
-                        <CheckCircle className="w-5 h-5" />
-                        <span className="font-medium">Données confirmées et appliquées au formulaire</span>
-                      </div>
-                      <p className="text-sm text-green-700 mt-1">
-                        Vous pouvez maintenant compléter le reste du formulaire ci-dessous
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowRawText(!showRawText)}
-                      className="w-full"
-                    >
-                      {showRawText ? "Masquer" : "Afficher"} le texte brut détecté
-                    </Button>
-                    
-                    {showRawText && rawText && (
-                      <div className="p-3 bg-gray-50 border border-gray-200 rounded text-xs font-mono whitespace-pre-wrap max-h-32 overflow-y-auto">
-                        {rawText}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {!extractedData && !isScanning && (
-                <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-yellow-800">
-                    ⚠️ Aucune donnée extraite. Assurez-vous que l'image de la CIN est claire et lisible.
-                  </p>
-                </div>
-              )}
+              <CINScanError
+                scannedImage={scannedImage}
+                extractedData={extractedData}
+                isScanning={isScanning}
+              />
             </>
           )}
         </CardContent>
