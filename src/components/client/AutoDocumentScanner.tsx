@@ -9,15 +9,24 @@ import { AdminAPIKeySection } from "./AdminAPIKeySection";
 import { PassportImageCapture } from "./PassportImageCapture";
 import { PassportEtrangerDataDisplay } from "./PassportEtrangerDataDisplay";
 import { CarteSejourDataDisplay } from "./CarteSejourDataDisplay";
+import { BarcodeScanner } from "./BarcodeScanner";
 import { useAutoDocumentOCR } from "@/hooks/useAutoDocumentOCR";
 
 interface AutoDocumentScannerProps {
   onDataExtracted: (data: any, documentType: 'passeport_etranger' | 'carte_sejour') => void;
   onImageScanned: (image: string) => void;
+  onBarcodeScanned?: (barcode: string, phone?: string, barcodeImageUrl?: string) => void;
   scannedImage: string | null;
+  currentBarcode?: string;
 }
 
-export const AutoDocumentScanner = ({ onDataExtracted, onImageScanned, scannedImage }: AutoDocumentScannerProps) => {
+export const AutoDocumentScanner = ({ 
+  onDataExtracted, 
+  onImageScanned, 
+  onBarcodeScanned,
+  scannedImage,
+  currentBarcode 
+}: AutoDocumentScannerProps) => {
   const [showRawText, setShowRawText] = useState(false);
   const [apiKey, setApiKey] = useState("K87783069388957");
   const [showApiKey, setShowApiKey] = useState(false);
@@ -55,6 +64,19 @@ export const AutoDocumentScanner = ({ onDataExtracted, onImageScanned, scannedIm
   const handleResetScan = () => {
     resetScan();
     onImageScanned("");
+  };
+
+  const handleBarcodeScannedInternal = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
+    console.log("🔥 AUTO DOCUMENT SCANNER - RÉCEPTION BARCODE:", {
+      barcode,
+      phone,
+      barcodeImageUrl,
+      component: "AutoDocumentScanner"
+    });
+    
+    if (onBarcodeScanned) {
+      onBarcodeScanned(barcode, phone, barcodeImageUrl);
+    }
   };
 
   const getDocumentTypeLabel = () => {
@@ -160,6 +182,14 @@ export const AutoDocumentScanner = ({ onDataExtracted, onImageScanned, scannedIm
           )}
         </CardContent>
       </Card>
+
+      {/* Scanner de code-barres séparé */}
+      {onBarcodeScanned && (
+        <BarcodeScanner 
+          onBarcodeScanned={handleBarcodeScannedInternal}
+          currentBarcode={currentBarcode}
+        />
+      )}
     </div>
   );
 };
