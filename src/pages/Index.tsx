@@ -50,7 +50,7 @@ const Index = () => {
 
   console.log("Profile role:", profile.role);
 
-  // 🎯 CORRECTION : Rediriger les agents vers leur page spécifique
+  // Redirect agents to their specific page
   if (profile.role === "agent") {
     console.log("Agent detected, redirecting to /nouveau-client");
     return <Navigate to="/nouveau-client" replace />;
@@ -67,18 +67,18 @@ const Index = () => {
   // Now we can safely call hooks since we know we're not redirecting
   const adminFilters = useAdminFilters();
 
-  // 🎯 IMPORTANT : Passer les filtres pour que les graphiques les respectent
-  const agentData = useAgentData(adminFilters.filters);
+  // Use the filters only for admin and superviseur
+  const isAdminOrSuperviseur = profile.role === "admin" || profile.role === "superviseur";
+  const agentData = useAgentData(isAdminOrSuperviseur ? adminFilters.filters : undefined);
 
-  // Debug pour vérifier que les données arrivent bien avec les filtres
-  console.log("🎯 DASHBOARD - Données reçues avec filtres:", {
+  // Debug pour vérifier que les données arrivent bien
+  console.log("🎯 DASHBOARD - Données reçues:", {
     totalClients: agentData.totalClients,
     nationalityData: agentData.nationalityData.length,
     registrationData: agentData.registrationData.length,
     recentClients: agentData.recentClients.length,
     filters: adminFilters.filters,
-    loading: agentData.loading,
-    userRole: profile.role
+    loading: agentData.loading
   });
 
   return (
@@ -90,28 +90,30 @@ const Index = () => {
         {/* Welcome Section - Mobile First */}
         <WelcomeSection profile={profile} userEmail={user.email} />
 
-        {/* Admin Filters - Uniquement pour admin et superviseur */}
-        <div className="max-w-4xl mx-auto space-y-4">
-          <AdminFilters
-            selectedPoint={adminFilters.selectedPoint}
-            selectedCategory={adminFilters.selectedCategory}
-            onPointChange={adminFilters.handlePointChange}
-            onCategoryChange={adminFilters.handleCategoryChange}
-            onClearFilters={adminFilters.clearFilters}
-          />
-          
-          <DateFilters
-            dateRange={adminFilters.dateRange}
-            onDateRangeChange={adminFilters.handleDateRangeChange}
-          />
-        </div>
+        {/* Admin Filters - Improved Mobile Layout */}
+        {isAdminOrSuperviseur && (
+          <div className="max-w-4xl mx-auto space-y-4">
+            <AdminFilters
+              selectedPoint={adminFilters.selectedPoint}
+              selectedCategory={adminFilters.selectedCategory}
+              onPointChange={adminFilters.handlePointChange}
+              onCategoryChange={adminFilters.handleCategoryChange}
+              onClearFilters={adminFilters.clearFilters}
+            />
+            
+            <DateFilters
+              dateRange={adminFilters.dateRange}
+              onDateRangeChange={adminFilters.handleDateRangeChange}
+            />
+          </div>
+        )}
 
         {/* Quick Actions - Enhanced Mobile Experience */}
         <div className="max-w-4xl mx-auto">
           <QuickActions />
         </div>
 
-        {/* Dashboard Statistics - Respectent maintenant les filtres */}
+        {/* Dashboard Statistics */}
         {agentData.loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
