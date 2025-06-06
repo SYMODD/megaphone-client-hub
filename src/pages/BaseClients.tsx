@@ -6,19 +6,9 @@ import { useBaseClientsLogic } from "@/hooks/useBaseClientsLogic";
 import { BaseClientsHeader } from "@/components/clients/BaseClientsHeader";
 import { BaseClientsContent } from "@/components/clients/BaseClientsContent";
 import { BaseClientsDialogs } from "@/components/clients/BaseClientsDialogs";
-import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 
 const BaseClients = () => {
-  const { user, profile } = useAuth();
-  
-  // Debug logging pour identifier le problème
-  useEffect(() => {
-    console.log("🔍 BaseClients page mounted");
-    console.log("🔍 User:", !!user, "Profile:", profile?.role);
-    console.log("🔍 Current URL:", window.location.pathname);
-  }, [user, profile]);
-
   const {
     clients,
     loading,
@@ -50,8 +40,13 @@ const BaseClients = () => {
     filterClients,
     forceRefresh
   } = useBaseClientsLogic();
-
-  console.log("🔍 BaseClients render state:", { loading, error, clientsCount: clients?.length });
+  
+  // S'assurer que les données sont toujours fraîches quand on arrive sur la page
+  useEffect(() => {
+    console.log("🔍 BaseClients - Rafraîchissement initial des données");
+    forceRefresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading) {
     return (
@@ -61,7 +56,7 @@ const BaseClients = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-slate-600">Chargement des clients...</p>
+            <p className="mt-2 text-slate-600">Chargement optimisé des clients...</p>
           </div>
         </div>
       </div>
@@ -69,7 +64,6 @@ const BaseClients = () => {
   }
 
   if (error) {
-    console.error("🔍 BaseClients error:", error);
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
         <AuthenticatedHeader />
@@ -77,7 +71,7 @@ const BaseClients = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-              <p className="text-red-600 font-medium">Erreur: {error}</p>
+              <p className="text-red-600 font-medium">{error}</p>
               <Button 
                 onClick={handleRetry} 
                 className="mt-4"
@@ -91,8 +85,6 @@ const BaseClients = () => {
       </div>
     );
   }
-
-  console.log("🔍 BaseClients rendering main content");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">

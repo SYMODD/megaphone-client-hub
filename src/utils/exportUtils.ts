@@ -51,8 +51,8 @@ export const exportToCSV = (clients: Client[], filename: string = 'clients') => 
     getDocumentTypeLabel(client.document_type),
     client.numero_passeport,
     client.numero_telephone || '',
-    getPointOperationLabel(client.point_operation),
-    getCategorieLabel(client.categorie),
+    client.point_operation || '',
+    client.categorie || '',
     client.code_barre || '',
     format(new Date(client.date_enregistrement), 'dd/MM/yyyy', { locale: fr }),
     client.created_at ? format(new Date(client.created_at), 'dd/MM/yyyy HH:mm', { locale: fr }) : '',
@@ -79,7 +79,7 @@ export const exportToCSV = (clients: Client[], filename: string = 'clients') => 
 };
 
 export const exportToPDF = (clients: Client[], filename: string = 'clients') => {
-  const doc = new jsPDF('landscape');
+  const doc = new jsPDF('landscape'); // Format paysage pour plus de colonnes
   
   // Titre
   doc.setFontSize(20);
@@ -99,40 +99,40 @@ export const exportToPDF = (clients: Client[], filename: string = 'clients') => 
     getDocumentTypeLabel(client.document_type),
     client.numero_passeport,
     client.numero_telephone || '-',
-    getPointOperationLabel(client.point_operation),
-    getCategorieLabel(client.categorie),
+    client.point_operation || '-',
+    client.categorie || '-',
     format(new Date(client.date_enregistrement), 'dd/MM/yyyy', { locale: fr }),
-    client.observations?.substring(0, 30) + (client.observations && client.observations.length > 30 ? '...' : '') || '-'
+    client.observations || '-'
   ]);
 
-  // Créer le tableau avec toutes les colonnes
+  // Créer le tableau avec plus de colonnes
   autoTable(doc, {
     head: [['Nom complet', 'Nationalité', 'Type doc.', 'N° Passeport', 'Téléphone', 'Point opération', 'Catégorie', 'Date enreg.', 'Observations']],
     body: tableData,
     startY: 50,
     styles: { 
-      fontSize: 6,
+      fontSize: 7,
       cellPadding: 1
     },
     headStyles: { 
       fillColor: [41, 128, 185],
       textColor: 255,
-      fontSize: 7
+      fontSize: 8
     },
     alternateRowStyles: { 
       fillColor: [245, 245, 245] 
     },
-    margin: { top: 50, left: 8, right: 8 },
+    margin: { top: 50, left: 10, right: 10 },
     columnStyles: {
-      0: { cellWidth: 30 }, // Nom complet
-      1: { cellWidth: 22 }, // Nationalité
-      2: { cellWidth: 18 }, // Type doc
-      3: { cellWidth: 22 }, // Passeport
-      4: { cellWidth: 22 }, // Téléphone
-      5: { cellWidth: 22 }, // Point
-      6: { cellWidth: 18 }, // Catégorie
-      7: { cellWidth: 18 }, // Date
-      8: { cellWidth: 25 }  // Observations
+      0: { cellWidth: 35 }, // Nom complet
+      1: { cellWidth: 25 }, // Nationalité
+      2: { cellWidth: 20 }, // Type doc
+      3: { cellWidth: 25 }, // Passeport
+      4: { cellWidth: 25 }, // Téléphone
+      5: { cellWidth: 25 }, // Point
+      6: { cellWidth: 20 }, // Catégorie
+      7: { cellWidth: 20 }, // Date
+      8: { cellWidth: 30 }  // Observations
     }
   });
 
@@ -153,39 +153,5 @@ const getDocumentTypeLabel = (documentType: string | undefined): string => {
       return 'Carte de Séjour';
     default:
       return 'Document';
-  }
-};
-
-// Fonction helper pour les points d'opération
-const getPointOperationLabel = (pointOperation: string | undefined): string => {
-  switch (pointOperation) {
-    case 'agence_centrale':
-      return 'Agence Centrale';
-    case 'agence_gare':
-      return 'Agence Gare';
-    case 'agence_aeroport':
-      return 'Agence Aéroport';
-    case 'agence_nord':
-      return 'Agence Nord';
-    case 'agence_sud':
-      return 'Agence Sud';
-    default:
-      return pointOperation || '-';
-  }
-};
-
-// Fonction helper pour les catégories
-const getCategorieLabel = (categorie: string | undefined): string => {
-  switch (categorie) {
-    case 'standard':
-      return 'Standard';
-    case 'premium':
-      return 'Premium';
-    case 'vip':
-      return 'VIP';
-    case 'express':
-      return 'Express';
-    default:
-      return categorie || '-';
   }
 };

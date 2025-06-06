@@ -1,14 +1,12 @@
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { DateRange } from "react-day-picker";
 import { ClientStatistics } from "@/components/clients/ClientStatistics";
 import { ClientFilters } from "@/components/clients/ClientFilters";
 import { ClientTable } from "@/components/clients/ClientTable";
-import { ClientPagination } from "@/components/clients/ClientPagination";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { Client } from "@/hooks/useClientData/types";
-import { useDebounce } from "@/hooks/useDebounce";
 
 interface BaseClientsContentProps {
   clients: Client[];
@@ -46,74 +44,36 @@ export const BaseClientsContent = ({
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Utiliser un délai de debounce plus long pour réduire les appels API
-  const debouncedSearchTerm = useDebounce(searchTerm, 1000);
-
-  // Mémoriser l'application des filtres pour éviter les appels inutiles
-  const applyFilters = useCallback((
-    search: string,
-    nationality: string,
-    range: DateRange | undefined
-  ) => {
-    console.log('🎯 Application des filtres:', { search, nationality, range });
-    filterClients(search, nationality, range);
-  }, [filterClients]);
-
-  // Effet pour la recherche avec debounce
+  // Déclencher le filtrage quand les critères changent
   useEffect(() => {
-    // Seulement appliquer quand le debounce est terminé
-    if (debouncedSearchTerm !== searchTerm) return;
-    
-    console.log('🔍 Terme de recherche avec debounce changé:', debouncedSearchTerm);
-    applyFilters(debouncedSearchTerm, selectedNationality, dateRange);
-  }, [debouncedSearchTerm, selectedNationality, dateRange, applyFilters, searchTerm]);
+    console.log('🔍 Filtres mis à jour:', { searchTerm, selectedNationality, dateRange });
+    filterClients(searchTerm, selectedNationality, dateRange);
+  }, [searchTerm, selectedNationality, dateRange, filterClients]);
 
-  // Gestionnaires immédiats pour les filtres non-recherche
-  const handleNationalityChange = useCallback((nationality: string) => {
-    console.log('🌍 Nationalité changée:', nationality);
-    setSelectedNationality(nationality);
-    applyFilters(debouncedSearchTerm, nationality, dateRange);
-  }, [debouncedSearchTerm, dateRange, applyFilters]);
-
-  const handleDateRangeChange = useCallback((range: DateRange | undefined) => {
-    console.log('📅 Plage de dates changée:', range);
-    setDateRange(range);
-    applyFilters(debouncedSearchTerm, selectedNationality, range);
-  }, [debouncedSearchTerm, selectedNationality, applyFilters]);
-
-  const handleSearchChange = useCallback((term: string) => {
-    console.log('🔍 Saisie de recherche:', term);
-    setSearchTerm(term);
-    // L'effet avec debounce s'occupera de l'application
-  }, []);
-
-  const handleManualRefresh = useCallback(async () => {
+  // Handler pour le rafraîchissement manuel
+  const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    console.log('🔄 Actualisation manuelle déclenchée');
+    console.log('🔄 Rafraîchissement manuel déclenché par l\'utilisateur');
     
-    // Ré-appliquer les filtres actuels
-    applyFilters(debouncedSearchTerm, selectedNationality, dateRange);
+    // Déclenche un nouveau filtrage avec les paramètres actuels
+    filterClients(searchTerm, selectedNationality, dateRange);
     
+    // Simule un délai pour l'animation
     setTimeout(() => {
       setIsRefreshing(false);
     }, 1000);
-  }, [debouncedSearchTerm, selectedNationality, dateRange, applyFilters]);
-
-  // Mémoriser les statistiques pour éviter les re-calculs inutiles
-  const memoizedStatistics = useMemo(() => (
-    <ClientStatistics 
-      totalCount={totalCount}
-      clients={clients}
-      nationalities={nationalities}
-    />
-  ), [totalCount, clients, nationalities]);
+  };
 
   return (
     <div className="space-y-6">
-      {/* Statistiques */}
-      {memoizedStatistics}
+      {/* Statistiques rapides */}
+      <ClientStatistics 
+        totalCount={totalCount}
+        clients={clients}
+        nationalities={nationalities}
+      />
 
-      {/* En-tête avec bouton d'actualisation */}
+      {/* Header avec bouton de rafraîchissement */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">
           Liste des clients ({totalCount} total)
@@ -131,19 +91,19 @@ export const BaseClientsContent = ({
         </Button>
       </div>
 
-      {/* Filtres */}
+      {/* Filtres et recherche optimisés */}
       <ClientFilters
         searchTerm={searchTerm}
-        setSearchTerm={handleSearchChange}
+        setSearchTerm={setSearchTerm}
         selectedNationality={selectedNationality}
-        setSelectedNationality={handleNationalityChange}
+        setSelectedNationality={setSelectedNationality}
         dateRange={dateRange}
-        setDateRange={handleDateRangeChange}
+        setDateRange={setDateRange}
         nationalities={nationalitiesLoading ? [] : nationalities}
         onExport={onExport}
       />
 
-      {/* Indicateur d'actualisation */}
+      {/* Indicateur de chargement pendant le rafraîchissement */}
       {isRefreshing && (
         <div className="flex items-center justify-center py-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center gap-2 text-blue-700">
@@ -153,7 +113,7 @@ export const BaseClientsContent = ({
         </div>
       )}
 
-      {/* Tableau des clients */}
+      {/* Liste des clients */}
       <ClientTable
         clients={clients}
         onViewClient={onViewClient}
@@ -162,13 +122,34 @@ export const BaseClientsContent = ({
         onDeleteClient={onDeleteClient}
       />
 
-      {/* Pagination améliorée */}
-      <ClientPagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalCount={totalCount}
-        onPageChange={onPageChange}
-      />
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            Page {currentPage} sur {totalPages} ({totalCount} clients au total)
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Précédent
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+            >
+              Suivant
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,22 +1,15 @@
 
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { DateRange } from "react-day-picker";
 import { useClientFilters } from "./useClientFilters";
 import { useClientFetcher } from "./useClientFetcher";
 import { usePagination } from "./usePagination";
-import { useClientDataState } from "./useClientDataState";
-import { useStableFetch } from "./useStableFetch";
-import { useClientDataEffects } from "./useClientDataEffects";
-import { useClientDataActions } from "./useClientDataActions";
 
 export const useClientData = () => {
-  console.log('🔍 useClientData - Début du hook');
-  
   const { user } = useAuth();
-  console.log('🔍 useClientData - User récupéré:', !!user);
-  
-  const { serverFilters, localFilters, updateLocalFilters, applyServerFilters } = useClientFilters();
-  console.log('🔍 useClientData - Filtres initialisés');
-  
+  const { serverFilters, applyServerFilters } = useClientFilters();
   const {
     clients,
     loading,
@@ -24,69 +17,135 @@ export const useClientData = () => {
     totalCount,
     fetchClients
   } = useClientFetcher();
-  console.log('🔍 useClientData - Fetcher initialisé:', { loading, error, clientsCount: clients?.length, totalCount });
-  
   const { currentPage, totalPages, handlePageChange, setCurrentPage } = usePagination(totalCount);
-  console.log('🔍 useClientData - Pagination initialisée:', { currentPage, totalPages });
-  
-  const {
-    nationalities,
-    isInitialized,
-    setIsInitialized,
-    setNationalities,
-    lastFetchParamsRef,
-    isCurrentlyFetchingRef
-  } = useClientDataState();
-  console.log('🔍 useClientData - État initialisé:', { 
-    nationalitiesCount: nationalities?.length, 
-    isInitialized,
-    isCurrentlyFetching: isCurrentlyFetchingRef.current 
-  });
+  const [nationalities, setNationalities] = useState<string[]>([]);
 
-  const { stableFetchClients } = useStableFetch({
-    fetchClients,
-    setCurrentPage,
-    lastFetchParamsRef,
-    isCurrentlyFetchingRef
-  });
-  console.log('🔍 useClientData - StableFetch initialisé');
+  // Fonction optimisée avec filtrage côté serveur
+  const fetchClientsWithFilters = useCallback(async (filters?: {
+    searchTerm?: string;
+    nationality?: string;
+    dateFrom?: Date | null;
+    dateTo?: Date | null;
+    page?: number;
+    forceRefresh?: boolean;
+  }) => {
+    if (!user) return;
 
-  useClientDataEffects({
-    user,
-    isInitialized,
-    loading,
-    setIsInitialized,
-    setNationalities,
-    stableFetchClients,
-    serverFilters,
-    currentPage,
-    isCurrentlyFetchingRef
-  });
-  console.log('🔍 useClientData - Effets initialisés');
+    const currentFilters = filters || serverFilters;
+    const page = filters?.page || currentPage;
+    const forceRefresh = filters?.forceRefresh || false;
+    
+    console.log('🔄 fetchClientsWithFilters called with:', { 
+      page, 
+      forceRefresh, 
+      totalCurrentClients: clients.length 
+    });
 
-  const {
-    fetchClientsWithFilters,
-    applyFiltersAndFetch,
-    forceRefreshClients,
-    filterClients
-  } = useClientDataActions({
-    stableFetchClients,
-    serverFilters,
-    currentPage,
-    updateLocalFilters,
-    applyServerFilters,
-    setCurrentPage,
-    clients
-  });
-  console.log('🔍 useClientData - Actions initialisées');
+    const result = await fetchClients(user.id, {
+      searchTerm: currentFilters.searchTerm || "",
+      nationality: currentFilters.nationality || "",
+      dateFrom: currentFilters.dateFrom,
+      dateTo: currentFilters.dateTo
+    }, page, forceRefresh);
 
-  console.log('🔍 useClientData - Hook terminé, état final:', { 
-    loading, 
-    error, 
-    clientsCount: clients?.length, 
-    totalCount,
-    isInitialized 
-  });
+    // Si on doit revenir à la page précédente (page vide après suppression)
+    if (result && result.shouldGoToPreviousPage && result.newPage) {
+      console.log('📄 Changement automatique vers la page', result.newPage);
+      setCurrentPage(result.newPage);
+      // Re-fetch avec la nouvelle page
+      await fetchClients(user.id, {
+        searchTerm: currentFilters.searchTerm || "",
+        nationality: currentFilters.nationality || "",
+        dateFrom: currentFilters.dateFrom,
+        dateTo: currentFilters.dateTo
+      }, result.newPage, true);
+    }
+  }, [user, serverFilters, currentPage, fetchClients, clients.length, setCurrentPage]);
+
+  const applyFiltersAndFetch = useCallback((
+    searchTerm: string,
+    nationality: string,
+    dateRange: DateRange | undefined
+  ) => {
+    console.log('Applying server-side filters:', { searchTerm, nationality, dateRange });
+    
+    const newFilters = applyServerFilters(searchTerm, nationality, dateRange);
+    
+    fetchClientsWithFilters({ ...newFilters, page: 1 });
+  }, [applyServerFilters, fetchClientsWithFilters]);
+
+  // Fonction de rafraîchissement forcé améliorée
+  const forceRefreshClients = useCallback(async () => {
+    console.log('🚀 FORCE REFRESH - Démarrage du rafraîchissement forcé');
+    if (!user) {
+      console.log('❌ FORCE REFRESH - Pas d\'utilisateur connecté');
+      return;
+    }
+    
+    try {
+      await fetchClientsWithFilters({ 
+        page: currentPage, 
+        forceRefresh: true 
+      });
+      console.log('✅ FORCE REFRESH - Rafraîchissement terminé avec succès');
+    } catch (error) {
+      console.error('❌ FORCE REFRESH - Erreur:', error);
+    }
+  }, [user, currentPage, fetchClientsWithFilters]);
+
+  // Fetch nationalities separately
+  useEffect(() => {
+    const fetchNationalities = async () => {
+      try {
+        console.log('Fetching unique nationalities...');
+        const { data, error } = await supabase
+          .from('clients')
+          .select('nationalite')
+          .not('nationalite', 'is', null);
+        
+        if (error) throw error;
+        
+        const uniqueNationalities = [...new Set(data?.map(client => client.nationalite) || [])];
+        console.log('Unique nationalities loaded:', uniqueNationalities.length);
+        setNationalities(uniqueNationalities);
+      } catch (error) {
+        console.error('Error fetching nationalities:', error);
+        setNationalities([]);
+      }
+    };
+
+    fetchNationalities();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchClientsWithFilters();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user && currentPage > 1) {
+      fetchClientsWithFilters({ page: currentPage });
+    }
+  }, [currentPage, user]);
+
+  const filterClients = useCallback((
+    searchTerm: string,
+    selectedNationality: string,
+    dateRange: DateRange | undefined
+  ) => {
+    if (
+      searchTerm !== serverFilters.searchTerm ||
+      selectedNationality !== serverFilters.nationality ||
+      dateRange?.from?.getTime() !== serverFilters.dateFrom?.getTime() ||
+      dateRange?.to?.getTime() !== serverFilters.dateTo?.getTime()
+    ) {
+      applyFiltersAndFetch(searchTerm, selectedNationality, dateRange);
+      return clients;
+    }
+    
+    return clients;
+  }, [clients, serverFilters, applyFiltersAndFetch]);
 
   return {
     clients,
@@ -96,11 +155,10 @@ export const useClientData = () => {
     totalCount,
     totalPages,
     nationalities,
-    localFilters,
     setCurrentPage: handlePageChange,
     fetchClients: fetchClientsWithFilters,
     filterClients,
     applyServerFilters: applyFiltersAndFetch,
-    forceRefreshClients
+    forceRefreshClients // Export the force refresh function
   };
 };
