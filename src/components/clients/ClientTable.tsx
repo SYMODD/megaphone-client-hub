@@ -13,6 +13,22 @@ interface ClientTableProps {
   onDeleteClient: (client: Client) => void;
 }
 
+// Helper function to get document type label
+const getDocumentTypeLabel = (documentType: string | undefined): string => {
+  switch (documentType) {
+    case 'cin':
+      return 'CIN';
+    case 'passport_marocain':
+      return 'Passeport Marocain';
+    case 'passport_etranger':
+      return 'Passeport Étranger';
+    case 'carte_sejour':
+      return 'Carte de Séjour';
+    default:
+      return 'Document';
+  }
+};
+
 export const ClientTable = ({
   clients,
   onViewClient,
@@ -56,23 +72,19 @@ export const ClientTable = ({
                   </td>
                   <td className="px-3 py-3 hidden lg:table-cell">
                     <div className="flex flex-col">
-                      <span>{client.numero_passeport}</span>
-                      <span className="text-xs text-slate-500">
-                        {client.document_type === 'cin' && "CIN"}
-                        {client.document_type === 'passport_marocain' && "Passeport Marocain"}
-                        {client.document_type === 'passport_etranger' && "Passeport Étranger"}
-                        {client.document_type === 'carte_sejour' && "Carte de Séjour"}
-                        {!client.document_type && "Document"}
+                      <span className="font-medium text-slate-900">{client.numero_passeport}</span>
+                      <span className="text-xs text-blue-600 font-medium">
+                        {getDocumentTypeLabel(client.document_type)}
                       </span>
                     </div>
                   </td>
                   <td className="px-3 py-3 hidden xl:table-cell">
                     <div className="flex flex-col">
                       <span className="text-xs font-medium text-slate-700">
-                        {client.point_operation || "Non défini"}
+                        {client.point_operation || "agence_centrale"}
                       </span>
                       <span className="text-xs text-slate-500 capitalize">
-                        {client.categorie || "Non définie"}
+                        {client.categorie || "agence"}
                       </span>
                     </div>
                   </td>
