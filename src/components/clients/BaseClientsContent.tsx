@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { DateRange } from "react-day-picker";
 import { ClientStatistics } from "@/components/clients/ClientStatistics";
 import { ClientFilters } from "@/components/clients/ClientFilters";
@@ -44,48 +44,69 @@ export const BaseClientsContent = ({
   const [selectedNationality, setSelectedNationality] = useState("");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Debounce la recherche pour éviter trop d'appels API
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const debouncedSearchTerm = useDebounce(searchTerm, 800);
 
-  // Déclencher le filtrage seulement quand les valeurs debounced changent
+  // Mémoriser les valeurs de filtres pour éviter les re-rendus inutiles
+  const filterValues = useMemo(() => ({
+    searchTerm: debouncedSearchTerm,
+    nationality: selectedNationality,
+    dateRange: dateRange
+  }), [debouncedSearchTerm, selectedNationality, dateRange]);
+
+  // Fonction de filtrage stable
+  const applyFilters = useCallback(() => {
+    console.log('🎯 Application des filtres:', filterValues);
+    filterClients(filterValues.searchTerm, filterValues.nationality, filterValues.dateRange);
+  }, [filterClients, filterValues]);
+
+  // Effet initial uniquement
   useEffect(() => {
-    console.log('🔍 Filtres débounced mis à jour:', { 
-      searchTerm: debouncedSearchTerm, 
-      selectedNationality, 
-      dateRange 
-    });
-    filterClients(debouncedSearchTerm, selectedNationality, dateRange);
-  }, [debouncedSearchTerm, selectedNationality, dateRange, filterClients]);
+    if (!hasInitialized) {
+      console.log('🚀 Initialisation des filtres');
+      setHasInitialized(true);
+      applyFilters();
+    }
+  }, [hasInitialized, applyFilters]);
+
+  // Effet pour les changements de filtres (uniquement après initialisation)
+  useEffect(() => {
+    if (hasInitialized) {
+      console.log('🔄 Filtres modifiés, application en cours:', filterValues);
+      applyFilters();
+    }
+  }, [filterValues, hasInitialized, applyFilters]);
 
   // Handler pour le rafraîchissement manuel
-  const handleManualRefresh = async () => {
+  const handleManualRefresh = useCallback(async () => {
     setIsRefreshing(true);
     console.log('🔄 Rafraîchissement manuel déclenché par l\'utilisateur');
     
     // Déclenche un nouveau filtrage avec les paramètres actuels
-    filterClients(debouncedSearchTerm, selectedNationality, dateRange);
+    applyFilters();
     
     // Simule un délai pour l'animation
     setTimeout(() => {
       setIsRefreshing(false);
     }, 1000);
-  };
+  }, [applyFilters]);
 
-  const handleNationalityChange = (nationality: string) => {
+  const handleNationalityChange = useCallback((nationality: string) => {
     console.log('🌍 Changement de nationalité:', nationality);
     setSelectedNationality(nationality);
-  };
+  }, []);
 
-  const handleDateRangeChange = (range: DateRange | undefined) => {
+  const handleDateRangeChange = useCallback((range: DateRange | undefined) => {
     console.log('📅 Changement de plage de dates:', range);
     setDateRange(range);
-  };
+  }, []);
 
-  const handleSearchChange = (term: string) => {
+  const handleSearchChange = useCallback((term: string) => {
     console.log('🔍 Changement de terme de recherche:', term);
     setSearchTerm(term);
-  };
+  }, []);
 
   return (
     <div className="space-y-6">

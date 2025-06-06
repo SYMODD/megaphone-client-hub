@@ -1,11 +1,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { DateRange } from "react-day-picker";
 import { useClientFilters } from "./useClientFilters";
 import { useClientFetcher } from "./useClientFetcher";
 import { usePagination } from "./usePagination";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useClientData = () => {
   const { user } = useAuth();
@@ -35,10 +35,10 @@ export const useClientData = () => {
     const page = filters?.page || currentPage;
     const forceRefresh = filters?.forceRefresh || false;
     
-    console.log('🔄 fetchClientsWithFilters called with:', { 
+    console.log('🔄 fetchClientsWithFilters appelé avec:', { 
       page, 
-      forceRefresh, 
-      totalCurrentClients: clients.length 
+      forceRefresh,
+      hasFilters: !!filters
     });
 
     const result = await fetchClients(user.id, {
@@ -60,22 +60,24 @@ export const useClientData = () => {
         dateTo: currentFilters.dateTo
       }, result.newPage, true);
     }
-  }, [user, serverFilters, currentPage, fetchClients, clients.length, setCurrentPage]);
+  }, [user, serverFilters, currentPage, fetchClients, setCurrentPage]);
 
   const applyFiltersAndFetch = useCallback((
     searchTerm: string,
     nationality: string,
     dateRange: DateRange | undefined
   ) => {
-    console.log('Applying optimized filters:', { searchTerm, nationality, dateRange });
+    console.log('🎯 Application des filtres et fetch:', { searchTerm, nationality, dateRange });
     
     // Mettre à jour les filtres locaux immédiatement
     updateLocalFilters(searchTerm, nationality, dateRange);
     
-    // Appliquer les filtres serveur et fetch
-    const newFilters = applyServerFilters(searchTerm, nationality, dateRange);
+    // Appliquer les filtres serveur et fetch seulement si nécessaire
+    const result = applyServerFilters(searchTerm, nationality, dateRange);
     
-    fetchClientsWithFilters({ ...newFilters, page: 1 });
+    if (result.updated) {
+      fetchClientsWithFilters({ ...result.filters, page: 1 });
+    }
   }, [updateLocalFilters, applyServerFilters, fetchClientsWithFilters]);
 
   // Fonction de rafraîchissement forcé améliorée
@@ -121,25 +123,27 @@ export const useClientData = () => {
     fetchNationalities();
   }, []);
 
+  // Effet initial pour charger les données
   useEffect(() => {
     if (user) {
+      console.log('🚀 Chargement initial des données utilisateur');
       fetchClientsWithFilters();
     }
-  }, [user]);
+  }, [user]); // Seulement quand l'utilisateur change
 
+  // Effet pour la pagination
   useEffect(() => {
     if (user && currentPage > 1) {
+      console.log('📄 Changement de page vers:', currentPage);
       fetchClientsWithFilters({ page: currentPage });
     }
-  }, [currentPage, user]);
+  }, [currentPage, user]); // Seulement pour les changements de page
 
   const filterClients = useCallback((
     searchTerm: string,
     selectedNationality: string,
     dateRange: DateRange | undefined
   ) => {
-    // Toujours appliquer les filtres, même si ils semblent identiques
-    // pour assurer la cohérence avec l'UI
     applyFiltersAndFetch(searchTerm, selectedNationality, dateRange);
     return clients;
   }, [clients, applyFiltersAndFetch]);
