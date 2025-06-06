@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { DateRange } from "react-day-picker";
 import { useClientFilters } from "./useClientFilters";
@@ -20,9 +20,46 @@ export const useClientData = () => {
   const { currentPage, totalPages, handlePageChange, setCurrentPage } = usePagination(totalCount);
   const [nationalities, setNationalities] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Use refs to avoid dependency issues
+  const lastFetchParamsRef = useRef<string>('');
 
-  // Fonction optimisée avec filtrage côté serveur
-  const fetchClientsWithFilters = useCallback(async (filters?: {
+  // Stable fetch function that doesn't change on every render
+  const stableFetchClients = useCallback(async (params: {
+    userId: string;
+    filters: any;
+    page: number;
+    forceRefresh?: boolean;
+  }) => {
+    const { userId, filters, page, forceRefresh = false } = params;
+    
+    // Create a stable key for comparison
+    const fetchKey = JSON.stringify({ filters, page, forceRefresh });
+    
+    // Avoid redundant fetches
+    if (!forceRefresh && fetchKey === lastFetchParamsRef.current) {
+      console.log('🔄 Fetch skipped - same parameters');
+      return;
+    }
+    
+    lastFetchParamsRef.current = fetchKey;
+    
+    console.log('🔄 Fetching clients with params:', { page, forceRefresh, filters });
+    
+    const result = await fetchClients(userId, filters, page, forceRefresh);
+    
+    if (result?.shouldGoToPreviousPage && result.newPage) {
+      console.log('📄 Auto changement vers la page', result.newPage);
+      setCurrentPage(result.newPage);
+      // Re-fetch with new page
+      await fetchClients(userId, filters, result.newPage, true);
+    }
+    
+    return result;
+  }, [fetchClients, setCurrentPage]);
+
+  // Simplified fetch function for external use
+  const fetchClientsWithFilters = useCallback(async (options?: {
     searchTerm?: string;
     nationality?: string;
     dateFrom?: Date | null;
@@ -30,78 +67,68 @@ export const useClientData = () => {
     page?: number;
     forceRefresh?: boolean;
   }) => {
-    if (!user || !isInitialized) return;
-
-    const currentFilters = filters || serverFilters;
-    const page = filters?.page || currentPage;
-    const forceRefresh = filters?.forceRefresh || false;
-    
-    console.log('🔄 fetchClientsWithFilters appelé avec:', { 
-      page, 
-      forceRefresh,
-      hasFilters: !!filters,
-      isInitialized
-    });
-
-    const result = await fetchClients(user.id, {
-      searchTerm: currentFilters.searchTerm || "",
-      nationality: currentFilters.nationality || "",
-      dateFrom: currentFilters.dateFrom,
-      dateTo: currentFilters.dateTo
-    }, page, forceRefresh);
-
-    // Si on doit revenir à la page précédente (page vide après suppression)
-    if (result && result.shouldGoToPreviousPage && result.newPage) {
-      console.log('📄 Changement automatique vers la page', result.newPage);
-      setCurrentPage(result.newPage);
-      // Re-fetch avec la nouvelle page
-      await fetchClients(user.id, {
-        searchTerm: currentFilters.searchTerm || "",
-        nationality: currentFilters.nationality || "",
-        dateFrom: currentFilters.dateFrom,
-        dateTo: currentFilters.dateTo
-      }, result.newPage, true);
+    if (!user) {
+      console.log('❌ No user - cannot fetch');
+      return;
     }
-  }, [user, serverFilters, currentPage, fetchClients, setCurrentPage, isInitialized]);
 
+    const filters = options ? {
+      searchTerm: options.searchTerm || "",
+      nationality: options.nationality || "",
+      dateFrom: options.dateFrom,
+      dateTo: options.dateTo
+    } : serverFilters;
+    
+    const page = options?.page || currentPage;
+    const forceRefresh = options?.forceRefresh || false;
+
+    return stableFetchClients({
+      userId: user.id,
+      filters,
+      page,
+      forceRefresh
+    });
+  }, [user, stableFetchClients, serverFilters, currentPage]);
+
+  // Apply filters and fetch - simplified
   const applyFiltersAndFetch = useCallback((
     searchTerm: string,
     nationality: string,
     dateRange: DateRange | undefined
   ) => {
-    console.log('🎯 Application des filtres et fetch:', { searchTerm, nationality, dateRange });
+    console.log('🎯 Applying filters and fetch:', { searchTerm, nationality, dateRange });
     
-    // Mettre à jour les filtres locaux immédiatement
+    // Update local filters immediately
     updateLocalFilters(searchTerm, nationality, dateRange);
     
-    // Appliquer les filtres serveur et fetch seulement si nécessaire
+    // Apply server filters
     const result = applyServerFilters(searchTerm, nationality, dateRange);
     
-    if (result.updated) {
-      fetchClientsWithFilters({ ...result.filters, page: 1 });
-    }
-  }, [updateLocalFilters, applyServerFilters, fetchClientsWithFilters]);
-
-  // Fonction de rafraîchissement forcé améliorée
-  const forceRefreshClients = useCallback(async () => {
-    console.log('🚀 FORCE REFRESH - Démarrage du rafraîchissement forcé');
-    if (!user) {
-      console.log('❌ FORCE REFRESH - Pas d\'utilisateur connecté');
-      return;
-    }
-    
-    try {
-      await fetchClientsWithFilters({ 
-        page: currentPage, 
-        forceRefresh: true 
+    if (result.updated && user) {
+      // Use the stable fetch function
+      stableFetchClients({
+        userId: user.id,
+        filters: result.filters,
+        page: 1,
+        forceRefresh: false
       });
-      console.log('✅ FORCE REFRESH - Rafraîchissement terminé avec succès');
-    } catch (error) {
-      console.error('❌ FORCE REFRESH - Erreur:', error);
     }
-  }, [user, currentPage, fetchClientsWithFilters]);
+  }, [updateLocalFilters, applyServerFilters, user, stableFetchClients]);
 
-  // Fetch nationalities separately
+  // Force refresh function
+  const forceRefreshClients = useCallback(async () => {
+    console.log('🚀 FORCE REFRESH');
+    if (!user) return;
+    
+    return stableFetchClients({
+      userId: user.id,
+      filters: serverFilters,
+      page: currentPage,
+      forceRefresh: true
+    });
+  }, [user, serverFilters, currentPage, stableFetchClients]);
+
+  // Fetch nationalities - separate effect
   useEffect(() => {
     const fetchNationalities = async () => {
       try {
@@ -125,22 +152,34 @@ export const useClientData = () => {
     fetchNationalities();
   }, []);
 
-  // Effet d'initialisation unique
+  // Initial data load - only once
   useEffect(() => {
     if (user && !isInitialized) {
-      console.log('🚀 Initialisation unique des données utilisateur');
+      console.log('🚀 Initial data load');
       setIsInitialized(true);
-      fetchClientsWithFilters();
+      
+      stableFetchClients({
+        userId: user.id,
+        filters: serverFilters,
+        page: 1,
+        forceRefresh: false
+      });
     }
-  }, [user, isInitialized, fetchClientsWithFilters]);
+  }, [user, isInitialized, stableFetchClients, serverFilters]);
 
-  // Effet pour la pagination uniquement
+  // Handle page changes - separate effect
   useEffect(() => {
-    if (isInitialized && currentPage > 1) {
-      console.log('📄 Changement de page vers:', currentPage);
-      fetchClientsWithFilters({ page: currentPage });
+    if (isInitialized && currentPage > 1 && user) {
+      console.log('📄 Page change to:', currentPage);
+      
+      stableFetchClients({
+        userId: user.id,
+        filters: serverFilters,
+        page: currentPage,
+        forceRefresh: false
+      });
     }
-  }, [currentPage, isInitialized, fetchClientsWithFilters]);
+  }, [currentPage, isInitialized, user, serverFilters, stableFetchClients]);
 
   const filterClients = useCallback((
     searchTerm: string,

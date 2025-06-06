@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { DateRange } from "react-day-picker";
 import { ClientStatistics } from "@/components/clients/ClientStatistics";
 import { ClientFilters } from "@/components/clients/ClientFilters";
@@ -45,66 +45,73 @@ export const BaseClientsContent = ({
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Debounce la recherche pour éviter trop d'appels API
-  const debouncedSearchTerm = useDebounce(searchTerm, 1000);
+  // Use a longer debounce delay to reduce API calls
+  const debouncedSearchTerm = useDebounce(searchTerm, 1500);
 
-  // Mémoriser les valeurs de filtres pour éviter les re-rendus inutiles
-  const stableFilterValues = useMemo(() => ({
-    searchTerm: debouncedSearchTerm,
-    nationality: selectedNationality,
-    dateRange: dateRange
-  }), [debouncedSearchTerm, selectedNationality, dateRange]);
+  // Memoize filter application to prevent unnecessary calls
+  const applyFilters = useCallback((
+    search: string,
+    nationality: string,
+    range: DateRange | undefined
+  ) => {
+    console.log('🎯 Applying filters:', { search, nationality, range });
+    filterClients(search, nationality, range);
+  }, [filterClients]);
 
-  // Fonction de filtrage stable avec throttling
-  const applyFilters = useCallback(() => {
-    console.log('🎯 Application des filtres (BaseClientsContent):', stableFilterValues);
-    filterClients(stableFilterValues.searchTerm, stableFilterValues.nationality, stableFilterValues.dateRange);
-  }, [filterClients, stableFilterValues]);
+  // Effect for debounced search
+  useEffect(() => {
+    if (debouncedSearchTerm !== searchTerm) return; // Only apply when debounce is complete
+    
+    console.log('🔍 Debounced search term changed:', debouncedSearchTerm);
+    applyFilters(debouncedSearchTerm, selectedNationality, dateRange);
+  }, [debouncedSearchTerm, selectedNationality, dateRange, applyFilters]);
 
-  // Handler pour le rafraîchissement manuel
+  // Immediate handlers for non-search filters
+  const handleNationalityChange = useCallback((nationality: string) => {
+    console.log('🌍 Nationality changed:', nationality);
+    setSelectedNationality(nationality);
+    applyFilters(debouncedSearchTerm, nationality, dateRange);
+  }, [debouncedSearchTerm, dateRange, applyFilters]);
+
+  const handleDateRangeChange = useCallback((range: DateRange | undefined) => {
+    console.log('📅 Date range changed:', range);
+    setDateRange(range);
+    applyFilters(debouncedSearchTerm, selectedNationality, range);
+  }, [debouncedSearchTerm, selectedNationality, applyFilters]);
+
+  const handleSearchChange = useCallback((term: string) => {
+    console.log('🔍 Search term input:', term);
+    setSearchTerm(term);
+    // The debounced effect will handle the actual filtering
+  }, []);
+
   const handleManualRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    console.log('🔄 Rafraîchissement manuel déclenché par l\'utilisateur');
+    console.log('🔄 Manual refresh triggered');
     
-    // Déclenche un nouveau filtrage avec les paramètres actuels
-    applyFilters();
+    // Re-apply current filters
+    applyFilters(debouncedSearchTerm, selectedNationality, dateRange);
     
-    // Simule un délai pour l'animation
     setTimeout(() => {
       setIsRefreshing(false);
     }, 1000);
-  }, [applyFilters]);
+  }, [debouncedSearchTerm, selectedNationality, dateRange, applyFilters]);
 
-  const handleNationalityChange = useCallback((nationality: string) => {
-    console.log('🌍 Changement de nationalité:', nationality);
-    setSelectedNationality(nationality);
-    // Application immédiate pour les dropdowns
-    filterClients(debouncedSearchTerm, nationality, dateRange);
-  }, [debouncedSearchTerm, dateRange, filterClients]);
-
-  const handleDateRangeChange = useCallback((range: DateRange | undefined) => {
-    console.log('📅 Changement de plage de dates:', range);
-    setDateRange(range);
-    // Application immédiate pour les dates
-    filterClients(debouncedSearchTerm, selectedNationality, range);
-  }, [debouncedSearchTerm, selectedNationality, filterClients]);
-
-  const handleSearchChange = useCallback((term: string) => {
-    console.log('🔍 Changement de terme de recherche:', term);
-    setSearchTerm(term);
-    // Le debounce s'occupera d'appliquer le filtre
-  }, []);
+  // Memoize the statistics to prevent unnecessary re-calculations
+  const memoizedStatistics = useMemo(() => (
+    <ClientStatistics 
+      totalCount={totalCount}
+      clients={clients}
+      nationalities={nationalities}
+    />
+  ), [totalCount, clients, nationalities]);
 
   return (
     <div className="space-y-6">
-      {/* Statistiques rapides */}
-      <ClientStatistics 
-        totalCount={totalCount}
-        clients={clients}
-        nationalities={nationalities}
-      />
+      {/* Statistics */}
+      {memoizedStatistics}
 
-      {/* Header avec bouton de rafraîchissement */}
+      {/* Header with refresh button */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">
           Liste des clients ({totalCount} total)
@@ -122,7 +129,7 @@ export const BaseClientsContent = ({
         </Button>
       </div>
 
-      {/* Filtres et recherche optimisés */}
+      {/* Filters */}
       <ClientFilters
         searchTerm={searchTerm}
         setSearchTerm={handleSearchChange}
@@ -134,7 +141,7 @@ export const BaseClientsContent = ({
         onExport={onExport}
       />
 
-      {/* Indicateur de chargement pendant le rafraîchissement */}
+      {/* Loading indicator */}
       {isRefreshing && (
         <div className="flex items-center justify-center py-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center gap-2 text-blue-700">
@@ -144,7 +151,7 @@ export const BaseClientsContent = ({
         </div>
       )}
 
-      {/* Liste des clients */}
+      {/* Client table */}
       <ClientTable
         clients={clients}
         onViewClient={onViewClient}
