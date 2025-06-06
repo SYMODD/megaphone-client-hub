@@ -14,6 +14,15 @@ interface ClientViewDialogProps {
 export const ClientViewDialog = ({ client, open, onOpenChange }: ClientViewDialogProps) => {
   if (!client) return null;
 
+  // Helper functions for default values
+  const getPointOperation = (pointOperation: string | undefined): string => {
+    return pointOperation || "agence_centrale";
+  };
+
+  const getCategorie = (categorie: string | undefined): string => {
+    return categorie || "agence";
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -119,7 +128,7 @@ export const ClientViewDialog = ({ client, open, onOpenChange }: ClientViewDialo
               </div>
             </div>
 
-            {/* 🔥 NEW: Section Point d'opération et Catégorie */}
+            {/* Section Point d'opération et Catégorie */}
             <div className="space-y-3">
               <h3 className="font-semibold text-lg flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
@@ -131,14 +140,14 @@ export const ClientViewDialog = ({ client, open, onOpenChange }: ClientViewDialo
                   <span className="text-sm font-medium text-gray-600">Point d'opération :</span>
                   <Badge variant="outline" className="mt-1 flex items-center gap-1 w-fit">
                     <Building className="w-3 h-3" />
-                    {client.point_operation || "Non défini"}
+                    {getPointOperation(client.point_operation)}
                   </Badge>
                 </div>
                 
                 <div>
                   <span className="text-sm font-medium text-gray-600">Catégorie :</span>
                   <Badge variant="secondary" className="mt-1 capitalize">
-                    {client.categorie || "Non définie"}
+                    {getCategorie(client.categorie)}
                   </Badge>
                 </div>
               </div>
@@ -224,13 +233,13 @@ export const ClientViewDialog = ({ client, open, onOpenChange }: ClientViewDialo
                   <Barcode className="w-3 h-3" />
                   <span>Image code-barres : {client.code_barre_image_url ? '✅ Disponible' : '❌ Manquante'}</span>
                 </div>
-                <div className={`flex items-center gap-1 ${client.point_operation ? 'text-green-600' : 'text-gray-400'}`}>
+                <div className="flex items-center gap-1 text-green-600">
                   <Building className="w-3 h-3" />
-                  <span>Point d'opération : {client.point_operation ? '✅ Défini' : '❌ Non défini'}</span>
+                  <span>Point d'opération : ✅ {getPointOperation(client.point_operation)}</span>
                 </div>
-                <div className={`flex items-center gap-1 ${client.categorie ? 'text-green-600' : 'text-gray-400'}`}>
+                <div className="flex items-center gap-1 text-green-600">
                   <MapPin className="w-3 h-3" />
-                  <span>Catégorie : {client.categorie ? '✅ Définie' : '❌ Non définie'}</span>
+                  <span>Catégorie : ✅ {getCategorie(client.categorie)}</span>
                 </div>
               </div>
             </div>

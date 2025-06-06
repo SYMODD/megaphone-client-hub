@@ -15,6 +15,10 @@ export const prepareSubmissionPayload = (formData: ClientFormData, userId: strin
     return 'agence';
   };
 
+  // Ensure we always have values for point_operation and categorie
+  const pointOperation = profile?.point_operation || 'agence_centrale';
+  const categorie = getCategorie(pointOperation);
+
   const dataToInsert = {
     nom: formData.nom,
     prenom: formData.prenom,
@@ -28,9 +32,18 @@ export const prepareSubmissionPayload = (formData: ClientFormData, userId: strin
     photo_url: formData.photo_url,
     document_type: formData.document_type,
     agent_id: userId,
-    point_operation: profile?.point_operation || 'agence_centrale',
-    categorie: getCategorie(profile?.point_operation)
+    point_operation: pointOperation,
+    categorie: categorie
   };
+
+  console.log("📝 Données préparées pour insertion:", {
+    point_operation: dataToInsert.point_operation,
+    categorie: dataToInsert.categorie,
+    profileData: {
+      point_operation: profile?.point_operation,
+      role: profile?.role
+    }
+  });
 
   return dataToInsert;
 };
