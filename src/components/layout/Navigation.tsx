@@ -24,7 +24,7 @@ const Navigation = memo(() => {
     } else {
       // Pour admin et superviseur : accès complet
       const baseItems = [
-        { to: "/", icon: Users, label: "Dashboard", color: "from-blue-500 to-blue-600" },
+        { to: "/dashboard", icon: Users, label: "Dashboard", color: "from-blue-500 to-blue-600" },
         { to: "/nouveau-client", icon: Plus, label: "Nouveau Client", color: "from-green-500 to-emerald-600" },
         { to: "/base-clients", icon: Database, label: "Base Clients", color: "from-blue-500 to-blue-600" },
         { to: "/contracts", icon: FileText, label: "Contrats", color: "from-purple-500 to-purple-600" },
