@@ -16,19 +16,31 @@ export const useClientFilters = () => {
     nationality: string,
     dateRange: DateRange | undefined
   ) => {
-    console.log('Applying server-side filters:', { searchTerm, nationality, dateRange });
+    console.log('🔍 Applying server-side filters:', { searchTerm, nationality, dateRange });
     
     const newFilters: ClientFilters = {
-      searchTerm,
+      searchTerm: searchTerm.trim(),
       nationality,
       dateFrom: dateRange?.from || null,
       dateTo: dateRange?.to || null
     };
 
-    setServerFilters(newFilters);
+    // Ne mettre à jour que si les filtres ont vraiment changé
+    const hasChanged = 
+      newFilters.searchTerm !== serverFilters.searchTerm ||
+      newFilters.nationality !== serverFilters.nationality ||
+      newFilters.dateFrom?.getTime() !== serverFilters.dateFrom?.getTime() ||
+      newFilters.dateTo?.getTime() !== serverFilters.dateTo?.getTime();
+
+    if (hasChanged) {
+      console.log('✅ Filtres modifiés, mise à jour en cours...');
+      setServerFilters(newFilters);
+    } else {
+      console.log('⏭️ Filtres identiques, pas de mise à jour');
+    }
     
     return newFilters;
-  }, []);
+  }, [serverFilters]);
 
   return {
     serverFilters,

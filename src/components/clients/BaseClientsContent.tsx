@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DateRange } from "react-day-picker";
 import { ClientStatistics } from "@/components/clients/ClientStatistics";
 import { ClientFilters } from "@/components/clients/ClientFilters";
@@ -44,10 +44,13 @@ export const BaseClientsContent = ({
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Utilise le filtrage optimisé côté serveur
-  const filteredClients = filterClients(searchTerm, selectedNationality, dateRange);
+  // Déclencher le filtrage quand les critères changent
+  useEffect(() => {
+    console.log('🔍 Filtres mis à jour:', { searchTerm, selectedNationality, dateRange });
+    filterClients(searchTerm, selectedNationality, dateRange);
+  }, [searchTerm, selectedNationality, dateRange, filterClients]);
 
-  // 🔥 SOLUTION 5 : Handler pour le rafraîchissement manuel
+  // Handler pour le rafraîchissement manuel
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     console.log('🔄 Rafraîchissement manuel déclenché par l\'utilisateur');
@@ -76,7 +79,6 @@ export const BaseClientsContent = ({
           Liste des clients ({totalCount} total)
         </h2>
         
-        {/* 🔥 SOLUTION 5 : Bouton de rafraîchissement avec animation */}
         <Button
           variant="outline"
           size="sm"
@@ -101,7 +103,7 @@ export const BaseClientsContent = ({
         onExport={onExport}
       />
 
-      {/* 🔥 SOLUTION 5 : Indicateur de chargement pendant le rafraîchissement */}
+      {/* Indicateur de chargement pendant le rafraîchissement */}
       {isRefreshing && (
         <div className="flex items-center justify-center py-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center gap-2 text-blue-700">
@@ -113,7 +115,7 @@ export const BaseClientsContent = ({
 
       {/* Liste des clients */}
       <ClientTable
-        clients={filteredClients}
+        clients={clients}
         onViewClient={onViewClient}
         onEditClient={onEditClient}
         onGenerateDocument={onGenerateDocument}
