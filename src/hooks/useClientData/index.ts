@@ -21,10 +21,11 @@ export const useClientData = () => {
   const [nationalities, setNationalities] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   
-  // Use refs to avoid dependency issues
+  // Utiliser des refs pour éviter les re-renders inutiles
   const lastFetchParamsRef = useRef<string>('');
+  const isCurrentlyFetchingRef = useRef(false);
 
-  // Stable fetch function that doesn't change on every render
+  // Fonction de fetch optimisée avec protection contre les appels multiples
   const stableFetchClients = useCallback(async (params: {
     userId: string;
     filters: any;
@@ -33,32 +34,43 @@ export const useClientData = () => {
   }) => {
     const { userId, filters, page, forceRefresh = false } = params;
     
-    // Create a stable key for comparison
-    const fetchKey = JSON.stringify({ filters, page, forceRefresh });
+    // Éviter les appels multiples simultanés
+    if (isCurrentlyFetchingRef.current && !forceRefresh) {
+      console.log('🔄 Fetch en cours, annulation de la requête');
+      return;
+    }
     
-    // Avoid redundant fetches
+    // Créer une clé stable pour la comparaison
+    const fetchKey = JSON.stringify({ filters, page });
+    
+    // Éviter les fetches redondants
     if (!forceRefresh && fetchKey === lastFetchParamsRef.current) {
-      console.log('🔄 Fetch skipped - same parameters');
+      console.log('🔄 Fetch évité - mêmes paramètres');
       return;
     }
     
     lastFetchParamsRef.current = fetchKey;
+    isCurrentlyFetchingRef.current = true;
     
-    console.log('🔄 Fetching clients with params:', { page, forceRefresh, filters });
+    console.log('🔄 Chargement des clients avec params:', { page, forceRefresh, filters });
     
-    const result = await fetchClients(userId, filters, page, forceRefresh);
-    
-    if (result?.shouldGoToPreviousPage && result.newPage) {
-      console.log('📄 Auto changement vers la page', result.newPage);
-      setCurrentPage(result.newPage);
-      // Re-fetch with new page
-      await fetchClients(userId, filters, result.newPage, true);
+    try {
+      const result = await fetchClients(userId, filters, page, forceRefresh);
+      
+      if (result?.shouldGoToPreviousPage && result.newPage) {
+        console.log('📄 Redirection automatique vers la page', result.newPage);
+        setCurrentPage(result.newPage);
+        // Re-fetch avec la nouvelle page
+        await fetchClients(userId, filters, result.newPage, true);
+      }
+      
+      return result;
+    } finally {
+      isCurrentlyFetchingRef.current = false;
     }
-    
-    return result;
   }, [fetchClients, setCurrentPage]);
 
-  // Simplified fetch function for external use
+  // Fonction simplifiée pour fetch avec options
   const fetchClientsWithFilters = useCallback(async (options?: {
     searchTerm?: string;
     nationality?: string;
@@ -68,7 +80,7 @@ export const useClientData = () => {
     forceRefresh?: boolean;
   }) => {
     if (!user) {
-      console.log('❌ No user - cannot fetch');
+      console.log('❌ Pas d\'utilisateur - impossible de charger');
       return;
     }
 
@@ -90,22 +102,25 @@ export const useClientData = () => {
     });
   }, [user, stableFetchClients, serverFilters, currentPage]);
 
-  // Apply filters and fetch - simplified
+  // Application des filtres et fetch - optimisée
   const applyFiltersAndFetch = useCallback((
     searchTerm: string,
     nationality: string,
     dateRange: DateRange | undefined
   ) => {
-    console.log('🎯 Applying filters and fetch:', { searchTerm, nationality, dateRange });
+    console.log('🎯 Application des filtres:', { searchTerm, nationality, dateRange });
     
-    // Update local filters immediately
+    // Mettre à jour les filtres locaux immédiatement
     updateLocalFilters(searchTerm, nationality, dateRange);
     
-    // Apply server filters
+    // Appliquer les filtres serveur
     const result = applyServerFilters(searchTerm, nationality, dateRange);
     
     if (result.updated && user) {
-      // Use the stable fetch function
+      // Réinitialiser à la page 1 lors de nouveaux filtres
+      setCurrentPage(1);
+      
+      // Utiliser la fonction de fetch stable
       stableFetchClients({
         userId: user.id,
         filters: result.filters,
@@ -113,9 +128,9 @@ export const useClientData = () => {
         forceRefresh: false
       });
     }
-  }, [updateLocalFilters, applyServerFilters, user, stableFetchClients]);
+  }, [updateLocalFilters, applyServerFilters, user, stableFetchClients, setCurrentPage]);
 
-  // Force refresh function
+  // Force refresh - optimisée
   const forceRefreshClients = useCallback(async () => {
     console.log('🚀 FORCE REFRESH');
     if (!user) return;
@@ -128,11 +143,11 @@ export const useClientData = () => {
     });
   }, [user, serverFilters, currentPage, stableFetchClients]);
 
-  // Fetch nationalities - separate effect
+  // Chargement des nationalités - effet séparé et optimisé
   useEffect(() => {
     const fetchNationalities = async () => {
       try {
-        console.log('Fetching unique nationalities...');
+        console.log('Chargement des nationalités uniques...');
         const { data, error } = await supabase
           .from('clients')
           .select('nationalite')
@@ -141,10 +156,10 @@ export const useClientData = () => {
         if (error) throw error;
         
         const uniqueNationalities = [...new Set(data?.map(client => client.nationalite) || [])];
-        console.log('Unique nationalities loaded:', uniqueNationalities.length);
+        console.log('Nationalités chargées:', uniqueNationalities.length);
         setNationalities(uniqueNationalities);
       } catch (error) {
-        console.error('Error fetching nationalities:', error);
+        console.error('Erreur lors du chargement des nationalités:', error);
         setNationalities([]);
       }
     };
@@ -152,10 +167,10 @@ export const useClientData = () => {
     fetchNationalities();
   }, []);
 
-  // Initial data load - only once
+  // Chargement initial des données - une seule fois
   useEffect(() => {
-    if (user && !isInitialized) {
-      console.log('🚀 Initial data load');
+    if (user && !isInitialized && !loading) {
+      console.log('🚀 Chargement initial des données');
       setIsInitialized(true);
       
       stableFetchClients({
@@ -165,12 +180,12 @@ export const useClientData = () => {
         forceRefresh: false
       });
     }
-  }, [user, isInitialized, stableFetchClients, serverFilters]);
+  }, [user, isInitialized, loading, stableFetchClients, serverFilters]);
 
-  // Handle page changes - separate effect
+  // Gestion des changements de page - effet séparé
   useEffect(() => {
-    if (isInitialized && currentPage > 1 && user) {
-      console.log('📄 Page change to:', currentPage);
+    if (isInitialized && currentPage > 1 && user && !isCurrentlyFetchingRef.current) {
+      console.log('📄 Changement de page vers:', currentPage);
       
       stableFetchClients({
         userId: user.id,

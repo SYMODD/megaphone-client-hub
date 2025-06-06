@@ -4,8 +4,9 @@ import { DateRange } from "react-day-picker";
 import { ClientStatistics } from "@/components/clients/ClientStatistics";
 import { ClientFilters } from "@/components/clients/ClientFilters";
 import { ClientTable } from "@/components/clients/ClientTable";
+import { ClientPagination } from "@/components/clients/ClientPagination";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { Client } from "@/hooks/useClientData/types";
 import { useDebounce } from "@/hooks/useDebounce";
 
@@ -45,51 +46,52 @@ export const BaseClientsContent = ({
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Use a longer debounce delay to reduce API calls
-  const debouncedSearchTerm = useDebounce(searchTerm, 1500);
+  // Utiliser un délai de debounce plus long pour réduire les appels API
+  const debouncedSearchTerm = useDebounce(searchTerm, 1000);
 
-  // Memoize filter application to prevent unnecessary calls
+  // Mémoriser l'application des filtres pour éviter les appels inutiles
   const applyFilters = useCallback((
     search: string,
     nationality: string,
     range: DateRange | undefined
   ) => {
-    console.log('🎯 Applying filters:', { search, nationality, range });
+    console.log('🎯 Application des filtres:', { search, nationality, range });
     filterClients(search, nationality, range);
   }, [filterClients]);
 
-  // Effect for debounced search
+  // Effet pour la recherche avec debounce
   useEffect(() => {
-    if (debouncedSearchTerm !== searchTerm) return; // Only apply when debounce is complete
+    // Seulement appliquer quand le debounce est terminé
+    if (debouncedSearchTerm !== searchTerm) return;
     
-    console.log('🔍 Debounced search term changed:', debouncedSearchTerm);
+    console.log('🔍 Terme de recherche avec debounce changé:', debouncedSearchTerm);
     applyFilters(debouncedSearchTerm, selectedNationality, dateRange);
-  }, [debouncedSearchTerm, selectedNationality, dateRange, applyFilters]);
+  }, [debouncedSearchTerm, selectedNationality, dateRange, applyFilters, searchTerm]);
 
-  // Immediate handlers for non-search filters
+  // Gestionnaires immédiats pour les filtres non-recherche
   const handleNationalityChange = useCallback((nationality: string) => {
-    console.log('🌍 Nationality changed:', nationality);
+    console.log('🌍 Nationalité changée:', nationality);
     setSelectedNationality(nationality);
     applyFilters(debouncedSearchTerm, nationality, dateRange);
   }, [debouncedSearchTerm, dateRange, applyFilters]);
 
   const handleDateRangeChange = useCallback((range: DateRange | undefined) => {
-    console.log('📅 Date range changed:', range);
+    console.log('📅 Plage de dates changée:', range);
     setDateRange(range);
     applyFilters(debouncedSearchTerm, selectedNationality, range);
   }, [debouncedSearchTerm, selectedNationality, applyFilters]);
 
   const handleSearchChange = useCallback((term: string) => {
-    console.log('🔍 Search term input:', term);
+    console.log('🔍 Saisie de recherche:', term);
     setSearchTerm(term);
-    // The debounced effect will handle the actual filtering
+    // L'effet avec debounce s'occupera de l'application
   }, []);
 
   const handleManualRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    console.log('🔄 Manual refresh triggered');
+    console.log('🔄 Actualisation manuelle déclenchée');
     
-    // Re-apply current filters
+    // Ré-appliquer les filtres actuels
     applyFilters(debouncedSearchTerm, selectedNationality, dateRange);
     
     setTimeout(() => {
@@ -97,7 +99,7 @@ export const BaseClientsContent = ({
     }, 1000);
   }, [debouncedSearchTerm, selectedNationality, dateRange, applyFilters]);
 
-  // Memoize the statistics to prevent unnecessary re-calculations
+  // Mémoriser les statistiques pour éviter les re-calculs inutiles
   const memoizedStatistics = useMemo(() => (
     <ClientStatistics 
       totalCount={totalCount}
@@ -108,10 +110,10 @@ export const BaseClientsContent = ({
 
   return (
     <div className="space-y-6">
-      {/* Statistics */}
+      {/* Statistiques */}
       {memoizedStatistics}
 
-      {/* Header with refresh button */}
+      {/* En-tête avec bouton d'actualisation */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">
           Liste des clients ({totalCount} total)
@@ -129,7 +131,7 @@ export const BaseClientsContent = ({
         </Button>
       </div>
 
-      {/* Filters */}
+      {/* Filtres */}
       <ClientFilters
         searchTerm={searchTerm}
         setSearchTerm={handleSearchChange}
@@ -141,7 +143,7 @@ export const BaseClientsContent = ({
         onExport={onExport}
       />
 
-      {/* Loading indicator */}
+      {/* Indicateur d'actualisation */}
       {isRefreshing && (
         <div className="flex items-center justify-center py-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center gap-2 text-blue-700">
@@ -151,7 +153,7 @@ export const BaseClientsContent = ({
         </div>
       )}
 
-      {/* Client table */}
+      {/* Tableau des clients */}
       <ClientTable
         clients={clients}
         onViewClient={onViewClient}
@@ -160,34 +162,13 @@ export const BaseClientsContent = ({
         onDeleteClient={onDeleteClient}
       />
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-600">
-            Page {currentPage} sur {totalPages} ({totalCount} clients au total)
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(currentPage - 1)}
-              disabled={currentPage <= 1}
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Précédent
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={currentPage >= totalPages}
-            >
-              Suivant
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Pagination améliorée */}
+      <ClientPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalCount={totalCount}
+        onPageChange={onPageChange}
+      />
     </div>
   );
 };
