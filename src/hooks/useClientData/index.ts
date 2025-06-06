@@ -19,6 +19,7 @@ export const useClientData = () => {
   } = useClientFetcher();
   const { currentPage, totalPages, handlePageChange, setCurrentPage } = usePagination(totalCount);
   const [nationalities, setNationalities] = useState<string[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Fonction optimisée avec filtrage côté serveur
   const fetchClientsWithFilters = useCallback(async (filters?: {
@@ -29,7 +30,7 @@ export const useClientData = () => {
     page?: number;
     forceRefresh?: boolean;
   }) => {
-    if (!user) return;
+    if (!user || !isInitialized) return;
 
     const currentFilters = filters || serverFilters;
     const page = filters?.page || currentPage;
@@ -38,7 +39,8 @@ export const useClientData = () => {
     console.log('🔄 fetchClientsWithFilters appelé avec:', { 
       page, 
       forceRefresh,
-      hasFilters: !!filters
+      hasFilters: !!filters,
+      isInitialized
     });
 
     const result = await fetchClients(user.id, {
@@ -60,7 +62,7 @@ export const useClientData = () => {
         dateTo: currentFilters.dateTo
       }, result.newPage, true);
     }
-  }, [user, serverFilters, currentPage, fetchClients, setCurrentPage]);
+  }, [user, serverFilters, currentPage, fetchClients, setCurrentPage, isInitialized]);
 
   const applyFiltersAndFetch = useCallback((
     searchTerm: string,
@@ -123,21 +125,22 @@ export const useClientData = () => {
     fetchNationalities();
   }, []);
 
-  // Effet initial pour charger les données
+  // Effet d'initialisation unique
   useEffect(() => {
-    if (user) {
-      console.log('🚀 Chargement initial des données utilisateur');
+    if (user && !isInitialized) {
+      console.log('🚀 Initialisation unique des données utilisateur');
+      setIsInitialized(true);
       fetchClientsWithFilters();
     }
-  }, [user]); // Seulement quand l'utilisateur change
+  }, [user, isInitialized, fetchClientsWithFilters]);
 
-  // Effet pour la pagination
+  // Effet pour la pagination uniquement
   useEffect(() => {
-    if (user && currentPage > 1) {
+    if (isInitialized && currentPage > 1) {
       console.log('📄 Changement de page vers:', currentPage);
       fetchClientsWithFilters({ page: currentPage });
     }
-  }, [currentPage, user]); // Seulement pour les changements de page
+  }, [currentPage, isInitialized, fetchClientsWithFilters]);
 
   const filterClients = useCallback((
     searchTerm: string,

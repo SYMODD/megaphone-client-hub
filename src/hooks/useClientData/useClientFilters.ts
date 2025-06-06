@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { DateRange } from "react-day-picker";
 import { ClientFilters } from "./types";
 
@@ -17,6 +17,9 @@ export const useClientFilters = () => {
     dateFrom: null,
     dateTo: null
   });
+
+  // Utiliser une ref pour éviter les comparaisons infinies
+  const lastAppliedFiltersRef = useRef<ClientFilters>(serverFilters);
 
   const updateLocalFilters = useCallback((
     searchTerm: string,
@@ -58,9 +61,10 @@ export const useClientFilters = () => {
 
     console.log('🔍 Tentative d\'application des filtres serveur:', newFilters);
 
-    // Utiliser la fonction helper pour comparer
-    if (!filtersAreEqual(newFilters, serverFilters)) {
+    // Comparer avec les derniers filtres appliqués via la ref
+    if (!filtersAreEqual(newFilters, lastAppliedFiltersRef.current)) {
       console.log('✅ Filtres différents détectés, mise à jour en cours...');
+      lastAppliedFiltersRef.current = newFilters;
       setServerFilters(newFilters);
       setLocalFilters(newFilters);
       return { updated: true, filters: newFilters };
@@ -68,7 +72,7 @@ export const useClientFilters = () => {
       console.log('⏭️ Filtres identiques, pas de mise à jour nécessaire');
       return { updated: false, filters: serverFilters };
     }
-  }, [serverFilters, filtersAreEqual]);
+  }, [filtersAreEqual, serverFilters]);
 
   return {
     serverFilters,

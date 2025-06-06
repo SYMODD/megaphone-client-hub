@@ -6,7 +6,6 @@ import { useBaseClientsLogic } from "@/hooks/useBaseClientsLogic";
 import { BaseClientsHeader } from "@/components/clients/BaseClientsHeader";
 import { BaseClientsContent } from "@/components/clients/BaseClientsContent";
 import { BaseClientsDialogs } from "@/components/clients/BaseClientsDialogs";
-import { useEffect } from "react";
 
 const BaseClients = () => {
   const {
@@ -41,12 +40,8 @@ const BaseClients = () => {
     forceRefresh
   } = useBaseClientsLogic();
   
-  // S'assurer que les données sont toujours fraîches quand on arrive sur la page
-  useEffect(() => {
-    console.log("🔍 BaseClients - Rafraîchissement initial des données");
-    forceRefresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // SUPPRIMER le useEffect qui forçait le refresh au montage
+  // car cela causait des boucles infinies
 
   if (loading) {
     return (

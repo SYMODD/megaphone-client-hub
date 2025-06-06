@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { DateRange } from "react-day-picker";
 import { ClientStatistics } from "@/components/clients/ClientStatistics";
 import { ClientFilters } from "@/components/clients/ClientFilters";
@@ -44,40 +44,22 @@ export const BaseClientsContent = ({
   const [selectedNationality, setSelectedNationality] = useState("");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Debounce la recherche pour éviter trop d'appels API
-  const debouncedSearchTerm = useDebounce(searchTerm, 800);
+  const debouncedSearchTerm = useDebounce(searchTerm, 1000);
 
   // Mémoriser les valeurs de filtres pour éviter les re-rendus inutiles
-  const filterValues = useMemo(() => ({
+  const stableFilterValues = useMemo(() => ({
     searchTerm: debouncedSearchTerm,
     nationality: selectedNationality,
     dateRange: dateRange
   }), [debouncedSearchTerm, selectedNationality, dateRange]);
 
-  // Fonction de filtrage stable
+  // Fonction de filtrage stable avec throttling
   const applyFilters = useCallback(() => {
-    console.log('🎯 Application des filtres:', filterValues);
-    filterClients(filterValues.searchTerm, filterValues.nationality, filterValues.dateRange);
-  }, [filterClients, filterValues]);
-
-  // Effet initial uniquement
-  useEffect(() => {
-    if (!hasInitialized) {
-      console.log('🚀 Initialisation des filtres');
-      setHasInitialized(true);
-      applyFilters();
-    }
-  }, [hasInitialized, applyFilters]);
-
-  // Effet pour les changements de filtres (uniquement après initialisation)
-  useEffect(() => {
-    if (hasInitialized) {
-      console.log('🔄 Filtres modifiés, application en cours:', filterValues);
-      applyFilters();
-    }
-  }, [filterValues, hasInitialized, applyFilters]);
+    console.log('🎯 Application des filtres (BaseClientsContent):', stableFilterValues);
+    filterClients(stableFilterValues.searchTerm, stableFilterValues.nationality, stableFilterValues.dateRange);
+  }, [filterClients, stableFilterValues]);
 
   // Handler pour le rafraîchissement manuel
   const handleManualRefresh = useCallback(async () => {
@@ -96,16 +78,21 @@ export const BaseClientsContent = ({
   const handleNationalityChange = useCallback((nationality: string) => {
     console.log('🌍 Changement de nationalité:', nationality);
     setSelectedNationality(nationality);
-  }, []);
+    // Application immédiate pour les dropdowns
+    filterClients(debouncedSearchTerm, nationality, dateRange);
+  }, [debouncedSearchTerm, dateRange, filterClients]);
 
   const handleDateRangeChange = useCallback((range: DateRange | undefined) => {
     console.log('📅 Changement de plage de dates:', range);
     setDateRange(range);
-  }, []);
+    // Application immédiate pour les dates
+    filterClients(debouncedSearchTerm, selectedNationality, range);
+  }, [debouncedSearchTerm, selectedNationality, filterClients]);
 
   const handleSearchChange = useCallback((term: string) => {
     console.log('🔍 Changement de terme de recherche:', term);
     setSearchTerm(term);
+    // Le debounce s'occupera d'appliquer le filtre
   }, []);
 
   return (
