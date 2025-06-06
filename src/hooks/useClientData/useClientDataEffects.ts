@@ -30,7 +30,7 @@ export const useClientDataEffects = ({
   useEffect(() => {
     const fetchNationalities = async () => {
       try {
-        console.log('Chargement des nationalités uniques...');
+        console.log('🔍 Chargement des nationalités uniques...');
         const { data, error } = await supabase
           .from('clients')
           .select('nationalite')
@@ -39,10 +39,10 @@ export const useClientDataEffects = ({
         if (error) throw error;
         
         const uniqueNationalities = [...new Set(data?.map(client => client.nationalite) || [])];
-        console.log('Nationalités chargées:', uniqueNationalities.length);
+        console.log('🔍 Nationalités chargées:', uniqueNationalities.length);
         setNationalities(uniqueNationalities);
       } catch (error) {
-        console.error('Erreur lors du chargement des nationalités:', error);
+        console.error('❌ Erreur lors du chargement des nationalités:', error);
         setNationalities([]);
       }
     };
@@ -52,8 +52,14 @@ export const useClientDataEffects = ({
 
   // Chargement initial des données - une seule fois
   useEffect(() => {
+    console.log('🔍 Effet chargement initial - conditions:', { 
+      hasUser: !!user, 
+      isInitialized, 
+      loading 
+    });
+    
     if (user && !isInitialized && !loading) {
-      console.log('🚀 Chargement initial des données');
+      console.log('🚀 DÉCLENCHEMENT du chargement initial des données');
       setIsInitialized(true);
       
       stableFetchClients({
@@ -61,21 +67,40 @@ export const useClientDataEffects = ({
         filters: serverFilters,
         page: 1,
         forceRefresh: false
+      }).then(() => {
+        console.log('✅ Chargement initial terminé');
+      }).catch((error) => {
+        console.error('❌ Erreur chargement initial:', error);
       });
+    } else {
+      console.log('⏭️ Chargement initial non déclenché - conditions non remplies');
     }
   }, [user, isInitialized, loading, stableFetchClients, serverFilters, setIsInitialized]);
 
   // Gestion des changements de page - effet séparé
   useEffect(() => {
+    console.log('🔍 Effet changement de page - conditions:', { 
+      isInitialized, 
+      currentPage, 
+      hasUser: !!user,
+      isCurrentlyFetching: isCurrentlyFetchingRef.current 
+    });
+    
     if (isInitialized && currentPage > 1 && user && !isCurrentlyFetchingRef.current) {
-      console.log('📄 Changement de page vers:', currentPage);
+      console.log('📄 DÉCLENCHEMENT changement de page vers:', currentPage);
       
       stableFetchClients({
         userId: user.id,
         filters: serverFilters,
         page: currentPage,
         forceRefresh: false
+      }).then(() => {
+        console.log('✅ Changement de page terminé');
+      }).catch((error) => {
+        console.error('❌ Erreur changement de page:', error);
       });
+    } else {
+      console.log('⏭️ Changement de page non déclenché - conditions non remplies');
     }
   }, [currentPage, isInitialized, user, serverFilters, stableFetchClients, isCurrentlyFetchingRef]);
 };

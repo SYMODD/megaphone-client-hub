@@ -9,8 +9,14 @@ import { useClientDataEffects } from "./useClientDataEffects";
 import { useClientDataActions } from "./useClientDataActions";
 
 export const useClientData = () => {
+  console.log('🔍 useClientData - Début du hook');
+  
   const { user } = useAuth();
+  console.log('🔍 useClientData - User récupéré:', !!user);
+  
   const { serverFilters, localFilters, updateLocalFilters, applyServerFilters } = useClientFilters();
+  console.log('🔍 useClientData - Filtres initialisés');
+  
   const {
     clients,
     loading,
@@ -18,7 +24,10 @@ export const useClientData = () => {
     totalCount,
     fetchClients
   } = useClientFetcher();
+  console.log('🔍 useClientData - Fetcher initialisé:', { loading, error, clientsCount: clients?.length, totalCount });
+  
   const { currentPage, totalPages, handlePageChange, setCurrentPage } = usePagination(totalCount);
+  console.log('🔍 useClientData - Pagination initialisée:', { currentPage, totalPages });
   
   const {
     nationalities,
@@ -28,6 +37,11 @@ export const useClientData = () => {
     lastFetchParamsRef,
     isCurrentlyFetchingRef
   } = useClientDataState();
+  console.log('🔍 useClientData - État initialisé:', { 
+    nationalitiesCount: nationalities?.length, 
+    isInitialized,
+    isCurrentlyFetching: isCurrentlyFetchingRef.current 
+  });
 
   const { stableFetchClients } = useStableFetch({
     fetchClients,
@@ -35,6 +49,7 @@ export const useClientData = () => {
     lastFetchParamsRef,
     isCurrentlyFetchingRef
   });
+  console.log('🔍 useClientData - StableFetch initialisé');
 
   useClientDataEffects({
     user,
@@ -47,6 +62,7 @@ export const useClientData = () => {
     currentPage,
     isCurrentlyFetchingRef
   });
+  console.log('🔍 useClientData - Effets initialisés');
 
   const {
     fetchClientsWithFilters,
@@ -61,6 +77,15 @@ export const useClientData = () => {
     applyServerFilters,
     setCurrentPage,
     clients
+  });
+  console.log('🔍 useClientData - Actions initialisées');
+
+  console.log('🔍 useClientData - Hook terminé, état final:', { 
+    loading, 
+    error, 
+    clientsCount: clients?.length, 
+    totalCount,
+    isInitialized 
   });
 
   return {

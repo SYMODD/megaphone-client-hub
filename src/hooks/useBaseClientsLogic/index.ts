@@ -4,6 +4,8 @@ import { useBaseClientsActions } from "./useBaseClientsActions";
 import { useBaseClientsHandlers } from "./useBaseClientsHandlers";
 
 export const useBaseClientsLogic = () => {
+  console.log('🔍 useBaseClientsLogic - Début du hook');
+  
   const {
     clients,
     loading,
@@ -34,6 +36,13 @@ export const useBaseClientsLogic = () => {
     confirmDeleteClient
   } = useBaseClientsState();
 
+  console.log('🔍 useBaseClientsLogic - État récupéré:', { 
+    loading, 
+    error, 
+    clientsCount: clients?.length, 
+    totalCount 
+  });
+
   const {
     handleConfirmDeleteWithRefresh,
     handleClientUpdated,
@@ -48,6 +57,8 @@ export const useBaseClientsLogic = () => {
   } = useBaseClientsHandlers({
     setCurrentPage
   });
+
+  console.log('🔍 useBaseClientsLogic - Hook terminé, retour des données');
 
   return {
     // Données des clients
@@ -86,7 +97,7 @@ export const useBaseClientsLogic = () => {
     handleExport,
     handleRetry,
     filterClients,
-    forceRefresh: forceRefreshClients, // Use the improved version
+    forceRefresh: forceRefreshClients,
     
     // CORRECTION : Utilise la fonction avec rafraîchissement forcé amélioré
     confirmDeleteClient: handleConfirmDeleteWithRefresh
