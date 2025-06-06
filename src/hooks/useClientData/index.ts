@@ -9,7 +9,7 @@ import { usePagination } from "./usePagination";
 
 export const useClientData = () => {
   const { user } = useAuth();
-  const { serverFilters, applyServerFilters } = useClientFilters();
+  const { serverFilters, localFilters, updateLocalFilters, applyServerFilters } = useClientFilters();
   const {
     clients,
     loading,
@@ -67,12 +67,16 @@ export const useClientData = () => {
     nationality: string,
     dateRange: DateRange | undefined
   ) => {
-    console.log('Applying server-side filters:', { searchTerm, nationality, dateRange });
+    console.log('Applying optimized filters:', { searchTerm, nationality, dateRange });
     
+    // Mettre à jour les filtres locaux immédiatement
+    updateLocalFilters(searchTerm, nationality, dateRange);
+    
+    // Appliquer les filtres serveur et fetch
     const newFilters = applyServerFilters(searchTerm, nationality, dateRange);
     
     fetchClientsWithFilters({ ...newFilters, page: 1 });
-  }, [applyServerFilters, fetchClientsWithFilters]);
+  }, [updateLocalFilters, applyServerFilters, fetchClientsWithFilters]);
 
   // Fonction de rafraîchissement forcé améliorée
   const forceRefreshClients = useCallback(async () => {
@@ -134,18 +138,11 @@ export const useClientData = () => {
     selectedNationality: string,
     dateRange: DateRange | undefined
   ) => {
-    if (
-      searchTerm !== serverFilters.searchTerm ||
-      selectedNationality !== serverFilters.nationality ||
-      dateRange?.from?.getTime() !== serverFilters.dateFrom?.getTime() ||
-      dateRange?.to?.getTime() !== serverFilters.dateTo?.getTime()
-    ) {
-      applyFiltersAndFetch(searchTerm, selectedNationality, dateRange);
-      return clients;
-    }
-    
+    // Toujours appliquer les filtres, même si ils semblent identiques
+    // pour assurer la cohérence avec l'UI
+    applyFiltersAndFetch(searchTerm, selectedNationality, dateRange);
     return clients;
-  }, [clients, serverFilters, applyFiltersAndFetch]);
+  }, [clients, applyFiltersAndFetch]);
 
   return {
     clients,
@@ -155,10 +152,11 @@ export const useClientData = () => {
     totalCount,
     totalPages,
     nationalities,
+    localFilters,
     setCurrentPage: handlePageChange,
     fetchClients: fetchClientsWithFilters,
     filterClients,
     applyServerFilters: applyFiltersAndFetch,
-    forceRefreshClients // Export the force refresh function
+    forceRefreshClients
   };
 };

@@ -7,6 +7,7 @@ import { ClientTable } from "@/components/clients/ClientTable";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { Client } from "@/hooks/useClientData/types";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface BaseClientsContentProps {
   clients: Client[];
@@ -44,11 +45,18 @@ export const BaseClientsContent = ({
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Déclencher le filtrage quand les critères changent
+  // Debounce la recherche pour éviter trop d'appels API
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // Déclencher le filtrage seulement quand les valeurs debounced changent
   useEffect(() => {
-    console.log('🔍 Filtres mis à jour:', { searchTerm, selectedNationality, dateRange });
-    filterClients(searchTerm, selectedNationality, dateRange);
-  }, [searchTerm, selectedNationality, dateRange, filterClients]);
+    console.log('🔍 Filtres débounced mis à jour:', { 
+      searchTerm: debouncedSearchTerm, 
+      selectedNationality, 
+      dateRange 
+    });
+    filterClients(debouncedSearchTerm, selectedNationality, dateRange);
+  }, [debouncedSearchTerm, selectedNationality, dateRange, filterClients]);
 
   // Handler pour le rafraîchissement manuel
   const handleManualRefresh = async () => {
@@ -56,12 +64,27 @@ export const BaseClientsContent = ({
     console.log('🔄 Rafraîchissement manuel déclenché par l\'utilisateur');
     
     // Déclenche un nouveau filtrage avec les paramètres actuels
-    filterClients(searchTerm, selectedNationality, dateRange);
+    filterClients(debouncedSearchTerm, selectedNationality, dateRange);
     
     // Simule un délai pour l'animation
     setTimeout(() => {
       setIsRefreshing(false);
     }, 1000);
+  };
+
+  const handleNationalityChange = (nationality: string) => {
+    console.log('🌍 Changement de nationalité:', nationality);
+    setSelectedNationality(nationality);
+  };
+
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    console.log('📅 Changement de plage de dates:', range);
+    setDateRange(range);
+  };
+
+  const handleSearchChange = (term: string) => {
+    console.log('🔍 Changement de terme de recherche:', term);
+    setSearchTerm(term);
   };
 
   return (
@@ -94,11 +117,11 @@ export const BaseClientsContent = ({
       {/* Filtres et recherche optimisés */}
       <ClientFilters
         searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
+        setSearchTerm={handleSearchChange}
         selectedNationality={selectedNationality}
-        setSelectedNationality={setSelectedNationality}
+        setSelectedNationality={handleNationalityChange}
         dateRange={dateRange}
-        setDateRange={setDateRange}
+        setDateRange={handleDateRangeChange}
         nationalities={nationalitiesLoading ? [] : nationalities}
         onExport={onExport}
       />

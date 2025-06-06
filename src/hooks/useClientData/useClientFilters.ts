@@ -11,6 +11,29 @@ export const useClientFilters = () => {
     dateTo: null
   });
 
+  const [localFilters, setLocalFilters] = useState<ClientFilters>({
+    searchTerm: "",
+    nationality: "",
+    dateFrom: null,
+    dateTo: null
+  });
+
+  const updateLocalFilters = useCallback((
+    searchTerm: string,
+    nationality: string,
+    dateRange: DateRange | undefined
+  ) => {
+    const newLocalFilters: ClientFilters = {
+      searchTerm: searchTerm.trim(),
+      nationality,
+      dateFrom: dateRange?.from || null,
+      dateTo: dateRange?.to || null
+    };
+    
+    setLocalFilters(newLocalFilters);
+    return newLocalFilters;
+  }, []);
+
   const applyServerFilters = useCallback((
     searchTerm: string,
     nationality: string,
@@ -35,6 +58,7 @@ export const useClientFilters = () => {
     if (hasChanged) {
       console.log('✅ Filtres modifiés, mise à jour en cours...');
       setServerFilters(newFilters);
+      setLocalFilters(newFilters);
     } else {
       console.log('⏭️ Filtres identiques, pas de mise à jour');
     }
@@ -44,7 +68,9 @@ export const useClientFilters = () => {
 
   return {
     serverFilters,
+    localFilters,
     setServerFilters,
+    updateLocalFilters,
     applyServerFilters
   };
 };
