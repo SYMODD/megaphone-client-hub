@@ -5,6 +5,7 @@ import {
   isValidName, 
   isValidNationality, 
   extractValueFromLine,
+  extractRealValueFromField,
   containsMultilingualKeywords
 } from "./stringUtils";
 import { convertMainTextNationality, checkForNationalityInLine } from "./nationalityUtils";
@@ -25,25 +26,23 @@ export const extractDataFromMainText = (lines: string[], passportData: any) => {
     const line = lines[i].toUpperCase();
     const nextLine = i + 1 < lines.length ? lines[i + 1] : "";
     
+    console.log(`📝 Ligne ${i}: "${line}"`);
+    
     // Extraction multilingue du nom de famille
-    if (containsMultilingualKeywords(line, NAME_KEYWORDS.surname)) {
-      let nameValue = extractValueFromLine(line, NAME_KEYWORDS.surname);
-      if (!nameValue && nextLine) {
-        nameValue = extractValueFromLine(nextLine, []);
-      }
-      if (nameValue && isValidName(nameValue)) {
+    if (containsMultilingualKeywords(line, NAME_KEYWORDS.surname) && !passportData.nom) {
+      console.log("🔍 Ligne contient mot-clé nom de famille:", line);
+      const nameValue = extractRealValueFromField(line, nextLine);
+      if (nameValue) {
         passportData.nom = safeStringTrim(nameValue);
         console.log("✅ Nom de famille trouvé (multilingue):", nameValue);
       }
     }
     
     // Extraction multilingue du prénom
-    if (containsMultilingualKeywords(line, NAME_KEYWORDS.givenName)) {
-      let prenomValue = extractValueFromLine(line, NAME_KEYWORDS.givenName);
-      if (!prenomValue && nextLine) {
-        prenomValue = extractValueFromLine(nextLine, []);
-      }
-      if (prenomValue && isValidName(prenomValue)) {
+    if (containsMultilingualKeywords(line, NAME_KEYWORDS.givenName) && !passportData.prenom) {
+      console.log("🔍 Ligne contient mot-clé prénom:", line);
+      const prenomValue = extractRealValueFromField(line, nextLine);
+      if (prenomValue) {
         passportData.prenom = safeStringTrim(prenomValue);
         console.log("✅ Prénom trouvé (multilingue):", prenomValue);
       }
@@ -66,17 +65,21 @@ export const extractDataFromMainText = (lines: string[], passportData: any) => {
     if (passportFormat === 'numbered') {
       const match = line.match(PASSPORT_FORMAT_PATTERNS.numberedField);
       if (match) {
+        const fieldNumber = match[1];
         const fieldName = match[2].trim();
+        
+        console.log(`🔢 Champ numéroté ${fieldNumber}: "${fieldName}"`);
+        
         if (containsMultilingualKeywords(fieldName, NAME_KEYWORDS.surname) && !passportData.nom) {
-          const nameValue = extractValueFromLine(nextLine || "", []);
-          if (nameValue && isValidName(nameValue)) {
+          const nameValue = extractRealValueFromField(line, nextLine);
+          if (nameValue) {
             passportData.nom = safeStringTrim(nameValue);
             console.log("✅ Nom trouvé (format numéroté):", nameValue);
           }
         }
         if (containsMultilingualKeywords(fieldName, NAME_KEYWORDS.givenName) && !passportData.prenom) {
-          const prenomValue = extractValueFromLine(nextLine || "", []);
-          if (prenomValue && isValidName(prenomValue)) {
+          const prenomValue = extractRealValueFromField(line, nextLine);
+          if (prenomValue) {
             passportData.prenom = safeStringTrim(prenomValue);
             console.log("✅ Prénom trouvé (format numéroté):", prenomValue);
           }

@@ -38,6 +38,9 @@ export const isValidName = (name: string): boolean => {
     'PASSAPORTE', 'PORTUGAL', 'PORTUGUESA', 'REPUBLICA',
     // Néerlandais
     'PASPOORT', 'NEDERLAND', 'NEDERLANDS', 'KONINKRIJK',
+    // Étiquettes multilingues courantes
+    'GIVEN', 'NAMES', 'SURNAME', 'NOM', 'PRENOM', 'PRENOMS', 'VERNAMEN', 'VORNAMEN',
+    'FAMILIENNAME', 'NACHNAME', 'GEBURTENAME',
     // Autres
     'CANADA', 'CANADIAN', 'CANADIEN', 'SCHWEIZ', 'SUISSE', 'OSTERREICH',
     'AUTRICHE', 'BELGIE', 'BELGIQUE', 'NORWAY', 'SVERIGE', 'DANMARK'
@@ -64,15 +67,39 @@ export const isValidNationality = (nationality: string): boolean => {
 };
 
 export const extractValueFromLine = (line: string, keywords: string[]): string | null => {
+  console.log("🔍 Extraction de valeur de la ligne:", line);
+  
   // Enlever les keywords de la ligne pour extraire la valeur
   let cleanLine = safeStringTrim(line);
-  keywords.forEach(keyword => {
-    cleanLine = cleanLine.replace(new RegExp(keyword, 'gi'), '');
-  });
+  
+  // Pour les formats avec deux points, on prend ce qui vient après
+  const colonMatch = cleanLine.match(/^.*?:\s*(.+)$/);
+  if (colonMatch) {
+    cleanLine = colonMatch[1];
+    console.log("📋 Valeur après deux points:", cleanLine);
+  } else {
+    // Sinon, enlever tous les mots-clés
+    keywords.forEach(keyword => {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+      cleanLine = cleanLine.replace(regex, '');
+    });
+  }
   
   // Nettoyer les caractères spéciaux et espaces, mais préserver les accents
-  cleanLine = cleanLine.replace(/[:/\d\.\-\|]/g, '').trim();
+  cleanLine = cleanLine.replace(/[:/\d\.\-\|\/]/g, '').trim();
   
+  // Enlever les séquences de mots multilingues courantes
+  const multilingualPatterns = [
+    /\b(GIVEN\s+NAMES?|VERNAMEN|VORNAMEN|PRENOMS?)\b/gi,
+    /\b(SURNAME|FAMILIENNAME|NACHNAME|GEBURTENAME)\b/gi,
+    /\b(NOM|PRENOM)\b/gi
+  ];
+  
+  multilingualPatterns.forEach(pattern => {
+    cleanLine = cleanLine.replace(pattern, '').trim();
+  });
+  
+  console.log("✨ Valeur nettoyée:", cleanLine);
   return cleanLine.length > 1 ? cleanLine : null;
 };
 
@@ -88,4 +115,31 @@ export const normalizeForComparison = (text: string): string => {
 export const containsMultilingualKeywords = (text: string, keywords: string[]): boolean => {
   const normalizedText = normalizeForComparison(text);
   return keywords.some(keyword => normalizedText.includes(normalizeForComparison(keyword)));
+};
+
+// Nouvelle fonction pour extraire la valeur réelle après identification du champ
+export const extractRealValueFromField = (currentLine: string, nextLine: string = ""): string | null => {
+  console.log("🎯 Extraction valeur réelle - Ligne courante:", currentLine);
+  console.log("🎯 Extraction valeur réelle - Ligne suivante:", nextLine);
+  
+  // D'abord essayer d'extraire depuis la ligne courante (format avec deux points)
+  const colonMatch = currentLine.match(/^.*?:\s*(.+)$/);
+  if (colonMatch) {
+    const value = colonMatch[1].trim();
+    console.log("📍 Valeur trouvée après deux points:", value);
+    if (isValidName(value)) {
+      return value;
+    }
+  }
+  
+  // Ensuite essayer la ligne suivante (format numéroté allemand)
+  if (nextLine) {
+    const nextValue = nextLine.trim();
+    console.log("📍 Valeur candidate ligne suivante:", nextValue);
+    if (isValidName(nextValue)) {
+      return nextValue;
+    }
+  }
+  
+  return null;
 };
