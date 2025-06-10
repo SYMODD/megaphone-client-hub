@@ -15,7 +15,12 @@ export const useSecuritySettings = () => {
     try {
       setLoading(true);
       
-      // Check if the function exists before calling it
+      console.log('🔧 Appel de la fonction upsert_security_setting avec:', {
+        settingKey,
+        isEncrypted,
+        description
+      });
+      
       const { data, error } = await supabase.rpc('upsert_security_setting', {
         p_setting_key: settingKey,
         p_setting_value: settingValue,
@@ -24,10 +29,23 @@ export const useSecuritySettings = () => {
       });
 
       if (error) {
-        console.error('❌ Database error:', error);
-        throw error;
+        console.error('❌ Erreur de la base de données:', error);
+        
+        // Messages d'erreur plus spécifiques
+        let errorMessage = error.message;
+        if (error.message?.includes('permission')) {
+          errorMessage = "Vous n'avez pas les permissions nécessaires pour cette opération";
+        } else if (error.message?.includes('function') && error.message?.includes('does not exist')) {
+          errorMessage = "Fonction de base de données manquante. Veuillez contacter l'administrateur.";
+        } else if (error.message?.includes('digest')) {
+          errorMessage = "Extension de chiffrement non disponible. Configuration en cours...";
+        }
+        
+        throw new Error(errorMessage);
       }
 
+      console.log('✅ Paramètre sauvegardé avec succès');
+      
       toast({
         title: "Paramètre sauvegardé",
         description: `${settingKey} a été mis à jour avec succès`,
@@ -37,14 +55,9 @@ export const useSecuritySettings = () => {
     } catch (error: any) {
       console.error('❌ Erreur lors de la sauvegarde:', error);
       
-      // Show a more user-friendly error message
-      const errorMessage = error.message?.includes('permission') 
-        ? "Vous n'avez pas les permissions nécessaires pour cette opération"
-        : error.message || "Impossible de sauvegarder le paramètre";
-        
       toast({
         title: "Erreur de sauvegarde",
-        description: errorMessage,
+        description: error.message || "Impossible de sauvegarder le paramètre",
         variant: "destructive",
       });
       return { success: false, error };
@@ -57,8 +70,8 @@ export const useSecuritySettings = () => {
     try {
       setLoading(true);
       
-      // Since we can't access the view directly, we'll create a simpler approach
-      // This will work once the database function is properly set up
+      console.log('📋 Chargement des paramètres de sécurité:', settingKeys);
+      
       let query = supabase
         .from('security_settings')
         .select('id, setting_key, setting_value, is_encrypted, description, updated_at, updated_by, created_at');
@@ -70,16 +83,18 @@ export const useSecuritySettings = () => {
       const { data, error } = await query;
 
       if (error) {
-        console.error('❌ Database error:', error);
-        // Don't throw error, just return empty data
+        console.error('❌ Erreur de chargement:', error);
+        // Ne pas lever d'erreur, juste retourner des données vides
         return { success: true, data: [] };
       }
 
-      // Process the data to mask encrypted values
+      // Traiter les données pour masquer les valeurs chiffrées
       const processedData = (data || []).map(item => ({
         ...item,
         setting_value: item.is_encrypted ? '[ENCRYPTED]' : item.setting_value
       }));
+
+      console.log('✅ Paramètres chargés avec succès:', processedData.length, 'éléments');
 
       return { success: true, data: processedData };
     } catch (error: any) {
