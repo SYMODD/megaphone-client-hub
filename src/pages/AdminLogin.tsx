@@ -5,13 +5,10 @@ import { RoleSpecificLogin } from "@/components/auth/RoleSpecificLogin";
 import { useAuthOperations } from "@/hooks/useAuthOperations";
 import { AuthAlert } from "@/components/auth/AuthAlert";
 import { useEffect, useState } from "react";
-import { initializeCaptchaKeys } from "@/utils/initializeCaptcha";
-import { toast } from "@/hooks/use-toast";
 
 const AdminLogin = () => {
   const { user, profile, loading } = useAuth();
   const [shouldRedirect, setShouldRedirect] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
 
   const {
     error,
@@ -23,32 +20,6 @@ const AdminLogin = () => {
     handleCaptchaVerification
   } = useAuthOperations();
 
-  // Initialiser les clés reCAPTCHA au chargement
-  useEffect(() => {
-    const initializeKeys = async () => {
-      try {
-        console.log('🔧 Tentative d\'initialisation des clés reCAPTCHA...');
-        const result = await initializeCaptchaKeys();
-        
-        if (result.success) {
-          console.log('✅ Configuration reCAPTCHA réussie');
-          if (result.message !== 'Les clés sont déjà configurées') {
-            toast({
-              title: "Configuration reCAPTCHA",
-              description: "Les clés reCAPTCHA ont été configurées automatiquement",
-            });
-          }
-        }
-      } catch (error) {
-        console.warn('⚠️ Erreur lors de l\'initialisation des clés reCAPTCHA:', error);
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-
-    initializeKeys();
-  }, []);
-
   useEffect(() => {
     if (user && profile && !loading) {
       if (profile.role === "admin" || user.email === "essbane.salim@gmail.com") {
@@ -57,14 +28,12 @@ const AdminLogin = () => {
     }
   }, [user, profile, loading]);
 
-  if (loading || isInitializing) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-slate-600">
-            {isInitializing ? "Configuration du système..." : "Chargement..."}
-          </p>
+          <p className="mt-2 text-slate-600">Chargement...</p>
         </div>
       </div>
     );
@@ -74,7 +43,7 @@ const AdminLogin = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Ne pas exiger le CAPTCHA pour l'admin principal lors de la configuration initiale
+  // Ne pas exiger le CAPTCHA pour l'admin principal
   const shouldRequireCaptcha = requiresCaptcha && user?.email !== "essbane.salim@gmail.com";
 
   return (
