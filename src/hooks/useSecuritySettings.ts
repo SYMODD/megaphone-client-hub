@@ -83,7 +83,7 @@ export const useSecuritySettings = () => {
         .from('security_settings')
         .select('id, setting_key, setting_value, is_encrypted, description, updated_at, updated_by, created_at');
       
-      if (settingKeys) {
+      if (settingKeys && settingKeys.length > 0) {
         query = query.in('setting_key', settingKeys);
       }
 
@@ -91,9 +91,11 @@ export const useSecuritySettings = () => {
 
       if (error) {
         console.error('❌ Erreur de chargement:', error);
-        // Retourner des données vides en cas d'erreur pour éviter de casser l'interface
-        return { success: true, data: [] };
+        return { success: false, error, data: [] };
       }
+
+      console.log('✅ Paramètres chargés avec succès:', data?.length || 0, 'éléments');
+      console.log('📊 Données brutes:', data);
 
       // Traiter les données : ne masquer que les valeurs réellement chiffrées
       const processedData = (data || []).map(item => ({
@@ -104,7 +106,6 @@ export const useSecuritySettings = () => {
           : item.setting_value
       }));
 
-      console.log('✅ Paramètres chargés avec succès:', processedData.length, 'éléments');
       console.log('📊 Données traitées:', processedData);
 
       return { success: true, data: processedData };

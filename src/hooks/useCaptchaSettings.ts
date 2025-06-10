@@ -26,15 +26,15 @@ export const useCaptchaSettings = () => {
       
       console.log('📋 Résultat des paramètres CAPTCHA:', result);
       
-      if (result.success && result.data) {
+      if (result.success && result.data && Array.isArray(result.data)) {
         const publicKeySetting = result.data.find((s: any) => s.setting_key === 'recaptcha_public_key');
         
         console.log('🔑 Clé publique trouvée:', publicKeySetting);
         
-        if (publicKeySetting && publicKeySetting.setting_value && publicKeySetting.setting_value !== '[ENCRYPTED]') {
-          console.log('✅ Clé publique CAPTCHA configurée');
+        if (publicKeySetting && publicKeySetting.setting_value && publicKeySetting.setting_value.trim() !== '') {
+          console.log('✅ Clé publique CAPTCHA configurée:', publicKeySetting.setting_value);
           setSettings({
-            publicKey: publicKeySetting.setting_value,
+            publicKey: publicKeySetting.setting_value.trim(),
             isLoading: false,
             error: null
           });

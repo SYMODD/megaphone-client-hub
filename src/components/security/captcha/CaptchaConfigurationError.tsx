@@ -33,6 +33,9 @@ export const CaptchaConfigurationError = ({
               <p className="text-sm mt-1">
                 {settingsError || "Les clés reCAPTCHA ne sont pas configurées correctement."}
               </p>
+              <p className="text-xs mt-1 text-orange-600">
+                Vérifiez que les clés reCAPTCHA sont bien configurées dans l'administration.
+              </p>
             </div>
             
             <div className="flex gap-2">
