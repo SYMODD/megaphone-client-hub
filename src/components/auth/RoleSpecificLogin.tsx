@@ -3,18 +3,19 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, User, Lock } from "lucide-react";
-import { LoginCaptchaSection } from "./LoginCaptchaSection"; // 🔒 NOUVEAU
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Eye, EyeOff, LogIn, User, Lock } from "lucide-react";
+import { LoginCaptchaSection } from "./LoginCaptchaSection";
 
 interface RoleSpecificLoginProps {
-  role: string;
-  onLogin: (email: string, password: string) => void;
+  role: "admin" | "agent" | "superviseur";
+  onLogin: (email: string, password: string, role: string) => void;
   onShowPasswordReset: () => void;
   isLoading: boolean;
   hidePasswordReset?: boolean;
-  requiresCaptcha?: boolean; // 🔒 NOUVEAU
-  isCaptchaVerified?: boolean; // 🔒 NOUVEAU
-  onCaptchaVerificationChange?: (verified: boolean) => void; // 🔒 NOUVEAU
+  requiresCaptcha?: boolean;
+  isCaptchaVerified?: boolean;
+  onCaptchaVerificationChange?: (isVerified: boolean) => void;
 }
 
 export const RoleSpecificLogin = ({
@@ -23,132 +24,159 @@ export const RoleSpecificLogin = ({
   onShowPasswordReset,
   isLoading,
   hidePasswordReset = false,
-  requiresCaptcha = false, // 🔒 NOUVEAU
-  isCaptchaVerified = false, // 🔒 NOUVEAU
-  onCaptchaVerificationChange // 🔒 NOUVEAU
+  requiresCaptcha = false,
+  isCaptchaVerified = false,
+  onCaptchaVerificationChange
 }: RoleSpecificLoginProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const getRoleConfig = (role: string) => {
+  const getRoleDisplayName = () => {
     switch (role) {
       case "admin":
-        return {
-          title: "Connexion Administrateur",
-          bgColor: "from-red-500 to-red-600",
-          placeholder: "admin@sudmegaphone.com"
-        };
+        return "Administrateur";
       case "superviseur":
-        return {
-          title: "Connexion Superviseur",
-          bgColor: "from-purple-500 to-purple-600",
-          placeholder: "superviseur@sudmegaphone.com"
-        };
+        return "Superviseur";
       case "agent":
-        return {
-          title: "Connexion Agent",
-          bgColor: "from-blue-600 to-purple-600",
-          placeholder: "agent@sudmegaphone.com"
-        };
+        return "Agent";
       default:
-        return {
-          title: "Connexion",
-          bgColor: "from-slate-500 to-slate-600",
-          placeholder: "email@example.com"
-        };
+        return role;
     }
   };
 
-  const config = getRoleConfig(role);
+  const getRoleColor = () => {
+    switch (role) {
+      case "admin":
+        return "from-red-500 to-red-600";
+      case "superviseur":
+        return "from-purple-500 to-purple-600";
+      case "agent":
+        return "from-blue-500 to-blue-600";
+      default:
+        return "from-gray-500 to-gray-600";
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && password) {
-      onLogin(email, password);
+    
+    // Vérifier le CAPTCHA si requis
+    if (requiresCaptcha && !isCaptchaVerified) {
+      return;
     }
+    
+    onLogin(email, password, role);
   };
 
-  // 🔒 VÉRIFIER SI CAPTCHA EST REQUIS POUR CE RÔLE
-  const shouldShowCaptcha = (role === 'admin' || role === 'superviseur') || requiresCaptcha;
+  const isFormValid = email && password && (!requiresCaptcha || isCaptchaVerified);
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="text-center mb-6">
-        <div className={`mx-auto w-12 h-12 mb-3 bg-gradient-to-r ${config.bgColor} rounded-lg flex items-center justify-center shadow-lg`}>
-          <span className="text-white font-bold text-lg">SM</span>
+    <Card className="w-full border border-slate-200 shadow-lg">
+      <CardHeader className="space-y-4 pb-6">
+        <div className="flex items-center gap-3">
+          <div className={`p-3 bg-gradient-to-br ${getRoleColor()} rounded-xl shadow-lg`}>
+            <User className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <CardTitle className="text-xl font-semibold text-slate-800">
+              Connexion {getRoleDisplayName()}
+            </CardTitle>
+            <CardDescription className="text-slate-600">
+              Accédez à votre espace {getRoleDisplayName().toLowerCase()}
+            </CardDescription>
+          </div>
         </div>
-        <h2 className="text-xl font-semibold text-slate-800">{config.title}</h2>
-      </div>
+      </CardHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-slate-700">Email</Label>
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-            <Input
-              id="email"
-              type="email"
-              placeholder={config.placeholder}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="pl-10"
-              required
+      <CardContent className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-slate-700 font-medium">
+              Adresse email
+            </Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="votre.email@exemple.com"
+                className="pl-10 border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                required
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-slate-700 font-medium">
+              Mot de passe
+            </Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="pl-10 pr-10 border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                required
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                disabled={isLoading}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Section CAPTCHA conditionnelle */}
+          {requiresCaptcha && (
+            <LoginCaptchaSection
+              onVerificationChange={onCaptchaVerificationChange || (() => {})}
+              show={requiresCaptcha}
             />
-          </div>
-        </div>
+          )}
 
-        <div className="space-y-2">
-          <Label htmlFor="password" className="text-slate-700">Mot de passe</Label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="Votre mot de passe"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 pr-10"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
-            >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
-        </div>
+          <Button
+            type="submit"
+            className={`w-full bg-gradient-to-r ${getRoleColor()} hover:opacity-90 text-white font-medium py-2.5 transition-all duration-200 shadow-md hover:shadow-lg`}
+            disabled={isLoading || !isFormValid}
+          >
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>Connexion...</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <LogIn className="w-4 h-4" />
+                <span>Se connecter</span>
+              </div>
+            )}
+          </Button>
 
-        {/* 🔒 NOUVELLE SECTION CAPTCHA CONDITIONNELLE */}
-        {shouldShowCaptcha && (
-          <LoginCaptchaSection
-            onVerificationChange={onCaptchaVerificationChange || (() => {})}
-            show={shouldShowCaptcha}
-          />
-        )}
-
-        <Button
-          type="submit"
-          className={`w-full bg-gradient-to-r ${config.bgColor} hover:opacity-90 text-white font-medium`}
-          disabled={isLoading || (shouldShowCaptcha && !isCaptchaVerified)} // 🔒 Désactiver si CAPTCHA requis mais pas vérifié
-        >
-          {isLoading ? "Connexion..." : "Se connecter"}
-        </Button>
-
-        {!hidePasswordReset && (
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={onShowPasswordReset}
-              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-            >
-              Mot de passe oublié ?
-            </button>
-          </div>
-        )}
-      </form>
-    </div>
+          {!hidePasswordReset && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={onShowPasswordReset}
+                className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                disabled={isLoading}
+              >
+                Mot de passe oublié ?
+              </button>
+            </div>
+          )}
+        </form>
+      </CardContent>
+    </Card>
   );
 };

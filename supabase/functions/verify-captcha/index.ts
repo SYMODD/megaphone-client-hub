@@ -16,7 +16,7 @@ serve(async (req) => {
     const { captchaToken } = await req.json();
     
     if (!captchaToken) {
-      console.error('Captcha token manquant');
+      console.error('❌ Token CAPTCHA manquant');
       return new Response(
         JSON.stringify({ success: false, error: 'Token CAPTCHA manquant' }),
         { 
@@ -28,7 +28,7 @@ serve(async (req) => {
 
     const secretKey = Deno.env.get('RECAPTCHA_SECRET_KEY');
     if (!secretKey) {
-      console.error('Clé secrète reCAPTCHA non configurée');
+      console.error('❌ Clé secrète reCAPTCHA non configurée');
       return new Response(
         JSON.stringify({ success: false, error: 'Configuration CAPTCHA manquante' }),
         { 
@@ -38,7 +38,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('🔒 Vérification CAPTCHA en cours...');
+    console.log('🔒 Début de la vérification CAPTCHA...');
     
     // Vérification auprès de Google reCAPTCHA
     const verificationResponse = await fetch('https://www.google.com/recaptcha/api/siteverify', {
@@ -49,30 +49,47 @@ serve(async (req) => {
       body: `secret=${secretKey}&response=${captchaToken}`,
     });
 
+    if (!verificationResponse.ok) {
+      console.error('❌ Erreur HTTP lors de la vérification:', verificationResponse.status);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Erreur de communication avec le service CAPTCHA' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     const verificationResult = await verificationResponse.json();
     
-    console.log('🔍 Résultat vérification CAPTCHA:', {
+    console.log('🔍 Résultat brut de la vérification CAPTCHA:', {
       success: verificationResult.success,
       score: verificationResult.score,
-      action: verificationResult.action
+      action: verificationResult.action,
+      challenge_ts: verificationResult.challenge_ts,
+      hostname: verificationResult.hostname,
+      'error-codes': verificationResult['error-codes']
     });
 
     if (verificationResult.success) {
-      // Pour reCAPTCHA v3, vérifier le score (optionnel)
+      // Pour reCAPTCHA v3, vérifier le score si disponible
       const minScore = 0.5;
-      if (verificationResult.score && verificationResult.score < minScore) {
-        console.warn(`⚠️ Score CAPTCHA trop bas: ${verificationResult.score}`);
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'Score de sécurité insuffisant',
-            score: verificationResult.score 
-          }),
-          { 
-            status: 400, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
+      if (verificationResult.score !== undefined) {
+        if (verificationResult.score < minScore) {
+          console.warn(`⚠️ Score CAPTCHA trop bas: ${verificationResult.score} < ${minScore}`);
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'Score de sécurité insuffisant. Veuillez réessayer.',
+              score: verificationResult.score 
+            }),
+            { 
+              status: 400, 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            }
+          );
+        }
+        console.log(`✅ Score CAPTCHA acceptable: ${verificationResult.score}`);
       }
 
       console.log('✅ CAPTCHA vérifié avec succès');
@@ -87,12 +104,24 @@ serve(async (req) => {
         }
       );
     } else {
-      console.error('❌ Échec vérification CAPTCHA:', verificationResult['error-codes']);
+      const errorCodes = verificationResult['error-codes'] || [];
+      console.error('❌ Échec vérification CAPTCHA. Codes d\'erreur:', errorCodes);
+      
+      // Messages d'erreur plus clairs selon les codes d'erreur
+      let errorMessage = 'Échec de la vérification CAPTCHA';
+      if (errorCodes.includes('timeout-or-duplicate')) {
+        errorMessage = 'Token CAPTCHA expiré ou déjà utilisé. Veuillez réessayer.';
+      } else if (errorCodes.includes('invalid-input-response')) {
+        errorMessage = 'Réponse CAPTCHA invalide. Veuillez réessayer.';
+      } else if (errorCodes.includes('missing-input-response')) {
+        errorMessage = 'Aucune réponse CAPTCHA fournie.';
+      }
+      
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Échec de la vérification CAPTCHA',
-          details: verificationResult['error-codes']
+          error: errorMessage,
+          details: errorCodes
         }),
         { 
           status: 400, 
@@ -102,11 +131,11 @@ serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('🚨 Erreur lors de la vérification CAPTCHA:', error);
+    console.error('🚨 Erreur critique lors de la vérification CAPTCHA:', error);
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: 'Erreur interne lors de la vérification CAPTCHA'
+        error: 'Erreur interne du serveur lors de la vérification CAPTCHA'
       }),
       { 
         status: 500, 

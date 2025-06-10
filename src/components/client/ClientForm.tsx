@@ -1,98 +1,74 @@
 
-import { PersonalInfoSection } from "./PersonalInfoSection";
-import { ContactInfoSection } from "./ContactInfoSection";
-import { PassportSection } from "./PassportSection";
-import { RegistrationSection } from "./RegistrationSection";
-import { FormActions } from "./FormActions";
-import { BarcodeScanner } from "./BarcodeScanner";
-import { CaptchaSection } from "./CaptchaSection"; // 🔒 NOUVEAU
+import { useState } from "react";
+import { DocumentTypeSelector } from "./DocumentTypeSelector";
+import { CINForm } from "./CINForm";
+import { PassportMarocainForm } from "./PassportMarocainForm";
+import { PassportEtrangerForm } from "./PassportEtrangerForm";
+import { CarteSejourForm } from "./CarteSejourForm";
+import { CaptchaSection } from "./CaptchaSection";
 import { useClientFormLogic } from "@/hooks/useClientForm";
-import { DocumentType } from "@/types/documentTypes";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Shield, Info } from "lucide-react";
 
 export const ClientForm = () => {
-  const { 
-    formData, 
-    isLoading, 
+  const {
     selectedDocumentType,
-    isCaptchaVerified, // 🔒 NOUVEAU
-    handleInputChange, 
-    handleSubmit, 
-    handleMRZDataExtracted,
+    isCaptchaVerified,
     handleDocumentTypeSelect,
-    handleBarcodeScanned,
-    handleCaptchaVerificationChange // 🔒 NOUVEAU
+    handleCaptchaVerificationChange
   } = useClientFormLogic();
 
-  const handleBarcodeScannedWithLogging = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
-    console.log("🔥 CLIENT FORM - RÉCEPTION BARCODE:", {
-      barcode,
-      phone,
-      barcodeImageUrl,
-      component: "ClientForm"
-    });
-    
-    handleBarcodeScanned(barcode, phone, barcodeImageUrl);
-  };
-
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    console.log("🔥 CLIENT FORM - SOUMISSION - État actuel du formulaire:", {
-      code_barre: formData.code_barre,
-      code_barre_image_url: formData.code_barre_image_url,
-      url_présente: formData.code_barre_image_url ? "✅ OUI" : "❌ NON",
-      captcha_verified: isCaptchaVerified ? "✅ VÉRIFIÉ" : "❌ NON VÉRIFIÉ" // 🔒 NOUVEAU
-    });
-    
-    handleSubmit(e);
+  const renderDocumentForm = () => {
+    switch (selectedDocumentType) {
+      case "cin":
+        return <CINForm />;
+      case "passeport_marocain":
+        return <PassportMarocainForm />;
+      case "passeport_etranger":
+        return <PassportEtrangerForm />;
+      case "carte_sejour":
+        return <CarteSejourForm />;
+      default:
+        return <CINForm />;
+    }
   };
 
   return (
-    <form onSubmit={handleFormSubmit} className="space-y-4 sm:space-y-6">
-      <div className="space-y-4 sm:space-y-6">
-        <PassportSection 
-          scannedImage={formData.scannedImage}
-          onImageScanned={(image) => handleInputChange("scannedImage", image)}
-          onMRZDataExtracted={handleMRZDataExtracted}
-          selectedDocumentType={selectedDocumentType as DocumentType}
-          onDocumentTypeSelect={handleDocumentTypeSelect}
-        />
+    <div className="space-y-6">
+      {/* Information de sécurité */}
+      <Alert className="border-blue-200 bg-blue-50">
+        <Shield className="w-4 h-4 text-blue-600" />
+        <AlertDescription className="text-blue-800">
+          <strong>Sécurité renforcée :</strong> Une vérification CAPTCHA est maintenant requise pour tous les nouveaux enregistrements de clients.
+        </AlertDescription>
+      </Alert>
 
-        <BarcodeScanner 
-          onBarcodeScanned={handleBarcodeScannedWithLogging}
-          currentBarcode={formData.code_barre}
-        />
+      {/* Sélecteur de type de document */}
+      <DocumentTypeSelector
+        selectedType={selectedDocumentType}
+        onTypeSelect={handleDocumentTypeSelect}
+      />
 
-        {selectedDocumentType && (
-          <>
-            <PersonalInfoSection 
-              formData={formData}
-              onInputChange={handleInputChange}
-            />
+      {/* Section CAPTCHA - Obligatoire */}
+      <CaptchaSection
+        onVerificationChange={handleCaptchaVerificationChange}
+        required={true}
+      />
 
-            <ContactInfoSection 
-              formData={formData}
-              onInputChange={handleInputChange}
-            />
+      {/* Information sur le statut CAPTCHA */}
+      {!isCaptchaVerified && (
+        <Alert className="border-orange-200 bg-orange-50">
+          <Info className="w-4 h-4 text-orange-600" />
+          <AlertDescription className="text-orange-800">
+            Veuillez compléter la vérification CAPTCHA ci-dessus avant de pouvoir soumettre le formulaire.
+          </AlertDescription>
+        </Alert>
+      )}
 
-            <RegistrationSection 
-              formData={formData}
-              onInputChange={handleInputChange}
-            />
-
-            {/* 🔒 NOUVELLE SECTION CAPTCHA */}
-            <CaptchaSection 
-              onVerificationChange={handleCaptchaVerificationChange}
-              required={true}
-            />
-
-            <FormActions 
-              isLoading={isLoading}
-              onSubmit={() => {}} // La soumission se fait via le form onSubmit
-            />
-          </>
-        )}
+      {/* Formulaire spécifique au document */}
+      <div className={`transition-opacity duration-300 ${!isCaptchaVerified ? 'opacity-50' : 'opacity-100'}`}>
+        {renderDocumentForm()}
       </div>
-    </form>
+    </div>
   );
 };
