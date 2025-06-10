@@ -88,7 +88,11 @@ export const convertMainTextNationality = (nationality: string): string => {
     "POLISH": "Pologne",
     "POLSKA": "Pologne",
     "RUSSIAN": "Russie",
-    "ROSSIYSKAYA": "Russie"
+    "ROSSIYSKAYA": "Russie",
+    
+    // Corrections spécifiques pour les erreurs d'OCR courantes
+    "NATION": "Canada", // Correction pour le cas d'OCR incomplet sur passeport canadien
+    "NATIONA": "Canada"
   };
 
   return mainTextMapping[nationalityUpper] || nationality;
@@ -99,6 +103,11 @@ export const checkForNationalityInLine = (line: string): string | null => {
   
   // Vérification spécifique pour le format canadien
   if (lineUpper === "CANADIAN/CANADIENNE") {
+    return "Canada";
+  }
+  
+  // Détection spéciale pour "CANADA" dans le texte
+  if (lineUpper.includes("CANADA")) {
     return "Canada";
   }
   
@@ -116,7 +125,10 @@ export const checkForNationalityInLine = (line: string): string | null => {
     "EGYPTIAN", "EGYPTIENNE", "LEBANESE", "LIBANAISE", "SYRIAN", "SYRIENNE", "JORDANIAN", "JORDANIENNE",
     
     // Autres
-    "BRAZILIAN", "BRASILEIRA", "ARGENTINE", "ARGENTINO", "CHINESE", "JAPONAISE", "KOREAN", "INDIEN"
+    "BRAZILIAN", "BRASILEIRA", "ARGENTINE", "ARGENTINO", "CHINESE", "JAPONAISE", "KOREAN", "INDIEN",
+    
+    // Corrections pour erreurs OCR
+    "NATION", "NATIONA"
   ];
 
   for (const nat of knownNationalities) {

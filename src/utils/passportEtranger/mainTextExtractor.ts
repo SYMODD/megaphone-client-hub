@@ -59,6 +59,12 @@ export const extractDataFromMainText = (lines: string[], passportData: any) => {
       }
     }
 
+    // Détection spéciale pour passeport canadien
+    if (line.includes("CANADA") && !passportData.nationalite) {
+      passportData.nationalite = "Canada";
+      console.log("✅ Nationalité canadienne détectée");
+    }
+
     // Extraction multilingue du nom de famille (logique de fallback)
     if (containsMultilingualKeywords(line, NAME_KEYWORDS.surname) && !passportData.nom) {
       console.log("🔍 Ligne contient mot-clé nom de famille:", line);
@@ -135,18 +141,33 @@ export const extractDataFromMainText = (lines: string[], passportData: any) => {
       }
     }
     
-    // Format allemand : SEULEMENT si aucune donnée n'a été trouvée avec les méthodes précédentes
-    if (passportFormat === 'german' && !passportData.nom && !passportData.prenom && 
+    // Format allemand : amélioration de la détection des noms isolés
+    if (passportFormat === 'german' && 
         line.match(PASSPORT_FORMAT_PATTERNS.germanIsolatedName) && 
         !line.match(/^(PASSPORT|REISEPASS|CANADA|DEUTSCH|GERMAN|BUNDESREPUBLIK|PP|CAN|TYPE)$/)) {
       
       if (isValidName(line)) {
-        if (!passportData.nom) {
-          passportData.nom = safeStringTrim(line);
-          console.log("✅ Nom de famille potentiel (format allemand):", line);
-        } else if (!passportData.prenom) {
-          passportData.prenom = safeStringTrim(line);
-          console.log("✅ Prénom potentiel (format allemand):", line);
+        // Logique améliorée : chercher des noms après les champs identifiés
+        if (i > 0) {
+          const prevLine = lines[i - 1].toUpperCase();
+          // Si la ligne précédente contient un mot-clé de nom de famille
+          if (containsMultilingualKeywords(prevLine, NAME_KEYWORDS.surname) && !passportData.nom) {
+            passportData.nom = safeStringTrim(line);
+            console.log("✅ Nom de famille trouvé après champ (format allemand):", line);
+          }
+          // Si la ligne précédente contient un mot-clé de prénom
+          else if (containsMultilingualKeywords(prevLine, NAME_KEYWORDS.givenName) && !passportData.prenom) {
+            passportData.prenom = safeStringTrim(line);
+            console.log("✅ Prénom trouvé après champ (format allemand):", line);
+          }
+          // Sinon, ordre par défaut : nom puis prénom
+          else if (!passportData.nom) {
+            passportData.nom = safeStringTrim(line);
+            console.log("✅ Nom de famille potentiel (format allemand):", line);
+          } else if (!passportData.prenom) {
+            passportData.prenom = safeStringTrim(line);
+            console.log("✅ Prénom potentiel (format allemand):", line);
+          }
         }
       }
     }
@@ -160,8 +181,6 @@ export const extractDataFromMainText = (lines: string[], passportData: any) => {
       }
     }
   }
-
-  // Pas de post-traitement automatique d'inversion - maintenir l'ordre trouvé
 
   console.log("🎯 Extraction multilingue terminée - Résultats:", {
     nom: passportData.nom,
