@@ -1,9 +1,10 @@
 
 import { useState } from "react";
 import { ClientFormData } from "./types";
+import { DocumentType } from "@/types/documentTypes";
 
 export const useFormState = () => {
-  const [selectedDocumentType, setSelectedDocumentType] = useState<string>("");
+  const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType | null>(null);
   
   const [formData, setFormData] = useState<ClientFormData>({
     nom: "",
@@ -35,10 +36,10 @@ export const useFormState = () => {
     });
   };
 
-  const handleDocumentTypeSelect = (documentType: string) => {
+  const handleDocumentTypeSelect = (documentType: DocumentType | null) => {
     console.log("📄 TYPE DOCUMENT sélectionné:", documentType);
     setSelectedDocumentType(documentType);
-    setFormData(prev => ({ ...prev, document_type: documentType }));
+    setFormData(prev => ({ ...prev, document_type: documentType || "" }));
   };
 
   const resetForm = () => {
@@ -57,7 +58,7 @@ export const useFormState = () => {
       photo_url: "",
       scannedImage: null
     });
-    setSelectedDocumentType("");
+    setSelectedDocumentType(null);
   };
 
   return {

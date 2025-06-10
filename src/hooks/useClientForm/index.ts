@@ -4,6 +4,7 @@ import { useFormState } from "./useFormState";
 import { useMRZHandler } from "./useMRZHandler";
 import { useBarcodeHandler } from "./useBarcodeHandler";
 import { useFormSubmission } from "./useFormSubmission";
+import { DocumentType } from "@/types/documentTypes";
 
 export const useClientFormLogic = () => {
   const [isCaptchaVerified, setIsCaptchaVerified] = useState(false); // 🔒 NOUVEAU: État CAPTCHA
