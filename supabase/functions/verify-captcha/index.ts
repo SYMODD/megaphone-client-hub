@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,9 +27,22 @@ serve(async (req) => {
       );
     }
 
-    const secretKey = Deno.env.get('RECAPTCHA_SECRET_KEY');
-    if (!secretKey) {
-      console.error('❌ Clé secrète reCAPTCHA non configurée');
+    // Initialiser le client Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    console.log('🔒 Récupération de la clé secrète reCAPTCHA depuis la base de données...');
+
+    // Récupérer la clé secrète depuis la base de données
+    const { data: settingData, error: settingError } = await supabase
+      .from('security_settings')
+      .select('setting_value, is_encrypted')
+      .eq('setting_key', 'recaptcha_secret_key')
+      .single();
+
+    if (settingError || !settingData) {
+      console.error('❌ Clé secrète reCAPTCHA non trouvée dans la base de données:', settingError);
       return new Response(
         JSON.stringify({ success: false, error: 'Configuration CAPTCHA manquante' }),
         { 
@@ -38,7 +52,18 @@ serve(async (req) => {
       );
     }
 
-    console.log('🔒 Début de la vérification CAPTCHA...');
+    let secretKey = settingData.setting_value;
+
+    // Si la clé est chiffrée, utiliser la fonction de déchiffrement de PostgreSQL
+    if (settingData.is_encrypted) {
+      console.log('🔓 Déchiffrement de la clé secrète...');
+      // Note: Pour les clés chiffrées avec bcrypt, on ne peut pas les déchiffrer
+      // Il faudrait utiliser un chiffrement symétrique réversible
+      // Pour l'instant, on assume que la clé est stockée en clair pour la vérification CAPTCHA
+      console.warn('⚠️ La clé secrète est marquée comme chiffrée, mais le déchiffrement n\'est pas implémenté');
+    }
+
+    console.log('🔍 Début de la vérification CAPTCHA...');
     
     // Vérification auprès de Google reCAPTCHA
     const verificationResponse = await fetch('https://www.google.com/recaptcha/api/siteverify', {
@@ -115,6 +140,8 @@ serve(async (req) => {
         errorMessage = 'Réponse CAPTCHA invalide. Veuillez réessayer.';
       } else if (errorCodes.includes('missing-input-response')) {
         errorMessage = 'Aucune réponse CAPTCHA fournie.';
+      } else if (errorCodes.includes('invalid-input-secret')) {
+        errorMessage = 'Clé secrète reCAPTCHA invalide. Contactez l\'administrateur.';
       }
       
       return new Response(
