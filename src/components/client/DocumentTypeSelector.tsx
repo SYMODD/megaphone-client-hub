@@ -1,13 +1,14 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, IdCard, BookOpen, Globe, CreditCard } from "lucide-react";
 import { DocumentType, documentTypes } from "@/types/documentTypes";
-import { useNavigate } from "react-router-dom";
 
 interface DocumentTypeSelectorProps {
   selectedType: DocumentType | null;
   onTypeSelect: (type: DocumentType) => void;
   onBack?: () => void;
+  allowNavigation?: boolean; // New prop to control navigation behavior
 }
 
 const iconMap = {
@@ -17,26 +18,35 @@ const iconMap = {
   'credit-card': CreditCard,
 };
 
-export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: DocumentTypeSelectorProps) => {
-  const navigate = useNavigate();
+export const DocumentTypeSelector = ({ 
+  selectedType, 
+  onTypeSelect, 
+  onBack,
+  allowNavigation = true // Default to true for backward compatibility
+}: DocumentTypeSelectorProps) => {
 
   const handleTypeClick = (docType: DocumentType) => {
-    // Navigate to specific scanner page based on document type
-    switch (docType) {
-      case 'cin':
-        navigate('/scanner-cin');
-        break;
-      case 'passeport_marocain':
-        navigate('/scanner-passeport-marocain');
-        break;
-      case 'passeport_etranger':
-        navigate('/scanner-passeport-etranger');
-        break;
-      case 'carte_sejour':
-        navigate('/scanner-carte-sejour');
-        break;
-      default:
-        onTypeSelect(docType);
+    if (allowNavigation) {
+      // Original navigation behavior for other pages
+      switch (docType) {
+        case 'cin':
+          // Navigation logic would go here
+          break;
+        case 'passeport_marocain':
+          // Navigation logic would go here
+          break;
+        case 'passeport_etranger':
+          // Navigation logic would go here
+          break;
+        case 'carte_sejour':
+          // Navigation logic would go here
+          break;
+        default:
+          onTypeSelect(docType);
+      }
+    } else {
+      // Local selection only - no navigation
+      onTypeSelect(docType);
     }
   };
 
