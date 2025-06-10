@@ -4,80 +4,124 @@ import {
   safeStringTrim, 
   isValidName, 
   isValidNationality, 
-  extractValueFromLine 
+  extractValueFromLine,
+  containsMultilingualKeywords
 } from "./stringUtils";
 import { convertMainTextNationality, checkForNationalityInLine } from "./nationalityUtils";
+import { 
+  NAME_KEYWORDS, 
+  NATIONALITY_KEYWORDS, 
+  PASSPORT_FORMAT_PATTERNS,
+  detectPassportFormat 
+} from "./multilingualPatterns";
 
 export const extractDataFromMainText = (lines: string[], passportData: any) => {
+  console.log("🌍 Extraction multilingue - Analyse de", lines.length, "lignes");
+  
+  // Détecter le format du passeport
+  const passportFormat = detectPassportFormat(lines);
+  
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].toUpperCase();
     const nextLine = i + 1 < lines.length ? lines[i + 1] : "";
     
-    // Recherche du nom (Surname/Name/Nom) - c'est le nom de famille
-    if (line.includes('SURNAME') || line.includes('NAME') || line.match(/^\d+\.\s*NOM/)) {
-      // Le nom peut être sur la même ligne ou la ligne suivante
-      let nameValue = extractValueFromLine(line, ['SURNAME', 'NAME', 'NOM']);
+    // Extraction multilingue du nom de famille
+    if (containsMultilingualKeywords(line, NAME_KEYWORDS.surname)) {
+      let nameValue = extractValueFromLine(line, NAME_KEYWORDS.surname);
       if (!nameValue && nextLine) {
         nameValue = extractValueFromLine(nextLine, []);
       }
       if (nameValue && isValidName(nameValue)) {
-        passportData.nom = safeStringTrim(nameValue); // Nom de famille
-        console.log("Nom de famille trouvé dans le texte principal:", nameValue);
+        passportData.nom = safeStringTrim(nameValue);
+        console.log("✅ Nom de famille trouvé (multilingue):", nameValue);
       }
     }
     
-    // Recherche du prénom (Given names/Prénoms/Vornamen) - c'est le prénom
-    if (line.includes('GIVEN') || line.includes('PRENOM') || line.includes('VORNAMEN')) {
-      let prenomValue = extractValueFromLine(line, ['GIVEN', 'NAMES', 'PRENOM', 'VORNAMEN']);
+    // Extraction multilingue du prénom
+    if (containsMultilingualKeywords(line, NAME_KEYWORDS.givenName)) {
+      let prenomValue = extractValueFromLine(line, NAME_KEYWORDS.givenName);
       if (!prenomValue && nextLine) {
         prenomValue = extractValueFromLine(nextLine, []);
       }
       if (prenomValue && isValidName(prenomValue)) {
-        passportData.prenom = safeStringTrim(prenomValue); // Prénom
-        console.log("Prénom trouvé dans le texte principal:", prenomValue);
+        passportData.prenom = safeStringTrim(prenomValue);
+        console.log("✅ Prénom trouvé (multilingue):", prenomValue);
       }
     }
 
-    // Recherche de la nationalité dans le texte principal
-    if (line.includes('NATIONALITY') || line.includes('STAATSANGEHÖRIGKEIT') || line.includes('NATIONALITÉ')) {
-      let nationalityValue = extractValueFromLine(line, ['NATIONALITY', 'STAATSANGEHÖRIGKEIT', 'NATIONALITÉ']);
+    // Extraction multilingue de la nationalité
+    if (containsMultilingualKeywords(line, NATIONALITY_KEYWORDS)) {
+      let nationalityValue = extractValueFromLine(line, NATIONALITY_KEYWORDS);
       if (!nationalityValue && nextLine) {
         nationalityValue = extractValueFromLine(nextLine, []);
       }
       if (nationalityValue && isValidNationality(nationalityValue)) {
-        // Convertir les nationalités spécifiques
         const convertedNationality = convertMainTextNationality(nationalityValue);
         passportData.nationalite = safeStringTrim(convertedNationality);
-        console.log("Nationalité trouvée dans le texte principal:", nationalityValue, "->", convertedNationality);
+        console.log("✅ Nationalité trouvée (multilingue):", nationalityValue, "->", convertedNationality);
       }
     }
 
-    // Patterns spécifiques pour différents formats de passeports
-    
-    // Format allemand : recherche de lignes avec des noms isolés
-    // Pour ce format, on doit identifier correctement le nom et le prénom
-    if (line.match(/^[A-Z]{2,20}$/) && !line.match(/^(PASSPORT|REISEPASS|CANADA|DEUTSCH|GERMAN)$/)) {
-      // Vérifier si c'est potentiellement un nom
-      if (isValidName(line)) {
-        // Si on n'a pas encore de nom de famille, on l'assigne
-        if (!passportData.nom) {
-          passportData.nom = safeStringTrim(line);
-          console.log("Nom de famille potentiel trouvé (format allemand):", line);
-        } 
-        // Si on a déjà un nom mais pas de prénom, on l'assigne comme prénom
-        else if (!passportData.prenom) {
-          passportData.prenom = safeStringTrim(line);
-          console.log("Prénom potentiel trouvé (format allemand):", line);
+    // Traitement spécifique selon le format détecté
+    if (passportFormat === 'numbered') {
+      const match = line.match(PASSPORT_FORMAT_PATTERNS.numberedField);
+      if (match) {
+        const fieldName = match[2].trim();
+        if (containsMultilingualKeywords(fieldName, NAME_KEYWORDS.surname) && !passportData.nom) {
+          const nameValue = extractValueFromLine(nextLine || "", []);
+          if (nameValue && isValidName(nameValue)) {
+            passportData.nom = safeStringTrim(nameValue);
+            console.log("✅ Nom trouvé (format numéroté):", nameValue);
+          }
+        }
+        if (containsMultilingualKeywords(fieldName, NAME_KEYWORDS.givenName) && !passportData.prenom) {
+          const prenomValue = extractValueFromLine(nextLine || "", []);
+          if (prenomValue && isValidName(prenomValue)) {
+            passportData.prenom = safeStringTrim(prenomValue);
+            console.log("✅ Prénom trouvé (format numéroté):", prenomValue);
+          }
+        }
+      }
+    }
+
+    if (passportFormat === 'colon') {
+      const match = line.match(PASSPORT_FORMAT_PATTERNS.colonFormat);
+      if (match) {
+        const fieldName = match[1].trim();
+        const fieldValue = match[2].trim();
+        
+        if (containsMultilingualKeywords(fieldName, NAME_KEYWORDS.surname) && !passportData.nom && isValidName(fieldValue)) {
+          passportData.nom = safeStringTrim(fieldValue);
+          console.log("✅ Nom trouvé (format deux points):", fieldValue);
+        }
+        if (containsMultilingualKeywords(fieldName, NAME_KEYWORDS.givenName) && !passportData.prenom && isValidName(fieldValue)) {
+          passportData.prenom = safeStringTrim(fieldValue);
+          console.log("✅ Prénom trouvé (format deux points):", fieldValue);
         }
       }
     }
     
-    // Format canadien : recherche après des patterns spécifiques
+    // Format allemand amélioré : recherche de lignes avec des noms isolés
+    if (passportFormat === 'german' && line.match(PASSPORT_FORMAT_PATTERNS.germanIsolatedName) && 
+        !line.match(/^(PASSPORT|REISEPASS|CANADA|DEUTSCH|GERMAN|BUNDESREPUBLIK)$/)) {
+      
+      if (isValidName(line)) {
+        if (!passportData.nom) {
+          passportData.nom = safeStringTrim(line);
+          console.log("✅ Nom de famille potentiel (format allemand):", line);
+        } else if (!passportData.prenom) {
+          passportData.prenom = safeStringTrim(line);
+          console.log("✅ Prénom potentiel (format allemand):", line);
+        }
+      }
+    }
+    
+    // Format canadien et autres : recherche après des patterns spécifiques
     if (line.includes('TYPE') && nextLine) {
       const possibleName = safeStringTrim(nextLine);
       if (isValidName(possibleName) && !passportData.nom) {
         passportData.nom = possibleName;
-        console.log("Nom trouvé après TYPE:", possibleName);
+        console.log("✅ Nom trouvé après TYPE:", possibleName);
       }
     }
 
@@ -86,21 +130,37 @@ export const extractDataFromMainText = (lines: string[], passportData: any) => {
       const nationalityCheck = checkForNationalityInLine(line);
       if (nationalityCheck) {
         passportData.nationalite = nationalityCheck;
-        console.log("Nationalité trouvée dans ligne isolée:", nationalityCheck);
+        console.log("✅ Nationalité trouvée dans ligne isolée:", nationalityCheck);
       }
     }
   }
 
-  // Post-traitement : Si on a détecté les noms dans le mauvais ordre (via format allemand)
-  // On vérifie si le "nom" détecté est plus court que le "prénom", ce qui indiquerait une inversion
+  // Post-traitement intelligent pour corriger l'ordre nom/prénom
   if (passportData.nom && passportData.prenom) {
-    // Dans le cas allemand RIM/BAHRANI, RIM est plus court et devrait être le prénom
+    // Cas 1: Le "nom" est plus court que le "prénom" et très court (probablement un prénom)
     if (passportData.nom.length < passportData.prenom.length && passportData.nom.length <= 4) {
-      console.log("Inversion détectée - échange nom/prénom:", passportData.nom, "<->", passportData.prenom);
+      console.log("🔄 Inversion détectée (longueur) - échange nom/prénom:", passportData.nom, "<->", passportData.prenom);
       const temp = passportData.nom;
-      passportData.nom = passportData.prenom;   // BAHRANI devient le nom
-      passportData.prenom = temp;               // RIM devient le prénom
-      console.log("Après correction - Nom:", passportData.nom, "Prénom:", passportData.prenom);
+      passportData.nom = passportData.prenom;
+      passportData.prenom = temp;
+      console.log("✅ Après correction - Nom:", passportData.nom, "Prénom:", passportData.prenom);
+    }
+    
+    // Cas 2: Détection basée sur des patterns courants de prénoms courts
+    const commonShortFirstNames = ['RIM', 'ALI', 'ANA', 'EVA', 'LEA', 'MAX', 'TOM', 'JAN', 'KAI'];
+    if (commonShortFirstNames.includes(passportData.nom) && passportData.nom.length <= 4) {
+      console.log("🔄 Prénom court détecté - échange nom/prénom:", passportData.nom, "<->", passportData.prenom);
+      const temp = passportData.nom;
+      passportData.nom = passportData.prenom;
+      passportData.prenom = temp;
+      console.log("✅ Après correction - Nom:", passportData.nom, "Prénom:", passportData.prenom);
     }
   }
+
+  console.log("🎯 Extraction multilingue terminée - Résultats:", {
+    nom: passportData.nom,
+    prenom: passportData.prenom,
+    nationalite: passportData.nationalite,
+    format: passportFormat
+  });
 };
