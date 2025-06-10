@@ -5,20 +5,46 @@ import { RoleSpecificLogin } from "@/components/auth/RoleSpecificLogin";
 import { useAuthOperations } from "@/hooks/useAuthOperations";
 import { AuthAlert } from "@/components/auth/AuthAlert";
 import { useEffect, useState } from "react";
+import { initializeCaptchaKeys } from "@/utils/initializeCaptcha";
+import { toast } from "@/hooks/use-toast";
 
 const AdminLogin = () => {
   const { user, profile, loading } = useAuth();
   const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const {
     error,
     success,
     isLoading,
     handleLogin,
-    requiresCaptcha, // 🔒 NOUVEAU
-    isCaptchaVerified, // 🔒 NOUVEAU
-    handleCaptchaVerification // 🔒 NOUVEAU
+    requiresCaptcha,
+    isCaptchaVerified,
+    handleCaptchaVerification
   } = useAuthOperations();
+
+  // Initialiser les clés reCAPTCHA au chargement
+  useEffect(() => {
+    const initializeKeys = async () => {
+      try {
+        console.log('🔧 Tentative d\'initialisation des clés reCAPTCHA...');
+        const result = await initializeCaptchaKeys();
+        
+        if (result.success) {
+          toast({
+            title: "Configuration reCAPTCHA",
+            description: "Les clés reCAPTCHA ont été configurées automatiquement",
+          });
+        }
+      } catch (error) {
+        console.warn('⚠️ Les clés reCAPTCHA sont peut-être déjà configurées:', error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initializeKeys();
+  }, []);
 
   useEffect(() => {
     if (user && profile && !loading) {
@@ -28,12 +54,14 @@ const AdminLogin = () => {
     }
   }, [user, profile, loading]);
 
-  if (loading) {
+  if (loading || isInitializing) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-slate-600">Chargement...</p>
+          <p className="mt-2 text-slate-600">
+            {isInitializing ? "Configuration du système..." : "Chargement..."}
+          </p>
         </div>
       </div>
     );
@@ -62,9 +90,9 @@ const AdminLogin = () => {
           onShowPasswordReset={() => {}}
           isLoading={isLoading}
           hidePasswordReset={false}
-          requiresCaptcha={requiresCaptcha} // 🔒 NOUVEAU
-          isCaptchaVerified={isCaptchaVerified} // 🔒 NOUVEAU
-          onCaptchaVerificationChange={handleCaptchaVerification} // 🔒 NOUVEAU
+          requiresCaptcha={requiresCaptcha}
+          isCaptchaVerified={isCaptchaVerified}
+          onCaptchaVerificationChange={handleCaptchaVerification}
         />
       </div>
     </div>
