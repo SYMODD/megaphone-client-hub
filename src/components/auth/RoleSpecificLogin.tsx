@@ -84,17 +84,6 @@ export const RoleSpecificLogin = ({
         <CardDescription className="text-slate-600">
           {getRoleDescription()}
         </CardDescription>
-        {/* 🔧 TEMPORAIRE: Affichage du mode configuration */}
-        {role === 'admin' && (
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mt-3">
-            <p className="text-orange-800 text-sm font-medium">
-              🔧 Mode configuration temporaire
-            </p>
-            <p className="text-orange-600 text-xs mt-1">
-              CAPTCHA désactivé pour permettre la configuration initiale
-            </p>
-          </div>
-        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -137,8 +126,8 @@ export const RoleSpecificLogin = ({
             </div>
           </div>
 
-          {/* 🔧 CAPTCHA Section - Masquée temporairement pour admin */}
-          {requiresCaptcha && role !== 'admin' && (
+          {/* CAPTCHA Section pour admin et superviseur */}
+          {requiresCaptcha && (role === 'admin' || role === 'superviseur') && (
             <LoginCaptchaSection
               onVerificationChange={onCaptchaVerificationChange}
               show={true}
@@ -148,7 +137,7 @@ export const RoleSpecificLogin = ({
           <Button 
             type="submit" 
             className="w-full" 
-            disabled={isLoading}
+            disabled={isLoading || (requiresCaptcha && !isCaptchaVerified)}
           >
             {isLoading ? "Connexion..." : "Se connecter"}
           </Button>
