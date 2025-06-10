@@ -15,7 +15,7 @@ export const useCarteSejourOCR = () => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('apikey', apiKey);
-      formData.append('language', 'fre');
+      formData.append('language', 'fre+eng'); // Français en priorité puis anglais
       formData.append('isOverlayRequired', 'true');
       formData.append('detectOrientation', 'true');
       formData.append('scale', 'true');
@@ -43,7 +43,14 @@ export const useCarteSejourOCR = () => {
 
       setExtractedData(carteData);
       setRawText(parsedText);
-      toast.success("Données carte de séjour extraites avec succès!");
+      
+      const extractedFields = Object.keys(carteData).filter(key => carteData[key]);
+      if (extractedFields.length > 0) {
+        toast.success(`Données extraites: ${extractedFields.join(", ")}`);
+      } else {
+        toast.warning("Aucune donnée détectée. Vérifiez la qualité de l'image.");
+      }
+      
       console.log("Carte de séjour extraction successful:", carteData);
       return carteData;
     } catch (error) {
@@ -76,46 +83,151 @@ const extractCarteSejourData = (text: string): any => {
   const carteData: any = {};
 
   for (const line of lines) {
-    // Numéro de carte
-    const numeroMatch = line.match(/(?:N°|NUM|NUMERO)[:\s]*([A-Z0-9]{8,15})/i);
-    if (numeroMatch && !carteData.numero_carte) {
-      carteData.numero_carte = numeroMatch[1];
-    }
-
-    // Nom
-    if (line.match(/(?:NOM|SURNAME|FAMILY)/i)) {
-      const nomMatch = line.match(/(?:NOM|SURNAME|FAMILY)[:\s]+([A-Z\s]+)/i);
-      if (nomMatch) {
-        carteData.nom = nomMatch[1].trim();
+    const upperLine = line.toUpperCase();
+    
+    // Numéro de carte avec patterns multiples
+    if (!carteData.numero_carte) {
+      const numeroPatterns = [
+        /(?:N°|NUM|NUMERO|NUMBER)[:\s]*([A-Z0-9]{6,15})/i,
+        /^([A-Z0-9]{8,12})$/, // Ligne contenant uniquement le numéro
+        /\b([A-Z]{2,3}[0-9]{6,9})\b/, // Format type AA123456789
+      ];
+      
+      for (const pattern of numeroPatterns) {
+        const match = line.match(pattern);
+        if (match && match[1] && match[1].length >= 6) {
+          carteData.numero_carte = match[1];
+          break;
+        }
       }
     }
 
-    // Prénom
-    if (line.match(/(?:PRENOM|GIVEN|FIRST)/i)) {
-      const prenomMatch = line.match(/(?:PRENOM|GIVEN|FIRST)[:\s]+([A-Z\s]+)/i);
-      if (prenomMatch) {
-        carteData.prenom = prenomMatch[1].trim();
+    // Nom avec patterns étendus
+    if (!carteData.nom) {
+      const nomPatterns = [
+        /(?:NOM|SURNAME|FAMILY\s*NAME|APELLIDOS?)[:\s]+([A-ZÀ-Ÿ\s]{2,25})/i,
+        /^([A-ZÀ-Ÿ]{2,25})$/, // Ligne avec uniquement majuscules
+        /(?:M\.|Mme|Mr|Mrs)[\s]+([A-ZÀ-Ÿ\s]{2,25})/i,
+      ];
+      
+      for (const pattern of nomPatterns) {
+        const match = line.match(pattern);
+        if (match && match[1] && match[1].trim().length > 1) {
+          const nom = match[1].trim().replace(/[^A-ZÀ-Ÿ\s]/g, '');
+          if (nom.length > 1 && nom.length < 25) {
+            carteData.nom = nom;
+            break;
+          }
+        }
       }
     }
 
-    // Nationalité
-    if (line.match(/(?:NATIONALITE|NATIONALITY)/i)) {
-      const natMatch = line.match(/(?:NATIONALITE|NATIONALITY)[:\s]+([A-Z\s]+)/i);
-      if (natMatch) {
-        carteData.nationalite = natMatch[1].trim();
+    // Prénom avec patterns étendus
+    if (!carteData.prenom) {
+      const prenomPatterns = [
+        /(?:PRENOM|GIVEN\s*NAMES?|FIRST\s*NAME|NOMBRES?)[:\s]+([A-ZÀ-Ÿa-zà-ÿ\s]{2,25})/i,
+        /(?:NOM|NAME)[:\s]+[A-ZÀ-Ÿ\s]+\s+([A-ZÀ-Ÿa-zà-ÿ\s]{2,20})/i, // Nom + Prénom sur même ligne
+      ];
+      
+      for (const pattern of prenomPatterns) {
+        const match = line.match(pattern);
+        if (match && match[1] && match[1].trim().length > 1) {
+          const prenom = match[1].trim().replace(/[^A-ZÀ-Ÿa-zà-ÿ\s]/g, '');
+          if (prenom.length > 1 && prenom.length < 25) {
+            carteData.prenom = prenom;
+            break;
+          }
+        }
       }
     }
 
-    // Date de naissance
-    const dateNaissanceMatch = line.match(/(?:NEE|BORN)[:\s]*(\d{2}\/\d{2}\/\d{4})/i);
-    if (dateNaissanceMatch) {
-      carteData.date_naissance = dateNaissanceMatch[1];
+    // Nationalité avec patterns étendus
+    if (!carteData.nationalite) {
+      const nationalitePatterns = [
+        /(?:NATIONALITE|NATIONALITY|NACIONALIDAD)[:\s]+([A-ZÀ-Ÿa-zà-ÿ\s]{3,25})/i,
+        /\b(ALGERIENNE?|MAROCAINE?|TUNISIENNE?|FRANÇAISE?|ESPAGNOLE?|ITALIENNE?|PORTUGAISE?|BELGE)\b/i,
+        /\b(ALGERIAN|MOROCCAN|TUNISIAN|FRENCH|SPANISH|ITALIAN|PORTUGUESE|BELGIAN)\b/i,
+      ];
+      
+      for (const pattern of nationalitePatterns) {
+        const match = line.match(pattern);
+        if (match && match[1]) {
+          carteData.nationalite = match[1].trim();
+          break;
+        }
+      }
     }
 
-    // Date d'expiration
-    const dateExpirationMatch = line.match(/(?:VALID|EXPIRE|JUSQU)[:\s]*(\d{2}\/\d{2}\/\d{4})/i);
-    if (dateExpirationMatch) {
-      carteData.date_expiration = dateExpirationMatch[1];
+    // Date de naissance avec formats multiples
+    if (!carteData.date_naissance) {
+      const dateNaissancePatterns = [
+        /(?:NEE?\s*LE?|BORN|FECHA\s*NAC)[:\s]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i,
+        /(?:DATE.*NAISSANCE|BIRTH.*DATE)[:\s]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i,
+        /\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})\b/, // Date isolée
+      ];
+      
+      for (const pattern of dateNaissancePatterns) {
+        const match = line.match(pattern);
+        if (match && match[1]) {
+          const dateStr = match[1];
+          // Convertir en format YYYY-MM-DD
+          const dateParts = dateStr.split(/[\/\-\.]/);
+          if (dateParts.length === 3) {
+            let [day, month, year] = dateParts;
+            if (year.length === 2) {
+              year = (parseInt(year) <= 30 ? '20' : '19') + year;
+            }
+            if (month.length === 1) month = '0' + month;
+            if (day.length === 1) day = '0' + day;
+            carteData.date_naissance = `${year}-${month}-${day}`;
+            break;
+          }
+        }
+      }
+    }
+
+    // Date d'expiration avec patterns multiples
+    if (!carteData.date_expiration) {
+      const dateExpirationPatterns = [
+        /(?:VALABLE?\s*JUSQU?.*?AU?|VALID.*?UNTIL|EXPIRE)[:\s]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i,
+        /(?:EXPIR.*DATE|DATE.*EXPIR)[:\s]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i,
+        /(?:FIN\s*VALIDITE|END\s*VALIDITY)[:\s]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i,
+      ];
+      
+      for (const pattern of dateExpirationPatterns) {
+        const match = line.match(pattern);
+        if (match && match[1]) {
+          const dateStr = match[1];
+          // Convertir en format YYYY-MM-DD
+          const dateParts = dateStr.split(/[\/\-\.]/);
+          if (dateParts.length === 3) {
+            let [day, month, year] = dateParts;
+            if (year.length === 2) {
+              year = (parseInt(year) <= 50 ? '20' : '19') + year;
+            }
+            if (month.length === 1) month = '0' + month;
+            if (day.length === 1) day = '0' + day;
+            carteData.date_expiration = `${year}-${month}-${day}`;
+            break;
+          }
+        }
+      }
+    }
+
+    // Lieu de naissance
+    if (!carteData.lieu_naissance) {
+      const lieuPatterns = [
+        /(?:NEE?\s*A|BORN\s*IN|LUGAR\s*NAC)[:\s]+([A-ZÀ-Ÿa-zà-ÿ\s,]{3,30})/i,
+        /(?:LIEU.*NAISSANCE|PLACE.*BIRTH)[:\s]+([A-ZÀ-Ÿa-zà-ÿ\s,]{3,30})/i,
+      ];
+      
+      for (const pattern of lieuPatterns) {
+        const match = line.match(pattern);
+        if (match && match[1] && match[1].trim().length > 2) {
+          carteData.lieu_naissance = match[1].trim();
+          break;
+        }
+      }
     }
   }
 
