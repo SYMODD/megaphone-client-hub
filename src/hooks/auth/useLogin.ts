@@ -6,10 +6,12 @@ import { toast } from "@/hooks/use-toast";
 export const useLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [requiresCaptcha, setRequiresCaptcha] = useState(false);
-  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState(true); // 🔧 TEMPORAIRE: défini à true pour bypasser
 
   const handleLogin = async (email: string, password: string, role?: string) => {
-    // Vérifier le CAPTCHA pour admin et superviseur
+    // 🔧 TEMPORAIRE: Désactiver la vérification CAPTCHA pour permettre l'accès admin initial
+    // Cette condition est commentée temporairement pour permettre la configuration initiale
+    /*
     if ((role === 'admin' || role === 'superviseur') && !isCaptchaVerified) {
       setRequiresCaptcha(true);
       toast({
@@ -19,6 +21,7 @@ export const useLogin = () => {
       });
       return;
     }
+    */
 
     setIsLoading(true);
     
@@ -33,10 +36,12 @@ export const useLogin = () => {
       if (error) {
         console.error('❌ Erreur de connexion:', error);
         
-        // Activer CAPTCHA après plusieurs tentatives échouées pour admin/superviseur
+        // 🔧 TEMPORAIRE: Commenté pour permettre l'accès initial
+        /*
         if (role === 'admin' || role === 'superviseur') {
           setRequiresCaptcha(true);
         }
+        */
         
         toast({
           title: "Erreur de connexion",
@@ -70,7 +75,7 @@ export const useLogin = () => {
 
         toast({
           title: "Connexion réussie",
-          description: "Bienvenue !",
+          description: "Bienvenue ! 🔧 Mode configuration temporaire activé",
         });
       }
     } catch (error) {
@@ -95,8 +100,8 @@ export const useLogin = () => {
   return {
     handleLogin,
     isLoading,
-    requiresCaptcha,
-    isCaptchaVerified,
+    requiresCaptcha: false, // 🔧 TEMPORAIRE: toujours false pour bypasser
+    isCaptchaVerified: true, // 🔧 TEMPORAIRE: toujours true pour bypasser
     handleCaptchaVerification
   };
 };
