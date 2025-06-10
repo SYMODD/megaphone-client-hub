@@ -30,17 +30,33 @@ export const SecurityAuditLog = () => {
     try {
       setLoading(true);
       
-      // Use raw SQL query to access the security_audit_log table
-      const { data, error } = await supabase.rpc('get_security_audit_logs');
+      // Accès direct à la table security_audit_log
+      const { data, error } = await supabase
+        .from('security_audit_log')
+        .select('*')
+        .order('changed_at', { ascending: false })
+        .limit(50);
 
       if (error) {
-        // If the function doesn't exist, we'll create a fallback
-        console.log('📋 Function get_security_audit_logs not found, using fallback');
+        console.log('📋 Erreur lors du chargement des logs d\'audit:', error);
         setAuditLogs([]);
         return;
       }
 
-      setAuditLogs(data || []);
+      // Mapper les données vers le format attendu
+      const mappedData: AuditLogEntry[] = (data || []).map(item => ({
+        id: item.id,
+        setting_key: item.setting_key,
+        action: item.action,
+        old_value_hash: item.old_value_hash,
+        new_value_hash: item.new_value_hash,
+        changed_by: item.changed_by,
+        changed_at: item.changed_at,
+        ip_address: item.ip_address,
+        user_agent: item.user_agent
+      }));
+
+      setAuditLogs(mappedData);
 
     } catch (error: any) {
       console.error('❌ Erreur lors du chargement des logs:', error);
