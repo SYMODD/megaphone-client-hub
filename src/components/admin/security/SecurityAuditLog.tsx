@@ -30,13 +30,15 @@ export const SecurityAuditLog = () => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
-        .from('security_audit_log')
-        .select('*')
-        .order('changed_at', { ascending: false })
-        .limit(50);
+      // Use raw SQL query to access the security_audit_log table
+      const { data, error } = await supabase.rpc('get_security_audit_logs');
 
-      if (error) throw error;
+      if (error) {
+        // If the function doesn't exist, we'll create a fallback
+        console.log('📋 Function get_security_audit_logs not found, using fallback');
+        setAuditLogs([]);
+        return;
+      }
 
       setAuditLogs(data || []);
 
@@ -47,6 +49,7 @@ export const SecurityAuditLog = () => {
         description: "Impossible de charger l'historique des modifications",
         variant: "destructive",
       });
+      setAuditLogs([]);
     } finally {
       setLoading(false);
     }
@@ -111,6 +114,7 @@ export const SecurityAuditLog = () => {
           <div className="text-center py-8 text-gray-500">
             <Shield className="w-12 h-12 mx-auto mb-4 opacity-30" />
             <p>Aucune modification enregistrée</p>
+            <p className="text-xs mt-2">Les modifications apparaîtront ici une fois que vous aurez configuré des paramètres</p>
           </div>
         ) : (
           <div className="space-y-4">

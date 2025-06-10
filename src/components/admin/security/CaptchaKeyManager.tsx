@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { useSecuritySettings } from "@/hooks/useSecuritySettings";
 import { Eye, EyeOff, Shield, Key, Save, AlertTriangle } from "lucide-react";
 
 interface SecuritySetting {
@@ -21,8 +20,9 @@ interface SecuritySetting {
 }
 
 export const CaptchaKeyManager = () => {
+  const { loading, getSecuritySettings, upsertSecuritySetting } = useSecuritySettings();
   const [settings, setSettings] = useState<SecuritySetting[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [fetchLoading, setFetchLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showSecretKey, setShowSecretKey] = useState(false);
   const [formData, setFormData] = useState({
@@ -36,55 +36,35 @@ export const CaptchaKeyManager = () => {
 
   const fetchSettings = async () => {
     try {
-      setLoading(true);
+      setFetchLoading(true);
       
-      // Utiliser la vue sécurisée qui masque automatiquement les valeurs chiffrées
-      const { data, error } = await supabase
-        .from('security_settings_view')
-        .select('*')
-        .in('setting_key', ['recaptcha_public_key', 'recaptcha_secret_key']);
-
-      if (error) throw error;
-
-      setSettings(data || []);
+      const result = await getSecuritySettings(['recaptcha_public_key', 'recaptcha_secret_key']);
       
-      // Pré-remplir le formulaire avec les valeurs existantes
-      const publicKey = data?.find(s => s.setting_key === 'recaptcha_public_key')?.setting_value || '';
-      const secretKey = data?.find(s => s.setting_key === 'recaptcha_secret_key')?.setting_value || '';
-      
-      setFormData({
-        public_key: publicKey,
-        secret_key: secretKey
-      });
-
-    } catch (error: any) {
+      if (result.success && result.data) {
+        setSettings(result.data);
+        
+        // Pré-remplir le formulaire avec les valeurs existantes
+        const publicKey = result.data.find((s: SecuritySetting) => s.setting_key === 'recaptcha_public_key')?.setting_value || '';
+        const secretKey = result.data.find((s: SecuritySetting) => s.setting_key === 'recaptcha_secret_key')?.setting_value || '';
+        
+        setFormData({
+          public_key: publicKey,
+          secret_key: secretKey
+        });
+      }
+    } catch (error) {
       console.error('❌ Erreur lors du chargement des paramètres:', error);
-      toast({
-        title: "Erreur de chargement",
-        description: "Impossible de charger les paramètres de sécurité",
-        variant: "destructive",
-      });
     } finally {
-      setLoading(false);
+      setFetchLoading(false);
     }
   };
 
   const saveSettings = async () => {
     if (!formData.public_key.trim()) {
-      toast({
-        title: "Clé publique requise",
-        description: "La clé publique reCAPTCHA est obligatoire",
-        variant: "destructive",
-      });
       return;
     }
 
     if (!formData.secret_key.trim()) {
-      toast({
-        title: "Clé secrète requise", 
-        description: "La clé secrète reCAPTCHA est obligatoire",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -92,40 +72,34 @@ export const CaptchaKeyManager = () => {
       setSaving(true);
       
       // Sauvegarder la clé publique (non chiffrée)
-      const { error: publicError } = await supabase.rpc('upsert_security_setting', {
-        p_setting_key: 'recaptcha_public_key',
-        p_setting_value: formData.public_key.trim(),
-        p_is_encrypted: false,
-        p_description: 'Clé publique reCAPTCHA pour la vérification côté client'
-      });
+      const publicResult = await upsertSecuritySetting(
+        'recaptcha_public_key',
+        formData.public_key.trim(),
+        false,
+        'Clé publique reCAPTCHA pour la vérification côté client'
+      );
 
-      if (publicError) throw publicError;
+      if (!publicResult.success) {
+        throw new Error('Erreur lors de la sauvegarde de la clé publique');
+      }
 
       // Sauvegarder la clé secrète (chiffrée)
-      const { error: secretError } = await supabase.rpc('upsert_security_setting', {
-        p_setting_key: 'recaptcha_secret_key', 
-        p_setting_value: formData.secret_key.trim(),
-        p_is_encrypted: true,
-        p_description: 'Clé secrète reCAPTCHA pour la vérification côté serveur'
-      });
+      const secretResult = await upsertSecuritySetting(
+        'recaptcha_secret_key', 
+        formData.secret_key.trim(),
+        true,
+        'Clé secrète reCAPTCHA pour la vérification côté serveur'
+      );
 
-      if (secretError) throw secretError;
-
-      toast({
-        title: "Paramètres sauvegardés",
-        description: "Les clés reCAPTCHA ont été mises à jour avec succès",
-      });
+      if (!secretResult.success) {
+        throw new Error('Erreur lors de la sauvegarde de la clé secrète');
+      }
 
       // Recharger les paramètres
       await fetchSettings();
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('❌ Erreur lors de la sauvegarde:', error);
-      toast({
-        title: "Erreur de sauvegarde",
-        description: error.message || "Impossible de sauvegarder les paramètres",
-        variant: "destructive",
-      });
     } finally {
       setSaving(false);
     }
@@ -135,7 +109,7 @@ export const CaptchaKeyManager = () => {
     return settings.find(s => s.setting_key === key);
   };
 
-  if (loading) {
+  if (fetchLoading) {
     return (
       <Card>
         <CardHeader>
@@ -260,7 +234,7 @@ export const CaptchaKeyManager = () => {
           {/* Bouton de sauvegarde */}
           <Button
             onClick={saveSettings}
-            disabled={saving || !formData.public_key.trim() || !formData.secret_key.trim()}
+            disabled={saving || loading || !formData.public_key.trim() || !formData.secret_key.trim()}
             className="w-full"
           >
             {saving ? (
