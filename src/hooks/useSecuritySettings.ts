@@ -48,9 +48,13 @@ export const useSecuritySettings = () => {
 
       console.log('✅ Paramètre sauvegardé avec succès:', data);
       
+      // Safely access the message property with type assertion
+      const response = data as { success?: boolean; message?: string; setting_key?: string } | null;
+      const message = response?.message || `${settingKey} a été mis à jour avec succès`;
+      
       toast({
         title: "Paramètre sauvegardé",
-        description: data?.message || `${settingKey} a été mis à jour avec succès`,
+        description: message,
       });
 
       return { success: true, data };
