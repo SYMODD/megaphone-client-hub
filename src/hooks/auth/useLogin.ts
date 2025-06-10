@@ -6,19 +6,33 @@ import { useAuthErrorHandling } from "./useAuthErrorHandling";
 export const useLogin = () => {
   const { signIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [requiresCaptcha, setRequiresCaptcha] = useState(false); // 🔒 NOUVEAU
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false); // 🔒 NOUVEAU
   const { handleAuthError, showSuccess, clearMessages } = useAuthErrorHandling();
 
   const handleLogin = async (email: string, password: string) => {
     clearMessages();
+    
+    // 🔒 VÉRIFICATION CAPTCHA POUR CERTAINS RÔLES
+    const emailLower = email.toLowerCase().trim();
+    const isAdminOrSuperviseur = emailLower.includes('admin') || emailLower.includes('superviseur') || emailLower === 'essbane.salim@gmail.com';
+    
+    if (isAdminOrSuperviseur && !isCaptchaVerified) {
+      setRequiresCaptcha(true);
+      handleAuthError({ code: 'captcha_required' }, "Veuillez compléter la vérification CAPTCHA pour ce type de compte");
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
-      const normalizedEmail = email.toLowerCase().trim();
+      const normalizedEmail = emailLower;
       console.log("=== DEBUG LOGIN START ===");
       console.log("Original email:", email);
       console.log("Normalized email:", normalizedEmail);
       console.log("Password length:", password.length);
-      console.log("Password first 3 chars:", password.substring(0, 3) + "...");
+      console.log("CAPTCHA verified:", isCaptchaVerified);
+      console.log("Requires CAPTCHA:", isAdminOrSuperviseur);
       
       console.log("Attempting sign in...");
       const { data, error } = await signIn(normalizedEmail, password);
@@ -38,9 +52,6 @@ export const useLogin = () => {
       if (error) {
         console.error("=== SIGN IN ERROR DETAILS ===");
         console.error("Error object:", error);
-        console.error("Error code:", error.code);
-        console.error("Error message:", error.message);
-        console.error("Error status:", error.status);
         
         // Gestion d'erreurs améliorée
         let errorMessage = "Email ou mot de passe incorrect";
@@ -68,20 +79,21 @@ export const useLogin = () => {
         console.log("=== LOGIN SUCCESS ===");
         console.log("User ID:", data?.user?.id);
         console.log("Session valid:", !!data?.session);
-        console.log("Access token present:", !!data?.session?.access_token);
         
         showSuccess("Vous êtes maintenant connecté.", "Connexion réussie");
         setTimeout(() => {
           clearMessages();
         }, 2000);
         
+        // 🔒 Reset CAPTCHA state après succès
+        setRequiresCaptcha(false);
+        setIsCaptchaVerified(false);
+        
         console.log("=== DEBUG LOGIN END (SUCCESS) ===");
       }
     } catch (error) {
       console.error("=== UNEXPECTED ERROR ===");
       console.error("Caught error:", error);
-      console.error("Error type:", typeof error);
-      console.error("Error constructor:", error?.constructor?.name);
       
       handleAuthError(error, "Une erreur inattendue s'est produite lors de la connexion");
       console.log("=== DEBUG LOGIN END (CATCH) ===");
@@ -90,5 +102,19 @@ export const useLogin = () => {
     }
   };
 
-  return { handleLogin, isLoading };
+  // 🔒 NOUVEAU: Handler pour CAPTCHA
+  const handleCaptchaVerification = (isVerified: boolean) => {
+    setIsCaptchaVerified(isVerified);
+    if (isVerified) {
+      clearMessages(); // Clear l'erreur CAPTCHA si vérification réussie
+    }
+  };
+
+  return { 
+    handleLogin, 
+    isLoading,
+    requiresCaptcha, // 🔒 NOUVEAU
+    isCaptchaVerified, // 🔒 NOUVEAU
+    handleCaptchaVerification // 🔒 NOUVEAU
+  };
 };

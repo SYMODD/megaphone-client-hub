@@ -17,9 +17,10 @@ import { insertClientData } from "./submission/supabaseOperations";
 interface UseFormSubmissionProps {
   formData: ClientFormData;
   resetForm: () => void;
+  isCaptchaVerified: boolean; // 🔒 NOUVEAU: Vérification CAPTCHA
 }
 
-export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProps) => {
+export const useFormSubmission = ({ formData, resetForm, isCaptchaVerified }: UseFormSubmissionProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,6 +28,13 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
     setIsSubmitting(true);
 
     logFormSubmissionStart(formData);
+
+    // 🔒 VÉRIFICATION CAPTCHA OBLIGATOIRE
+    if (!isCaptchaVerified) {
+      toast.error("🚨 Veuillez compléter la vérification CAPTCHA avant de soumettre le formulaire");
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const user = await getAuthenticatedUser();

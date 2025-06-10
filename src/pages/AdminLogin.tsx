@@ -15,20 +15,19 @@ const AdminLogin = () => {
     success,
     isLoading,
     handleLogin,
+    requiresCaptcha, // 🔒 NOUVEAU
+    isCaptchaVerified, // 🔒 NOUVEAU
+    handleCaptchaVerification // 🔒 NOUVEAU
   } = useAuthOperations();
 
   useEffect(() => {
     if (user && profile && !loading) {
-      // Si l'utilisateur est déjà connecté avec le bon rôle, rediriger
       if (profile.role === "admin") {
         setShouldRedirect(true);
       }
-      // Si l'utilisateur est connecté avec un autre rôle, ne pas déconnecter automatiquement
-      // Laisser l'utilisateur voir qu'il doit se connecter avec le bon compte
     }
   }, [user, profile, loading]);
 
-  // Show loading while checking auth state
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -40,7 +39,6 @@ const AdminLogin = () => {
     );
   }
 
-  // Redirect admin to their dashboard
   if (shouldRedirect && profile?.role === "admin") {
     return <Navigate to="/dashboard" replace />;
   }
@@ -61,9 +59,12 @@ const AdminLogin = () => {
         <RoleSpecificLogin
           role="admin"
           onLogin={handleLogin}
-          onShowPasswordReset={() => {}} // Pas de reset pour admin via ce flow
+          onShowPasswordReset={() => {}}
           isLoading={isLoading}
-          hidePasswordReset={false} // Admin garde l'option
+          hidePasswordReset={false}
+          requiresCaptcha={requiresCaptcha} // 🔒 NOUVEAU
+          isCaptchaVerified={isCaptchaVerified} // 🔒 NOUVEAU
+          onCaptchaVerificationChange={handleCaptchaVerification} // 🔒 NOUVEAU
         />
       </div>
     </div>

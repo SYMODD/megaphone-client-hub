@@ -19,16 +19,12 @@ const AgentLogin = () => {
 
   useEffect(() => {
     if (user && profile && !loading) {
-      // Si l'utilisateur est déjà connecté avec le bon rôle, rediriger
       if (profile.role === "agent") {
         setShouldRedirect(true);
       }
-      // Si l'utilisateur est connecté avec un autre rôle, ne pas déconnecter automatiquement
-      // Laisser l'utilisateur voir qu'il doit se connecter avec le bon compte
     }
   }, [user, profile, loading]);
 
-  // Show loading while checking auth state
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -40,7 +36,6 @@ const AgentLogin = () => {
     );
   }
 
-  // Redirect agent to their dashboard
   if (shouldRedirect && profile?.role === "agent") {
     return <Navigate to="/nouveau-client" replace />;
   }
@@ -61,9 +56,10 @@ const AgentLogin = () => {
         <RoleSpecificLogin
           role="agent"
           onLogin={handleLogin}
-          onShowPasswordReset={() => {}} // Pas utilisé
+          onShowPasswordReset={() => {}}
           isLoading={isLoading}
-          hidePasswordReset={true} // Masquer pour agent
+          hidePasswordReset={true}
+          requiresCaptcha={false} // 🔒 Agents n'ont pas besoin de CAPTCHA
         />
       </div>
     </div>

@@ -15,20 +15,19 @@ const SuperviseurLogin = () => {
     success,
     isLoading,
     handleLogin,
+    requiresCaptcha, // 🔒 NOUVEAU
+    isCaptchaVerified, // 🔒 NOUVEAU
+    handleCaptchaVerification // 🔒 NOUVEAU
   } = useAuthOperations();
 
   useEffect(() => {
     if (user && profile && !loading) {
-      // Si l'utilisateur est déjà connecté avec le bon rôle, rediriger
       if (profile.role === "superviseur") {
         setShouldRedirect(true);
       }
-      // Si l'utilisateur est connecté avec un autre rôle, ne pas déconnecter automatiquement
-      // Laisser l'utilisateur voir qu'il doit se connecter avec le bon compte
     }
   }, [user, profile, loading]);
 
-  // Show loading while checking auth state
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -40,7 +39,6 @@ const SuperviseurLogin = () => {
     );
   }
 
-  // Redirect superviseur to their dashboard
   if (shouldRedirect && profile?.role === "superviseur") {
     return <Navigate to="/dashboard" replace />;
   }
@@ -61,9 +59,12 @@ const SuperviseurLogin = () => {
         <RoleSpecificLogin
           role="superviseur"
           onLogin={handleLogin}
-          onShowPasswordReset={() => {}} // Pas utilisé
+          onShowPasswordReset={() => {}}
           isLoading={isLoading}
-          hidePasswordReset={true} // Masquer pour superviseur
+          hidePasswordReset={true}
+          requiresCaptcha={requiresCaptcha} // 🔒 NOUVEAU
+          isCaptchaVerified={isCaptchaVerified} // 🔒 NOUVEAU
+          onCaptchaVerificationChange={handleCaptchaVerification} // 🔒 NOUVEAU
         />
       </div>
     </div>
