@@ -11,12 +11,14 @@ export const useClientFilters = () => {
     dateTo: null
   });
 
+  const [isApplyingFilters, setIsApplyingFilters] = useState(false);
+
   const applyServerFilters = useCallback((
     searchTerm: string,
     nationality: string,
     dateRange: DateRange | undefined
   ) => {
-    console.log('🔍 Applying server-side filters:', { searchTerm, nationality, dateRange });
+    console.log('🔍 Application des filtres côté serveur:', { searchTerm, nationality, dateRange });
     
     const newFilters: ClientFilters = {
       searchTerm: searchTerm.trim(),
@@ -25,7 +27,7 @@ export const useClientFilters = () => {
       dateTo: dateRange?.to || null
     };
 
-    // Ne mettre à jour que si les filtres ont vraiment changé
+    // Vérifier si les filtres ont vraiment changé
     const hasChanged = 
       newFilters.searchTerm !== serverFilters.searchTerm ||
       newFilters.nationality !== serverFilters.nationality ||
@@ -33,10 +35,16 @@ export const useClientFilters = () => {
       newFilters.dateTo?.getTime() !== serverFilters.dateTo?.getTime();
 
     if (hasChanged) {
-      console.log('✅ Filtres modifiés, mise à jour en cours...');
+      console.log('✅ Filtres modifiés, mise à jour du serveur...');
+      setIsApplyingFilters(true);
       setServerFilters(newFilters);
+      
+      // Réinitialiser le loading après un délai
+      setTimeout(() => {
+        setIsApplyingFilters(false);
+      }, 500);
     } else {
-      console.log('⏭️ Filtres identiques, pas de mise à jour');
+      console.log('⏭️ Filtres identiques, pas de mise à jour serveur');
     }
     
     return newFilters;
@@ -45,6 +53,7 @@ export const useClientFilters = () => {
   return {
     serverFilters,
     setServerFilters,
-    applyServerFilters
+    applyServerFilters,
+    isApplyingFilters
   };
 };

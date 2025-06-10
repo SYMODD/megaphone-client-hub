@@ -9,7 +9,7 @@ import { usePagination } from "./usePagination";
 
 export const useClientData = () => {
   const { user } = useAuth();
-  const { serverFilters, applyServerFilters } = useClientFilters();
+  const { serverFilters, applyServerFilters, isApplyingFilters } = useClientFilters();
   const {
     clients,
     loading,
@@ -35,10 +35,11 @@ export const useClientData = () => {
     const page = filters?.page || currentPage;
     const forceRefresh = filters?.forceRefresh || false;
     
-    console.log('🔄 fetchClientsWithFilters called with:', { 
+    console.log('🔄 fetchClientsWithFilters appelé avec:', { 
       page, 
       forceRefresh, 
-      totalCurrentClients: clients.length 
+      totalCurrentClients: clients.length,
+      filters: currentFilters
     });
 
     const result = await fetchClients(user.id, {
@@ -67,12 +68,15 @@ export const useClientData = () => {
     nationality: string,
     dateRange: DateRange | undefined
   ) => {
-    console.log('Applying server-side filters:', { searchTerm, nationality, dateRange });
+    console.log('🎯 Application des filtres et récupération des données:', { searchTerm, nationality, dateRange });
     
     const newFilters = applyServerFilters(searchTerm, nationality, dateRange);
     
+    // Retourner à la page 1 lors d'une nouvelle recherche
+    setCurrentPage(1);
+    
     fetchClientsWithFilters({ ...newFilters, page: 1 });
-  }, [applyServerFilters, fetchClientsWithFilters]);
+  }, [applyServerFilters, fetchClientsWithFilters, setCurrentPage]);
 
   // Fonction de rafraîchissement forcé améliorée
   const forceRefreshClients = useCallback(async () => {
@@ -97,7 +101,7 @@ export const useClientData = () => {
   useEffect(() => {
     const fetchNationalities = async () => {
       try {
-        console.log('Fetching unique nationalities...');
+        console.log('📊 Chargement des nationalités uniques...');
         const { data, error } = await supabase
           .from('clients')
           .select('nationalite')
@@ -106,10 +110,10 @@ export const useClientData = () => {
         if (error) throw error;
         
         const uniqueNationalities = [...new Set(data?.map(client => client.nationalite) || [])];
-        console.log('Unique nationalities loaded:', uniqueNationalities.length);
+        console.log('✅ Nationalités chargées:', uniqueNationalities.length);
         setNationalities(uniqueNationalities);
       } catch (error) {
-        console.error('Error fetching nationalities:', error);
+        console.error('❌ Erreur lors du chargement des nationalités:', error);
         setNationalities([]);
       }
     };
@@ -117,39 +121,36 @@ export const useClientData = () => {
     fetchNationalities();
   }, []);
 
+  // Chargement initial des données
   useEffect(() => {
     if (user) {
+      console.log('👤 Utilisateur connecté - Chargement initial des clients');
       fetchClientsWithFilters();
     }
   }, [user]);
 
+  // Gestion du changement de page
   useEffect(() => {
     if (user && currentPage > 1) {
+      console.log('📄 Changement de page vers:', currentPage);
       fetchClientsWithFilters({ page: currentPage });
     }
   }, [currentPage, user]);
 
+  // Fonction de filtrage simplifiée (maintenant juste un wrapper)
   const filterClients = useCallback((
     searchTerm: string,
     selectedNationality: string,
     dateRange: DateRange | undefined
   ) => {
-    if (
-      searchTerm !== serverFilters.searchTerm ||
-      selectedNationality !== serverFilters.nationality ||
-      dateRange?.from?.getTime() !== serverFilters.dateFrom?.getTime() ||
-      dateRange?.to?.getTime() !== serverFilters.dateTo?.getTime()
-    ) {
-      applyFiltersAndFetch(searchTerm, selectedNationality, dateRange);
-      return clients;
-    }
-    
-    return clients;
-  }, [clients, serverFilters, applyFiltersAndFetch]);
+    console.log('🔍 Demande de filtrage reçue:', { searchTerm, selectedNationality, dateRange });
+    applyFiltersAndFetch(searchTerm, selectedNationality, dateRange);
+    return clients; // Retourner les clients actuels (pour la compatibilité)
+  }, [clients, applyFiltersAndFetch]);
 
   return {
     clients,
-    loading,
+    loading: loading || isApplyingFilters,
     error,
     currentPage,
     totalCount,
@@ -159,6 +160,7 @@ export const useClientData = () => {
     fetchClients: fetchClientsWithFilters,
     filterClients,
     applyServerFilters: applyFiltersAndFetch,
-    forceRefreshClients // Export the force refresh function
+    forceRefreshClients,
+    isApplyingFilters
   };
 };

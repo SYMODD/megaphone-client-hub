@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { DateRange } from "react-day-picker";
 import { ClientStatistics } from "@/components/clients/ClientStatistics";
 import { ClientFilters } from "@/components/clients/ClientFilters";
@@ -39,24 +39,47 @@ export const BaseClientsContent = ({
   onExport,
   filterClients
 }: BaseClientsContentProps) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedNationality, setSelectedNationality] = useState("");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  // États des filtres appliqués (synchronisés avec les données affichées)
+  const [appliedSearchTerm, setAppliedSearchTerm] = useState("");
+  const [appliedNationality, setAppliedNationality] = useState("");
+  const [appliedDateRange, setAppliedDateRange] = useState<DateRange | undefined>();
+  
+  // État du chargement des filtres
+  const [isApplyingFilters, setIsApplyingFilters] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Déclencher le filtrage quand les critères changent
-  useEffect(() => {
-    console.log('🔍 Filtres mis à jour:', { searchTerm, selectedNationality, dateRange });
-    filterClients(searchTerm, selectedNationality, dateRange);
-  }, [searchTerm, selectedNationality, dateRange, filterClients]);
+  // Handler pour appliquer les filtres (contrôlé par le bouton)
+  const handleApplyFilters = async (searchTerm: string, selectedNationality: string, dateRange: DateRange | undefined) => {
+    setIsApplyingFilters(true);
+    console.log('🔍 Application des filtres depuis BaseClientsContent:', { 
+      searchTerm, 
+      selectedNationality, 
+      dateRange 
+    });
+    
+    try {
+      // Mettre à jour les filtres appliqués
+      setAppliedSearchTerm(searchTerm);
+      setAppliedNationality(selectedNationality);
+      setAppliedDateRange(dateRange);
+      
+      // Déclencher le filtrage avec les nouveaux critères
+      filterClients(searchTerm, selectedNationality, dateRange);
+    } finally {
+      // Délai pour l'animation
+      setTimeout(() => {
+        setIsApplyingFilters(false);
+      }, 500);
+    }
+  };
 
   // Handler pour le rafraîchissement manuel
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    console.log('🔄 Rafraîchissement manuel déclenché par l\'utilisateur');
+    console.log('🔄 Rafraîchissement manuel avec filtres actuels');
     
-    // Déclenche un nouveau filtrage avec les paramètres actuels
-    filterClients(searchTerm, selectedNationality, dateRange);
+    // Re-appliquer les filtres actuels
+    filterClients(appliedSearchTerm, appliedNationality, appliedDateRange);
     
     // Simule un délai pour l'animation
     setTimeout(() => {
@@ -83,7 +106,7 @@ export const BaseClientsContent = ({
           variant="outline"
           size="sm"
           onClick={handleManualRefresh}
-          disabled={isRefreshing}
+          disabled={isRefreshing || isApplyingFilters}
           className="flex items-center gap-2"
         >
           <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -91,24 +114,26 @@ export const BaseClientsContent = ({
         </Button>
       </div>
 
-      {/* Filtres et recherche optimisés */}
+      {/* Filtres avec contrôle d'application */}
       <ClientFilters
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        selectedNationality={selectedNationality}
-        setSelectedNationality={setSelectedNationality}
-        dateRange={dateRange}
-        setDateRange={setDateRange}
+        searchTerm={appliedSearchTerm}
+        setSearchTerm={setAppliedSearchTerm}
+        selectedNationality={appliedNationality}
+        setSelectedNationality={setAppliedNationality}
+        dateRange={appliedDateRange}
+        setDateRange={setAppliedDateRange}
         nationalities={nationalitiesLoading ? [] : nationalities}
         onExport={onExport}
+        onApplyFilters={handleApplyFilters}
+        isApplyingFilters={isApplyingFilters}
       />
 
-      {/* Indicateur de chargement pendant le rafraîchissement */}
-      {isRefreshing && (
+      {/* Indicateur de chargement pendant l'application des filtres */}
+      {isApplyingFilters && (
         <div className="flex items-center justify-center py-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center gap-2 text-blue-700">
             <RefreshCw className="h-4 w-4 animate-spin" />
-            <span className="text-sm font-medium">Actualisation des données en cours...</span>
+            <span className="text-sm font-medium">Application des filtres en cours...</span>
           </div>
         </div>
       )}
