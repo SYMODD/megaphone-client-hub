@@ -1,144 +1,145 @@
 
 import { OCRResponse } from "@/types/ocrTypes";
+import { compressImage } from "@/utils/imageCompression";
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const performOCRRequest = async (imageFile: File, apiKey: string = "K87783069388957"): Promise<OCRResponse> => {
-  console.log("=== DÉBUT DE LA REQUÊTE OCR ===");
-  console.log("Preparing OCR request with API key:", apiKey.substring(0, 5) + "...");
+  console.log("🚀 DÉBUT REQUÊTE OCR OPTIMISÉE");
+  console.log("📁 Fichier original:", {
+    name: imageFile.name,
+    size: `${(imageFile.size / 1024).toFixed(1)}KB`,
+    type: imageFile.type
+  });
   
-  // Vérifier la taille du fichier
+  // Compression intelligente pour optimiser l'OCR
+  let processedFile = imageFile;
   const fileSizeKB = imageFile.size / 1024;
-  console.log(`Image size: ${fileSizeKB.toFixed(1)}KB`);
-  console.log(`Image type: ${imageFile.type}`);
-  console.log(`Image name: ${imageFile.name}`);
   
-  if (fileSizeKB > 1024) {
-    console.warn("Image size is large, this might cause issues");
+  if (fileSizeKB > 500) {
+    console.log("🔄 Compression nécessaire pour optimiser l'OCR...");
+    try {
+      processedFile = await compressImage(imageFile, {
+        maxWidth: 1600,
+        maxHeight: 1600,
+        quality: 0.85,
+        maxSizeKB: 500
+      });
+      console.log("✅ Image compressée:", `${(processedFile.size / 1024).toFixed(1)}KB`);
+    } catch (error) {
+      console.warn("⚠️ Échec compression, utilisation fichier original");
+      processedFile = imageFile;
+    }
   }
 
   const formData = new FormData();
-  formData.append('file', imageFile);
+  formData.append('file', processedFile);
   formData.append('apikey', apiKey);
-  formData.append('language', 'fre'); // Français uniquement pour plus de stabilité
-  formData.append('isOverlayRequired', 'false'); // Simplifier
+  formData.append('language', 'fre');
+  formData.append('isOverlayRequired', 'false');
   formData.append('detectOrientation', 'true');
   formData.append('scale', 'true');
   formData.append('OCREngine', '2');
   formData.append('filetype', 'Auto');
 
-  console.log("FormData prepared, parameters:");
-  console.log("- apikey:", apiKey.substring(0, 5) + "...");
-  console.log("- language: fre");
-  console.log("- OCREngine: 2");
-  console.log("- file size:", fileSizeKB.toFixed(1), "KB");
+  console.log("📋 Configuration OCR:", {
+    apikey: apiKey.substring(0, 5) + "...",
+    language: "fre",
+    engine: "2",
+    fileSize: `${(processedFile.size / 1024).toFixed(1)}KB`
+  });
 
-  // Système de retry avec backoff exponentiel amélioré
-  const maxRetries = 2; // Réduire le nombre de tentatives
+  // Système de retry avec timeouts progressifs
+  const maxRetries = 3;
+  const timeouts = [90000, 120000, 150000]; // 90s, 2min, 2.5min
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    console.log(`Tentative ${attempt}/${maxRetries} - Sending image to OCR.space API...`);
-    const startTime = Date.now();
-
+    const currentTimeout = timeouts[attempt - 1];
+    console.log(`🔄 TENTATIVE ${attempt}/${maxRetries} - Timeout: ${currentTimeout/1000}s`);
+    
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
-        console.log("⏰ TIMEOUT ATTEINT - Annulation de la requête après 40 secondes");
+        console.log(`⏰ TIMEOUT après ${currentTimeout/1000}s - Annulation tentative ${attempt}`);
         controller.abort();
-      }, 40000); // Réduire le timeout à 40 secondes
+      }, currentTimeout);
 
-      console.log("Making fetch request to OCR.space API...");
+      console.log("📡 Envoi requête OCR.space...");
+      const startTime = Date.now();
+      
       const response = await fetch('https://api.ocr.space/parse/image', {
         method: 'POST',
         body: formData,
-        signal: controller.signal,
-        headers: {
-          // Le navigateur gère automatiquement Content-Type avec boundary pour FormData
-        }
+        signal: controller.signal
       });
 
       clearTimeout(timeoutId);
       const elapsed = Date.now() - startTime;
-      console.log(`Réponse reçue après ${elapsed}ms (tentative ${attempt})`);
-
-      console.log("OCR API response status:", response.status);
-      console.log("OCR API response headers:", Object.fromEntries(response.headers.entries()));
+      console.log(`✅ Réponse reçue en ${(elapsed/1000).toFixed(1)}s`);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("OCR API error response:", errorText);
-        console.error("Response status:", response.status, response.statusText);
+        console.error(`❌ Erreur HTTP ${response.status}:`, errorText);
         
-        // Gestion spéciale pour différents types d'erreurs
         if (response.status === 403) {
-          const waitTime = Math.min(2000 * Math.pow(2, attempt - 1), 8000); // Backoff exponentiel max 8s
-          console.log(`🔄 Erreur 403. Attente de ${waitTime}ms avant nouvelle tentative...`);
-          
+          const backoffTime = Math.min(3000 * attempt, 10000);
           if (attempt < maxRetries) {
-            await delay(waitTime);
-            continue; // Retry
-          } else {
-            throw new Error("La clé API OCR est temporairement surchargée. Veuillez réessayer dans quelques minutes.");
+            console.log(`🔄 Erreur 403, attente ${backoffTime}ms avant retry...`);
+            await delay(backoffTime);
+            continue;
           }
-        } else if (response.status === 500) {
-          console.log(`🔄 Erreur serveur 500. Tentative ${attempt}/${maxRetries}`);
-          if (attempt < maxRetries) {
-            await delay(3000);
-            continue; // Retry pour erreur serveur
-          } else {
-            throw new Error("Erreur du serveur OCR. Veuillez réessayer avec une image de meilleure qualité.");
-          }
+          throw new Error("Service OCR temporairement indisponible. Réessayez dans quelques minutes.");
         }
         
-        throw new Error(`Erreur HTTP ${response.status}: ${errorText || response.statusText}`);
+        if (response.status >= 500 && attempt < maxRetries) {
+          console.log(`🔄 Erreur serveur ${response.status}, retry dans 5s...`);
+          await delay(5000);
+          continue;
+        }
+        
+        throw new Error(`Erreur OCR ${response.status}: ${errorText || response.statusText}`);
       }
 
-      console.log("Parsing JSON response...");
       const result = await response.json();
-      console.log("OCR API response received successfully");
-      console.log("=== FIN DE LA REQUÊTE OCR (SUCCÈS) ===");
-      
+      console.log("✅ SUCCÈS OCR - Données reçues");
       return result;
+      
     } catch (error) {
-      const elapsed = Date.now() - startTime;
-      console.error(`=== ERREUR OCR tentative ${attempt} après ${elapsed}ms ===`);
-      console.error("OCR API request failed:", error);
-      console.error("Error type:", error.constructor.name);
-      console.error("Error message:", error.message);
+      const elapsed = Date.now() - Date.now();
+      console.error(`❌ ÉCHEC tentative ${attempt}:`, {
+        error: error.message,
+        type: error.name,
+        attempt: `${attempt}/${maxRetries}`
+      });
       
       lastError = error;
       
       if (error.name === 'AbortError') {
-        console.error("⏰ Requête annulée par timeout");
         if (attempt < maxRetries) {
-          console.log(`🔄 Timeout - tentative ${attempt + 1} dans 3 secondes...`);
-          await delay(3000);
+          console.log(`🔄 Timeout - Retry avec timeout plus long...`);
+          await delay(2000);
           continue;
-        } else {
-          throw new Error("Timeout: La requête OCR a pris trop de temps. Veuillez réessayer avec une image plus petite.");
         }
+        throw new Error(`Timeout: L'analyse a pris trop de temps (>${currentTimeout/1000}s). Essayez avec une image plus petite.`);
       }
       
       if (error.message.includes('Failed to fetch')) {
-        console.error("🌐 Erreur de connexion réseau");
         if (attempt < maxRetries) {
-          console.log(`🔄 Erreur réseau - tentative ${attempt + 1} dans 5 secondes...`);
+          console.log(`🔄 Erreur réseau - Retry dans 5s...`);
           await delay(5000);
           continue;
-        } else {
-          throw new Error("Erreur de connexion: Impossible de joindre le service OCR. Vérifiez votre connexion internet.");
         }
+        throw new Error("Erreur de connexion. Vérifiez votre connexion internet.");
       }
       
-      // Pour les autres erreurs, ne pas retry
+      // Pour autres erreurs, pas de retry
       if (attempt === maxRetries) {
         break;
       }
     }
   }
   
-  // Si on arrive ici, toutes les tentatives ont échoué
-  console.error("🔥 Toutes les tentatives ont échoué");
-  throw lastError || new Error("Erreur inconnue lors de la requête OCR");
+  console.error("🔥 ÉCHEC DÉFINITIF après", maxRetries, "tentatives");
+  throw lastError || new Error("Échec OCR après plusieurs tentatives");
 };
