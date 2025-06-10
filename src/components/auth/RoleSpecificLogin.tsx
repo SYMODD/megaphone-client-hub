@@ -141,6 +141,7 @@ export const RoleSpecificLogin = ({
           {requiresCaptcha && role !== 'admin' && (
             <LoginCaptchaSection
               onVerificationChange={onCaptchaVerificationChange}
+              show={true}
             />
           )}
 
