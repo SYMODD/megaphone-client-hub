@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -51,7 +50,7 @@ export const useSecuritySettings = () => {
       
       toast({
         title: "Paramètre sauvegardé",
-        description: `${settingKey} a été mis à jour avec succès`,
+        description: data?.message || `${settingKey} a été mis à jour avec succès`,
       });
 
       return { success: true, data };

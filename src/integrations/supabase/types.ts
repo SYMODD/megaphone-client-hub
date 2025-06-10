@@ -402,7 +402,7 @@ export type Database = {
           p_is_encrypted: boolean
           p_description: string
         }
-        Returns: undefined
+        Returns: Json
       }
     }
     Enums: {
