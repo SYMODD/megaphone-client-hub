@@ -9,6 +9,7 @@ import { CaptchaSection } from "./CaptchaSection";
 import { useClientFormLogic } from "@/hooks/useClientForm";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield, Info } from "lucide-react";
+import { DocumentType } from "@/types/documentTypes";
 
 export const ClientForm = () => {
   const {
