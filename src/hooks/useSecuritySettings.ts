@@ -18,7 +18,8 @@ export const useSecuritySettings = () => {
       console.log('🔧 Appel de la fonction upsert_security_setting avec:', {
         settingKey,
         isEncrypted,
-        description
+        description,
+        valueLength: settingValue?.length || 0
       });
       
       const { data, error } = await supabase.rpc('upsert_security_setting', {
@@ -33,12 +34,14 @@ export const useSecuritySettings = () => {
         
         // Messages d'erreur plus spécifiques
         let errorMessage = error.message;
-        if (error.message?.includes('permission')) {
+        if (error.message?.includes('permission') || error.message?.includes('Accès refusé')) {
           errorMessage = "Vous n'avez pas les permissions nécessaires pour cette opération";
         } else if (error.message?.includes('function') && error.message?.includes('does not exist')) {
           errorMessage = "Fonction de base de données manquante. Veuillez contacter l'administrateur.";
         } else if (error.message?.includes('digest')) {
           errorMessage = "Extension de chiffrement non disponible. Configuration en cours...";
+        } else if (error.message?.includes('Utilisateur non authentifié')) {
+          errorMessage = "Vous devez être connecté pour effectuer cette opération";
         }
         
         throw new Error(errorMessage);
