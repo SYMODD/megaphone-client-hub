@@ -32,21 +32,32 @@ export const extractDataFromMainText = (lines: string[], passportData: any) => {
     // Recherche explicite de "SURNAME/NOM" suivi de la valeur
     if ((line.includes("SURNAME") && line.includes("NOM")) || 
         (line.includes("SURNAME") && !line.includes("GIVEN"))) {
-      if (nextLine && isValidName(nextLine)) {
+      if (nextLine && isValidName(nextLine) && !passportData.nom) {
         passportData.nom = safeStringTrim(nextLine);
         console.log("✅ Nom trouvé après label SURNAME:", nextLine);
         continue;
       }
     }
     
-    // Recherche explicite de "GIVEN NAMES/PRÉNOMS" suivi de la valeur
+    // Recherche explicite de "GIVEN NAMES/PRÉNOMS" ou lignes contenant "GIVEN" et "PRENOM"
     if ((line.includes("GIVEN") && (line.includes("PRENOM") || line.includes("NAMES"))) ||
-        (line.includes("GIVEN NAMES") && !passportData.prenom)) {
-      if (nextLine && isValidName(nextLine)) {
-        passportData.prenom = safeStringTrim(nextLine);
-        console.log("✅ Prénom trouvé après label GIVEN NAMES:", nextLine);
-        continue;
+        (line.includes("GIVEN NAMES") && !passportData.prenom) ||
+        (line.includes("GIVEN NA") && !passportData.prenom)) {
+      // Chercher la valeur dans les lignes suivantes
+      for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+        const candidateLine = lines[j].trim();
+        console.log(`🔍 Recherche prénom - ligne candidate ${j}: "${candidateLine}"`);
+        
+        if (candidateLine && isValidName(candidateLine) && !passportData.prenom) {
+          // Vérifier que ce n'est pas le même que le nom déjà trouvé
+          if (candidateLine !== passportData.nom) {
+            passportData.prenom = safeStringTrim(candidateLine);
+            console.log("✅ Prénom trouvé après label GIVEN:", candidateLine);
+            break;
+          }
+        }
       }
+      continue;
     }
     
     // Recherche explicite de "NATIONALITY" suivi de la valeur
@@ -65,7 +76,7 @@ export const extractDataFromMainText = (lines: string[], passportData: any) => {
       console.log("✅ Nationalité canadienne détectée");
     }
 
-    // Extraction multilingue du nom de famille (logique de fallback)
+    // Extraction multilingue du nom de famille (logique de fallback) - seulement si pas encore trouvé
     if (containsMultilingualKeywords(line, NAME_KEYWORDS.surname) && !passportData.nom) {
       console.log("🔍 Ligne contient mot-clé nom de famille:", line);
       const nameValue = extractRealValueFromField(line, nextLine);
@@ -75,11 +86,11 @@ export const extractDataFromMainText = (lines: string[], passportData: any) => {
       }
     }
     
-    // Extraction multilingue du prénom (logique de fallback)
+    // Extraction multilingue du prénom (logique de fallback) - seulement si pas encore trouvé
     if (containsMultilingualKeywords(line, NAME_KEYWORDS.givenName) && !passportData.prenom) {
       console.log("🔍 Ligne contient mot-clé prénom:", line);
       const prenomValue = extractRealValueFromField(line, nextLine);
-      if (prenomValue) {
+      if (prenomValue && prenomValue !== passportData.nom) {
         passportData.prenom = safeStringTrim(prenomValue);
         console.log("✅ Prénom trouvé (multilingue):", prenomValue);
       }
@@ -116,7 +127,7 @@ export const extractDataFromMainText = (lines: string[], passportData: any) => {
         }
         if (containsMultilingualKeywords(fieldName, NAME_KEYWORDS.givenName) && !passportData.prenom) {
           const prenomValue = extractRealValueFromField(line, nextLine);
-          if (prenomValue) {
+          if (prenomValue && prenomValue !== passportData.nom) {
             passportData.prenom = safeStringTrim(prenomValue);
             console.log("✅ Prénom trouvé (format numéroté):", prenomValue);
           }
@@ -134,7 +145,7 @@ export const extractDataFromMainText = (lines: string[], passportData: any) => {
           passportData.nom = safeStringTrim(fieldValue);
           console.log("✅ Nom trouvé (format deux points):", fieldValue);
         }
-        if (containsMultilingualKeywords(fieldName, NAME_KEYWORDS.givenName) && !passportData.prenom && isValidName(fieldValue)) {
+        if (containsMultilingualKeywords(fieldName, NAME_KEYWORDS.givenName) && !passportData.prenom && isValidName(fieldValue) && fieldValue !== passportData.nom) {
           passportData.prenom = safeStringTrim(fieldValue);
           console.log("✅ Prénom trouvé (format deux points):", fieldValue);
         }
@@ -156,17 +167,9 @@ export const extractDataFromMainText = (lines: string[], passportData: any) => {
             console.log("✅ Nom de famille trouvé après champ (format allemand):", line);
           }
           // Si la ligne précédente contient un mot-clé de prénom
-          else if (containsMultilingualKeywords(prevLine, NAME_KEYWORDS.givenName) && !passportData.prenom) {
+          else if (containsMultilingualKeywords(prevLine, NAME_KEYWORDS.givenName) && !passportData.prenom && line !== passportData.nom) {
             passportData.prenom = safeStringTrim(line);
             console.log("✅ Prénom trouvé après champ (format allemand):", line);
-          }
-          // Sinon, ordre par défaut : nom puis prénom
-          else if (!passportData.nom) {
-            passportData.nom = safeStringTrim(line);
-            console.log("✅ Nom de famille potentiel (format allemand):", line);
-          } else if (!passportData.prenom) {
-            passportData.prenom = safeStringTrim(line);
-            console.log("✅ Prénom potentiel (format allemand):", line);
           }
         }
       }
