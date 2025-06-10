@@ -2,6 +2,7 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw, Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface CaptchaConfigurationErrorProps {
   settingsError: string | null;
@@ -14,6 +15,13 @@ export const CaptchaConfigurationError = ({
   onRefetch, 
   className = "" 
 }: CaptchaConfigurationErrorProps) => {
+  const navigate = useNavigate();
+
+  const handleConfigurationClick = () => {
+    // Rediriger vers la page de gestion de la sécurité
+    navigate('/security-management');
+  };
+
   return (
     <div className={`p-6 bg-orange-50 rounded-lg border border-orange-200 ${className}`}>
       <Alert className="border-orange-200 bg-transparent">
@@ -23,7 +31,7 @@ export const CaptchaConfigurationError = ({
             <div>
               <strong>Configuration CAPTCHA requise</strong>
               <p className="text-sm mt-1">
-                {settingsError || "Les clés reCAPTCHA ne sont pas configurées."}
+                {settingsError || "Les clés reCAPTCHA ne sont pas configurées correctement."}
               </p>
             </div>
             
@@ -41,7 +49,7 @@ export const CaptchaConfigurationError = ({
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => window.location.href = '/security-management'}
+                onClick={handleConfigurationClick}
                 className="text-orange-700 border-orange-300 hover:bg-orange-100"
               >
                 <Settings className="w-4 h-4 mr-2" />

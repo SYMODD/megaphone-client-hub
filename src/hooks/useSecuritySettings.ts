@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -90,17 +91,21 @@ export const useSecuritySettings = () => {
 
       if (error) {
         console.error('❌ Erreur de chargement:', error);
-        // Ne pas lever d'erreur, juste retourner des données vides
+        // Retourner des données vides en cas d'erreur pour éviter de casser l'interface
         return { success: true, data: [] };
       }
 
-      // Traiter les données pour masquer les valeurs chiffrées
+      // Traiter les données : ne masquer que les valeurs réellement chiffrées
       const processedData = (data || []).map(item => ({
         ...item,
-        setting_value: item.is_encrypted ? '[ENCRYPTED]' : item.setting_value
+        // Pour la clé publique, ne pas masquer car elle doit être lisible
+        setting_value: item.is_encrypted && item.setting_key !== 'recaptcha_public_key' 
+          ? '[ENCRYPTED]' 
+          : item.setting_value
       }));
 
       console.log('✅ Paramètres chargés avec succès:', processedData.length, 'éléments');
+      console.log('📊 Données traitées:', processedData);
 
       return { success: true, data: processedData };
     } catch (error: any) {
