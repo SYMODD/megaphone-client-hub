@@ -34,10 +34,10 @@ export const useSecuritySettings = () => {
         
         // Messages d'erreur plus spécifiques
         let errorMessage = error.message;
-        if (error.message?.includes('permission') || error.message?.includes('Accès refusé')) {
+        if (error.code === 'PGRST116' || error.message?.includes('function') && error.message?.includes('does not exist')) {
+          errorMessage = "Fonction de base de données manquante. La migration doit être appliquée.";
+        } else if (error.message?.includes('permission') || error.message?.includes('Accès refusé')) {
           errorMessage = "Vous n'avez pas les permissions nécessaires pour cette opération";
-        } else if (error.message?.includes('function') && error.message?.includes('does not exist')) {
-          errorMessage = "Fonction de base de données manquante. Veuillez contacter l'administrateur.";
         } else if (error.message?.includes('digest')) {
           errorMessage = "Extension de chiffrement non disponible. Configuration en cours...";
         } else if (error.message?.includes('Utilisateur non authentifié')) {
@@ -47,7 +47,7 @@ export const useSecuritySettings = () => {
         throw new Error(errorMessage);
       }
 
-      console.log('✅ Paramètre sauvegardé avec succès');
+      console.log('✅ Paramètre sauvegardé avec succès:', data);
       
       toast({
         title: "Paramètre sauvegardé",
