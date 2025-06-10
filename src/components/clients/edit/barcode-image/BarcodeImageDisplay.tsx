@@ -43,9 +43,7 @@ export const BarcodeImageDisplay = ({
       <img 
         src={currentImageUrl} 
         alt="Image du code-barres"
-        className={`max-w-full h-auto max-h-48 rounded-lg shadow-md mx-auto border transition-opacity duration-200 ${
-          imageLoading ? 'opacity-0' : 'opacity-100'
-        }`}
+        className="max-w-full h-auto max-h-48 rounded-lg shadow-md mx-auto border"
         onLoad={() => {
           console.log("✅ BarcodeImageDisplay - Image chargée avec succès");
           onLoad();

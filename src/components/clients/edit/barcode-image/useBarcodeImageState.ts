@@ -18,7 +18,7 @@ export const useBarcodeImageState = ({ code_barre_image_url }: UseBarcodeImageSt
     type_current: typeof currentImageUrl
   });
 
-  // Synchronisation directe et simplifiée
+  // Synchronisation simplifiée avec reset des états
   useEffect(() => {
     console.log("🔄 useBarcodeImageState - SYNCHRONISATION:", {
       url_entrante: code_barre_image_url,
@@ -26,24 +26,18 @@ export const useBarcodeImageState = ({ code_barre_image_url }: UseBarcodeImageSt
       different: code_barre_image_url !== currentImageUrl
     });
 
-    if (code_barre_image_url !== currentImageUrl) {
-      setCurrentImageUrl(code_barre_image_url || "");
-      setImageError(false);
-      
-      // Démarrer le chargement seulement si on a une URL valide
-      if (code_barre_image_url && code_barre_image_url.trim() !== "") {
-        setImageLoading(true);
-      } else {
-        setImageLoading(false);
-      }
-      
-      console.log("✅ useBarcodeImageState - URL MISE À JOUR:", {
-        nouvelle_url: code_barre_image_url || "",
-        imageLoading: !!(code_barre_image_url && code_barre_image_url.trim() !== ""),
-        imageError: false
-      });
-    }
-  }, [code_barre_image_url, currentImageUrl]);
+    setCurrentImageUrl(code_barre_image_url || "");
+    setImageError(false);
+    
+    // Reset loading state - l'image se chargera naturellement
+    setImageLoading(false);
+    
+    console.log("✅ useBarcodeImageState - URL MISE À JOUR:", {
+      nouvelle_url: code_barre_image_url || "",
+      imageLoading: false,
+      imageError: false
+    });
+  }, [code_barre_image_url]);
 
   const handleImageLoad = () => {
     console.log("✅ useBarcodeImageState - Image chargée:", currentImageUrl);
