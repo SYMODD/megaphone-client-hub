@@ -1,6 +1,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Image, Barcode } from "lucide-react";
+import { SecureImageViewer } from "@/components/ui/SecureImageViewer";
 import { Client } from "@/hooks/useClientData/types";
 
 interface ClientViewDialogImagesProps {
@@ -23,10 +24,10 @@ export const ClientViewDialogImages = ({ client }: ClientViewDialogImagesProps) 
         </div>
         {client.photo_url ? (
           <div className="border rounded-lg p-4 bg-gray-50">
-            <img 
-              src={client.photo_url} 
-              alt="Photo du client"
-              className="max-w-full h-auto max-h-48 rounded-lg shadow-md mx-auto"
+            <SecureImageViewer 
+              imageUrl={client.photo_url}
+              altText="Photo du client"
+              showInline={true}
             />
             <p className="text-xs text-gray-500 text-center mt-2">
               Photo du document d'identité
@@ -53,10 +54,10 @@ export const ClientViewDialogImages = ({ client }: ClientViewDialogImagesProps) 
         </div>
         {client.code_barre_image_url ? (
           <div className="border rounded-lg p-4 bg-gray-50">
-            <img 
-              src={client.code_barre_image_url} 
-              alt="Image du code-barres"
-              className="max-w-full h-auto max-h-48 rounded-lg shadow-md mx-auto"
+            <SecureImageViewer 
+              imageUrl={client.code_barre_image_url}
+              altText="Image du code-barres"
+              showInline={true}
             />
             <p className="text-xs text-gray-500 text-center mt-2">
               Image du code-barres scanné

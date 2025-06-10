@@ -7,6 +7,7 @@ import { BarcodeImageDisplay } from "./barcode-image/BarcodeImageDisplay";
 import { BarcodeImageError } from "./barcode-image/BarcodeImageError";
 import { BarcodeImageDebugInfo } from "./barcode-image/BarcodeImageDebugInfo";
 import { BarcodeImagePlaceholder } from "./barcode-image/BarcodeImagePlaceholder";
+import { SecureImageViewer } from "@/components/ui/SecureImageViewer";
 import { useBarcodeImageState } from "./barcode-image/useBarcodeImageState";
 
 interface BarcodeImageSectionProps {
@@ -63,7 +64,7 @@ export const BarcodeImageSection = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Affichage de l'image actuelle */}
+        {/* Affichage sécurisé de l'image */}
         {hasValidImageUrl ? (
           <div className="space-y-2">
             <Label className="text-sm font-medium">Image actuelle</Label>
@@ -75,22 +76,33 @@ export const BarcodeImageSection = ({
                   onTest={testImageUrl}
                 />
               ) : (
-                <BarcodeImageDisplay
-                  currentImageUrl={currentImageUrl}
-                  imageLoading={imageLoading}
-                  imageError={imageError}
-                  onLoad={handleImageLoad}
-                  onError={handleImageError}
-                />
+                <div className="space-y-2">
+                  <BarcodeImageDisplay
+                    currentImageUrl={currentImageUrl}
+                    imageLoading={imageLoading}
+                    imageError={imageError}
+                    onLoad={handleImageLoad}
+                    onError={handleImageError}
+                  />
+                  <div className="text-center">
+                    <SecureImageViewer 
+                      imageUrl={currentImageUrl}
+                      label="Ouvrir l'image en grand"
+                      altText="Image du code-barres"
+                    />
+                  </div>
+                </div>
               )}
             </div>
             
-            {/* Informations de debug */}
-            <BarcodeImageDebugInfo 
-              currentImageUrl={currentImageUrl}
-              imageError={imageError}
-              imageLoading={imageLoading}
-            />
+            {/* Informations de debug - masquées en production */}
+            {process.env.NODE_ENV === 'development' && (
+              <BarcodeImageDebugInfo 
+                currentImageUrl={currentImageUrl}
+                imageError={imageError}
+                imageLoading={imageLoading}
+              />
+            )}
           </div>
         ) : (
           <BarcodeImagePlaceholder code_barre_image_url={code_barre_image_url} />
