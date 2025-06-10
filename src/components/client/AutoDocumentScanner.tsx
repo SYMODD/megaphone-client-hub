@@ -193,30 +193,4 @@ export const AutoDocumentScanner = ({
       )}
     </div>
   );
-
-  function getDocumentTypeLabel() {
-    switch (detectedDocumentType) {
-      case 'passeport_etranger':
-        return 'Passeport Étranger';
-      case 'carte_sejour':
-        return 'Carte de Séjour';
-      case 'unknown':
-        return 'Type inconnu';
-      default:
-        return 'En cours de détection...';
-    }
-  }
-
-  function getDocumentTypeColor() {
-    switch (detectedDocumentType) {
-      case 'passeport_etranger':
-        return 'bg-blue-500';
-      case 'carte_sejour':
-        return 'bg-green-500';
-      case 'unknown':
-        return 'bg-red-500';
-      default:
-        return 'bg-gray-500';
-    }
-  }
 };
