@@ -24,20 +24,20 @@ export const Navigation = () => {
 
   // Admin/Supervisor navigation items
   const adminNavItems = [
-    { to: "/", icon: Home, label: "Tableau de bord", adminOnly: false },
-    { to: "/clients", icon: Users, label: "Clients", adminOnly: false },
+    { to: "/dashboard", icon: Home, label: "Tableau de bord", adminOnly: false },
+    { to: "/base-clients", icon: Users, label: "Clients", adminOnly: false },
     { to: "/nouveau-client", icon: UserPlus, label: "Nouveau client", adminOnly: false },
-    { to: "/contrats", icon: FileText, label: "Contrats", adminOnly: false },
-    { to: "/gestion-utilisateurs", icon: Settings, label: "Utilisateurs", adminOnly: false },
-    { to: "/securite", icon: Shield, label: "Sécurité", adminOnly: true },
+    { to: "/contracts", icon: FileText, label: "Contrats", adminOnly: false },
+    { to: "/gestion-utilisateurs", icon: Settings, label: "Utilisateurs", adminOnly: true },
+    { to: "/security-management", icon: Shield, label: "Sécurité", adminOnly: true },
   ];
 
   // Agent navigation items
   const agentNavItems = [
     { to: "/nouveau-client", icon: UserPlus, label: "Nouveau client" },
-    { to: "/clients", icon: Users, label: "Mes clients" },
+    { to: "/base-clients", icon: Users, label: "Mes clients" },
     { to: "/scanner-auto", icon: Camera, label: "Scanner auto" },
-    { to: "/contrats", icon: FileText, label: "Contrats" },
+    { to: "/contracts", icon: FileText, label: "Contrats" },
     { to: "/scanner-cin", icon: CreditCard, label: "Scanner CIN" },
   ];
 
@@ -45,7 +45,7 @@ export const Navigation = () => {
   const navItems = isAgent ? agentNavItems : adminNavItems.filter(item => !item.adminOnly || isAdmin);
 
   const isActive = (path: string) => {
-    if (path === "/") {
+    if (path === "/dashboard") {
       return location.pathname === "/" || location.pathname === "/dashboard";
     }
     return location.pathname.startsWith(path);

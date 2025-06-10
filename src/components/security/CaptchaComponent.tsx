@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useCaptchaSettings } from "@/hooks/useCaptchaSettings";
