@@ -6,6 +6,13 @@ interface UseCaptchaScriptProps {
   publicKey: string | null;
 }
 
+declare global {
+  interface Window {
+    onRecaptchaLoad: () => void;
+    grecaptcha: any;
+  }
+}
+
 export const useCaptchaScript = ({ publicKey }: UseCaptchaScriptProps) => {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [scriptError, setScriptError] = useState(false);
