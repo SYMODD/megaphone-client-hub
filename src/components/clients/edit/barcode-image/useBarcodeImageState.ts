@@ -18,24 +18,28 @@ export const useBarcodeImageState = ({ code_barre_image_url }: UseBarcodeImageSt
     type_current: typeof currentImageUrl
   });
 
-  // 🎯 SYNCHRONISATION IMMÉDIATE ET SIMPLE
+  // Synchronisation directe et simplifiée
   useEffect(() => {
     console.log("🔄 useBarcodeImageState - SYNCHRONISATION:", {
       url_entrante: code_barre_image_url,
       url_actuelle: currentImageUrl,
-      different: code_barre_image_url !== currentImageUrl,
-      va_mettre_a_jour: code_barre_image_url !== currentImageUrl
+      different: code_barre_image_url !== currentImageUrl
     });
 
-    // Synchronisation directe sans validation complexe
     if (code_barre_image_url !== currentImageUrl) {
       setCurrentImageUrl(code_barre_image_url || "");
       setImageError(false);
-      setImageLoading(!!code_barre_image_url);
+      
+      // Démarrer le chargement seulement si on a une URL valide
+      if (code_barre_image_url && code_barre_image_url.trim() !== "") {
+        setImageLoading(true);
+      } else {
+        setImageLoading(false);
+      }
       
       console.log("✅ useBarcodeImageState - URL MISE À JOUR:", {
         nouvelle_url: code_barre_image_url || "",
-        imageLoading: !!code_barre_image_url,
+        imageLoading: !!(code_barre_image_url && code_barre_image_url.trim() !== ""),
         imageError: false
       });
     }
@@ -61,7 +65,7 @@ export const useBarcodeImageState = ({ code_barre_image_url }: UseBarcodeImageSt
     console.log("🔄 useBarcodeImageState - Retry chargement:", currentImageUrl);
     setImageError(false);
     setImageLoading(true);
-    // Force un nouveau chargement avec timestamp
+    // Force un nouveau chargement avec timestamp pour éviter le cache
     const urlWithTimestamp = currentImageUrl + (currentImageUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
     setCurrentImageUrl(urlWithTimestamp);
   };
@@ -73,7 +77,10 @@ export const useBarcodeImageState = ({ code_barre_image_url }: UseBarcodeImageSt
     }
   };
 
-  const hasValidImageUrl = !!(currentImageUrl && currentImageUrl.trim() !== "" && currentImageUrl !== "null" && currentImageUrl !== "undefined");
+  const hasValidImageUrl = !!(currentImageUrl && 
+                             currentImageUrl.trim() !== "" && 
+                             currentImageUrl !== "null" && 
+                             currentImageUrl !== "undefined");
 
   console.log("📊 useBarcodeImageState - ÉTAT FINAL:", {
     currentImageUrl,
