@@ -16,7 +16,7 @@ export const useAutoDocumentOCR = () => {
   const passportOCR = usePassportEtrangerOCR();
   const carteSejourOCR = useCarteSejourOCR();
 
-  const scanImage = async (file: File, apiKey: string) => {
+  const scanImage = async (file: File, apiKey: string, onDataExtracted?: (data: any, documentType: 'passeport_etranger' | 'carte_sejour') => void) => {
     setIsScanning(true);
     setExtractedData(null);
     setRawText("");
@@ -100,7 +100,16 @@ export const useAutoDocumentOCR = () => {
 
       setExtractedData(extractedData);
       
-      if (extractedData) {
+      // 🎯 NOUVEAU: Remplir automatiquement les champs si des données sont extraites
+      if (extractedData && detection.detectedType && detection.detectedType !== 'unknown' && onDataExtracted) {
+        const extractedFields = Object.keys(extractedData).filter(k => extractedData[k]);
+        console.log("✅ Remplissage automatique des champs:", extractedFields.length, "champs -", extractedFields.join(", "));
+        
+        // Appeler automatiquement onDataExtracted pour remplir les champs
+        onDataExtracted(extractedData, detection.detectedType);
+        
+        toast.success(`✅ ${extractedFields.length} champs remplis automatiquement: ${extractedFields.slice(0, 3).join(", ")}${extractedFields.length > 3 ? '...' : ''}`);
+      } else if (extractedData) {
         const extractedFields = Object.keys(extractedData).filter(k => extractedData[k]);
         console.log("✅ Extraction réussie:", extractedFields.length, "champs -", extractedFields.join(", "));
         toast.success(`✅ ${extractedFields.length} données extraites: ${extractedFields.slice(0, 3).join(", ")}${extractedFields.length > 3 ? '...' : ''}`);

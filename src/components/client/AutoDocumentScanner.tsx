@@ -51,7 +51,8 @@ export const AutoDocumentScanner = ({
     };
     reader.readAsDataURL(file);
 
-    await scanImage(file, apiKey);
+    // 🎯 MODIFICATION: Passer onDataExtracted au hook pour remplir automatiquement
+    await scanImage(file, apiKey, onDataExtracted);
   };
 
   const handleConfirmData = () => {
@@ -132,7 +133,7 @@ export const AutoDocumentScanner = ({
             )}
           </CardTitle>
           <CardDescription>
-            Prenez une photo ou téléversez une image du document. Le système détectera automatiquement s'il s'agit d'un passeport étranger ou d'une carte de séjour.
+            Prenez une photo ou téléversez une image du document. Le système détectera automatiquement s'il s'agit d'un passeport étranger ou d'une carte de séjour et remplira les champs automatiquement.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -192,4 +193,30 @@ export const AutoDocumentScanner = ({
       )}
     </div>
   );
+
+  function getDocumentTypeLabel() {
+    switch (detectedDocumentType) {
+      case 'passeport_etranger':
+        return 'Passeport Étranger';
+      case 'carte_sejour':
+        return 'Carte de Séjour';
+      case 'unknown':
+        return 'Type inconnu';
+      default:
+        return 'En cours de détection...';
+    }
+  }
+
+  function getDocumentTypeColor() {
+    switch (detectedDocumentType) {
+      case 'passeport_etranger':
+        return 'bg-blue-500';
+      case 'carte_sejour':
+        return 'bg-green-500';
+      case 'unknown':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  }
 };
