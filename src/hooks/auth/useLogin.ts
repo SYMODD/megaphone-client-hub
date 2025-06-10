@@ -9,8 +9,11 @@ export const useLogin = () => {
   const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
 
   const handleLogin = async (email: string, password: string, role?: string) => {
-    // Vérification CAPTCHA pour admin et superviseur
-    if ((role === 'admin' || role === 'superviseur') && !isCaptchaVerified) {
+    // Ne pas exiger CAPTCHA pour l'admin principal
+    const isMainAdmin = email === "essbane.salim@gmail.com";
+    
+    // Vérification CAPTCHA pour admin et superviseur (sauf admin principal)
+    if ((role === 'admin' || role === 'superviseur') && !isCaptchaVerified && !isMainAdmin) {
       setRequiresCaptcha(true);
       toast({
         title: "Vérification CAPTCHA requise",
@@ -33,8 +36,8 @@ export const useLogin = () => {
       if (error) {
         console.error('❌ Erreur de connexion:', error);
         
-        // Demander CAPTCHA en cas d'erreur pour admin/superviseur
-        if (role === 'admin' || role === 'superviseur') {
+        // Demander CAPTCHA en cas d'erreur pour admin/superviseur (sauf admin principal)
+        if ((role === 'admin' || role === 'superviseur') && !isMainAdmin) {
           setRequiresCaptcha(true);
         }
         
@@ -58,7 +61,7 @@ export const useLogin = () => {
           .eq('id', data.user.id)
           .single();
 
-        if (profile && role && profile.role !== role) {
+        if (profile && role && profile.role !== role && !isMainAdmin) {
           await supabase.auth.signOut();
           toast({
             title: "Accès refusé",

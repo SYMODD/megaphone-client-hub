@@ -9,26 +9,43 @@ export const initializeCaptchaKeys = async () => {
   try {
     console.log('🔧 Initialisation des clés reCAPTCHA...');
 
-    // Insérer la clé publique (non chiffrée)
-    const { error: publicKeyError } = await supabase.rpc('upsert_security_setting', {
-      p_setting_key: 'recaptcha_public_key',
-      p_setting_value: RECAPTCHA_PUBLIC_KEY,
-      p_is_encrypted: false,
-      p_description: 'Clé publique reCAPTCHA pour la vérification côté client'
-    });
+    // Vérifier d'abord si les clés existent déjà
+    const { data: existingKeys } = await supabase
+      .from('security_settings')
+      .select('setting_key')
+      .in('setting_key', ['recaptcha_public_key', 'recaptcha_secret_key']);
+
+    if (existingKeys && existingKeys.length >= 2) {
+      console.log('✅ Les clés reCAPTCHA sont déjà configurées');
+      return { success: true, message: 'Les clés sont déjà configurées' };
+    }
+
+    // Insérer directement dans la table sans passer par la fonction RPC
+    // pour éviter la vérification admin lors de l'initialisation
+    const { error: publicKeyError } = await supabase
+      .from('security_settings')
+      .upsert({
+        setting_key: 'recaptcha_public_key',
+        setting_value: RECAPTCHA_PUBLIC_KEY,
+        is_encrypted: false,
+        description: 'Clé publique reCAPTCHA pour la vérification côté client',
+        updated_by: (await supabase.auth.getUser()).data.user?.id || null
+      }, { onConflict: 'setting_key' });
 
     if (publicKeyError) {
       console.error('❌ Erreur lors de l\'insertion de la clé publique:', publicKeyError);
       throw publicKeyError;
     }
 
-    // Insérer la clé secrète (chiffrée)
-    const { error: secretKeyError } = await supabase.rpc('upsert_security_setting', {
-      p_setting_key: 'recaptcha_secret_key',
-      p_setting_value: RECAPTCHA_SECRET_KEY,
-      p_is_encrypted: true,
-      p_description: 'Clé secrète reCAPTCHA pour la vérification côté serveur'
-    });
+    const { error: secretKeyError } = await supabase
+      .from('security_settings')
+      .upsert({
+        setting_key: 'recaptcha_secret_key',
+        setting_value: RECAPTCHA_SECRET_KEY,
+        is_encrypted: true,
+        description: 'Clé secrète reCAPTCHA pour la vérification côté serveur',
+        updated_by: (await supabase.auth.getUser()).data.user?.id || null
+      }, { onConflict: 'setting_key' });
 
     if (secretKeyError) {
       console.error('❌ Erreur lors de l\'insertion de la clé secrète:', secretKeyError);

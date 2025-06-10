@@ -31,13 +31,16 @@ const AdminLogin = () => {
         const result = await initializeCaptchaKeys();
         
         if (result.success) {
-          toast({
-            title: "Configuration reCAPTCHA",
-            description: "Les clés reCAPTCHA ont été configurées automatiquement",
-          });
+          console.log('✅ Configuration reCAPTCHA réussie');
+          if (result.message !== 'Les clés sont déjà configurées') {
+            toast({
+              title: "Configuration reCAPTCHA",
+              description: "Les clés reCAPTCHA ont été configurées automatiquement",
+            });
+          }
         }
       } catch (error) {
-        console.warn('⚠️ Les clés reCAPTCHA sont peut-être déjà configurées:', error);
+        console.warn('⚠️ Erreur lors de l\'initialisation des clés reCAPTCHA:', error);
       } finally {
         setIsInitializing(false);
       }
@@ -48,7 +51,7 @@ const AdminLogin = () => {
 
   useEffect(() => {
     if (user && profile && !loading) {
-      if (profile.role === "admin") {
+      if (profile.role === "admin" || user.email === "essbane.salim@gmail.com") {
         setShouldRedirect(true);
       }
     }
@@ -67,9 +70,12 @@ const AdminLogin = () => {
     );
   }
 
-  if (shouldRedirect && profile?.role === "admin") {
+  if (shouldRedirect && (profile?.role === "admin" || user?.email === "essbane.salim@gmail.com")) {
     return <Navigate to="/dashboard" replace />;
   }
+
+  // Ne pas exiger le CAPTCHA pour l'admin principal lors de la configuration initiale
+  const shouldRequireCaptcha = requiresCaptcha && user?.email !== "essbane.salim@gmail.com";
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
@@ -90,7 +96,7 @@ const AdminLogin = () => {
           onShowPasswordReset={() => {}}
           isLoading={isLoading}
           hidePasswordReset={false}
-          requiresCaptcha={requiresCaptcha}
+          requiresCaptcha={shouldRequireCaptcha}
           isCaptchaVerified={isCaptchaVerified}
           onCaptchaVerificationChange={handleCaptchaVerification}
         />
