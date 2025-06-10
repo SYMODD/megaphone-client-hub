@@ -6,20 +6,21 @@ export const convertMainTextNationality = (nationality: string): string => {
   
   // Mapping étendu pour les nationalités en plusieurs langues
   const mainTextMapping: Record<string, string> = {
+    // Anglais/Canadien
+    "CANADIAN": "Canada",
+    "CANADIENNE": "Canada",
+    "CANADIAN/CANADIENNE": "Canada",
+    "AMERICAN": "États-Unis",
+    "UNITED STATES": "États-Unis",
+    "BRITISH": "Royaume-Uni",
+    "ENGLISH": "Royaume-Uni",
+    
     // Allemand
     "DEUTSCH": "Allemagne",
     "DEUTSCHE": "Allemagne",
     "GERMAN": "Allemagne",
     "BUNDESREPUBLIK": "Allemagne",
     "DEUTSCHLAND": "Allemagne",
-    
-    // Anglais/Canadien
-    "CANADIAN": "Canada",
-    "CANADIENNE": "Canada",
-    "AMERICAN": "États-Unis",
-    "UNITED STATES": "États-Unis",
-    "BRITISH": "Royaume-Uni",
-    "ENGLISH": "Royaume-Uni",
     
     // Français
     "FRENCH": "France",
@@ -95,6 +96,11 @@ export const convertMainTextNationality = (nationality: string): string => {
 
 export const checkForNationalityInLine = (line: string): string | null => {
   const lineUpper = line.toUpperCase().trim();
+  
+  // Vérification spécifique pour le format canadien
+  if (lineUpper === "CANADIAN/CANADIENNE") {
+    return "Canada";
+  }
   
   // Liste étendue des nationalités reconnues
   const knownNationalities = [
