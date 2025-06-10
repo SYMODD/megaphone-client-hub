@@ -70,10 +70,24 @@ export const usePassportEtrangerOCR = () => {
   };
 };
 
+// Helper function to safely convert values to strings and trim them
+const safeStringTrim = (value: any): string => {
+  if (value === null || value === undefined) {
+    return "";
+  }
+  const stringValue = String(value);
+  return stringValue.trim();
+};
+
+// Helper function to validate if a value is a valid string
+const isValidString = (value: any): boolean => {
+  return typeof value === 'string' && value.length > 0;
+};
+
 const extractPassportEtrangerData = (text: string): any => {
   console.log("Extracting foreign passport data from text:", text);
   
-  const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  const lines = text.split('\n').map(line => safeStringTrim(line)).filter(line => line.length > 0);
   const passportData: any = {};
 
   // Analyse du texte principal pour extraire nom et prénom
@@ -115,7 +129,7 @@ const extractNamesFromMainText = (lines: string[], passportData: any) => {
         nameValue = extractValueFromLine(nextLine, []);
       }
       if (nameValue && isValidName(nameValue)) {
-        passportData.nom = nameValue;
+        passportData.nom = safeStringTrim(nameValue);
         console.log("Nom trouvé dans le texte principal:", nameValue);
       }
     }
@@ -127,7 +141,7 @@ const extractNamesFromMainText = (lines: string[], passportData: any) => {
         prenomValue = extractValueFromLine(nextLine, []);
       }
       if (prenomValue && isValidName(prenomValue)) {
-        passportData.prenom = prenomValue;
+        passportData.prenom = safeStringTrim(prenomValue);
         console.log("Prénom trouvé dans le texte principal:", prenomValue);
       }
     }
@@ -138,14 +152,14 @@ const extractNamesFromMainText = (lines: string[], passportData: any) => {
     if (line.match(/^[A-Z]{2,20}$/) && !line.match(/^(PASSPORT|REISEPASS|CANADA|DEUTSCH|GERMAN)$/)) {
       // Vérifier si c'est potentiellement un nom
       if (isValidName(line) && !passportData.nom) {
-        passportData.nom = line;
+        passportData.nom = safeStringTrim(line);
         console.log("Nom potentiel trouvé (format allemand):", line);
       }
     }
     
     // Format canadien : recherche après des patterns spécifiques
     if (line.includes('TYPE') && nextLine) {
-      const possibleName = nextLine.trim();
+      const possibleName = safeStringTrim(nextLine);
       if (isValidName(possibleName) && !passportData.nom) {
         passportData.nom = possibleName;
         console.log("Nom trouvé après TYPE:", possibleName);
@@ -156,7 +170,7 @@ const extractNamesFromMainText = (lines: string[], passportData: any) => {
 
 const extractValueFromLine = (line: string, keywords: string[]): string | null => {
   // Enlever les keywords de la ligne pour extraire la valeur
-  let cleanLine = line;
+  let cleanLine = safeStringTrim(line);
   keywords.forEach(keyword => {
     cleanLine = cleanLine.replace(new RegExp(keyword, 'gi'), '');
   });
@@ -168,6 +182,9 @@ const extractValueFromLine = (line: string, keywords: string[]): string | null =
 };
 
 const isValidName = (name: string): boolean => {
+  if (!isValidString(name)) {
+    return false;
+  }
   // Vérifier que c'est un nom valide (lettres seulement, longueur raisonnable)
   return /^[A-Z\s]{2,30}$/.test(name) && 
          !name.match(/^(PASSPORT|REISEPASS|CANADA|GERMAN|DEUTSCH|FEDERAL|REPUBLIC)$/);
@@ -175,17 +192,17 @@ const isValidName = (name: string): boolean => {
 
 const extractNamesFromMRZ = (mrzLines: string[], passportData: any) => {
   // Première ligne MRZ contient les noms
-  const firstLine = mrzLines[0];
+  const firstLine = safeStringTrim(mrzLines[0]);
   
   if (firstLine.startsWith('P<')) {
     const namesPart = firstLine.substring(5);
     const names = namesPart.split('<<');
     if (names.length >= 2) {
-      if (!passportData.nom) {
-        passportData.nom = names[0].replace(/</g, '').trim();
+      if (!passportData.nom && names[0]) {
+        passportData.nom = safeStringTrim(names[0].replace(/</g, ''));
       }
-      if (!passportData.prenom) {
-        passportData.prenom = names[1].replace(/</g, ' ').trim();
+      if (!passportData.prenom && names[1]) {
+        passportData.prenom = safeStringTrim(names[1].replace(/</g, ' '));
       }
     }
   }
@@ -194,19 +211,35 @@ const extractNamesFromMRZ = (mrzLines: string[], passportData: any) => {
 const extractOtherDataFromMRZ = (mrzLines: string[], passportData: any) => {
   // Deuxième ligne MRZ contient les autres informations
   if (mrzLines.length >= 2) {
-    const secondLine = mrzLines[mrzLines.length - 1];
+    const secondLine = safeStringTrim(mrzLines[mrzLines.length - 1]);
     
     if (secondLine.length >= 30) {
       // Numéro de passeport
-      const docNumber = secondLine.substring(0, 9).replace(/</g, '');
+      const docNumber = safeStringTrim(secondLine.substring(0, 9).replace(/</g, ''));
       if (docNumber) {
         passportData.numero_passeport = docNumber;
       }
 
-      // Nationalité
-      const nationality = secondLine.substring(10, 13);
-      if (nationality && nationality !== '<<<') {
-        passportData.nationalite = convertNationalityCode(nationality);
+      // Nationalité - Add validation here
+      const nationalityRaw = secondLine.substring(10, 13);
+      if (nationalityRaw && nationalityRaw !== '<<<') {
+        try {
+          const nationalityCode = safeStringTrim(nationalityRaw);
+          console.log("Raw nationality code extracted:", nationalityCode);
+          
+          // Ensure we have a valid 3-character nationality code
+          if (nationalityCode.length === 3 && /^[A-Z]{3}$/.test(nationalityCode)) {
+            const convertedNationality = convertNationalityCode(nationalityCode);
+            passportData.nationalite = safeStringTrim(convertedNationality);
+            console.log("Converted nationality:", convertedNationality);
+          } else {
+            console.warn("Invalid nationality code format:", nationalityCode);
+            passportData.nationalite = nationalityCode; // Keep raw value if conversion fails
+          }
+        } catch (error) {
+          console.error("Error converting nationality code:", error);
+          passportData.nationalite = safeStringTrim(nationalityRaw);
+        }
       }
 
       // Date de naissance
