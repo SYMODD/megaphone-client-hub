@@ -12,14 +12,9 @@ export const PassportEtrangerForm = () => {
     isLoading,
     handleInputChange,
     handleSubmit,
+    handleImageScanned,
     handlePassportDataExtracted
   } = usePassportEtrangerForm();
-
-  // Fonction pour gérer l'image scannée
-  const handleImageScanned = (imageData: string) => {
-    console.log("🖼️ Image passeport étranger scannée reçue");
-    handleInputChange("scannedImage", imageData);
-  };
 
   // Fonction pour gérer le scan du code-barres
   const handleBarcodeScanned = (barcode: string, phone?: string, barcodeImageUrl?: string) => {

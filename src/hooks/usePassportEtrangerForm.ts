@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PassportEtrangerData } from "@/types/passportEtrangerTypes";
 
 interface FormData {
   nom: string;
@@ -12,10 +13,12 @@ interface FormData {
   numero_passeport: string;
   numero_telephone: string;
   code_barre: string;
+  date_naissance: string;
+  date_expiration: string;
   date_enregistrement: string;
   observations: string;
   scannedImage: string | null;
-  code_barre_image_url: string; // 🎯 AJOUT: URL de l'image du code-barres
+  code_barre_image_url: string;
 }
 
 export const usePassportEtrangerForm = () => {
@@ -31,10 +34,12 @@ export const usePassportEtrangerForm = () => {
     numero_passeport: "",
     numero_telephone: "",
     code_barre: "",
+    date_naissance: "",
+    date_expiration: "",
     date_enregistrement: new Date().toISOString().split('T')[0],
     observations: "",
     scannedImage: null,
-    code_barre_image_url: "" // 🎯 AJOUT: Initialisation
+    code_barre_image_url: ""
   });
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -45,20 +50,20 @@ export const usePassportEtrangerForm = () => {
     setFormData(prev => ({ ...prev, scannedImage: imageData }));
   };
 
-  const handlePassportDataExtracted = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
-    console.log("🎯 PASSEPORT ÉTRANGER - Données extraites:", {
-      barcode,
-      phone,
-      barcodeImageUrl,
-      barcodeImageUrl_present: barcodeImageUrl ? "✅ OUI" : "❌ NON"
-    });
+  const handlePassportDataExtracted = (extractedData: PassportEtrangerData, documentType: 'passeport_etranger' | 'carte_sejour') => {
+    console.log("🎯 PASSEPORT ÉTRANGER - Données extraites:", extractedData);
 
     setFormData(prev => ({
       ...prev,
-      code_barre: barcode || "",
-      numero_telephone: phone || "",
-      code_barre_image_url: barcodeImageUrl || "", // 🎯 CRUCIAL: Sauvegarder l'URL
-      observations: prev.observations || `Données extraites automatiquement via OCR le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')} - Type de document: Passeport étranger`
+      nom: extractedData.nom || "",
+      prenom: extractedData.prenom || "",
+      nationalite: extractedData.nationalite || "",
+      numero_passeport: extractedData.numero_passeport || "",
+      date_naissance: extractedData.date_naissance || "",
+      date_expiration: extractedData.date_expiration || "",
+      code_barre: extractedData.code_barre || extractedData.numero_passeport || "",
+      numero_telephone: extractedData.numero_telephone || "",
+      observations: prev.observations || `Données extraites automatiquement via OCR le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')} - Type de document: ${documentType}`
     }));
   };
 
@@ -69,7 +74,7 @@ export const usePassportEtrangerForm = () => {
       numero_passeport: formData.numero_passeport,
       nationalite: formData.nationalite,
       scannedImage: formData.scannedImage ? "✅ PRÉSENTE" : "❌ ABSENTE",
-      code_barre_image_url: formData.code_barre_image_url || "❌ ABSENTE" // 🎯 LOG pour debug
+      code_barre_image_url: formData.code_barre_image_url || "❌ ABSENTE"
     });
 
     if (!formData.nom || !formData.prenom || !formData.numero_passeport || !formData.nationalite) {
@@ -89,7 +94,6 @@ export const usePassportEtrangerForm = () => {
       if (formData.scannedImage) {
         console.log("📤 UPLOAD IMAGE PASSEPORT ÉTRANGER vers client-photos");
         
-        // 🎯 FIX: Utiliser uploadClientPhoto avec l'image base64 et le type de document
         photoUrl = await uploadClientPhoto(formData.scannedImage, 'passeport_etranger');
         console.log("✅ Image passeport étranger uploadée:", photoUrl);
       }
@@ -100,7 +104,6 @@ export const usePassportEtrangerForm = () => {
         throw new Error("Utilisateur non connecté");
       }
 
-      // 🎯 CRUCIAL: S'assurer que l'URL du code-barres est bien présente
       console.log("💾 VÉRIFICATION AVANT INSERTION - URL code-barres:", {
         code_barre_image_url_from_form: formData.code_barre_image_url,
         is_valid: formData.code_barre_image_url ? "✅ VALIDE" : "❌ MANQUANTE"
@@ -119,13 +122,13 @@ export const usePassportEtrangerForm = () => {
         date_enregistrement: formData.date_enregistrement,
         document_type: 'passeport_etranger',
         agent_id: user.id,
-        code_barre_image_url: formData.code_barre_image_url || null // 🎯 CRUCIAL: Inclure l'URL
+        code_barre_image_url: formData.code_barre_image_url || null
       };
 
       console.log("💾 INSERTION CLIENT PASSEPORT ÉTRANGER - Données finales:", {
         ...finalData,
         photo_incluse: photoUrl ? "✅ INCLUSE" : "❌ ABSENTE",
-        code_barre_image_incluse: finalData.code_barre_image_url ? "✅ INCLUSE" : "❌ ABSENTE" // 🎯 LOG pour debug
+        code_barre_image_incluse: finalData.code_barre_image_url ? "✅ INCLUSE" : "❌ ABSENTE"
       });
 
       // Insertion en base de données
