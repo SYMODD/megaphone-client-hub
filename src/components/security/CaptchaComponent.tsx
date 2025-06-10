@@ -29,9 +29,8 @@ export const CaptchaComponent = ({
   const [widgetId, setWidgetId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // IMPORTANT: Remplacez cette clé par votre vraie clé publique reCAPTCHA
-  // Vous pouvez l'obtenir sur https://www.google.com/recaptcha/admin
-  const RECAPTCHA_SITE_KEY = "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"; // Clé de test - À REMPLACER
+  // Votre vraie clé publique reCAPTCHA pour app.sudmegaphone.com
+  const RECAPTCHA_SITE_KEY = "6LdlZGFqAAAAANDr8QVhvWHm9FJvvEGdzokATr";
 
   useEffect(() => {
     // Éviter de charger le script plusieurs fois
