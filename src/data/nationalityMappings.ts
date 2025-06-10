@@ -7,6 +7,7 @@ export const nationalityCodeMapping: Record<string, string> = {
   "ESP": "Espagne",
   "ITA": "Italie",
   "DEU": "Allemagne",
+  "GER": "Allemagne", // Code alternatif pour l'Allemagne
   "GBR": "Royaume-Uni",
   "USA": "États-Unis",
   "CAN": "Canada",
@@ -125,7 +126,9 @@ export const nationalityCodeMapping: Record<string, string> = {
   "FSM": "Micronésie",
   "MHL": "Îles Marshall",
   "COK": "Îles Cook",
-  "NIU": "Niue"
+  "NIU": "Niue",
+  // Ajout spécifique pour gérer le cas du passeport allemand
+  "D": "Allemagne" // Pour les cas où seul "D" est extrait
 };
 
 export const convertNationalityCode = (code: string): string => {

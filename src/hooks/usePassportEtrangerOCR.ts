@@ -90,8 +90,8 @@ const extractPassportEtrangerData = (text: string): any => {
   const lines = text.split('\n').map(line => safeStringTrim(line)).filter(line => line.length > 0);
   const passportData: any = {};
 
-  // Analyse du texte principal pour extraire nom et prénom
-  extractNamesFromMainText(lines, passportData);
+  // Analyse du texte principal pour extraire nom, prénom et nationalité
+  extractDataFromMainText(lines, passportData);
   
   // Recherche des lignes MRZ pour les autres informations
   const mrzLines = lines.filter(line => 
@@ -116,7 +116,7 @@ const extractPassportEtrangerData = (text: string): any => {
   return passportData;
 };
 
-const extractNamesFromMainText = (lines: string[], passportData: any) => {
+const extractDataFromMainText = (lines: string[], passportData: any) => {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].toUpperCase();
     const nextLine = i + 1 < lines.length ? lines[i + 1] : "";
@@ -146,6 +146,20 @@ const extractNamesFromMainText = (lines: string[], passportData: any) => {
       }
     }
 
+    // Recherche de la nationalité dans le texte principal
+    if (line.includes('NATIONALITY') || line.includes('STAATSANGEHÖRIGKEIT') || line.includes('NATIONALITÉ')) {
+      let nationalityValue = extractValueFromLine(line, ['NATIONALITY', 'STAATSANGEHÖRIGKEIT', 'NATIONALITÉ']);
+      if (!nationalityValue && nextLine) {
+        nationalityValue = extractValueFromLine(nextLine, []);
+      }
+      if (nationalityValue && isValidNationality(nationalityValue)) {
+        // Convertir les nationalités spécifiques
+        const convertedNationality = convertMainTextNationality(nationalityValue);
+        passportData.nationalite = safeStringTrim(convertedNationality);
+        console.log("Nationalité trouvée dans le texte principal:", nationalityValue, "->", convertedNationality);
+      }
+    }
+
     // Patterns spécifiques pour différents formats de passeports
     
     // Format allemand : recherche de lignes avec des noms isolés
@@ -163,6 +177,15 @@ const extractNamesFromMainText = (lines: string[], passportData: any) => {
       if (isValidName(possibleName) && !passportData.nom) {
         passportData.nom = possibleName;
         console.log("Nom trouvé après TYPE:", possibleName);
+      }
+    }
+
+    // Recherche spécifique pour les nationalités dans des lignes isolées
+    if (!passportData.nationalite) {
+      const nationalityCheck = checkForNationalityInLine(line);
+      if (nationalityCheck) {
+        passportData.nationalite = nationalityCheck;
+        console.log("Nationalité trouvée dans ligne isolée:", nationalityCheck);
       }
     }
   }
@@ -188,6 +211,59 @@ const isValidName = (name: string): boolean => {
   // Vérifier que c'est un nom valide (lettres seulement, longueur raisonnable)
   return /^[A-Z\s]{2,30}$/.test(name) && 
          !name.match(/^(PASSPORT|REISEPASS|CANADA|GERMAN|DEUTSCH|FEDERAL|REPUBLIC)$/);
+};
+
+const isValidNationality = (nationality: string): boolean => {
+  if (!isValidString(nationality)) {
+    return false;
+  }
+  // Vérifier que c'est une nationalité valide
+  return /^[A-Z\s]{2,30}$/.test(nationality) && 
+         !nationality.match(/^(PASSPORT|REISEPASS|TYPE|GIVEN|SURNAME)$/);
+};
+
+const convertMainTextNationality = (nationality: string): string => {
+  const nationalityUpper = nationality.toUpperCase().trim();
+  
+  // Mapping spécifique pour les nationalités trouvées dans le texte principal
+  const mainTextMapping: Record<string, string> = {
+    "DEUTSCH": "Allemagne",
+    "GERMAN": "Allemagne", 
+    "CANADIAN": "Canada",
+    "CANADIENNE": "Canada",
+    "FRENCH": "France",
+    "FRANÇAISE": "France",
+    "AMERICAN": "États-Unis",
+    "BRITISH": "Royaume-Uni",
+    "SPANISH": "Espagne",
+    "ITALIAN": "Italie",
+    "BELGIAN": "Belgique",
+    "DUTCH": "Pays-Bas",
+    "SWISS": "Suisse",
+    "AUSTRIAN": "Autriche",
+    "PORTUGUESE": "Portugal"
+  };
+
+  return mainTextMapping[nationalityUpper] || nationality;
+};
+
+const checkForNationalityInLine = (line: string): string | null => {
+  const lineUpper = line.toUpperCase().trim();
+  
+  // Vérifier si la ligne contient uniquement une nationalité connue
+  const knownNationalities = [
+    "DEUTSCH", "GERMAN", "CANADIAN", "CANADIENNE", "FRENCH", "FRANÇAISE",
+    "AMERICAN", "BRITISH", "SPANISH", "ITALIAN", "BELGIAN", "DUTCH",
+    "SWISS", "AUSTRIAN", "PORTUGUESE", "MOROCCAN", "TUNISIAN", "ALGERIAN"
+  ];
+
+  for (const nat of knownNationalities) {
+    if (lineUpper === nat) {
+      return convertMainTextNationality(nat);
+    }
+  }
+
+  return null;
 };
 
 const extractNamesFromMRZ = (mrzLines: string[], passportData: any) => {
@@ -220,25 +296,27 @@ const extractOtherDataFromMRZ = (mrzLines: string[], passportData: any) => {
         passportData.numero_passeport = docNumber;
       }
 
-      // Nationalité - Add validation here
-      const nationalityRaw = secondLine.substring(10, 13);
-      if (nationalityRaw && nationalityRaw !== '<<<') {
-        try {
-          const nationalityCode = safeStringTrim(nationalityRaw);
-          console.log("Raw nationality code extracted:", nationalityCode);
-          
-          // Ensure we have a valid 3-character nationality code
-          if (nationalityCode.length === 3 && /^[A-Z]{3}$/.test(nationalityCode)) {
-            const convertedNationality = convertNationalityCode(nationalityCode);
-            passportData.nationalite = safeStringTrim(convertedNationality);
-            console.log("Converted nationality:", convertedNationality);
-          } else {
-            console.warn("Invalid nationality code format:", nationalityCode);
-            passportData.nationalite = nationalityCode; // Keep raw value if conversion fails
+      // Nationalité depuis MRZ (seulement si pas déjà trouvée dans le texte principal)
+      if (!passportData.nationalite) {
+        const nationalityRaw = secondLine.substring(10, 13);
+        if (nationalityRaw && nationalityRaw !== '<<<') {
+          try {
+            const nationalityCode = safeStringTrim(nationalityRaw);
+            console.log("Raw nationality code extracted from MRZ:", nationalityCode);
+            
+            // Ensure we have a valid 3-character nationality code
+            if (nationalityCode.length === 3 && /^[A-Z]{3}$/.test(nationalityCode)) {
+              const convertedNationality = convertNationalityCode(nationalityCode);
+              passportData.nationalite = safeStringTrim(convertedNationality);
+              console.log("Converted nationality from MRZ:", convertedNationality);
+            } else {
+              console.warn("Invalid nationality code format:", nationalityCode);
+              passportData.nationalite = nationalityCode; // Keep raw value if conversion fails
+            }
+          } catch (error) {
+            console.error("Error converting nationality code:", error);
+            passportData.nationalite = safeStringTrim(nationalityRaw);
           }
-        } catch (error) {
-          console.error("Error converting nationality code:", error);
-          passportData.nationalite = safeStringTrim(nationalityRaw);
         }
       }
 
