@@ -1,43 +1,52 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, Save, RefreshCw, Shield, Key } from 'lucide-react';
-import { AuthenticatedHeader } from '@/components/layout/AuthenticatedHeader';
-import { Navigation } from '@/components/layout/Navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { useRecaptchaSettings } from '@/hooks/useRecaptchaSettings';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
+import { Navigation } from "@/components/layout/Navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { Navigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Shield, Settings, TestTube, Eye, EyeOff } from "lucide-react";
+import { useRecaptchaSettings } from "@/hooks/useRecaptchaSettings";
+import { RecaptchaStatusTester } from "@/components/recaptcha/RecaptchaStatusTester";
 
 const AdminRecaptcha = () => {
-  const { profile, user } = useAuth();
-  const { siteKey, secretKey, isConfigured, isLoading, refreshSettings } = useRecaptchaSettings();
+  const { profile, loading } = useAuth();
+  const { siteKey, secretKey, isConfigured, refreshSettings } = useRecaptchaSettings();
   
   const [formData, setFormData] = useState({
     siteKey: '',
     secretKey: ''
   });
-  
-  const [showKeys, setShowKeys] = useState({
-    siteKey: false,
-    secretKey: false
-  });
-  
-  const [isSaving, setIsSaving] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [showSecrets, setShowSecrets] = useState(false);
 
-  // Vérification des droits d'accès
-  const isAdmin = profile?.role === "admin" || user?.email === "essbane.salim@gmail.com";
-  
-  if (!isAdmin) {
+  // Vérifier que l'utilisateur est admin
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+        <AuthenticatedHeader />
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-slate-600">Chargement...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile || profile.role !== 'admin') {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Charger les valeurs existantes quand elles sont disponibles
+  // Charger les valeurs existantes au premier rendu
   React.useEffect(() => {
     if (siteKey || secretKey) {
       setFormData({
@@ -47,60 +56,73 @@ const AdminRecaptcha = () => {
     }
   }, [siteKey, secretKey]);
 
-  const handleSaveSettings = async () => {
+  const handleSave = async () => {
     if (!formData.siteKey.trim() || !formData.secretKey.trim()) {
-      toast.error('Les deux clés sont obligatoires');
+      toast.error('Veuillez remplir tous les champs');
       return;
     }
 
-    setIsSaving(true);
+    setSaving(true);
+    
     try {
-      console.log('💾 Saving reCAPTCHA settings...');
+      // Supprimer les anciennes clés
+      await supabase
+        .from('security_settings')
+        .delete()
+        .in('setting_key', ['recaptcha_site_key', 'recaptcha_secret_key']);
 
-      // Sauvegarder la clé publique
-      const { error: siteKeyError } = await supabase
-        .rpc('upsert_security_setting', {
-          p_setting_key: 'recaptcha_site_key',
-          p_setting_value: formData.siteKey.trim(),
-          p_is_encrypted: false,
-          p_description: 'Clé publique reCAPTCHA V3'
-        });
+      // Insérer les nouvelles clés
+      const { error } = await supabase
+        .from('security_settings')
+        .insert([
+          {
+            setting_key: 'recaptcha_site_key',
+            setting_value: formData.siteKey.trim()
+          },
+          {
+            setting_key: 'recaptcha_secret_key',
+            setting_value: formData.secretKey.trim()
+          }
+        ]);
 
-      if (siteKeyError) {
-        throw siteKeyError;
-      }
+      if (error) throw error;
 
-      // Sauvegarder la clé secrète
-      const { error: secretKeyError } = await supabase
-        .rpc('upsert_security_setting', {
-          p_setting_key: 'recaptcha_secret_key',
-          p_setting_value: formData.secretKey.trim(),
-          p_is_encrypted: true,
-          p_description: 'Clé secrète reCAPTCHA V3'
-        });
-
-      if (secretKeyError) {
-        throw secretKeyError;
-      }
-
-      console.log('✅ reCAPTCHA settings saved successfully');
-      toast.success('✅ Paramètres reCAPTCHA sauvegardés avec succès !');
+      toast.success('Clés reCAPTCHA sauvegardées avec succès');
       
-      // Actualiser les paramètres
+      // Rafraîchir les paramètres
       refreshSettings();
+      
     } catch (error) {
-      console.error('❌ Error saving reCAPTCHA settings:', error);
-      toast.error('❌ Erreur lors de la sauvegarde');
+      console.error('Erreur lors de la sauvegarde:', error);
+      toast.error('Erreur lors de la sauvegarde des clés');
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
   };
 
-  const toggleShowKey = (keyType: 'siteKey' | 'secretKey') => {
-    setShowKeys(prev => ({
-      ...prev,
-      [keyType]: !prev[keyType]
-    }));
+  const handleClear = async () => {
+    setSaving(true);
+    
+    try {
+      const { error } = await supabase
+        .from('security_settings')
+        .delete()
+        .in('setting_key', ['recaptcha_site_key', 'recaptcha_secret_key']);
+
+      if (error) throw error;
+
+      setFormData({ siteKey: '', secretKey: '' });
+      toast.success('Clés reCAPTCHA supprimées');
+      
+      // Rafraîchir les paramètres
+      refreshSettings();
+      
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      toast.error('Erreur lors de la suppression des clés');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -109,172 +131,137 @@ const AdminRecaptcha = () => {
       <Navigation />
       
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* En-tête */}
-          <div className="space-y-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 flex items-center gap-2">
-              <Shield className="w-6 h-6 text-blue-600" />
-              Configuration reCAPTCHA V3
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">
+              Configuration reCAPTCHA
             </h1>
-            <p className="text-slate-600">
-              Gérez les clés de sécurité reCAPTCHA pour protéger l'application contre les bots
+            <p className="text-sm sm:text-base text-slate-600">
+              Gérez les clés reCAPTCHA pour la sécurité de l'application
             </p>
           </div>
 
-          {/* Status actuel */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Key className="w-5 h-5" />
-                État actuel
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${isConfigured ? 'bg-green-500' : 'bg-red-500'}`} />
-                  <span className="font-medium">
-                    {isConfigured ? 'Configuré' : 'Non configuré'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${siteKey ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  <span className="text-sm">
-                    Clé publique: {siteKey ? 'Définie' : 'Non définie'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${secretKey ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  <span className="text-sm">
-                    Clé secrète: {secretKey ? 'Définie' : 'Non définie'}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <Tabs defaultValue="config" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="config" className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Configuration
+              </TabsTrigger>
+              <TabsTrigger value="testing" className="flex items-center gap-2">
+                <TestTube className="w-4 h-4" />
+                Tests & Statut
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Configuration des clés */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Configuration des clés reCAPTCHA</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Clé publique */}
-              <div className="space-y-2">
-                <Label htmlFor="siteKey">Clé publique (Site Key)</Label>
-                <div className="relative">
-                  <Input
-                    id="siteKey"
-                    type={showKeys.siteKey ? "text" : "password"}
-                    value={formData.siteKey}
-                    onChange={(e) => setFormData(prev => ({ ...prev, siteKey: e.target.value }))}
-                    placeholder="6LcXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => toggleShowKey('siteKey')}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showKeys.siteKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500">
-                  Clé publique utilisée côté client (visible dans le code source)
-                </p>
-              </div>
-
-              <Separator />
-
-              {/* Clé secrète */}
-              <div className="space-y-2">
-                <Label htmlFor="secretKey">Clé secrète (Secret Key)</Label>
-                <div className="relative">
-                  <Input
-                    id="secretKey"
-                    type={showKeys.secretKey ? "text" : "password"}
-                    value={formData.secretKey}
-                    onChange={(e) => setFormData(prev => ({ ...prev, secretKey: e.target.value }))}
-                    placeholder="6LcXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => toggleShowKey('secretKey')}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showKeys.secretKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500">
-                  Clé secrète utilisée côté serveur (stockée chiffrée)
-                </p>
-              </div>
-
-              <Separator />
-
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button 
-                  onClick={handleSaveSettings}
-                  disabled={isSaving || isLoading}
-                  className="flex items-center gap-2"
-                >
-                  <Save className="w-4 h-4" />
-                  {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
-                </Button>
+            <TabsContent value="config">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="w-5 h-5" />
+                    Clés reCAPTCHA v3
+                  </CardTitle>
+                  <CardDescription>
+                    Configurez vos clés reCAPTCHA v3 pour sécuriser l'application.
+                    Ces clés sont utilisées pour la connexion Admin/Superviseur et la sélection de documents pour les Agents.
+                  </CardDescription>
+                </CardHeader>
                 
-                <Button 
-                  variant="outline"
-                  onClick={refreshSettings}
-                  disabled={isLoading}
-                  className="flex items-center gap-2"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Actualiser
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                <CardContent className="space-y-4">
+                  {/* Statut actuel */}
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-blue-800">
+                        Statut de configuration
+                      </span>
+                      <span className={`text-sm px-2 py-1 rounded ${
+                        isConfigured 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {isConfigured ? '✅ Configuré' : '❌ Non configuré'}
+                      </span>
+                    </div>
+                  </div>
 
-          {/* Instructions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Instructions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="font-medium">1. Obtenez vos clés reCAPTCHA</h4>
-                <p className="text-sm text-gray-600">
-                  Rendez-vous sur la{' '}
-                  <a 
-                    href="https://www.google.com/recaptcha/admin"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    console d'administration reCAPTCHA
-                  </a>
-                  {' '}pour créer un nouveau site avec reCAPTCHA V3.
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="font-medium">2. Configuration du domaine</h4>
-                <p className="text-sm text-gray-600">
-                  Ajoutez votre domaine (et localhost pour le développement) dans les domaines autorisés.
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="font-medium">3. Sécurité</h4>
-                <p className="text-sm text-gray-600">
-                  La clé secrète est automatiquement chiffrée lors du stockage.
-                  Toutes les modifications sont tracées dans les logs d'audit.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="siteKey">Clé publique (Site Key)</Label>
+                      <Input
+                        id="siteKey"
+                        type={showSecrets ? "text" : "password"}
+                        placeholder="6Lc..."
+                        value={formData.siteKey}
+                        onChange={(e) => setFormData(prev => ({ ...prev, siteKey: e.target.value }))}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="secretKey">Clé secrète (Secret Key)</Label>
+                      <Input
+                        id="secretKey"
+                        type={showSecrets ? "text" : "password"}
+                        placeholder="6Lc..."
+                        value={formData.secretKey}
+                        onChange={(e) => setFormData(prev => ({ ...prev, secretKey: e.target.value }))}
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowSecrets(!showSecrets)}
+                      >
+                        {showSecrets ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showSecrets ? 'Masquer' : 'Afficher'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-4">
+                    <Button 
+                      onClick={handleSave} 
+                      disabled={saving}
+                      className="flex items-center gap-2"
+                    >
+                      {saving ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Sauvegarde...
+                        </>
+                      ) : (
+                        'Sauvegarder'
+                      )}
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      onClick={handleClear}
+                      disabled={saving}
+                    >
+                      Vider
+                    </Button>
+                  </div>
+
+                  <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
+                    <h4 className="font-medium text-yellow-800 mb-1">
+                      Comment obtenir vos clés reCAPTCHA v3 ?
+                    </h4>
+                    <ol className="text-sm text-yellow-700 space-y-1">
+                      <li>1. Visitez <a href="https://www.google.com/recaptcha/admin" target="_blank" rel="noopener noreferrer" className="underline">Google reCAPTCHA Admin</a></li>
+                      <li>2. Créez un nouveau site avec reCAPTCHA v3</li>
+                      <li>3. Ajoutez votre domaine (ex: sudmegaphone.netlify.app)</li>
+                      <li>4. Copiez les clés publique et secrète ici</li>
+                    </ol>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="testing">
+              <RecaptchaStatusTester />
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>
