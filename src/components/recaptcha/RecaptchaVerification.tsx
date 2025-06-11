@@ -24,7 +24,7 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
   const { profile } = useAuth();
   const [isVerifying, setIsVerifying] = useState(false);
 
-  console.log('🔍 [UNIFIED_VERIFICATION] Vérification unifiée:', {
+  console.log('🔍 [UNIFIED_VERIFICATION] Vérification:', {
     action,
     userRole: profile?.role,
     isConfigured,
@@ -32,29 +32,37 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
   });
 
   function determineRequirement() {
-    // RÈGLES UNIFIÉES :
-    // - Admin/Superviseur sur login : REQUIS
+    // RÈGLES UNIFIÉES CLAIRES :
+    // - Agent : TOUJOURS bypass (même si reCAPTCHA configuré)
+    // - Admin/Superviseur sur login : REQUIS si configuré
     // - Tout le reste : BYPASS
     const userRole = profile?.role || '';
     
-    if (action === 'login' && ['admin', 'superviseur'].includes(userRole)) {
+    // RÈGLE 1 : Les agents sont TOUJOURS en bypass
+    if (userRole === 'agent') {
+      return 'BYPASS_AGENT';
+    }
+    
+    // RÈGLE 2 : Admin/Superviseur sur login
+    if (action.includes('login') && ['admin', 'superviseur'].includes(userRole)) {
       return isConfigured ? 'VERIFICATION_REQUISE' : 'ERREUR_NON_CONFIGURE';
     }
     
-    return 'BYPASS_TOTAL';
+    // RÈGLE 3 : Tout le reste en bypass
+    return 'BYPASS_GENERAL';
   }
 
   // Chargement : rendu direct
   if (isLoading) {
-    console.log('⏳ [UNIFIED_VERIFICATION] Chargement → Bypass');
+    console.log('⏳ [UNIFIED_VERIFICATION] Chargement → Bypass temporaire');
     return <>{children}</>;
   }
 
   const requirement = determineRequirement();
 
-  // BYPASS TOTAL pour tous sauf Admin/Superviseur sur login
-  if (requirement === 'BYPASS_TOTAL') {
-    console.log('⚡ [UNIFIED_VERIFICATION] BYPASS TOTAL');
+  // BYPASS pour agents et autres cas
+  if (requirement === 'BYPASS_AGENT' || requirement === 'BYPASS_GENERAL') {
+    console.log(`⚡ [UNIFIED_VERIFICATION] ${requirement} - Rendu direct`);
     return <>{children}</>;
   }
 
