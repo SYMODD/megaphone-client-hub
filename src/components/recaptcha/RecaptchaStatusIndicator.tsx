@@ -26,7 +26,7 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
     return null;
   }
 
-  console.log('🎯 [FIXED_INDICATOR] Indicateur corrigé:', {
+  console.log('🎯 [CORRECTED_INDICATOR] Indicateur avec logique corrigée:', {
     context,
     userRole: profile?.role,
     isConfigured,
@@ -36,14 +36,14 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
   function getDecision() {
     const userRole = profile?.role || '';
     
-    // RÈGLES CORRIGÉES ET CLAIRES
+    // RÈGLES FINALES CORRIGÉES ET CLAIRES
     if (context === 'login' && ['admin', 'superviseur'].includes(userRole)) {
-      // Pour login admin/superviseur : si configuré = ACTIF, sinon = REQUIS_NON_CONFIGURÉ
+      // Pour login admin/superviseur : statut suit la configuration
       return isConfigured ? 'RECAPTCHA_ACTIF' : 'REQUIS_MAIS_NON_CONFIGURÉ';
     }
     
     if (context === 'document_selection') {
-      // Sélection documents = toujours désactivé pour tous
+      // Sélection documents = toujours désactivé pour TOUS les rôles
       return 'DÉSACTIVÉ_POUR_TOUS';
     }
     

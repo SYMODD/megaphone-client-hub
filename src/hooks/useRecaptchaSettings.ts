@@ -1,6 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { recaptchaEventEmitter } from '@/hooks/recaptcha/RecaptchaEventEmitter';
+import { loadRecaptchaSettings } from '@/hooks/recaptcha/RecaptchaSettingsLoader';
+import { getCacheVersion } from '@/hooks/recaptcha/RecaptchaCache';
 
 export interface RecaptchaSettings {
   siteKey: string | null;
@@ -18,47 +21,43 @@ export const useRecaptchaSettings = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cacheVersion, setCacheVersion] = useState(getCacheVersion());
 
-  const loadSettings = async () => {
+  const loadSettings = async (forceRefresh: boolean = false) => {
     try {
       setIsLoading(true);
       setError(null);
 
-      console.log('🔍 [FIXED_HOOK] Chargement paramètres reCAPTCHA');
+      console.log('🔑 [CORRECTED_HOOK] Chargement des paramètres reCAPTCHA', {
+        forceRefresh,
+        currentCacheVersion: cacheVersion
+      });
       
-      const { data, error: fetchError } = await supabase
-        .from('security_settings')
-        .select('setting_key, setting_value')
-        .in('setting_key', ['recaptcha_site_key', 'recaptcha_secret_key']);
+      const newSettings = await loadRecaptchaSettings(cacheVersion, forceRefresh);
+      
+      // LOGIQUE CORRIGÉE : Validation stricte avec trim
+      const hasSiteKey = !!(newSettings.siteKey && newSettings.siteKey.trim() !== '');
+      const hasSecretKey = !!(newSettings.secretKey && newSettings.secretKey.trim() !== '');
+      const isConfigured = hasSiteKey && hasSecretKey;
 
-      if (fetchError) {
-        console.error('❌ [FIXED_HOOK] Erreur Supabase:', fetchError);
-        throw fetchError;
-      }
-
-      const siteKey = data?.find(item => item.setting_key === 'recaptcha_site_key')?.setting_value || null;
-      const secretKey = data?.find(item => item.setting_key === 'recaptcha_secret_key')?.setting_value || null;
-
-      // LOGIQUE FIXÉE : les deux clés doivent être présentes et non vides
-      const isConfigured = !!(siteKey && siteKey.trim() && secretKey && secretKey.trim());
-
-      const newSettings = {
-        siteKey,
-        secretKey,
-        isLoaded: true,
+      const correctedSettings = {
+        ...newSettings,
         isConfigured
       };
 
-      console.log('✅ [FIXED_HOOK] Statut final:', {
-        hasSiteKey: !!siteKey,
-        hasSecretKey: !!secretKey,
-        isConfigured,
-        status: isConfigured ? 'CONFIGURÉ ✅' : 'NON CONFIGURÉ ❌'
+      console.log('✅ [CORRECTED_HOOK] Configuration CORRIGÉE:', {
+        hasSiteKey,
+        hasSecretKey,
+        isConfigured: isConfigured ? 'OUI ✅' : 'NON ❌',
+        siteKeyPreview: newSettings.siteKey ? newSettings.siteKey.substring(0, 15) + '...' : 'VIDE',
+        secretKeyPreview: newSettings.secretKey ? newSettings.secretKey.substring(0, 15) + '...' : 'VIDE'
       });
 
-      setSettings(newSettings);
+      setSettings(correctedSettings);
+      setCacheVersion(getCacheVersion());
+      
     } catch (err) {
-      console.error('❌ [FIXED_HOOK] Erreur:', err);
+      console.error('❌ [CORRECTED_HOOK] Erreur:', err);
       setError('Erreur lors du chargement');
       setSettings({
         siteKey: null,
@@ -75,9 +74,19 @@ export const useRecaptchaSettings = () => {
     loadSettings();
   }, []);
 
+  // Synchronisation automatique avec les événements globaux
+  useEffect(() => {
+    const unsubscribe = recaptchaEventEmitter.subscribe(() => {
+      console.log('🔄 [CORRECTED_HOOK] Synchronisation automatique détectée');
+      loadSettings(true);
+    });
+
+    return unsubscribe;
+  }, []);
+
   const refreshSettings = () => {
-    console.log('🔄 [FIXED_HOOK] Actualisation demandée');
-    loadSettings();
+    console.log('🔄 [CORRECTED_HOOK] Actualisation manuelle demandée');
+    loadSettings(true);
   };
 
   return {

@@ -71,12 +71,12 @@ export const RoleSpecificLogin = ({
   const { isConfigured } = useRecaptchaSettings();
   const roleInfo = getRoleInfo(role);
 
-  // RÈGLES FIXÉES ET CLAIRES :
+  // RÈGLES FINALES CORRIGÉES :
   // - Agent : TOUJOURS connexion directe (pas de reCAPTCHA)
   // - Admin/Superviseur : reCAPTCHA uniquement si configuré
   const requiresRecaptcha = role !== 'agent' && isConfigured;
 
-  console.log(`🔐 [FIXED_LOGIN] Connexion ${role}:`, {
+  console.log(`🔐 [CORRECTED_LOGIN] Connexion ${role} avec logique corrigée:`, {
     requiresRecaptcha,
     isConfigured,
     rule: role === 'agent' ? 'BYPASS_AGENT' : (isConfigured ? 'RECAPTCHA_REQUIRED' : 'DIRECT_LOGIN')
@@ -84,7 +84,7 @@ export const RoleSpecificLogin = ({
 
   // Gestionnaire avec reCAPTCHA pour Admin/Superviseur (si configuré)
   const handleLoginWithRecaptcha = async (recaptchaToken: string) => {
-    console.log('🔒 [FIXED_LOGIN] reCAPTCHA validé pour:', role, recaptchaToken.substring(0, 20) + '...');
+    console.log('🔒 [CORRECTED_LOGIN] reCAPTCHA validé pour:', role, recaptchaToken.substring(0, 20) + '...');
     
     const tempData = localStorage.getItem('temp_login_data');
     if (!tempData) {
@@ -94,19 +94,19 @@ export const RoleSpecificLogin = ({
 
     try {
       const { email, password } = JSON.parse(tempData);
-      console.log(`📝 [FIXED_LOGIN] Connexion ${role} après reCAPTCHA:`, email);
+      console.log(`📝 [CORRECTED_LOGIN] Connexion ${role} après reCAPTCHA:`, email);
       
       await onLogin(email, password);
       localStorage.removeItem('temp_login_data');
     } catch (error) {
-      console.error('❌ [FIXED_LOGIN] Erreur lors de la connexion:', error);
+      console.error('❌ [CORRECTED_LOGIN] Erreur lors de la connexion:', error);
       toast.error('Erreur lors de la connexion');
       localStorage.removeItem('temp_login_data');
     }
   };
 
   const handleRecaptchaError = (error: string) => {
-    console.error('❌ [FIXED_LOGIN] Erreur reCAPTCHA:', error);
+    console.error('❌ [CORRECTED_LOGIN] Erreur reCAPTCHA:', error);
     toast.error('Vérification de sécurité échouée');
     localStorage.removeItem('temp_login_data');
   };
@@ -119,10 +119,10 @@ export const RoleSpecificLogin = ({
       return;
     }
 
-    // LOGIQUE FIXÉE ET CLAIRE
+    // LOGIQUE CORRIGÉE ET CLAIRE
     if (requiresRecaptcha) {
       // Admin/Superviseur avec reCAPTCHA configuré
-      console.log(`🔒 [FIXED_LOGIN] Stockage temporaire pour reCAPTCHA ${role}`);
+      console.log(`🔒 [CORRECTED_LOGIN] Stockage temporaire pour reCAPTCHA ${role}`);
       localStorage.setItem('temp_login_data', JSON.stringify({
         email: loginForm.email,
         password: loginForm.password
@@ -130,7 +130,7 @@ export const RoleSpecificLogin = ({
       // Le composant RecaptchaVerification s'occupera du reste
     } else {
       // Agent OU Admin/Superviseur sans reCAPTCHA
-      console.log(`⚡ [FIXED_LOGIN] Connexion directe ${role}`);
+      console.log(`⚡ [CORRECTED_LOGIN] Connexion directe ${role}`);
       await onLogin(loginForm.email, loginForm.password);
     }
   };
@@ -207,21 +207,21 @@ export const RoleSpecificLogin = ({
         </div>
       )}
 
-      {/* Avertissement pour Admin/Superviseur sans reCAPTCHA */}
+      {/* Message corrigé pour Admin/Superviseur sans reCAPTCHA */}
       {role !== 'agent' && !isConfigured && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex">
             <div className="flex-shrink-0">
-              <Shield className="h-5 w-5 text-yellow-400" />
+              <Shield className="h-5 w-5 text-blue-400" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">
-                Configuration reCAPTCHA recommandée
+              <h3 className="text-sm font-medium text-blue-800">
+                Connexion directe autorisée
               </h3>
-              <div className="mt-2 text-sm text-yellow-700">
+              <div className="mt-2 text-sm text-blue-700">
                 <p>
-                  Pour une sécurité optimale des comptes {role}, nous recommandons de configurer reCAPTCHA.
-                  Contactez votre administrateur pour la configuration.
+                  La connexion {role} est actuellement possible sans reCAPTCHA. 
+                  Pour une sécurité renforcée, contactez votre administrateur pour configurer reCAPTCHA.
                 </p>
               </div>
             </div>
