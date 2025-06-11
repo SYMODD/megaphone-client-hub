@@ -1,88 +1,61 @@
 
-import { PersonalInfoSection } from "./PersonalInfoSection";
-import { ContactInfoSection } from "./ContactInfoSection";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CINForm } from "./CINForm";
 import { PassportSection } from "./PassportSection";
-import { RegistrationSection } from "./RegistrationSection";
-import { FormActions } from "./FormActions";
-import { BarcodeScanner } from "./BarcodeScanner";
-import { useClientFormLogic } from "@/hooks/useClientForm";
 import { DocumentType } from "@/types/documentTypes";
+import { MRZData } from "@/services/ocr";
 
 export const ClientForm = () => {
-  const { 
-    formData, 
-    isLoading, 
-    selectedDocumentType,
-    handleInputChange, 
-    handleSubmit, 
-    handleMRZDataExtracted,
-    handleDocumentTypeSelect,
-    handleBarcodeScanned
-  } = useClientFormLogic();
+  const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType | null>(null);
+  const [scannedImage, setScannedImage] = useState<string | null>(null);
 
-  const handleBarcodeScannedWithLogging = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
-    console.log("🔥 CLIENT FORM - RÉCEPTION BARCODE:", {
-      barcode,
-      phone,
-      barcodeImageUrl,
-      component: "ClientForm"
-    });
-    
-    handleBarcodeScanned(barcode, phone, barcodeImageUrl);
+  console.log('📝 [CLIENT_FORM] Rendu formulaire client (VERSION UNIFIÉE)');
+
+  const handleMRZDataExtracted = (data: MRZData, documentType: DocumentType) => {
+    console.log('📄 [CLIENT_FORM] Données MRZ extraites:', { data, documentType });
+    // Les données sont transmises au composant approprié
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    console.log("🔥 CLIENT FORM - SOUMISSION - État actuel du formulaire:", {
-      code_barre: formData.code_barre,
-      code_barre_image_url: formData.code_barre_image_url,
-      url_présente: formData.code_barre_image_url ? "✅ OUI" : "❌ NON"
-    });
-    
-    handleSubmit(e);
+  const handleImageScanned = (image: string) => {
+    console.log('📸 [CLIENT_FORM] Image scannée');
+    setScannedImage(image);
   };
 
-  return (
-    <form onSubmit={handleFormSubmit} className="space-y-4 sm:space-y-6">
+  // Rendu conditionnel basé sur le type de document sélectionné
+  if (selectedDocumentType === 'cin') {
+    return (
       <div className="space-y-4 sm:space-y-6">
-        <PassportSection 
-          scannedImage={formData.scannedImage}
-          onImageScanned={(image) => handleInputChange("scannedImage", image)}
-          onMRZDataExtracted={handleMRZDataExtracted}
-          selectedDocumentType={selectedDocumentType as DocumentType}
-          onDocumentTypeSelect={handleDocumentTypeSelect}
-        />
-
-        <BarcodeScanner 
-          onBarcodeScanned={handleBarcodeScannedWithLogging}
-          currentBarcode={formData.code_barre}
-        />
-
-        {selectedDocumentType && (
-          <>
-            <PersonalInfoSection 
-              formData={formData}
-              onInputChange={handleInputChange}
-            />
-
-            <ContactInfoSection 
-              formData={formData}
-              onInputChange={handleInputChange}
-            />
-
-            <RegistrationSection 
-              formData={formData}
-              onInputChange={handleInputChange}
-            />
-
-            <FormActions 
-              isLoading={isLoading}
-              onSubmit={() => {}} // La soumission se fait via le form onSubmit
-            />
-          </>
-        )}
+        <Card>
+          <CardHeader>
+            <CardTitle>🆔 Formulaire CIN</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CINForm />
+          </CardContent>
+        </Card>
       </div>
-    </form>
+    );
+  }
+
+  // Pour tous les autres types de documents (passeports, carte de séjour)
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>📋 Formulaire Client</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {/* UN SEUL PassportSection qui gère TOUT */}
+          <PassportSection
+            selectedDocumentType={selectedDocumentType}
+            onDocumentTypeSelect={setSelectedDocumentType}
+            scannedImage={scannedImage}
+            onImageScanned={handleImageScanned}
+            onMRZDataExtracted={handleMRZDataExtracted}
+          />
+        </CardContent>
+      </Card>
+    </div>
   );
 };

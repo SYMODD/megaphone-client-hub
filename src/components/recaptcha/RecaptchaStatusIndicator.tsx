@@ -21,58 +21,27 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
   const { isConfigured, isLoading, error, refreshSettings } = useRecaptchaSettings();
   const { profile } = useAuth();
 
-  console.log('🎯 [UNIFIED_INDICATOR] Affichage indicateur de statut:', {
+  console.log('🎯 [UNIFIED_INDICATOR] Indicateur unifié:', {
     context,
     userRole: profile?.role,
     isConfigured,
-    decision: context === 'document_selection' ? 'FORCE_DISABLED' : 'EVALUATE_BY_ROLE'
+    decision: getDecision()
   });
 
-  // LOGIQUE UNIFIÉE ET SIMPLIFIÉE
-  const getDisplayInfo = () => {
+  function getDecision() {
     const userRole = profile?.role || '';
     
-    // RÈGLE ABSOLUE : document_selection = TOUJOURS désactivé
+    // RÈGLES UNIFIÉES CLAIRES
     if (context === 'document_selection') {
-      return {
-        variant: 'secondary' as const,
-        icon: ShieldX,
-        text: 'reCAPTCHA désactivé',
-        color: 'text-gray-600',
-        bgColor: 'bg-gray-50 border-gray-300'
-      };
+      return 'DÉSACTIVÉ_POUR_TOUS';
     }
-
-    // Pour les autres contextes : évaluer selon le rôle
-    if (['admin', 'superviseur'].includes(userRole)) {
-      if (isConfigured) {
-        return {
-          variant: 'default' as const,
-          icon: ShieldCheck,
-          text: 'reCAPTCHA actif',
-          color: 'text-green-800',
-          bgColor: 'bg-green-100 border-green-300'
-        };
-      } else {
-        return {
-          variant: 'destructive' as const,
-          icon: ShieldX,
-          text: 'reCAPTCHA requis',
-          color: 'text-red-800',
-          bgColor: 'bg-red-100 border-red-300'
-        };
-      }
+    
+    if (context === 'login' && ['admin', 'superviseur'].includes(userRole)) {
+      return isConfigured ? 'REQUIS_ET_CONFIGURÉ' : 'REQUIS_MAIS_NON_CONFIGURÉ';
     }
-
-    // Agent ou autres rôles
-    return {
-      variant: 'outline' as const,
-      icon: ShieldX,
-      text: 'reCAPTCHA non requis',
-      color: 'text-gray-600',
-      bgColor: 'bg-gray-50 border-gray-300'
-    };
-  };
+    
+    return 'NON_REQUIS';
+  }
 
   if (isLoading) {
     return (
@@ -114,6 +83,48 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
     );
   }
 
+  const decision = getDecision();
+  
+  const getDisplayInfo = () => {
+    switch (decision) {
+      case 'DÉSACTIVÉ_POUR_TOUS':
+        return {
+          variant: 'secondary' as const,
+          icon: ShieldX,
+          text: 'reCAPTCHA désactivé',
+          bgColor: 'bg-gray-100 border-gray-300',
+          textColor: 'text-gray-600'
+        };
+      
+      case 'REQUIS_ET_CONFIGURÉ':
+        return {
+          variant: 'default' as const,
+          icon: ShieldCheck,
+          text: 'reCAPTCHA actif',
+          bgColor: 'bg-green-100 border-green-300',
+          textColor: 'text-green-800'
+        };
+      
+      case 'REQUIS_MAIS_NON_CONFIGURÉ':
+        return {
+          variant: 'destructive' as const,
+          icon: ShieldX,
+          text: 'reCAPTCHA requis',
+          bgColor: 'bg-red-100 border-red-300',
+          textColor: 'text-red-800'
+        };
+      
+      default: // NON_REQUIS
+        return {
+          variant: 'outline' as const,
+          icon: ShieldX,
+          text: 'reCAPTCHA non requis',
+          bgColor: 'bg-blue-100 border-blue-300',
+          textColor: 'text-blue-800'
+        };
+    }
+  };
+
   const displayInfo = getDisplayInfo();
   const IconComponent = displayInfo.icon;
 
@@ -121,14 +132,14 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
     <div className="flex items-center gap-2">
       <Badge 
         variant={displayInfo.variant} 
-        className={`flex items-center gap-1 ${displayInfo.bgColor} ${displayInfo.color}`}
+        className={`flex items-center gap-1 ${displayInfo.bgColor} ${displayInfo.textColor}`}
       >
         <IconComponent className="w-3 h-3" />
         <span className="text-xs">{displayInfo.text}</span>
       </Badge>
       {showDebug && (
         <span className="text-xs text-gray-600">
-          (Contexte: {context}, Rôle: {profile?.role}, Configuré: {isConfigured ? 'OUI' : 'NON'})
+          (Contexte: {context}, Rôle: {profile?.role}, Décision: {decision})
         </span>
       )}
       {showRefreshButton && (

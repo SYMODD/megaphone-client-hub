@@ -13,6 +13,12 @@ interface DocumentTypeSelectorProps {
 }
 
 export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: DocumentTypeSelectorProps) => {
+  console.log('📋 [DOCUMENT_SELECTOR] Rendu sélecteur (version unifiée):', {
+    selectedType,
+    hasCallback: !!onTypeSelect,
+    hasBack: !!onBack
+  });
+
   if (selectedType) {
     return (
       <SelectedDocumentCard 
@@ -31,7 +37,7 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
         <DocumentTypeList onTypeSelect={onTypeSelect} />
       </Card>
 
-      {/* Informations de debug pour les admins */}
+      {/* Informations de debug pour les admins uniquement */}
       <RecaptchaDebugInfo />
     </>
   );
