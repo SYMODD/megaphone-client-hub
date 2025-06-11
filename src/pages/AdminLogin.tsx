@@ -6,6 +6,7 @@ import { useAuthOperations } from "@/hooks/useAuthOperations";
 import { AuthAlert } from "@/components/auth/AuthAlert";
 import { RecaptchaStatusIndicator } from "@/components/recaptcha/RecaptchaStatusIndicator";
 import { RecaptchaDebugInfo } from "@/components/recaptcha/RecaptchaDebugInfo";
+import { RecaptchaDomainTester } from "@/components/recaptcha/RecaptchaDomainTester";
 import { useEffect, useState } from "react";
 
 const AdminLogin = () => {
@@ -49,7 +50,7 @@ const AdminLogin = () => {
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md space-y-6">
         <div className="text-center mb-8">
           <div className="mx-auto w-16 h-16 mb-4 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
             <span className="text-white font-bold text-xl">SM</span>
@@ -66,6 +67,9 @@ const AdminLogin = () => {
         </div>
 
         <AuthAlert error={error} success={success} />
+
+        {/* Diagnostic de domaine en priorité */}
+        <RecaptchaDomainTester />
 
         <RoleSpecificLogin
           role="admin"
