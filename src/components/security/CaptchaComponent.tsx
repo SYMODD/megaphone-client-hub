@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useCaptchaSettings } from "@/hooks/useCaptchaSettings";
 import { CaptchaConfigurationError } from "./captcha/CaptchaConfigurationError";
 import { CaptchaScriptError } from "./captcha/CaptchaScriptError";
@@ -29,9 +29,24 @@ export const CaptchaComponent = ({
   className = ""
 }: CaptchaComponentProps) => {
   const [widgetId, setWidgetId] = useState<number | null>(null);
+  const [componentKey, setComponentKey] = useState<number>(0);
   
   const { publicKey, isLoading: settingsLoading, error: settingsError, refetch } = useCaptchaSettings();
   const { isScriptLoaded, scriptError, resetScript } = useCaptchaScript({ publicKey });
+
+  // Fonction pour forcer un nouveau rendu du widget
+  const forceReset = useCallback(() => {
+    console.log('🔄 Force reset du composant CAPTCHA');
+    setWidgetId(null);
+    setComponentKey(prev => prev + 1);
+  }, []);
+
+  // Reset automatique lors des changements de clé publique
+  useEffect(() => {
+    if (publicKey) {
+      forceReset();
+    }
+  }, [publicKey, forceReset]);
 
   // Cleanup lors du démontage
   useEffect(() => {
@@ -40,22 +55,11 @@ export const CaptchaComponent = ({
         try {
           window.grecaptcha.reset(widgetId);
         } catch (error) {
-          console.warn('⚠️ Erreur lors du reset du CAPTCHA:', error);
+          console.warn('⚠️ Erreur lors du reset final du CAPTCHA:', error);
         }
       }
     };
   }, [widgetId]);
-
-  const reset = () => {
-    if (widgetId !== null && window.grecaptcha) {
-      try {
-        window.grecaptcha.reset(widgetId);
-        console.log('🔄 CAPTCHA reset');
-      } catch (error) {
-        console.warn('⚠️ Erreur lors du reset:', error);
-      }
-    }
-  };
 
   // État de chargement des paramètres
   if (settingsLoading) {
@@ -72,7 +76,10 @@ export const CaptchaComponent = ({
     return (
       <CaptchaConfigurationError
         settingsError={settingsError}
-        onRefetch={refetch}
+        onRefetch={() => {
+          refetch();
+          forceReset();
+        }}
         className={className}
       />
     );
@@ -100,6 +107,7 @@ export const CaptchaComponent = ({
 
   return (
     <CaptchaWidget
+      key={componentKey} // Force un nouveau rendu à chaque reset
       publicKey={publicKey}
       isScriptLoaded={isScriptLoaded}
       theme={theme}
