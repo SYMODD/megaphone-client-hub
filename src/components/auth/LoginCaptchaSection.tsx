@@ -36,8 +36,8 @@ export const LoginCaptchaSection = ({ onVerificationChange, show }: LoginCaptcha
         <CaptchaComponent
           onVerify={handleCaptchaVerify}
           onExpire={handleCaptchaExpire}
-          action="login"
-          className="w-full"
+          theme="light"
+          size="compact"
         />
       </div>
       

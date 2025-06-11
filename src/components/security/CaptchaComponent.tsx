@@ -1,16 +1,17 @@
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useCaptchaSettings } from "@/hooks/useCaptchaSettings";
 import { CaptchaConfigurationError } from "./captcha/CaptchaConfigurationError";
 import { CaptchaScriptError } from "./captcha/CaptchaScriptError";
 import { CaptchaLoadingState } from "./captcha/CaptchaLoadingState";
-import { CaptchaV3Widget } from "./captcha/CaptchaV3Widget";
-import { useCaptchaV3Script } from "./captcha/useCaptchaV3Script";
+import { CaptchaWidget } from "./captcha/CaptchaWidget";
+import { useCaptchaScript } from "./captcha/useCaptchaScript";
 
 interface CaptchaComponentProps {
-  onVerify: (token: string, score?: number) => void;
+  onVerify: (token: string) => void;
   onExpire?: () => void;
-  action?: string; // Action spécifique pour reCAPTCHA v3
+  theme?: 'light' | 'dark';
+  size?: 'compact' | 'normal';
   className?: string;
 }
 
@@ -23,26 +24,38 @@ declare global {
 export const CaptchaComponent = ({ 
   onVerify, 
   onExpire, 
-  action = 'submit', // Action par défaut
+  theme = 'light', 
+  size = 'normal',
   className = ""
 }: CaptchaComponentProps) => {
-  const [componentKey, setComponentKey] = useState<number>(0);
+  const [widgetId, setWidgetId] = useState<number | null>(null);
   
   const { publicKey, isLoading: settingsLoading, error: settingsError, refetch } = useCaptchaSettings();
-  const { isScriptLoaded, scriptError, resetScript } = useCaptchaV3Script({ publicKey });
+  const { isScriptLoaded, scriptError, resetScript } = useCaptchaScript({ publicKey });
 
-  // Fonction pour forcer un nouveau rendu du widget
-  const forceReset = useCallback(() => {
-    console.log('🔄 Force reset du composant CAPTCHA v3');
-    setComponentKey(prev => prev + 1);
-  }, []);
-
-  // Reset automatique lors des changements de clé publique
+  // Cleanup lors du démontage
   useEffect(() => {
-    if (publicKey) {
-      forceReset();
+    return () => {
+      if (widgetId !== null && window.grecaptcha) {
+        try {
+          window.grecaptcha.reset(widgetId);
+        } catch (error) {
+          console.warn('⚠️ Erreur lors du reset du CAPTCHA:', error);
+        }
+      }
+    };
+  }, [widgetId]);
+
+  const reset = () => {
+    if (widgetId !== null && window.grecaptcha) {
+      try {
+        window.grecaptcha.reset(widgetId);
+        console.log('🔄 CAPTCHA reset');
+      } catch (error) {
+        console.warn('⚠️ Erreur lors du reset:', error);
+      }
     }
-  }, [publicKey, forceReset]);
+  };
 
   // État de chargement des paramètres
   if (settingsLoading) {
@@ -59,10 +72,7 @@ export const CaptchaComponent = ({
     return (
       <CaptchaConfigurationError
         settingsError={settingsError}
-        onRefetch={() => {
-          refetch();
-          forceReset();
-        }}
+        onRefetch={refetch}
         className={className}
       />
     );
@@ -82,20 +92,21 @@ export const CaptchaComponent = ({
   if (!isScriptLoaded) {
     return (
       <CaptchaLoadingState 
-        message="Chargement du CAPTCHA v3..." 
+        message="Chargement du CAPTCHA..." 
         className={className}
       />
     );
   }
 
   return (
-    <CaptchaV3Widget
-      key={componentKey}
+    <CaptchaWidget
       publicKey={publicKey}
       isScriptLoaded={isScriptLoaded}
-      action={action}
+      theme={theme}
+      size={size}
       onVerify={onVerify}
       onExpire={onExpire}
+      onWidgetIdChange={setWidgetId}
       className={className}
     />
   );
