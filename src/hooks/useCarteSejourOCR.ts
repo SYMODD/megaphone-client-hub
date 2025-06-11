@@ -132,7 +132,7 @@ const extractCarteSejourData = (text: string): any => {
       }
     }
 
-    // Nationalité - patterns améliorés
+    // Nationalité - patterns améliorés avec normalisation
     if (upperLine.includes('NATIONALITE') || upperLine.includes('NATIONALITY')) {
       const natPatterns = [
         /(?:NATIONALITE|NATIONALITY)[:\s]+([A-Z][A-Z\s]{2,25})/i,

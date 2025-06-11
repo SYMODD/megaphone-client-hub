@@ -1,80 +1,102 @@
 
-import { convertNationalityCode } from "@/data/nationalityMappings";
+import { PassportEtrangerData } from "@/types/passportEtrangerTypes";
 import { safeStringTrim } from "./stringUtils";
+import { normalizeNationality } from "../nationalityNormalizer";
 
-export const extractNamesFromMRZ = (mrzLines: string[], passportData: any) => {
-  // Première ligne MRZ contient les noms
-  const firstLine = safeStringTrim(mrzLines[0]);
+export const extractNamesFromMRZ = (mrzLines: string[], passportData: PassportEtrangerData) => {
+  console.log("📄 Extraction des noms depuis MRZ...");
   
-  if (firstLine.startsWith('P<')) {
-    const namesPart = firstLine.substring(5);
-    const names = namesPart.split('<<');
-    if (names.length >= 2) {
-      if (!passportData.nom && names[0]) {
-        passportData.nom = safeStringTrim(names[0].replace(/</g, ''));
+  for (const line of mrzLines) {
+    const cleanLine = safeStringTrim(line);
+    
+    // Pattern pour la première ligne MRZ des passeports (P<CODE_PAYS<NOM<<PRENOM<<<)
+    const namePattern = /P<[A-Z]{1,3}<+([A-Z]+)<<([A-Z]+)</;
+    const match = cleanLine.match(namePattern);
+    
+    if (match) {
+      const nom = match[1].replace(/</g, '').trim();
+      const prenom = match[2].replace(/</g, '').trim();
+      
+      if (nom && nom.length > 1) {
+        passportData.nom = nom;
+        console.log("📄 Nom extrait de la MRZ:", nom);
       }
-      if (!passportData.prenom && names[1]) {
-        passportData.prenom = safeStringTrim(names[1].replace(/</g, ' '));
+      if (prenom && prenom.length > 1) {
+        passportData.prenom = prenom;
+        console.log("📄 Prénom extrait de la MRZ:", prenom);
       }
+      
+      console.log("📄 Noms extraits de la ligne MRZ:", { nom, prenom });
+      break;
     }
   }
 };
 
-export const extractOtherDataFromMRZ = (mrzLines: string[], passportData: any) => {
-  // Deuxième ligne MRZ contient les autres informations
-  if (mrzLines.length >= 2) {
-    const secondLine = safeStringTrim(mrzLines[mrzLines.length - 1]);
+export const extractOtherDataFromMRZ = (mrzLines: string[], passportData: PassportEtrangerData) => {
+  console.log("📄 Extraction des autres données depuis MRZ...");
+  
+  for (const line of mrzLines) {
+    const cleanLine = safeStringTrim(line);
     
-    if (secondLine.length >= 30) {
-      // Numéro de passeport
-      const docNumber = safeStringTrim(secondLine.substring(0, 9).replace(/</g, ''));
-      if (docNumber) {
-        passportData.numero_passeport = docNumber;
+    // Pattern pour la deuxième ligne MRZ (numéro de passeport, nationalité, dates, etc.)
+    if (cleanLine.length >= 36 && /^[A-Z0-9<]{36,}$/.test(cleanLine)) {
+      console.log("📄 Processing second line:", cleanLine);
+      
+      // Extraction du numéro de passeport (premiers 9 caractères)
+      const numeroPasseport = cleanLine.substring(0, 9).replace(/</g, '');
+      if (numeroPasseport && numeroPasseport.length >= 6) {
+        passportData.numero_passeport = numeroPasseport;
+        console.log("📄 Numéro de document extrait:", numeroPasseport);
       }
-
-      // Nationalité depuis MRZ (seulement si pas déjà trouvée dans le texte principal)
-      if (!passportData.nationalite) {
-        const nationalityRaw = secondLine.substring(10, 13);
-        if (nationalityRaw && nationalityRaw !== '<<<') {
-          try {
-            const nationalityCode = safeStringTrim(nationalityRaw);
-            console.log("Raw nationality code extracted from MRZ:", nationalityCode);
-            
-            // Ensure we have a valid 3-character nationality code
-            if (nationalityCode.length === 3 && /^[A-Z]{3}$/.test(nationalityCode)) {
-              const convertedNationality = convertNationalityCode(nationalityCode);
-              passportData.nationalite = safeStringTrim(convertedNationality);
-              console.log("Converted nationality from MRZ:", convertedNationality);
-            } else {
-              console.warn("Invalid nationality code format:", nationalityCode);
-              passportData.nationalite = nationalityCode; // Keep raw value if conversion fails
-            }
-          } catch (error) {
-            console.error("Error converting nationality code:", error);
-            passportData.nationalite = safeStringTrim(nationalityRaw);
-          }
+      
+      // Extraction du code nationalité (caractères 10-12)
+      const nationaliteCode = cleanLine.substring(10, 13).replace(/</g, '');
+      if (nationaliteCode && nationaliteCode.length >= 1) {
+        // Normaliser le code de nationalité
+        const nationaliteNormalisee = normalizeNationality(nationaliteCode);
+        if (nationaliteNormalisee) {
+          passportData.nationalite = nationaliteNormalisee;
+          console.log("📄 Code nationalité extrait et normalisé:", nationaliteCode, "→", nationaliteNormalisee);
         }
       }
-
-      // Date de naissance
-      const birthDate = secondLine.substring(13, 19);
-      if (birthDate.match(/^\d{6}$/)) {
-        const year = parseInt(birthDate.substring(0, 2));
-        const month = birthDate.substring(2, 4);
-        const day = birthDate.substring(4, 6);
-        const fullYear = year <= 30 ? 2000 + year : 1900 + year;
-        passportData.date_naissance = `${fullYear}-${month}-${day}`;
+      
+      // Extraction de la date de naissance (AAMMJJ - positions 13-18)
+      const dateNaissanceRaw = cleanLine.substring(13, 19);
+      if (/^\d{6}$/.test(dateNaissanceRaw)) {
+        const annee = "20" + dateNaissanceRaw.substring(0, 2);
+        const mois = dateNaissanceRaw.substring(2, 4);
+        const jour = dateNaissanceRaw.substring(4, 6);
+        
+        // Validation basique de la date
+        const anneeNum = parseInt(annee);
+        const moisNum = parseInt(mois);
+        const jourNum = parseInt(jour);
+        
+        if (anneeNum >= 1940 && anneeNum <= 2024 && moisNum >= 1 && moisNum <= 12 && jourNum >= 1 && jourNum <= 31) {
+          passportData.date_naissance = `${annee}-${mois}-${jour}`;
+          console.log("📄 Date naissance extraite:", passportData.date_naissance);
+        }
       }
-
-      // Date d'expiration
-      const expiryDate = secondLine.substring(21, 27);
-      if (expiryDate.match(/^\d{6}$/)) {
-        const year = parseInt(expiryDate.substring(0, 2));
-        const month = expiryDate.substring(2, 4);
-        const day = expiryDate.substring(4, 6);
-        const fullYear = year <= 50 ? 2000 + year : 1900 + year;
-        passportData.date_expiration = `${fullYear}-${month}-${day}`;
+      
+      // Extraction de la date d'expiration (AAMMJJ - positions 21-26)
+      const dateExpirationRaw = cleanLine.substring(21, 27);
+      if (/^\d{6}$/.test(dateExpirationRaw)) {
+        const annee = "20" + dateExpirationRaw.substring(0, 2);
+        const mois = dateExpirationRaw.substring(2, 4);
+        const jour = dateExpirationRaw.substring(4, 6);
+        
+        // Validation basique de la date
+        const anneeNum = parseInt(annee);
+        const moisNum = parseInt(mois);
+        const jourNum = parseInt(jour);
+        
+        if (anneeNum >= 2024 && anneeNum <= 2040 && moisNum >= 1 && moisNum <= 12 && jourNum >= 1 && jourNum <= 31) {
+          passportData.date_expiration = `${annee}-${mois}-${jour}`;
+          console.log("📄 Date expiration extraite:", passportData.date_expiration);
+        }
       }
+      
+      break;
     }
   }
 };

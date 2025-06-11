@@ -8,9 +8,10 @@ export const extractMRZData = (text: string): MRZData => {
   console.log("🔍 EXTRACTION MRZ - Extracting data from text:", text);
   
   const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  
   const mrzData: MRZData = {};
 
-  // Recherche des lignes MRZ (commence par P< pour passeports)
+  // Recherche des lignes MRZ
   const mrzLines = lines.filter(line => 
     line.startsWith('P<') || 
     line.match(/^[A-Z0-9<]{30,}$/) ||
@@ -19,143 +20,128 @@ export const extractMRZData = (text: string): MRZData => {
 
   console.log("📄 Detected MRZ lines:", mrzLines);
 
-  // Extraction depuis les lignes MRZ
-  if (mrzLines.length > 0) {
-    extractFromMRZLines(mrzLines, mrzData);
+  // Extraction des noms depuis MRZ
+  for (const line of mrzLines) {
+    const cleanLine = line.trim();
+    
+    // Pattern pour la première ligne MRZ des passeports (P<CODE_PAYS<NOM<<PRENOM<<<)
+    const namePattern = /P<[A-Z]{1,3}<+([A-Z]+)<<([A-Z]+)</;
+    const match = cleanLine.match(namePattern);
+    
+    if (match) {
+      const nom = match[1].replace(/</g, '').trim();
+      const prenom = match[2].replace(/</g, '').trim();
+      
+      if (nom && nom.length > 1) {
+        mrzData.nom = nom;
+        console.log("✅ Nom extrait:", nom);
+      }
+      if (prenom && prenom.length > 1) {
+        mrzData.prenom = prenom;
+        console.log("✅ Prénom extrait:", prenom);
+      }
+      
+      console.log("📄 Noms extraits de la ligne MRZ:", { nom, prenom });
+      break;
+    }
   }
 
-  // Extraction du numéro de téléphone
+  // Extraction des autres données depuis la deuxième ligne MRZ
+  for (const line of mrzLines) {
+    const cleanLine = line.trim();
+    
+    if (cleanLine.length >= 36 && /^[A-Z0-9<]{36,}$/.test(cleanLine) && !cleanLine.startsWith('P<')) {
+      console.log("📄 Processing second line:", cleanLine);
+      
+      // Extraction du numéro de passeport (premiers 9 caractères)
+      const numeroPasseport = cleanLine.substring(0, 9).replace(/</g, '');
+      if (numeroPasseport && numeroPasseport.length >= 6) {
+        mrzData.numero_passeport = numeroPasseport;
+        console.log("📄 Numéro de document extrait:", numeroPasseport);
+      }
+      
+      // Extraction du code nationalité (caractères 10-12)
+      const nationaliteCode = cleanLine.substring(10, 13).replace(/</g, '');
+      if (nationaliteCode && nationaliteCode.length >= 1) {
+        mrzData.nationalite = normalizeNationality(nationaliteCode);
+        console.log("📄 Code nationalité extrait:", nationaliteCode);
+      }
+      
+      // Extraction de la date de naissance (AAMMJJ - positions 13-18)
+      const dateNaissanceRaw = cleanLine.substring(13, 19);
+      if (/^\d{6}$/.test(dateNaissanceRaw)) {
+        const annee = "20" + dateNaissanceRaw.substring(0, 2);
+        const mois = dateNaissanceRaw.substring(2, 4);
+        const jour = dateNaissanceRaw.substring(4, 6);
+        
+        const anneeNum = parseInt(annee);
+        const moisNum = parseInt(mois);
+        const jourNum = parseInt(jour);
+        
+        if (anneeNum >= 1940 && anneeNum <= 2024 && moisNum >= 1 && moisNum <= 12 && jourNum >= 1 && jourNum <= 31) {
+          mrzData.date_naissance = `${annee}-${mois}-${jour}`;
+          console.log("📄 Date naissance extraite:", mrzData.date_naissance);
+        }
+      }
+      
+      // Extraction de la date d'expiration (AAMMJJ - positions 21-26)
+      const dateExpirationRaw = cleanLine.substring(21, 27);
+      if (/^\d{6}$/.test(dateExpirationRaw)) {
+        const annee = "20" + dateExpirationRaw.substring(0, 2);
+        const mois = dateExpirationRaw.substring(2, 4);
+        const jour = dateExpirationRaw.substring(4, 6);
+        
+        const anneeNum = parseInt(annee);
+        const moisNum = parseInt(mois);
+        const jourNum = parseInt(jour);
+        
+        if (anneeNum >= 2024 && anneeNum <= 2040 && moisNum >= 1 && moisNum <= 12 && jourNum >= 1 && jourNum <= 31) {
+          mrzData.date_expiration = `${annee}-${mois}-${jour}`;
+          console.log("📄 Date expiration extraite:", mrzData.date_expiration);
+        }
+      }
+      
+      break;
+    }
+  }
+
+  // Extraction du téléphone - seulement si c'est un vrai numéro
   const phoneNumber = extractPhoneNumber(text);
-  if (phoneNumber) {
+  if (phoneNumber && isValidPhoneNumber(phoneNumber)) {
     mrzData.numero_telephone = phoneNumber;
     console.log("✅ Téléphone extrait:", phoneNumber);
   }
 
-  // Extraction du code-barres
-  const barcode = extractBarcode(text, mrzData.numero_telephone);
-  if (barcode) {
+  // Extraction du code-barres - seulement si c'est un vrai code-barres
+  const barcode = extractBarcode(text, phoneNumber);
+  if (barcode && isValidBarcode(barcode)) {
     mrzData.code_barre = barcode;
     console.log("✅ Code-barres extrait:", barcode);
   }
-
-  // Si pas de données MRZ trouvées, essayer d'extraire depuis le texte lisible
-  if (!mrzData.nom || !mrzData.prenom) {
-    extractFromReadableText(text, mrzData);
-  }
-
-  // Normaliser la nationalité si elle existe
-  if (mrzData.nationalite) {
-    mrzData.nationalite = normalizeNationality(mrzData.nationalite);
-    console.log("✅ Nationalité normalisée:", mrzData.nationalite);
-  }
-
-  // Logs de debug
-  if (mrzData.nom) console.log("✅ Nom extrait:", mrzData.nom);
-  if (mrzData.prenom) console.log("✅ Prénom extrait:", mrzData.prenom);
-  if (mrzData.numero_passeport) console.log("✅ Numéro passeport extrait:", mrzData.numero_passeport);
 
   console.log("📋 Final extracted MRZ data:", mrzData);
   return mrzData;
 };
 
-const extractFromMRZLines = (mrzLines: string[], mrzData: MRZData): void => {
-  // Première ligne MRZ - contient le type de document et les noms
-  const firstLine = mrzLines[0];
+// Fonction pour valider les numéros de téléphone
+function isValidPhoneNumber(phone: string): boolean {
+  if (!phone) return false;
+  if (phone.length > 15 || phone.length < 8) return false;
+  return /^(\+?[0-9]{8,15})$/.test(phone) && !phone.startsWith('0000');
+}
+
+// Fonction pour valider les codes-barres
+function isValidBarcode(barcode: string): boolean {
+  if (!barcode || barcode.length < 6) return false;
   
-  if (firstLine.startsWith('P<')) {
-    // Format: P<MARONAME<<FIRSTNAME<<<<<<<<<<<<<<<
-    const namesPart = firstLine.substring(5); // Enlève "P<MAR"
-    const names = namesPart.split('<<');
-    if (names.length >= 2) {
-      mrzData.nom = names[0].replace(/</g, '').trim();
-      mrzData.prenom = names[1].replace(/</g, ' ').trim();
-      console.log("📄 Noms extraits de la ligne MRZ:", { nom: mrzData.nom, prenom: mrzData.prenom });
-    }
+  const excludedWords = [
+    'BUNDESREPUBLIK', 'JUNDESREPUBLIK', 'DEUTSCHLAND', 'REPUBLIC', 'FEDERAL',
+    'PASSPORT', 'PASSEPORT', 'REISEPASS', 'CARTE', 'IDENTITY', 'IDENTITE'
+  ];
+  
+  if (excludedWords.includes(barcode.toUpperCase())) {
+    return false;
   }
   
-  // Deuxième ligne MRZ - format: PASSPORTNUMBERCOUNTRYDATESETC
-  if (mrzLines.length >= 2) {
-    const secondLine = mrzLines[mrzLines.length - 1];
-    console.log("📄 Processing second line:", secondLine);
-    
-    if (secondLine.length >= 30) {
-      extractFromSecondMRZLine(secondLine, mrzData);
-    }
-  }
-};
-
-const extractFromSecondMRZLine = (secondLine: string, mrzData: MRZData): void => {
-  // Numéro de passeport (9 premiers caractères)
-  const docNumber = secondLine.substring(0, 9).replace(/</g, '');
-  if (docNumber && docNumber.length > 0) {
-    mrzData.numero_passeport = docNumber;
-    console.log("📄 Numéro de document extrait:", docNumber);
-  }
-
-  // Nationalité (positions 10-12)
-  const nationality = secondLine.substring(10, 13);
-  if (nationality && nationality !== '<<<') {
-    // Convertir le code de nationalité vers le nom complet
-    mrzData.nationalite = nationality;
-    console.log("📄 Code nationalité extrait:", nationality);
-  }
-
-  // Date de naissance (positions 13-18) - format YYMMDD
-  const birthDate = secondLine.substring(13, 19);
-  if (birthDate.match(/^\d{6}$/)) {
-    mrzData.date_naissance = formatDate(birthDate, false);
-    console.log("📄 Date naissance extraite:", mrzData.date_naissance);
-  }
-
-  // Date d'expiration (positions 21-26) - format YYMMDD
-  const expiryDate = secondLine.substring(21, 27);
-  if (expiryDate.match(/^\d{6}$/)) {
-    mrzData.date_expiration = formatDate(expiryDate, true);
-    console.log("📄 Date expiration extraite:", mrzData.date_expiration);
-  }
-};
-
-const formatDate = (dateString: string, isExpiry: boolean): string => {
-  const year = parseInt(dateString.substring(0, 2));
-  const month = dateString.substring(2, 4);
-  const day = dateString.substring(4, 6);
-  
-  // Assume années 00-30 sont 2000-2030, autres sont 1900-1999 pour naissance
-  // Pour expiration, assume années 00-50 sont 2000-2050, autres sont 1900-1999
-  const cutoff = isExpiry ? 50 : 30;
-  const fullYear = year <= cutoff ? 2000 + year : 1900 + year;
-  
-  return `${fullYear}-${month}-${day}`;
-};
-
-const extractFromReadableText = (text: string, mrzData: MRZData): void => {
-  const lines = text.split('\n');
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    
-    // Recherche de patterns de noms courants
-    if (line.includes('SURNAME') || line.includes('NOM')) {
-      const nameMatch = line.match(/(?:SURNAME|NOM)[:\s]+([A-Z\s]+)/i);
-      if (nameMatch && !mrzData.nom) {
-        mrzData.nom = nameMatch[1].trim();
-        console.log("📄 Nom extrait du texte lisible:", mrzData.nom);
-      }
-    }
-    
-    if (line.includes('GIVEN') || line.includes('PRENOM') || line.includes('PRÉNOM')) {
-      const prenomMatch = line.match(/(?:GIVEN|PRENOM|PRÉNOM)[:\s]+([A-Z\s]+)/i);
-      if (prenomMatch && !mrzData.prenom) {
-        mrzData.prenom = prenomMatch[1].trim();
-        console.log("📄 Prénom extrait du texte lisible:", mrzData.prenom);
-      }
-    }
-    
-    // Recherche de numéros de passeport
-    const passportMatch = line.match(/[A-Z]{1,3}\d{5,10}/);
-    if (passportMatch && !mrzData.numero_passeport) {
-      mrzData.numero_passeport = passportMatch[0];
-      console.log("📄 Numéro passeport extrait du texte lisible:", mrzData.numero_passeport);
-    }
-  }
-};
+  return /^P=\d+$/i.test(barcode) || /^[A-Z0-9]{6,15}$/.test(barcode);
+}

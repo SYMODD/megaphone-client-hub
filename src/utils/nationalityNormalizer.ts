@@ -22,6 +22,17 @@ export const normalizeNationality = (nationality: string | undefined): string =>
     'française': 'France',
     'french': 'France',
     
+    // Allemagne
+    'deu': 'Allemagne',
+    'germany': 'Allemagne',
+    'allemagne': 'Allemagne',
+    'allemand': 'Allemagne',
+    'allemande': 'Allemagne',
+    'german': 'Allemagne',
+    'deutsch': 'Allemagne',
+    'd': 'Allemagne',
+    'd<<': 'Allemagne',
+    
     // Algérie
     'dza': 'Algérie',
     'algeria': 'Algérie',
@@ -54,14 +65,6 @@ export const normalizeNationality = (nationality: string | undefined): string =>
     'italienne': 'Italie',
     'italian': 'Italie',
     
-    // Allemagne
-    'deu': 'Allemagne',
-    'germany': 'Allemagne',
-    'allemagne': 'Allemagne',
-    'allemand': 'Allemagne',
-    'allemande': 'Allemagne',
-    'german': 'Allemagne',
-    
     // Royaume-Uni
     'gbr': 'Royaume-Uni',
     'uk': 'Royaume-Uni',
@@ -93,13 +96,35 @@ export const normalizeNationality = (nationality: string | undefined): string =>
     'malienne': 'Mali',
     'malian': 'Mali',
     
-    // Côte d\'Ivoire
+    // Côte d'Ivoire
     'civ': 'Côte d\'Ivoire',
     'ivory coast': 'Côte d\'Ivoire',
     'côte d\'ivoire': 'Côte d\'Ivoire',
     'ivoirien': 'Côte d\'Ivoire',
     'ivoirienne': 'Côte d\'Ivoire',
-    'ivorian': 'Côte d\'Ivoire'
+    'ivorian': 'Côte d\'Ivoire',
+    
+    // Belgique
+    'bel': 'Belgique',
+    'belgium': 'Belgique',
+    'belgique': 'Belgique',
+    'belge': 'Belgique',
+    'belgian': 'Belgique',
+    
+    // Pays-Bas
+    'nld': 'Pays-Bas',
+    'netherlands': 'Pays-Bas',
+    'pays-bas': 'Pays-Bas',
+    'néerlandais': 'Pays-Bas',
+    'néerlandaise': 'Pays-Bas',
+    'dutch': 'Pays-Bas',
+    
+    // Suisse
+    'che': 'Suisse',
+    'switzerland': 'Suisse',
+    'suisse': 'Suisse',
+    'suisse': 'Suisse',
+    'swiss': 'Suisse'
   };
   
   // Chercher une correspondance exacte
