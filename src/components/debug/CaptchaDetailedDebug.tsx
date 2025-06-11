@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { RefreshCw, AlertTriangle, CheckCircle, Database } from "lucide-react";
 import { useCaptchaSettings } from "@/hooks/useCaptchaSettings";
 import { useCaptchaSettingsV2 } from "@/hooks/useCaptchaSettingsV2";
+import { supabase } from "@/integrations/supabase/client";
 
 export const CaptchaDetailedDebug = () => {
   const { getSecuritySettings, loading: dbLoading } = useSecuritySettings();
@@ -14,6 +15,7 @@ export const CaptchaDetailedDebug = () => {
   const captchaV2 = useCaptchaSettingsV2();
   
   const [dbDirectQuery, setDbDirectQuery] = useState<any>(null);
+  const [rawDbQuery, setRawDbQuery] = useState<any>(null);
   const [lastRefresh, setLastRefresh] = useState<string>("");
 
   const performDirectDbQuery = async () => {
@@ -29,8 +31,37 @@ export const CaptchaDetailedDebug = () => {
     }
   };
 
+  const performRawDbQuery = async () => {
+    console.log('🔍 Requête brute Supabase...');
+    try {
+      // Requête directe avec le client Supabase
+      const { data, error } = await supabase
+        .from('security_settings')
+        .select('*');
+
+      console.log('📊 Résultat requête brute:', { data, error });
+      
+      setRawDbQuery({
+        success: !error,
+        data: data || [],
+        error: error?.message,
+        count: data?.length || 0
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Erreur requête brute:', error);
+      setRawDbQuery({ 
+        success: false, 
+        error: error.message,
+        data: [],
+        count: 0
+      });
+    }
+  };
+
   useEffect(() => {
     performDirectDbQuery();
+    performRawDbQuery();
   }, []);
 
   const handleRefreshAll = () => {
@@ -38,6 +69,7 @@ export const CaptchaDetailedDebug = () => {
     captchaV1.refetch();
     captchaV2.refetch();
     performDirectDbQuery();
+    performRawDbQuery();
   };
 
   const getStatusBadge = (isLoading: boolean, hasPublicKey: boolean, error: string | null) => {
@@ -72,11 +104,46 @@ export const CaptchaDetailedDebug = () => {
       </CardHeader>
       
       <CardContent className="space-y-6">
-        {/* Base de données directe */}
+        {/* Requête brute Supabase */}
         <div className="space-y-3">
           <h4 className="font-medium text-indigo-800 flex items-center gap-2">
             <Database className="w-4 h-4" />
-            Requête directe base de données
+            Requête brute Supabase (security_settings)
+          </h4>
+          
+          <div className="bg-white p-3 rounded border text-sm">
+            {rawDbQuery ? (
+              <div className="space-y-2">
+                <div><strong>Succès:</strong> {rawDbQuery.success ? 'Oui' : 'Non'}</div>
+                <div><strong>Nombre total d'enregistrements:</strong> {rawDbQuery.count}</div>
+                {rawDbQuery.error && (
+                  <div className="text-red-600"><strong>Erreur:</strong> {rawDbQuery.error}</div>
+                )}
+                {rawDbQuery.data && rawDbQuery.data.length > 0 && (
+                  <div>
+                    <strong>Paramètres trouvés:</strong>
+                    <ul className="mt-1 list-disc list-inside">
+                      {rawDbQuery.data.map((item: any) => (
+                        <li key={item.id} className="text-xs">
+                          <strong>{item.setting_key}</strong>: {item.setting_value ? `Configuré (${item.setting_value.length} chars)` : 'Vide'} 
+                          {item.is_encrypted && ' [CHIFFRÉ]'}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <span className="text-gray-500">Chargement...</span>
+            )}
+          </div>
+        </div>
+
+        {/* Base de données via useSecuritySettings */}
+        <div className="space-y-3">
+          <h4 className="font-medium text-indigo-800 flex items-center gap-2">
+            <Database className="w-4 h-4" />
+            Via hook useSecuritySettings
           </h4>
           
           <div className="bg-white p-3 rounded border text-sm">
@@ -154,19 +221,28 @@ export const CaptchaDetailedDebug = () => {
         <div className="space-y-3">
           <h4 className="font-medium text-indigo-800 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4" />
-            Recommandations
+            Analyse et recommandations
           </h4>
           
           <div className="bg-white p-3 rounded border text-sm">
-            {dbDirectQuery?.data?.length === 0 ? (
+            {rawDbQuery?.count === 0 ? (
               <div className="text-orange-600">
-                <strong>Action requise:</strong> Aucune clé CAPTCHA n'est configurée dans la base de données. 
-                Veuillez accéder à la page de gestion de la sécurité pour configurer les clés reCAPTCHA.
+                <strong>⚠️ Problème identifié:</strong> Aucun paramètre de sécurité trouvé dans la base de données. 
+                Les clés ne sont pas sauvegardées correctement.
               </div>
-            ) : (
+            ) : rawDbQuery?.count > 0 && (!captchaV1.publicKey && !captchaV2.publicKey) ? (
+              <div className="text-red-600">
+                <strong>🚨 Problème critique:</strong> Les paramètres existent en base ({rawDbQuery.count} enregistrements) 
+                mais les hooks ne parviennent pas à les récupérer. Problème de logique de récupération.
+              </div>
+            ) : captchaV1.publicKey || captchaV2.publicKey ? (
               <div className="text-green-600">
                 <CheckCircle className="w-4 h-4 inline mr-2" />
-                <strong>Configuration détectée:</strong> Des paramètres de sécurité sont présents dans la base de données.
+                <strong>✅ Configuration détectée:</strong> Les hooks parviennent à récupérer les clés CAPTCHA.
+              </div>
+            ) : (
+              <div className="text-gray-600">
+                <strong>🔍 Diagnostic en cours...</strong> Veuillez actualiser pour obtenir plus d'informations.
               </div>
             )}
           </div>

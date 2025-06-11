@@ -1,190 +1,100 @@
 
 import { useState, useEffect } from "react";
-import { useSecuritySettings } from "@/hooks/useSecuritySettings";
-import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-interface CaptchaSettings {
-  publicKey: string | null;
-  isLoading: boolean;
-  error: string | null;
-  debugInfo?: any; // Informations de debug temporaires
+interface DebugInfo {
+  step: string;
+  data?: any;
+  error?: any;
 }
 
 export const useCaptchaSettingsV2 = () => {
-  const { getSecuritySettings } = useSecuritySettings();
-  const [settings, setSettings] = useState<CaptchaSettings>({
-    publicKey: null,
-    isLoading: true,
-    error: null
-  });
+  const [publicKey, setPublicKey] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
 
-  const fetchCaptchaSettings = async () => {
+  const fetchSettings = async () => {
     try {
-      console.log('🔄 [V2] DEBUT - Chargement des paramètres CAPTCHA...');
-      setSettings(prev => ({ ...prev, isLoading: true, error: null }));
+      setIsLoading(true);
+      setError(null);
       
-      // ÉTAPE 1: Vérifier la fonction getSecuritySettings
-      console.log('🔍 [V2] ÉTAPE 1: Test de la fonction getSecuritySettings');
-      if (typeof getSecuritySettings !== 'function') {
-        throw new Error('getSecuritySettings n\'est pas une fonction');
-      }
-      console.log('✅ [V2] getSecuritySettings est bien une fonction');
+      console.log('🔍 [useCaptchaSettingsV2] Début de la récupération...');
+      setDebugInfo({ step: 'Début de la requête' });
 
-      // ÉTAPE 2: Appeler la fonction avec les paramètres CAPTCHA
-      console.log('🔍 [V2] ÉTAPE 2: Appel de getSecuritySettings avec les clés CAPTCHA');
-      const result = await getSecuritySettings(['recaptcha_public_key', 'recaptcha_secret_key']);
-      
-      console.log('📋 [V2] ÉTAPE 3: Analyse du résultat brut');
-      console.log('📋 [V2] Type du résultat:', typeof result);
-      console.log('📋 [V2] Résultat complet:', result);
-      
-      // ÉTAPE 3: Vérifications de base
-      if (!result) {
-        throw new Error('Aucun résultat retourné par getSecuritySettings');
-      }
+      // Test 1: Récupération avec SELECT simple
+      const { data: allSettings, error: allError } = await supabase
+        .from('security_settings')
+        .select('*');
 
-      if (typeof result !== 'object') {
-        throw new Error(`Type de résultat inattendu: ${typeof result}`);
-      }
-
-      console.log('🔍 [V2] ÉTAPE 4: Vérification de result.success');
-      console.log('📋 [V2] result.success:', result.success);
-      console.log('📋 [V2] Type de result.success:', typeof result.success);
-
-      if (result.success !== true) {
-        console.warn('⚠️ [V2] result.success n\'est pas true:', result.success);
-        throw new Error(`Échec de getSecuritySettings: ${result.error || 'Raison inconnue'}`);
-      }
-
-      console.log('🔍 [V2] ÉTAPE 5: Vérification de result.data');
-      console.log('📋 [V2] result.data:', result.data);
-      console.log('📋 [V2] Type de result.data:', typeof result.data);
-      console.log('📋 [V2] Est un array:', Array.isArray(result.data));
-      console.log('📋 [V2] Longueur:', result.data?.length);
-
-      if (!result.data) {
-        throw new Error('result.data est null ou undefined');
-      }
-
-      if (!Array.isArray(result.data)) {
-        throw new Error(`result.data n'est pas un array: ${typeof result.data}`);
-      }
-
-      if (result.data.length === 0) {
-        console.warn('⚠️ [V2] Aucun paramètre de sécurité trouvé');
-        setSettings({
-          publicKey: null,
-          isLoading: false,
-          error: "Aucun paramètre CAPTCHA configuré",
-          debugInfo: { step: 'no_data', result }
-        });
-        return;
-      }
-
-      console.log('🔍 [V2] ÉTAPE 6: Recherche de la clé publique');
-      console.log('📋 [V2] Données disponibles:', result.data.map((item: any) => ({
-        key: item.setting_key,
-        valueLength: item.setting_value?.length,
-        valueStart: item.setting_value?.substring(0, 20),
-        isEncrypted: item.is_encrypted
-      })));
-
-      const publicKeySetting = result.data.find((s: any) => {
-        console.log('🔍 [V2] Vérification:', s.setting_key, '===', 'recaptcha_public_key');
-        return s.setting_key === 'recaptcha_public_key';
+      console.log('📊 [useCaptchaSettingsV2] Tous les paramètres:', {
+        count: allSettings?.length || 0,
+        data: allSettings,
+        error: allError
       });
-      
-      console.log('🔑 [V2] ÉTAPE 7: Analyse de la clé publique trouvée');
-      console.log('📋 [V2] publicKeySetting:', publicKeySetting);
 
-      if (!publicKeySetting) {
-        console.warn('⚠️ [V2] Clé publique reCAPTCHA non trouvée dans les données');
-        setSettings({
-          publicKey: null,
-          isLoading: false,
-          error: "Clé publique reCAPTCHA non configurée",
-          debugInfo: { step: 'no_public_key', result, availableKeys: result.data.map((s: any) => s.setting_key) }
-        });
-        return;
-      }
-
-      console.log('🔍 [V2] ÉTAPE 8: Validation de la valeur de la clé publique');
-      console.log('📋 [V2] setting_value brut:', publicKeySetting.setting_value);
-      console.log('📋 [V2] Type:', typeof publicKeySetting.setting_value);
-      console.log('📋 [V2] Longueur:', publicKeySetting.setting_value?.length);
-      console.log('📋 [V2] Est vide après trim:', !publicKeySetting.setting_value?.trim());
-
-      if (!publicKeySetting.setting_value) {
-        throw new Error('La clé publique existe mais sa valeur est null/undefined');
-      }
-
-      if (typeof publicKeySetting.setting_value !== 'string') {
-        throw new Error(`La valeur de la clé publique n'est pas une string: ${typeof publicKeySetting.setting_value}`);
-      }
-
-      const trimmedValue = publicKeySetting.setting_value.trim();
-      
-      if (trimmedValue === '') {
-        console.warn('⚠️ [V2] Clé publique reCAPTCHA vide après trim');
-        setSettings({
-          publicKey: null,
-          isLoading: false,
-          error: "Clé publique reCAPTCHA vide",
-          debugInfo: { step: 'empty_value', publicKeySetting }
-        });
-        return;
-      }
-
-      if (trimmedValue === '[ENCRYPTED]') {
-        console.warn('⚠️ [V2] Clé publique marquée comme chiffrée');
-        setSettings({
-          publicKey: null,
-          isLoading: false,
-          error: "Clé publique incorrectement chiffrée",
-          debugInfo: { step: 'encrypted_value', publicKeySetting }
-        });
-        return;
-      }
-
-      // SUCCÈS !
-      console.log('✅ [V2] ÉTAPE 9: SUCCÈS - Clé publique CAPTCHA configurée');
-      console.log('✅ [V2] Valeur finale:', trimmedValue);
-      
-      setSettings({
-        publicKey: trimmedValue,
-        isLoading: false,
-        error: null,
-        debugInfo: { step: 'success', publicKeySetting, finalValue: trimmedValue }
+      setDebugInfo({ 
+        step: `Requête ALL: ${allSettings?.length || 0} résultats`,
+        data: allSettings,
+        error: allError
       });
+
+      if (allError) {
+        console.error('❌ [useCaptchaSettingsV2] Erreur requête globale:', allError);
+        setError(`Erreur globale: ${allError.message}`);
+        return;
+      }
+
+      // Test 2: Recherche spécifique de la clé publique
+      const publicKeySettings = allSettings?.find(s => s.setting_key === 'recaptcha_public_key');
+      
+      console.log('🔑 [useCaptchaSettingsV2] Recherche clé publique:', {
+        found: !!publicKeySettings,
+        setting: publicKeySettings
+      });
+
+      if (publicKeySettings) {
+        setPublicKey(publicKeySettings.setting_value || "");
+        setError(null);
+        setDebugInfo({ 
+          step: 'Clé trouvée et configurée',
+          data: { 
+            key_length: publicKeySettings.setting_value?.length || 0,
+            is_encrypted: publicKeySettings.is_encrypted 
+          }
+        });
+        console.log('✅ [useCaptchaSettingsV2] Clé publique configurée');
+      } else {
+        setError('Clé publique introuvable');
+        setPublicKey("");
+        setDebugInfo({ step: 'Clé publique non trouvée' });
+        console.warn('⚠️ [useCaptchaSettingsV2] Clé publique non trouvée');
+      }
 
     } catch (error: any) {
-      console.error('❌ [V2] ERREUR lors du chargement des paramètres CAPTCHA:', error);
-      console.error('❌ [V2] Stack trace:', error.stack);
-      
-      setSettings({
-        publicKey: null,
-        isLoading: false,
-        error: `Erreur de chargement: ${error.message}`,
-        debugInfo: { step: 'error', error: error.message, stack: error.stack }
-      });
+      console.error('❌ [useCaptchaSettingsV2] Erreur générale:', error);
+      setError(error.message);
+      setPublicKey("");
+      setDebugInfo({ step: 'Erreur générale', error: error.message });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchCaptchaSettings();
-  }, []);
-
   const refetch = () => {
-    console.log('🔄 [V2] Rechargement manuel des paramètres CAPTCHA');
-    toast({
-      title: "Rechargement V2",
-      description: "Rechargement des paramètres CAPTCHA avec debug détaillé...",
-    });
-    fetchCaptchaSettings();
+    console.log('🔄 [useCaptchaSettingsV2] Refetch demandé');
+    fetchSettings();
   };
 
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
   return {
-    ...settings,
+    publicKey,
+    isLoading,
+    error,
+    debugInfo,
     refetch
   };
 };

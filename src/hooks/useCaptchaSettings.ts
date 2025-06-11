@@ -1,133 +1,93 @@
 
 import { useState, useEffect } from "react";
-import { useSecuritySettings } from "@/hooks/useSecuritySettings";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
-interface CaptchaSettings {
-  publicKey: string | null;
-  isLoading: boolean;
-  error: string | null;
-}
-
 export const useCaptchaSettings = () => {
-  const { getSecuritySettings } = useSecuritySettings();
-  const [settings, setSettings] = useState<CaptchaSettings>({
-    publicKey: null,
-    isLoading: true,
-    error: null
-  });
+  const [publicKey, setPublicKey] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchCaptchaSettings = async () => {
     try {
-      console.log('🔄 [V1] Chargement des paramètres CAPTCHA...');
-      setSettings(prev => ({ ...prev, isLoading: true, error: null }));
+      setIsLoading(true);
+      setError(null);
       
-      // Récupérer uniquement la clé publique pour simplifier
-      const result = await getSecuritySettings(['recaptcha_public_key']);
+      console.log('🔍 [useCaptchaSettings] Récupération des paramètres CAPTCHA...');
       
-      console.log('📋 [V1] Résultat complet:', result);
-      
-      if (!result.success) {
-        console.error('❌ [V1] Échec de récupération:', result.error);
-        setSettings({
-          publicKey: null,
-          isLoading: false,
-          error: `Erreur de récupération: ${result.error || 'Raison inconnue'}`
-        });
+      // Récupérer directement depuis la table security_settings
+      const { data, error: dbError } = await supabase
+        .from('security_settings')
+        .select('setting_key, setting_value, is_encrypted')
+        .eq('setting_key', 'recaptcha_public_key')
+        .single();
+
+      if (dbError) {
+        console.error('❌ [useCaptchaSettings] Erreur base de données:', dbError);
+        
+        if (dbError.code === 'PGRST116') {
+          setError('Aucune clé CAPTCHA configurée');
+        } else {
+          setError(`Erreur de récupération: ${dbError.message}`);
+        }
+        setPublicKey("");
         return;
       }
 
-      // Vérifier si on a des données
-      if (!result.data || !Array.isArray(result.data)) {
-        console.warn('⚠️ [V1] Pas de données ou format invalide:', result.data);
-        setSettings({
-          publicKey: null,
-          isLoading: false,
-          error: "Aucune donnée retournée"
-        });
+      if (!data) {
+        console.warn('⚠️ [useCaptchaSettings] Aucune clé publique trouvée');
+        setError('Aucune clé CAPTCHA configurée');
+        setPublicKey("");
         return;
       }
 
-      console.log('📋 [V1] Nombre d\'éléments trouvés:', result.data.length);
-      console.log('📋 [V1] Éléments:', result.data.map(item => ({ key: item.setting_key, value_length: item.setting_value?.length })));
-
-      if (result.data.length === 0) {
-        console.warn('⚠️ [V1] Aucune clé CAPTCHA trouvée');
-        setSettings({
-          publicKey: null,
-          isLoading: false,
-          error: "Aucune clé CAPTCHA configurée - utilisez l'interface de test pour en ajouter"
-        });
-        return;
-      }
-
-      // Chercher la clé publique
-      const publicKeySetting = result.data.find((s: any) => s.setting_key === 'recaptcha_public_key');
-      
-      if (!publicKeySetting) {
-        console.warn('⚠️ [V1] Clé publique non trouvée dans les résultats');
-        setSettings({
-          publicKey: null,
-          isLoading: false,
-          error: "Clé publique reCAPTCHA non configurée"
-        });
-        return;
-      }
-
-      // Valider la valeur
-      const publicKeyValue = publicKeySetting.setting_value;
-      
-      if (!publicKeyValue || typeof publicKeyValue !== 'string') {
-        console.warn('⚠️ [V1] Valeur de clé publique invalide:', publicKeyValue);
-        setSettings({
-          publicKey: null,
-          isLoading: false,
-          error: "Valeur de clé publique invalide"
-        });
-        return;
-      }
-
-      const trimmedValue = publicKeyValue.trim();
-      
-      if (trimmedValue === '' || trimmedValue === '[ENCRYPTED]') {
-        console.warn('⚠️ [V1] Clé publique vide ou incorrectement chiffrée');
-        setSettings({
-          publicKey: null,
-          isLoading: false,
-          error: "Clé publique vide ou incorrectement configurée"
-        });
-        return;
-      }
-
-      // Succès !
-      console.log('✅ [V1] Clé publique CAPTCHA récupérée avec succès:', trimmedValue.substring(0, 20) + '...');
-      setSettings({
-        publicKey: trimmedValue,
-        isLoading: false,
-        error: null
+      console.log('✅ [useCaptchaSettings] Clé publique récupérée:', {
+        setting_key: data.setting_key,
+        is_encrypted: data.is_encrypted,
+        value_length: data.setting_value?.length || 0
       });
+
+      // Pour la clé publique, elle ne devrait pas être chiffrée
+      if (data.setting_value) {
+        setPublicKey(data.setting_value);
+        setError(null);
+        console.log('🔑 [useCaptchaSettings] Clé publique définie avec succès');
+      } else {
+        setError('Clé publique vide');
+        setPublicKey("");
+      }
 
     } catch (error: any) {
-      console.error('❌ [V1] Erreur lors du chargement des paramètres CAPTCHA:', error);
-      setSettings({
-        publicKey: null,
-        isLoading: false,
-        error: `Erreur: ${error.message}`
-      });
+      console.error('❌ [useCaptchaSettings] Erreur générale:', error);
+      setError(error.message || 'Erreur inconnue');
+      setPublicKey("");
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const refetch = () => {
+    console.log('🔄 [useCaptchaSettings] Refetch demandé');
+    fetchCaptchaSettings();
   };
 
   useEffect(() => {
     fetchCaptchaSettings();
   }, []);
 
-  const refetch = () => {
-    console.log('🔄 [V1] Rechargement manuel des paramètres CAPTCHA');
-    fetchCaptchaSettings();
-  };
+  // Debug des valeurs actuelles
+  useEffect(() => {
+    console.log('📊 [useCaptchaSettings] État actuel:', {
+      publicKey: publicKey || '[VIDE]',
+      isLoading,
+      error: error || '[AUCUNE]'
+    });
+  }, [publicKey, isLoading, error]);
 
   return {
-    ...settings,
+    publicKey,
+    isLoading,
+    error,
     refetch
   };
 };
