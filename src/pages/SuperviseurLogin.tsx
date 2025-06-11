@@ -1,21 +1,22 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
-import { RoleSpecificLogin } from "@/components/auth/RoleSpecificLogin";
-import { useAuthOperations } from "@/hooks/useAuthOperations";
+import { RoleSpecificLoginWithRecaptcha } from "@/components/auth/RoleSpecificLoginWithRecaptcha";
+import { useLoginWithRecaptcha } from "@/hooks/auth/useLoginWithRecaptcha";
 import { AuthAlert } from "@/components/auth/AuthAlert";
+import { useAuthErrorHandling } from "@/hooks/auth/useAuthErrorHandling";
 import { useEffect, useState } from "react";
 
 const SuperviseurLogin = () => {
   const { user, profile, loading } = useAuth();
   const [shouldRedirect, setShouldRedirect] = useState(false);
+  const { error, success } = useAuthErrorHandling();
 
   const {
-    error,
-    success,
-    isLoading,
     handleLogin,
-  } = useAuthOperations();
+    isLoading,
+    isRecaptchaConfigured
+  } = useLoginWithRecaptcha({ role: 'superviseur' });
 
   useEffect(() => {
     if (user && profile && !loading) {
@@ -58,12 +59,11 @@ const SuperviseurLogin = () => {
 
         <AuthAlert error={error} success={success} />
 
-        <RoleSpecificLogin
+        <RoleSpecificLoginWithRecaptcha
           role="superviseur"
           onLogin={handleLogin}
-          onShowPasswordReset={() => {}} // Pas utilisé
           isLoading={isLoading}
-          hidePasswordReset={true} // Masquer pour superviseur
+          isRecaptchaConfigured={isRecaptchaConfigured}
         />
       </div>
     </div>

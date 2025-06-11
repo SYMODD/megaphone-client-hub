@@ -1,8 +1,11 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, IdCard, BookOpen, Globe, CreditCard } from "lucide-react";
+import { ArrowLeft, IdCard, BookOpen, Globe, CreditCard, Shield } from "lucide-react";
 import { DocumentType, documentTypes } from "@/types/documentTypes";
 import { useNavigate } from "react-router-dom";
+import { useDocumentSelectionRecaptcha } from "@/hooks/useDocumentSelectionRecaptcha";
+import { useState } from "react";
 
 interface DocumentTypeSelectorProps {
   selectedType: DocumentType | null;
@@ -19,24 +22,40 @@ const iconMap = {
 
 export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: DocumentTypeSelectorProps) => {
   const navigate = useNavigate();
+  const { validateDocumentSelection, isRecaptchaConfigured } = useDocumentSelectionRecaptcha();
+  const [isValidating, setIsValidating] = useState(false);
 
-  const handleTypeClick = (docType: DocumentType) => {
-    // Navigate to specific scanner page based on document type
-    switch (docType) {
-      case 'cin':
-        navigate('/scanner-cin');
-        break;
-      case 'passeport_marocain':
-        navigate('/scanner-passeport-marocain');
-        break;
-      case 'passeport_etranger':
-        navigate('/scanner-passeport-etranger');
-        break;
-      case 'carte_sejour':
-        navigate('/scanner-carte-sejour');
-        break;
-      default:
-        onTypeSelect(docType);
+  const handleTypeClick = async (docType: DocumentType) => {
+    setIsValidating(true);
+    
+    try {
+      // Valider avec reCAPTCHA si configuré
+      const isValid = await validateDocumentSelection();
+      
+      if (!isValid) {
+        console.log("❌ Validation reCAPTCHA échouée, accès refusé");
+        return;
+      }
+
+      // Si validation réussie, naviguer vers la page appropriée
+      switch (docType) {
+        case 'cin':
+          navigate('/scanner-cin');
+          break;
+        case 'passeport_marocain':
+          navigate('/scanner-passeport-marocain');
+          break;
+        case 'passeport_etranger':
+          navigate('/scanner-passeport-etranger');
+          break;
+        case 'carte_sejour':
+          navigate('/scanner-carte-sejour');
+          break;
+        default:
+          onTypeSelect(docType);
+      }
+    } finally {
+      setIsValidating(false);
     }
   };
 
@@ -68,6 +87,16 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
         <CardDescription>
           Veuillez sélectionner la pièce d'identité souhaitée par le client
         </CardDescription>
+        
+        {/* Indicateur de sécurité reCAPTCHA */}
+        {isRecaptchaConfigured && (
+          <div className="flex items-center gap-2 p-2 bg-green-50 rounded-md border border-green-200 mt-2">
+            <Shield className="w-4 h-4 text-green-600" />
+            <span className="text-sm text-green-700 font-medium">
+              Protection reCAPTCHA active
+            </span>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-3">
         {documentTypes.map((docType) => {
@@ -78,13 +107,20 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
               variant="outline"
               className="w-full justify-start h-auto p-4 hover:bg-blue-50 hover:border-blue-300"
               onClick={() => handleTypeClick(docType.id)}
+              disabled={isValidating}
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <IconComponent className="w-5 h-5 text-blue-600" />
+                  {isValidating ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                  ) : (
+                    <IconComponent className="w-5 h-5 text-blue-600" />
+                  )}
                 </div>
                 <div className="text-left">
-                  <div className="font-medium text-slate-800">{docType.label}</div>
+                  <div className="font-medium text-slate-800">
+                    {isValidating ? "Validation..." : docType.label}
+                  </div>
                   <div className="text-sm text-slate-600">{docType.description}</div>
                 </div>
               </div>
