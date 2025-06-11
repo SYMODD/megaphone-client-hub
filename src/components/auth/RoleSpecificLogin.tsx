@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Shield, Eye, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RecaptchaVerification } from "@/components/recaptcha/RecaptchaVerification";
+import { useRecaptchaSettings } from "@/hooks/useRecaptchaSettings";
 import { toast } from "sonner";
 
 interface RoleSpecificLoginProps {
@@ -67,9 +68,10 @@ export const RoleSpecificLogin = ({
     password: "",
   });
 
+  const { isConfigured } = useRecaptchaSettings();
   const roleInfo = getRoleInfo(role);
 
-  // Gestionnaire avec reCAPTCHA pour Admin et Superviseur
+  // Gestionnaire avec reCAPTCHA pour Admin et Superviseur (seulement si configuré)
   const handleLoginWithRecaptcha = async (recaptchaToken: string) => {
     console.log('🔒 reCAPTCHA token reçu pour connexion:', role, recaptchaToken.substring(0, 20) + '...');
     
@@ -105,14 +107,20 @@ export const RoleSpecificLogin = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Pour Admin et Superviseur UNIQUEMENT, stocker temporairement les données pour reCAPTCHA
+    // Pour Admin et Superviseur, vérifier si reCAPTCHA est configuré
     if (role === 'admin' || role === 'superviseur') {
-      console.log(`🔒 Stockage temporaire des données de connexion ${role}`);
-      localStorage.setItem('temp_login_data', JSON.stringify({
-        email: loginForm.email,
-        password: loginForm.password
-      }));
-      // Le clic sur le bouton déclenchera automatiquement reCAPTCHA via RecaptchaVerification
+      if (isConfigured) {
+        console.log(`🔒 Stockage temporaire des données de connexion ${role}`);
+        localStorage.setItem('temp_login_data', JSON.stringify({
+          email: loginForm.email,
+          password: loginForm.password
+        }));
+        // Le clic sur le bouton déclenchera automatiquement reCAPTCHA via RecaptchaVerification
+      } else {
+        // Si reCAPTCHA n'est pas configuré pour les admins, permettre la connexion directe
+        console.log('⚠️ reCAPTCHA non configuré, connexion Admin directe pour configuration initiale');
+        await onLogin(loginForm.email, loginForm.password);
+      }
     } else {
       // Pour les AGENTS, connexion directe SANS reCAPTCHA
       console.log('📝 Connexion Agent directe (sans reCAPTCHA)');
@@ -131,8 +139,8 @@ export const RoleSpecificLogin = ({
       </Button>
     );
 
-    // Pour Admin et Superviseur, envelopper le bouton avec reCAPTCHA
-    if (role === 'admin' || role === 'superviseur') {
+    // Pour Admin et Superviseur, envelopper le bouton avec reCAPTCHA SEULEMENT si configuré
+    if ((role === 'admin' || role === 'superviseur') && isConfigured) {
       return (
         <RecaptchaVerification
           action={`${role}_login`}
@@ -144,12 +152,35 @@ export const RoleSpecificLogin = ({
       );
     }
 
-    // Pour les agents, bouton normal
+    // Pour les agents ou si reCAPTCHA n'est pas configuré, bouton normal
     return buttonElement;
   };
 
   return (
     <div className="space-y-6">
+      {/* Avertissement si reCAPTCHA n'est pas configuré pour admin/superviseur */}
+      {(role === 'admin' || role === 'superviseur') && !isConfigured && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <Shield className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-yellow-800">
+                Configuration reCAPTCHA requise
+              </h3>
+              <div className="mt-2 text-sm text-yellow-700">
+                <p>
+                  Les clés reCAPTCHA ne sont pas encore configurées. 
+                  Vous pouvez vous connecter pour configurer la sécurité, 
+                  mais nous recommandons de configurer reCAPTCHA rapidement.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Carte de connexion spécifique au rôle */}
       <Card className="border-2">
         <CardHeader className="text-center">
