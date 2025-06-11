@@ -10,6 +10,7 @@ import { RecaptchaDebugInfo } from "@/components/recaptcha/RecaptchaDebugInfo";
 import { useRecaptchaSettings } from "@/hooks/useRecaptchaSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 interface DocumentTypeSelectorProps {
   selectedType: DocumentType | null;
@@ -29,44 +30,68 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
   const { isConfigured } = useRecaptchaSettings();
   const { profile } = useAuth();
 
+  // 🧹 Nettoyer les données temporaires au montage du composant
+  useEffect(() => {
+    const tempData = localStorage.getItem('temp_document_selection');
+    if (tempData) {
+      console.log('🧹 [CLEANUP] Nettoyage des données temporaires au montage:', tempData);
+      localStorage.removeItem('temp_document_selection');
+    }
+  }, []);
+
   // Vérifier si on doit utiliser reCAPTCHA pour cette action
   // Seulement pour les agents ET seulement si reCAPTCHA est configuré
   const shouldUseRecaptcha = profile?.role === "agent" && isConfigured;
 
+  console.log('📋 [DOCUMENT_SELECTOR] État actuel:', {
+    selectedType,
+    shouldUseRecaptcha,
+    userRole: profile?.role,
+    isConfigured,
+    hasStoredData: !!localStorage.getItem('temp_document_selection')
+  });
+
   // Gestionnaire avec reCAPTCHA pour la sélection de document (seulement si nécessaire)
   const handleDocumentSelectionWithRecaptcha = (recaptchaToken: string) => {
-    console.log('🔒 reCAPTCHA token reçu pour sélection document Agent:', recaptchaToken.substring(0, 20) + '...');
+    console.log('🔒 [RECAPTCHA_SUCCESS] Token reçu pour sélection document Agent:', recaptchaToken.substring(0, 20) + '...');
     
     // Récupérer le type de document depuis le localStorage temporaire
     const tempData = localStorage.getItem('temp_document_selection');
     if (!tempData) {
+      console.error('❌ [RECAPTCHA_SUCCESS] Données de sélection manquantes');
       toast.error('Données de sélection manquantes');
       return;
     }
 
     try {
       const { docType } = JSON.parse(tempData);
-      console.log('📝 Sélection de document validée par reCAPTCHA:', docType);
+      console.log('📝 [RECAPTCHA_SUCCESS] Sélection de document validée par reCAPTCHA:', docType);
+      
+      // Nettoyer les données temporaires AVANT la navigation
+      localStorage.removeItem('temp_document_selection');
+      console.log('🧹 [RECAPTCHA_SUCCESS] Données temporaires nettoyées');
       
       // Effectuer la navigation après validation reCAPTCHA
       navigateToScanner(docType);
       
-      // Nettoyer les données temporaires
-      localStorage.removeItem('temp_document_selection');
     } catch (error) {
-      console.error('❌ Erreur lors de la sélection de document:', error);
+      console.error('❌ [RECAPTCHA_SUCCESS] Erreur lors de la sélection de document:', error);
       toast.error('Erreur lors de la sélection');
       localStorage.removeItem('temp_document_selection');
     }
   };
 
   const handleRecaptchaError = (error: string) => {
-    console.error('❌ Erreur reCAPTCHA sélection document:', error);
+    console.error('❌ [RECAPTCHA_ERROR] Erreur reCAPTCHA sélection document:', error);
     toast.error('Vérification de sécurité échouée');
+    // Nettoyer les données temporaires en cas d'erreur
     localStorage.removeItem('temp_document_selection');
+    console.log('🧹 [RECAPTCHA_ERROR] Données temporaires nettoyées après erreur');
   };
 
   const navigateToScanner = (docType: DocumentType) => {
+    console.log('🚀 [NAVIGATION] Navigation vers scanner pour type:', docType);
+    
     // Navigation vers les pages spécifiques selon le type de document
     switch (docType) {
       case 'cin':
@@ -82,24 +107,53 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
         navigate('/scanner-carte-sejour');
         break;
       default:
+        console.log('📝 [NAVIGATION] Sélection locale pour type:', docType);
         onTypeSelect(docType);
     }
   };
 
   const handleTypeClick = (docType: DocumentType) => {
+    console.log('🖱️ [CLICK] Clic sur type de document:', docType, {
+      shouldUseRecaptcha,
+      userRole: profile?.role,
+      isConfigured
+    });
+
     if (shouldUseRecaptcha) {
-      console.log('🔒 Stockage temporaire de la sélection document pour reCAPTCHA:', docType);
+      console.log('🔒 [CLICK] Stockage temporaire de la sélection document pour reCAPTCHA:', docType);
+      
+      // Vérifier s'il y a déjà des données temporaires
+      const existingData = localStorage.getItem('temp_document_selection');
+      if (existingData) {
+        console.warn('⚠️ [CLICK] Données temporaires existantes détectées, nettoyage:', existingData);
+        localStorage.removeItem('temp_document_selection');
+      }
       
       // Stocker temporairement le type de document pour reCAPTCHA
-      localStorage.setItem('temp_document_selection', JSON.stringify({
-        docType: docType
-      }));
+      const tempData = { docType: docType };
+      localStorage.setItem('temp_document_selection', JSON.stringify(tempData));
+      console.log('💾 [CLICK] Données temporaires stockées:', tempData);
       
       // Le clic sur le bouton déclenchera automatiquement reCAPTCHA via RecaptchaVerification
     } else {
       // Navigation directe sans reCAPTCHA
-      console.log('📝 Sélection de document directe (sans reCAPTCHA):', docType);
+      console.log('📝 [CLICK] Sélection de document directe (sans reCAPTCHA):', docType);
       navigateToScanner(docType);
+    }
+  };
+
+  const handleBackClick = () => {
+    console.log('⬅️ [BACK] Clic sur retour');
+    
+    // Nettoyer les données temporaires lors du retour
+    const tempData = localStorage.getItem('temp_document_selection');
+    if (tempData) {
+      console.log('🧹 [BACK] Nettoyage des données temporaires lors du retour:', tempData);
+      localStorage.removeItem('temp_document_selection');
+    }
+    
+    if (onBack) {
+      onBack();
     }
   };
 
@@ -110,7 +164,7 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
         <CardHeader className="pb-3">
           <div className="flex items-center gap-3">
             {onBack && (
-              <Button variant="outline" size="sm" onClick={onBack}>
+              <Button variant="outline" size="sm" onClick={handleBackClick}>
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             )}

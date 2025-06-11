@@ -4,8 +4,18 @@ import { Navigation } from "@/components/layout/Navigation";
 import { ClientForm } from "@/components/client/ClientForm";
 import { RecaptchaStatusIndicator } from "@/components/recaptcha/RecaptchaStatusIndicator";
 import { RecaptchaDebugInfo } from "@/components/recaptcha/RecaptchaDebugInfo";
+import { useEffect } from "react";
 
 const NewClient = () => {
+  // 🧹 Nettoyer les données temporaires reCAPTCHA au chargement de la page
+  useEffect(() => {
+    const tempData = localStorage.getItem('temp_document_selection');
+    if (tempData) {
+      console.log('🧹 [NEW_CLIENT] Nettoyage des données temporaires reCAPTCHA au chargement:', tempData);
+      localStorage.removeItem('temp_document_selection');
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <AuthenticatedHeader />

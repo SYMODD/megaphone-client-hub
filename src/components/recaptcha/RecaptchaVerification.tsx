@@ -23,21 +23,30 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
   const [isVerifying, setIsVerifying] = useState(false);
 
   const handleVerification = async () => {
+    console.log('🔍 [RECAPTCHA_VERIFICATION] Début de la vérification:', {
+      action,
+      isConfigured,
+      siteKey: siteKey ? siteKey.substring(0, 20) + '...' : 'null',
+      disabled,
+      isVerifying
+    });
+
     if (!isConfigured || !siteKey) {
       const error = 'reCAPTCHA non configuré';
-      console.error('❌ [RECAPTCHA]', error);
+      console.error('❌ [RECAPTCHA_VERIFICATION]', error);
       onError?.(error);
       toast.error('Service de sécurité non disponible');
       return;
     }
 
     if (disabled || isVerifying) {
+      console.warn('⚠️ [RECAPTCHA_VERIFICATION] Vérification bloquée:', { disabled, isVerifying });
       return;
     }
 
     try {
       setIsVerifying(true);
-      console.log(`🔍 [RECAPTCHA] Démarrage de la vérification pour l'action: ${action}`);
+      console.log(`🔍 [RECAPTCHA_VERIFICATION] Démarrage de la vérification pour l'action: ${action}`);
       
       // Afficher un toast de début de vérification
       toast.info('🔒 Vérification de sécurité en cours...', {
@@ -46,7 +55,7 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
       
       const token = await recaptchaService.executeRecaptcha(siteKey, action);
       
-      console.log(`✅ [RECAPTCHA] Vérification réussie pour l'action: ${action}`);
+      console.log(`✅ [RECAPTCHA_VERIFICATION] Vérification réussie pour l'action: ${action}`);
       
       // Afficher un toast de succès
       toast.success('✅ Vérification de sécurité réussie', {
@@ -56,7 +65,7 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
       onSuccess(token);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur de vérification';
-      console.error(`❌ [RECAPTCHA] Échec de la vérification pour l'action ${action}:`, error);
+      console.error(`❌ [RECAPTCHA_VERIFICATION] Échec de la vérification pour l'action ${action}:`, error);
       
       // Afficher un toast d'erreur détaillé
       toast.error(`❌ Échec de la vérification: ${errorMessage}`, {
@@ -66,16 +75,18 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
       onError?.(errorMessage);
     } finally {
       setIsVerifying(false);
+      console.log(`🏁 [RECAPTCHA_VERIFICATION] Fin de la vérification pour l'action: ${action}`);
     }
   };
 
   // Si reCAPTCHA n'est pas configuré, on rend les enfants directement
   if (isLoading) {
+    console.log('⏳ [RECAPTCHA_VERIFICATION] Chargement en cours, rendu direct des enfants');
     return <>{children}</>;
   }
 
   if (!isConfigured) {
-    console.warn('⚠️ [RECAPTCHA] reCAPTCHA non configuré, contournement de la vérification');
+    console.warn('⚠️ [RECAPTCHA_VERIFICATION] reCAPTCHA non configuré, contournement de la vérification');
     return <>{children}</>;
   }
 
