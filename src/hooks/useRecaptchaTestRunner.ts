@@ -25,7 +25,7 @@ export const useRecaptchaTestRunner = () => {
 
   const runTests = async (scenarios: TestScenario[], siteKey: string, isConfigured: boolean) => {
     if (!isConfigured || !siteKey) {
-      toast.error('reCAPTCHA non configuré');
+      toast.error('reCAPTCHA non configuré - impossible de lancer les tests');
       return;
     }
 
@@ -33,6 +33,7 @@ export const useRecaptchaTestRunner = () => {
     setResults([]);
     
     console.log('🧪 [TEST] Début des tests reCAPTCHA pour tous les rôles');
+    console.log('🔑 [TEST] Site Key utilisé:', siteKey.substring(0, 20) + '...');
 
     for (const scenario of scenarios) {
       try {
@@ -69,11 +70,22 @@ export const useRecaptchaTestRunner = () => {
     }
 
     setTesting(false);
-    console.log('🧪 [TEST] Tests terminés');
+    
+    const successCount = results.filter(r => r.success).length;
+    const totalCount = scenarios.length;
+    
+    console.log(`🧪 [TEST] Tests terminés - ${successCount}/${totalCount} réussis`);
+    
+    if (successCount === totalCount) {
+      toast.success(`✅ Tous les tests reCAPTCHA réussis (${successCount}/${totalCount})`);
+    } else {
+      toast.warning(`⚠️ Tests partiellement réussis (${successCount}/${totalCount})`);
+    }
   };
 
   const clearResults = () => {
     setResults([]);
+    console.log('🧪 [TEST] Résultats des tests effacés');
   };
 
   return {

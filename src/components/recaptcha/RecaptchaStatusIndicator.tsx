@@ -35,21 +35,22 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
     );
   }
 
-  // Détermine si reCAPTCHA est nécessaire pour ce contexte
-  const isRequired = () => {
+  // Détermine si reCAPTCHA est nécessaire pour ce contexte et ce rôle
+  const isRequiredForContext = () => {
     switch (context) {
       case 'login':
         return ['admin', 'superviseur'].includes(profile?.role || '');
       case 'document_selection':
         return profile?.role === 'agent';
       default:
-        return true;
+        return false; // Pour le contexte général, on vérifie juste la configuration
     }
   };
 
-  const shouldShowRecaptcha = isRequired() && isConfigured;
+  const isRequired = isRequiredForContext();
 
-  if (!isRequired()) {
+  // Si reCAPTCHA n'est pas requis pour ce contexte/rôle
+  if (!isRequired) {
     return (
       <Badge variant="secondary" className="flex items-center gap-1">
         <Shield className="w-3 h-3 text-slate-500" />
@@ -58,19 +59,21 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
     );
   }
 
-  if (shouldShowRecaptcha) {
+  // Si reCAPTCHA est requis mais non configuré
+  if (!isConfigured) {
     return (
-      <Badge variant="default" className="flex items-center gap-1 bg-green-100 text-green-800 border-green-300">
-        <ShieldCheck className="w-3 h-3" />
-        <span className="text-xs">reCAPTCHA actif</span>
+      <Badge variant="outline" className="flex items-center gap-1 bg-yellow-50 text-yellow-800 border-yellow-300">
+        <ShieldX className="w-3 h-3" />
+        <span className="text-xs">reCAPTCHA non configuré</span>
       </Badge>
     );
   }
 
+  // Si reCAPTCHA est requis et configuré
   return (
-    <Badge variant="outline" className="flex items-center gap-1 bg-yellow-50 text-yellow-800 border-yellow-300">
-      <ShieldX className="w-3 h-3" />
-      <span className="text-xs">reCAPTCHA non configuré</span>
+    <Badge variant="default" className="flex items-center gap-1 bg-green-100 text-green-800 border-green-300">
+      <ShieldCheck className="w-3 h-3" />
+      <span className="text-xs">reCAPTCHA actif</span>
     </Badge>
   );
 };

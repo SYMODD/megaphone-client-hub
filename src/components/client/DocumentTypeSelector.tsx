@@ -114,10 +114,11 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             )}
-            <div>
+            <div className="flex-1">
               <CardTitle className="text-lg">Document sélectionné</CardTitle>
               <CardDescription>{selected?.label} - {selected?.description}</CardDescription>
             </div>
+            <RecaptchaStatusIndicator context="document_selection" />
           </div>
         </CardHeader>
       </Card>
@@ -129,7 +130,7 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex-1">
               <CardTitle className="text-lg">Choix de pièce d'identité</CardTitle>
               <CardDescription>
                 Veuillez sélectionner la pièce d'identité souhaitée par le client
