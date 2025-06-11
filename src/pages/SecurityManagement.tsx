@@ -4,14 +4,12 @@ import { Navigate } from "react-router-dom";
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
 import { SecurityManagement } from "@/components/admin/security/SecurityManagement";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ShieldAlert } from "lucide-react";
+import { CaptchaTestInterface } from "@/components/admin/security/CaptchaTestInterface";
+import { CaptchaValidationTest } from "@/components/admin/security/CaptchaValidationTest";
+import { CaptchaDetailedDebug } from "@/components/debug/CaptchaDetailedDebug";
 
 const SecurityManagementPage = () => {
   const { user, profile, loading } = useAuth();
-
-  // Check if current user is admin - same logic as in UserManagement
-  const isAdmin = profile?.role === "admin" || user?.email === "essbane.salim@gmail.com";
 
   if (loading) {
     return (
@@ -24,25 +22,12 @@ const SecurityManagementPage = () => {
     );
   }
 
-  if (!user) {
+  if (!user || !profile) {
     return <Navigate to="/admin" replace />;
   }
 
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <AuthenticatedHeader />
-        <Navigation />
-        <div className="container mx-auto px-4 py-8">
-          <Alert className="border-red-200 bg-red-50">
-            <ShieldAlert className="h-4 w-4" />
-            <AlertDescription className="text-red-700">
-              Accès refusé. Seuls les administrateurs peuvent accéder à la gestion de la sécurité.
-            </AlertDescription>
-          </Alert>
-        </div>
-      </div>
-    );
+  if (profile.role !== "admin") {
+    return <Navigate to="/" replace />;
   }
 
   return (
@@ -51,7 +36,26 @@ const SecurityManagementPage = () => {
       <Navigation />
       
       <main className="container mx-auto px-4 py-8">
-        <SecurityManagement />
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">
+              Gestion de la sécurité
+            </h1>
+            <p className="text-slate-600">
+              Configuration des paramètres de sécurité et des clés d'API
+            </p>
+          </div>
+
+          {/* Outils de test et diagnostic CAPTCHA */}
+          <div className="grid gap-6">
+            <CaptchaTestInterface />
+            <CaptchaValidationTest />
+            <CaptchaDetailedDebug />
+          </div>
+
+          {/* Gestion principale de la sécurité */}
+          <SecurityManagement />
+        </div>
       </main>
     </div>
   );
