@@ -11,15 +11,19 @@ interface DocumentTypeListProps {
 export const DocumentTypeList = ({ onTypeSelect }: DocumentTypeListProps) => {
   const { handleTypeClick } = useDocumentSelection();
 
+  console.log('📋 [UNIFIED_LIST] Rendu liste des types de documents (version unifiée)');
+
   return (
     <CardContent className="space-y-3">
       {documentTypes.map((docType) => (
-        <div key={docType.id}>
-          <DocumentTypeButton
-            docType={docType}
-            onTypeClick={() => handleTypeClick(docType.id, onTypeSelect)}
-          />
-        </div>
+        <DocumentTypeButton
+          key={docType.id}
+          docType={docType}
+          onTypeClick={() => {
+            console.log('🔗 [UNIFIED_LIST] Transmission du clic vers handler unifié:', docType.id);
+            handleTypeClick(docType.id, onTypeSelect);
+          }}
+        />
       ))}
     </CardContent>
   );

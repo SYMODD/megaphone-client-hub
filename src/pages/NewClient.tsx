@@ -14,6 +14,8 @@ const NewClient = () => {
     }
   }, []);
 
+  console.log('🔍 [NEW_CLIENT] Rendu de la page Nouveau Client (version unifiée)');
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <AuthenticatedHeader />
@@ -31,7 +33,7 @@ const NewClient = () => {
             </p>
           </div>
 
-          {/* Formulaire client */}
+          {/* UN SEUL COMPOSANT : ClientForm */}
           <ClientForm />
         </div>
       </main>

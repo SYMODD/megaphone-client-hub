@@ -21,23 +21,18 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
   const { isConfigured, isLoading, error, refreshSettings } = useRecaptchaSettings();
   const { profile } = useAuth();
 
-  console.log('🎯 [UNIFIED_INDICATOR] État simple:', {
+  console.log('🎯 [UNIFIED_INDICATOR] Affichage indicateur de statut:', {
     context,
     userRole: profile?.role,
     isConfigured,
-    isLoading,
-    error: !!error
+    decision: context === 'document_selection' ? 'FORCE_DISABLED' : 'EVALUATE_BY_ROLE'
   });
 
-  // LOGIQUE UNIFIÉE SIMPLE
+  // LOGIQUE UNIFIÉE ET SIMPLIFIÉE
   const getDisplayInfo = () => {
     const userRole = profile?.role || '';
     
-    // RÈGLES SIMPLES :
-    // - Admin/Superviseur : TOUJOURS besoin de reCAPTCHA
-    // - Agent : JAMAIS besoin de reCAPTCHA (désactivé volontairement)
-    // - Contexte document_selection : TOUJOURS désactivé
-    
+    // RÈGLE ABSOLUE : document_selection = TOUJOURS désactivé
     if (context === 'document_selection') {
       return {
         variant: 'secondary' as const,
@@ -48,6 +43,7 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
       };
     }
 
+    // Pour les autres contextes : évaluer selon le rôle
     if (['admin', 'superviseur'].includes(userRole)) {
       if (isConfigured) {
         return {

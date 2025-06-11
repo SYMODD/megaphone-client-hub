@@ -21,13 +21,18 @@ export const DocumentTypeButton = ({
 }: DocumentTypeButtonProps) => {
   const IconComponent = iconMap[docType.icon as keyof typeof iconMap];
 
-  console.log('🔘 [SIMPLE] Bouton document sans reCAPTCHA:', docType.id);
+  console.log('🔘 [UNIFIED_BUTTON] Rendu bouton document:', docType.id, '- Handler unifié');
+
+  const handleClick = () => {
+    console.log('🖱️ [UNIFIED_BUTTON] Clic détecté sur:', docType.id);
+    onTypeClick();
+  };
 
   return (
     <Button
       variant="outline"
-      className="w-full justify-start h-auto p-4 hover:bg-blue-50 hover:border-blue-300"
-      onClick={onTypeClick}
+      className="w-full justify-start h-auto p-4 hover:bg-blue-50 hover:border-blue-300 transition-colors"
+      onClick={handleClick}
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
