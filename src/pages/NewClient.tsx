@@ -1,16 +1,13 @@
+
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
 import { ClientForm } from "@/components/client/ClientForm";
-import { CaptchaDebugInfo } from "@/components/debug/CaptchaDebugInfo";
-import { useCaptchaSettingsV2 } from "@/hooks/useCaptchaSettingsV2";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CaptchaDetailedDebug } from "@/components/debug/CaptchaDetailedDebug";
 
 const NewClient = () => {
   const { user, profile, loading } = useAuth();
-  
-  const captchaV2 = useCaptchaSettingsV2();
 
   if (loading) {
     return (
@@ -47,25 +44,7 @@ const NewClient = () => {
             </p>
           </div>
 
-          <div className="space-y-4">
-            <Card className="border-purple-200 bg-purple-50">
-              <CardHeader>
-                <CardTitle className="text-purple-800">🔧 Debug CAPTCHA V2 (Temporaire)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  <div><strong>État V2:</strong> {captchaV2.isLoading ? 'Chargement...' : 'Terminé'}</div>
-                  <div><strong>Clé publique V2:</strong> {captchaV2.publicKey || '[AUCUNE]'}</div>
-                  <div><strong>Erreur V2:</strong> {captchaV2.error || '[AUCUNE]'}</div>
-                  {captchaV2.debugInfo && (
-                    <div><strong>Debug info:</strong> {JSON.stringify(captchaV2.debugInfo, null, 2)}</div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <CaptchaDebugInfo />
-          </div>
+          <CaptchaDetailedDebug />
 
           <ClientForm />
         </div>

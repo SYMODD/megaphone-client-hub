@@ -1,44 +1,39 @@
 
 import { useState } from "react";
 import { useFormState } from "./useFormState";
-import { useMRZHandler } from "./useMRZHandler";
 import { useBarcodeHandler } from "./useBarcodeHandler";
+import { useMRZHandler } from "./useMRZHandler";
 import { useFormSubmission } from "./useFormSubmission";
-import { DocumentType } from "@/types/documentTypes";
 
-export const useClientFormLogic = () => {
-  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false); // 🔒 NOUVEAU: État CAPTCHA
-
-  const {
-    formData,
-    setFormData,
-    selectedDocumentType,
-    handleInputChange,
-    handleDocumentTypeSelect,
-    resetForm
-  } = useFormState();
-
-  const { handleMRZDataExtracted } = useMRZHandler({ formData, setFormData });
-  const { handleBarcodeScanned } = useBarcodeHandler({ setFormData });
+export const useClientForm = () => {
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
+  
+  const { formData, updateFormData, resetForm: resetFormState } = useFormState();
+  
+  const { handleBarcodeData } = useBarcodeHandler({ updateFormData });
+  const { handleMRZData } = useMRZHandler({ updateFormData });
+  
+  const resetForm = () => {
+    resetFormState();
+    setIsCaptchaVerified(false);
+    console.log('🔄 Formulaire et CAPTCHA réinitialisés');
+  };
+  
   const { isSubmitting, handleSubmit } = useFormSubmission({ 
     formData, 
-    resetForm: () => {
-      resetForm();
-      setIsCaptchaVerified(false); // 🔒 Reset CAPTCHA aussi
-    },
-    isCaptchaVerified // 🔒 Passer l'état CAPTCHA
+    resetForm,
+    isCaptchaVerified 
   });
 
   return {
     formData,
-    isLoading: isSubmitting,
-    selectedDocumentType,
-    isCaptchaVerified, // 🔒 NOUVEAU: Exposer l'état CAPTCHA
-    handleInputChange,
+    updateFormData,
+    resetForm,
+    isSubmitting,
     handleSubmit,
-    handleMRZDataExtracted,
-    handleDocumentTypeSelect,
-    handleBarcodeScanned,
-    handleCaptchaVerificationChange: setIsCaptchaVerified // 🔒 NOUVEAU: Handler CAPTCHA
+    handleBarcodeData,
+    handleMRZData,
+    isCaptchaVerified,
+    setIsCaptchaVerified
   };
 };
