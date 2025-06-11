@@ -26,7 +26,7 @@ export const useRecaptchaSettings = () => {
       setIsLoading(true);
       setError(null);
 
-      console.log('🔑 Loading reCAPTCHA settings from Supabase...');
+      console.log('🔑 Loading production reCAPTCHA settings...');
       
       const { data, error } = await supabase
         .from('security_settings')
@@ -51,10 +51,11 @@ export const useRecaptchaSettings = () => {
         isConfigured
       });
 
-      console.log('✅ reCAPTCHA settings loaded:', {
+      console.log('✅ Production reCAPTCHA settings loaded:', {
         hasSiteKey: !!siteKey,
         hasSecretKey: !!secretKey,
-        isConfigured
+        isConfigured,
+        environment: 'PRODUCTION'
       });
 
     } catch (error) {
@@ -70,7 +71,7 @@ export const useRecaptchaSettings = () => {
   }, []);
 
   const refreshSettings = () => {
-    console.log('🔄 Refreshing reCAPTCHA settings...');
+    console.log('🔄 Refreshing production reCAPTCHA settings...');
     loadSettings();
   };
 

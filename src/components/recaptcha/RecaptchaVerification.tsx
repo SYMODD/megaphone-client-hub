@@ -24,8 +24,8 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
 
   const handleVerification = async () => {
     if (!isConfigured || !siteKey) {
-      const error = 'reCAPTCHA non configuré';
-      console.error('❌', error);
+      const error = 'reCAPTCHA non configuré en production';
+      console.error('❌ [PRODUCTION]', error);
       onError?.(error);
       toast.error('Service de sécurité non disponible');
       return;
@@ -37,15 +37,15 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
 
     try {
       setIsVerifying(true);
-      console.log(`🔍 Starting reCAPTCHA verification for action: ${action}`);
+      console.log(`🔍 [PRODUCTION] Starting reCAPTCHA verification for action: ${action}`);
       
       const token = await recaptchaService.executeRecaptcha(siteKey, action);
       
-      console.log(`✅ reCAPTCHA verification successful for action: ${action}`);
+      console.log(`✅ [PRODUCTION] reCAPTCHA verification successful for action: ${action}`);
       onSuccess(token);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur de vérification';
-      console.error(`❌ reCAPTCHA verification failed for action ${action}:`, error);
+      console.error(`❌ [PRODUCTION] reCAPTCHA verification failed for action ${action}:`, error);
       onError?.(errorMessage);
       toast.error('Échec de la vérification de sécurité');
     } finally {
@@ -59,7 +59,7 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
   }
 
   if (!isConfigured) {
-    console.warn('⚠️ reCAPTCHA not configured, bypassing verification');
+    console.warn('⚠️ [PRODUCTION] reCAPTCHA not configured, bypassing verification');
     return <>{children}</>;
   }
 

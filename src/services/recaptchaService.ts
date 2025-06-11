@@ -31,26 +31,26 @@ class RecaptchaService {
           return;
         }
 
-        // Créer et injecter le script reCAPTCHA
+        // Créer et injecter le script reCAPTCHA de production
         const script = document.createElement('script');
         script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
         script.async = true;
         script.defer = true;
 
         script.onload = () => {
-          console.log('✅ reCAPTCHA script loaded successfully');
+          console.log('✅ Production reCAPTCHA script loaded successfully');
           this.isScriptLoaded = true;
           resolve();
         };
 
         script.onerror = () => {
-          console.error('❌ Failed to load reCAPTCHA script');
+          console.error('❌ Failed to load production reCAPTCHA script');
           reject(new Error('Failed to load reCAPTCHA script'));
         };
 
         document.head.appendChild(script);
       } catch (error) {
-        console.error('❌ Error loading reCAPTCHA script:', error);
+        console.error('❌ Error loading production reCAPTCHA script:', error);
         reject(error);
       }
     });
@@ -60,7 +60,7 @@ class RecaptchaService {
 
   async executeRecaptcha(siteKey: string, action: string): Promise<string> {
     try {
-      console.log(`🔍 Executing reCAPTCHA for action: ${action}`);
+      console.log(`🔍 [PRODUCTION] Executing reCAPTCHA for action: ${action}`);
       
       // S'assurer que le script est chargé
       await this.loadRecaptchaScript(siteKey);
@@ -68,14 +68,14 @@ class RecaptchaService {
       // Attendre que grecaptcha soit disponible
       await this.waitForGrecaptcha();
 
-      // Exécuter reCAPTCHA
+      // Exécuter reCAPTCHA en production
       const token = await window.grecaptcha.execute(siteKey, { action });
       
-      console.log(`✅ reCAPTCHA token generated for action: ${action}`);
+      console.log(`✅ [PRODUCTION] reCAPTCHA token generated for action: ${action}`);
       return token;
     } catch (error) {
-      console.error(`❌ Error executing reCAPTCHA for action ${action}:`, error);
-      throw new Error(`Erreur reCAPTCHA: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      console.error(`❌ [PRODUCTION] Error executing reCAPTCHA for action ${action}:`, error);
+      throw new Error(`Erreur reCAPTCHA production: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
@@ -105,7 +105,7 @@ class RecaptchaService {
 
   async verifyToken(token: string, secretKey: string): Promise<RecaptchaVerificationResult> {
     try {
-      console.log('🔍 Verifying reCAPTCHA token...');
+      console.log('🔍 [PRODUCTION] Verifying reCAPTCHA token...');
       
       const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
         method: 'POST',
@@ -120,10 +120,11 @@ class RecaptchaService {
 
       const result = await response.json();
       
-      console.log('✅ reCAPTCHA verification result:', {
+      console.log('✅ [PRODUCTION] reCAPTCHA verification result:', {
         success: result.success,
         score: result.score,
-        action: result.action
+        action: result.action,
+        environment: 'PRODUCTION'
       });
 
       return {
@@ -133,7 +134,7 @@ class RecaptchaService {
         error: result.success ? undefined : 'Token invalide'
       };
     } catch (error) {
-      console.error('❌ Error verifying reCAPTCHA token:', error);
+      console.error('❌ [PRODUCTION] Error verifying reCAPTCHA token:', error);
       return {
         success: false,
         error: 'Erreur de vérification'
