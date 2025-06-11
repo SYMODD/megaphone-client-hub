@@ -24,7 +24,7 @@ export const useRecaptchaSettings = () => {
       setIsLoading(true);
       setError(null);
 
-      console.log('🔍 [SIMPLE] Chargement direct des paramètres reCAPTCHA');
+      console.log('🔍 [UNIFIED] Chargement paramètres reCAPTCHA');
       
       const { data, error: fetchError } = await supabase
         .from('security_settings')
@@ -32,13 +32,14 @@ export const useRecaptchaSettings = () => {
         .in('setting_key', ['recaptcha_site_key', 'recaptcha_secret_key']);
 
       if (fetchError) {
-        console.error('❌ [SIMPLE] Erreur Supabase:', fetchError);
+        console.error('❌ [UNIFIED] Erreur Supabase:', fetchError);
         throw fetchError;
       }
 
       const siteKey = data?.find(item => item.setting_key === 'recaptcha_site_key')?.setting_value || null;
       const secretKey = data?.find(item => item.setting_key === 'recaptcha_secret_key')?.setting_value || null;
 
+      // LOGIQUE SIMPLE : les deux clés doivent être présentes et non vides
       const isConfigured = !!(siteKey && siteKey.trim() && secretKey && secretKey.trim());
 
       const newSettings = {
@@ -48,17 +49,23 @@ export const useRecaptchaSettings = () => {
         isConfigured
       };
 
-      console.log('✅ [SIMPLE] Paramètres chargés:', {
+      console.log('✅ [UNIFIED] Statut final:', {
         hasSiteKey: !!siteKey,
         hasSecretKey: !!secretKey,
         isConfigured,
-        status: isConfigured ? 'CONFIGURÉ' : 'NON CONFIGURÉ'
+        status: isConfigured ? 'CONFIGURÉ ✅' : 'NON CONFIGURÉ ❌'
       });
 
       setSettings(newSettings);
     } catch (err) {
-      console.error('❌ [SIMPLE] Erreur lors du chargement:', err);
-      setError('Erreur lors du chargement des paramètres');
+      console.error('❌ [UNIFIED] Erreur:', err);
+      setError('Erreur lors du chargement');
+      setSettings({
+        siteKey: null,
+        secretKey: null,
+        isLoaded: true,
+        isConfigured: false
+      });
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +76,7 @@ export const useRecaptchaSettings = () => {
   }, []);
 
   const refreshSettings = () => {
-    console.log('🔄 [SIMPLE] Actualisation des paramètres');
+    console.log('🔄 [UNIFIED] Actualisation');
     loadSettings();
   };
 
@@ -81,8 +88,7 @@ export const useRecaptchaSettings = () => {
   };
 };
 
-// Export pour compatibilité
+// Export pour compatibilité (simplifié)
 export const notifyRecaptchaSettingsUpdate = () => {
-  console.log('📢 [SIMPLE] Notification de mise à jour (simplified)');
-  // Plus besoin de notifications complexes
+  console.log('📢 [UNIFIED] Notification simplifiée');
 };

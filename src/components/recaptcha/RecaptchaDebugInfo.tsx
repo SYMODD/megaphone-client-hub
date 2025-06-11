@@ -24,9 +24,20 @@ export const RecaptchaDebugInfo: React.FC = () => {
 
   const getContextRequirements = () => {
     return [
-      { context: 'login', roles: ['admin', 'superviseur'], description: 'Connexion Admin/Superviseur' },
-      { context: 'document_selection', roles: ['agent'], description: 'Sélection de document Agent (DÉSACTIVÉ)' },
-      { context: 'general', roles: [], description: 'Vérification générale' }
+      { 
+        context: 'login', 
+        roles: ['admin', 'superviseur'], 
+        description: 'Connexion Admin/Superviseur',
+        isRequired: true,
+        status: isConfigured ? 'ACTIF' : 'REQUIS MAIS NON CONFIGURÉ'
+      },
+      { 
+        context: 'document_selection', 
+        roles: [], 
+        description: 'Sélection de documents',
+        isRequired: false,
+        status: 'DÉSACTIVÉ VOLONTAIREMENT'
+      }
     ];
   };
 
@@ -35,19 +46,19 @@ export const RecaptchaDebugInfo: React.FC = () => {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-sm">
           <Bug className="w-4 h-4" />
-          Debug reCAPTCHA (Admin uniquement)
+          Debug reCAPTCHA UNIFIÉ (Admin uniquement)
         </CardTitle>
         <CardDescription className="text-xs">
-          Informations techniques pour le diagnostic des problèmes reCAPTCHA
+          Version simplifiée - Informations de diagnostic unifiées
         </CardDescription>
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* État général */}
+        {/* État général unifié */}
         <div className="space-y-2">
           <h5 className="font-medium text-sm flex items-center gap-1">
             <Settings className="w-3 h-3" />
-            État de Configuration
+            État de Configuration UNIFIÉ
           </h5>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="flex justify-between">
@@ -59,7 +70,7 @@ export const RecaptchaDebugInfo: React.FC = () => {
             <div className="flex justify-between">
               <span>Configuré:</span>
               <Badge variant={isConfigured ? "default" : "destructive"}>
-                {isConfigured ? "Oui" : "Non"}
+                {isConfigured ? "OUI ✅" : "NON ❌"}
               </Badge>
             </div>
             <div className="flex justify-between">
@@ -114,32 +125,26 @@ export const RecaptchaDebugInfo: React.FC = () => {
           </div>
         </div>
 
-        {/* Exigences par contexte */}
+        {/* Règles unifiées par contexte */}
         <div className="space-y-2">
           <h5 className="font-medium text-sm flex items-center gap-1">
             <User className="w-3 h-3" />
-            Exigences par Contexte
+            Règles UNIFIÉES par Contexte
           </h5>
           <div className="space-y-1">
             {getContextRequirements().map((req) => (
               <div key={req.context} className="flex justify-between items-center text-xs">
                 <span className="flex-1">{req.description}:</span>
                 <div className="flex items-center gap-1">
-                  <span className="text-slate-500">
-                    {req.roles.length > 0 ? req.roles.join(', ') : 'Tous'}
+                  <span className="text-slate-500 text-xs">
+                    {req.isRequired ? 'REQUIS' : 'DÉSACTIVÉ'}
                   </span>
                   <Badge variant={
-                    req.context === 'document_selection' 
-                      ? "secondary" // Toujours grisé pour document_selection
-                      : req.roles.length === 0 || req.roles.includes(profile?.role || '') 
-                        ? (isConfigured ? "default" : "destructive")
-                        : "secondary"
+                    req.isRequired 
+                      ? (isConfigured ? "default" : "destructive")
+                      : "secondary"
                   } className="text-xs">
-                    {req.context === 'document_selection' 
-                      ? "DÉSACTIVÉ"
-                      : req.roles.length === 0 || req.roles.includes(profile?.role || '') 
-                        ? (isConfigured ? "✓" : "✗")
-                        : "N/A"}
+                    {req.status}
                   </Badge>
                 </div>
               </div>
@@ -147,7 +152,7 @@ export const RecaptchaDebugInfo: React.FC = () => {
           </div>
         </div>
 
-        {/* Actions de debug */}
+        {/* Actions */}
         <div className="flex gap-2 pt-2 border-t border-amber-200">
           <Button 
             size="sm" 
@@ -160,12 +165,14 @@ export const RecaptchaDebugInfo: React.FC = () => {
           </Button>
         </div>
 
-        {/* Note technique */}
+        {/* Note technique unifiée */}
         <div className="p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
-          <strong>Note:</strong> Les indicateurs de statut utilisent cette configuration en temps réel. 
-          Si vous modifiez les clés, utilisez "Actualiser" pour mettre à jour les indicateurs.
-          <br />
-          <strong>Approche simplifiée:</strong> reCAPTCHA désactivé pour la sélection de documents.
+          <strong>APPROCHE UNIFIÉE:</strong>
+          <ul className="mt-1 list-disc list-inside space-y-1">
+            <li><strong>Admin/Superviseur:</strong> reCAPTCHA OBLIGATOIRE pour la connexion</li>
+            <li><strong>Sélection documents:</strong> reCAPTCHA DÉSACTIVÉ pour tous (simplicité)</li>
+            <li><strong>Agents:</strong> Accès direct sans reCAPTCHA</li>
+          </ul>
         </div>
       </CardContent>
     </Card>

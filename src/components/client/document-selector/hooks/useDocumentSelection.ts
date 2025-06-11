@@ -12,10 +12,10 @@ export const useDocumentSelection = () => {
     cleanupTempData();
   }, []);
 
-  console.log('📋 [SIMPLE] Sélection de documents SANS reCAPTCHA');
+  console.log('📋 [UNIFIED] Sélection documents SANS reCAPTCHA (approche unifiée)');
 
   const handleTypeClick = (docType: DocumentType, onTypeSelect?: (type: DocumentType) => void) => {
-    console.log('🖱️ [SIMPLE] Clic direct sur document:', docType);
+    console.log('🖱️ [UNIFIED] Clic direct sur document (NO reCAPTCHA):', docType);
 
     if (onTypeSelect) {
       onTypeSelect(docType);
