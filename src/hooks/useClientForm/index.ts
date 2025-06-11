@@ -16,10 +16,11 @@ export const useClientForm = () => {
     console.log('🔄 Formulaire réinitialisé');
   };
   
+  // Pour le ClientForm principal, pas de CAPTCHA requis - c'est un formulaire simple
   const { isSubmitting, handleSubmit } = useFormSubmission({ 
     formData, 
     resetForm,
-    isCaptchaVerified: true // Pas de CAPTCHA requis ici
+    isCaptchaVerified: true // Toujours true pour ce formulaire
   });
 
   // Helper function to update form data (for compatibility with components expecting onInputChange)
