@@ -1,6 +1,6 @@
-
 import { useState } from 'react';
-import { useRecaptchaSettings, notifyRecaptchaSettingsUpdate } from "@/hooks/useRecaptchaSettings";
+import { useRecaptchaSettings } from "@/hooks/useRecaptchaSettings";
+import { notifyRecaptchaSettingsUpdate } from "@/hooks/recaptcha/RecaptchaNotifications";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const useRecaptchaStatusLogic = (context: string) => {

@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RefreshCw, TestTube, Check, X } from "lucide-react";
-import { useRecaptchaSettings, notifyRecaptchaSettingsUpdate } from "@/hooks/useRecaptchaSettings";
+import { useRecaptchaSettings } from "@/hooks/useRecaptchaSettings";
+import { notifyRecaptchaSettingsUpdate } from "@/hooks/recaptcha/RecaptchaNotifications";
 import { toast } from 'sonner';
 
 export const RecaptchaUpdateTester: React.FC = () => {
