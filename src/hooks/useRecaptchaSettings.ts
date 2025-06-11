@@ -24,7 +24,7 @@ export const useRecaptchaSettings = () => {
       setIsLoading(true);
       setError(null);
 
-      console.log('🔍 [UNIFIED] Chargement paramètres reCAPTCHA');
+      console.log('🔍 [FIXED_HOOK] Chargement paramètres reCAPTCHA');
       
       const { data, error: fetchError } = await supabase
         .from('security_settings')
@@ -32,14 +32,14 @@ export const useRecaptchaSettings = () => {
         .in('setting_key', ['recaptcha_site_key', 'recaptcha_secret_key']);
 
       if (fetchError) {
-        console.error('❌ [UNIFIED] Erreur Supabase:', fetchError);
+        console.error('❌ [FIXED_HOOK] Erreur Supabase:', fetchError);
         throw fetchError;
       }
 
       const siteKey = data?.find(item => item.setting_key === 'recaptcha_site_key')?.setting_value || null;
       const secretKey = data?.find(item => item.setting_key === 'recaptcha_secret_key')?.setting_value || null;
 
-      // LOGIQUE SIMPLE : les deux clés doivent être présentes et non vides
+      // LOGIQUE FIXÉE : les deux clés doivent être présentes et non vides
       const isConfigured = !!(siteKey && siteKey.trim() && secretKey && secretKey.trim());
 
       const newSettings = {
@@ -49,7 +49,7 @@ export const useRecaptchaSettings = () => {
         isConfigured
       };
 
-      console.log('✅ [UNIFIED] Statut final:', {
+      console.log('✅ [FIXED_HOOK] Statut final:', {
         hasSiteKey: !!siteKey,
         hasSecretKey: !!secretKey,
         isConfigured,
@@ -58,7 +58,7 @@ export const useRecaptchaSettings = () => {
 
       setSettings(newSettings);
     } catch (err) {
-      console.error('❌ [UNIFIED] Erreur:', err);
+      console.error('❌ [FIXED_HOOK] Erreur:', err);
       setError('Erreur lors du chargement');
       setSettings({
         siteKey: null,
@@ -76,7 +76,7 @@ export const useRecaptchaSettings = () => {
   }, []);
 
   const refreshSettings = () => {
-    console.log('🔄 [UNIFIED] Actualisation');
+    console.log('🔄 [FIXED_HOOK] Actualisation demandée');
     loadSettings();
   };
 
@@ -86,9 +86,4 @@ export const useRecaptchaSettings = () => {
     error,
     refreshSettings
   };
-};
-
-// Export pour compatibilité (simplifié)
-export const notifyRecaptchaSettingsUpdate = () => {
-  console.log('📢 [UNIFIED] Notification simplifiée');
 };

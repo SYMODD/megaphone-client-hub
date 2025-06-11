@@ -21,7 +21,7 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
   const { isConfigured, isLoading, error, refreshSettings } = useRecaptchaSettings();
   const { profile } = useAuth();
 
-  // Masquer complètement pour les agents - ils n'ont pas besoin de voir le statut reCAPTCHA
+  // Masquer pour les agents - ils n'ont pas besoin de voir le statut reCAPTCHA
   if (profile?.role === 'agent') {
     return null;
   }
@@ -47,7 +47,12 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
       return 'DÉSACTIVÉ_POUR_TOUS';
     }
     
-    // Général = non requis
+    // Général pour admin/superviseur = suit la configuration
+    if (['admin', 'superviseur'].includes(userRole)) {
+      return isConfigured ? 'RECAPTCHA_ACTIF' : 'REQUIS_MAIS_NON_CONFIGURÉ';
+    }
+    
+    // Autres cas = non requis
     return 'NON_REQUIS';
   }
 

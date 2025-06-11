@@ -165,29 +165,7 @@ export const RoleSpecificLogin = ({
 
   return (
     <div className="space-y-6">
-      {/* LOGIQUE FIXÉE : Avertissement reCAPTCHA selon le rôle ET la configuration */}
-      {role !== 'agent' && !isConfigured && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <Shield className="h-5 w-5 text-yellow-400" />
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">
-                Configuration reCAPTCHA recommandée
-              </h3>
-              <div className="mt-2 text-sm text-yellow-700">
-                <p>
-                  Pour une sécurité optimale des comptes {role}, nous recommandons de configurer reCAPTCHA.
-                  Contactez votre administrateur pour la configuration.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Information spéciale pour les agents */}
+      {/* Information pour les agents */}
       {role === 'agent' && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex">
@@ -208,7 +186,7 @@ export const RoleSpecificLogin = ({
         </div>
       )}
 
-      {/* NOUVEAU : Information pour Admin/Superviseur avec reCAPTCHA configuré */}
+      {/* Information pour Admin/Superviseur avec reCAPTCHA configuré */}
       {role !== 'agent' && isConfigured && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex">
@@ -222,6 +200,28 @@ export const RoleSpecificLogin = ({
               <div className="mt-2 text-sm text-green-700">
                 <p>
                   Sécurité renforcée activée pour les connexions {role}.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Avertissement pour Admin/Superviseur sans reCAPTCHA */}
+      {role !== 'agent' && !isConfigured && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <Shield className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-yellow-800">
+                Configuration reCAPTCHA recommandée
+              </h3>
+              <div className="mt-2 text-sm text-yellow-700">
+                <p>
+                  Pour une sécurité optimale des comptes {role}, nous recommandons de configurer reCAPTCHA.
+                  Contactez votre administrateur pour la configuration.
                 </p>
               </div>
             </div>
