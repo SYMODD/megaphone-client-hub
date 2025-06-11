@@ -70,18 +70,24 @@ export const RoleSpecificLogin = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validation des champs requis
+    if (!loginForm.email.trim() || !loginForm.password.trim()) {
+      return;
+    }
+    
     // Pour Admin et Superviseur UNIQUEMENT, stocker temporairement les données pour reCAPTCHA
     if (role === 'admin' || role === 'superviseur') {
-      console.log(`🔒 Stockage temporaire des données de connexion ${role}`);
+      console.log(`🔒 [${role.toUpperCase()}] Storing login data for reCAPTCHA verification`);
       localStorage.setItem('temp_login_data', JSON.stringify({
-        email: loginForm.email,
+        email: loginForm.email.trim(),
         password: loginForm.password
       }));
       // Le clic sur le bouton déclenchera automatiquement reCAPTCHA via RecaptchaVerification
+      // La validation reCAPTCHA se fera au niveau parent (AdminLogin/SuperviseurLogin)
     } else {
       // Pour les AGENTS, connexion directe SANS reCAPTCHA
-      console.log('📝 Connexion Agent directe (sans reCAPTCHA)');
-      await onLogin(loginForm.email, loginForm.password);
+      console.log('📝 [AGENT] Direct login without reCAPTCHA');
+      await onLogin(loginForm.email.trim(), loginForm.password);
     }
   };
 
@@ -115,6 +121,7 @@ export const RoleSpecificLogin = ({
                 placeholder={roleInfo.placeholder}
                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
+                disabled={isLoading}
               />
             </div>
             
@@ -130,13 +137,14 @@ export const RoleSpecificLogin = ({
                 placeholder="Votre mot de passe"
                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
+                disabled={isLoading}
               />
             </div>
 
             <Button 
               type="submit" 
               className={`w-full bg-gradient-to-r ${roleInfo.bgGradient} hover:opacity-90 transition-opacity`}
-              disabled={isLoading}
+              disabled={isLoading || !loginForm.email.trim() || !loginForm.password.trim()}
             >
               {isLoading ? "Connexion..." : `Se connecter comme ${role}`}
             </Button>
@@ -148,6 +156,7 @@ export const RoleSpecificLogin = ({
                 type="button"
                 onClick={onShowPasswordReset}
                 className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                disabled={isLoading}
               >
                 Mot de passe oublié ?
               </button>

@@ -26,7 +26,7 @@ export const useRecaptchaSettings = () => {
       setIsLoading(true);
       setError(null);
 
-      console.log('🔑 Loading production reCAPTCHA settings...');
+      console.log('🔑 [PRODUCTION] Loading reCAPTCHA settings from database...');
       
       const { data, error } = await supabase
         .from('security_settings')
@@ -34,33 +34,56 @@ export const useRecaptchaSettings = () => {
         .in('setting_key', ['recaptcha_site_key', 'recaptcha_secret_key']);
 
       if (error) {
-        console.error('❌ Error loading reCAPTCHA settings:', error);
+        console.error('❌ [PRODUCTION] Error loading reCAPTCHA settings:', error);
         setError('Erreur lors du chargement des paramètres reCAPTCHA');
+        
+        // En cas d'erreur, on bloque l'application
+        setSettings({
+          siteKey: null,
+          secretKey: null,
+          isLoaded: true,
+          isConfigured: false
+        });
         return;
       }
 
       const siteKey = data?.find(item => item.setting_key === 'recaptcha_site_key')?.setting_value || null;
       const secretKey = data?.find(item => item.setting_key === 'recaptcha_secret_key')?.setting_value || null;
 
-      const isConfigured = !!(siteKey && secretKey);
+      // Validation stricte : les deux clés doivent être présentes ET non vides
+      const isConfigured = !!(siteKey && secretKey && siteKey.trim().length > 0 && secretKey.trim().length > 0);
 
       setSettings({
-        siteKey,
-        secretKey,
+        siteKey: siteKey?.trim() || null,
+        secretKey: secretKey?.trim() || null,
         isLoaded: true,
         isConfigured
       });
 
-      console.log('✅ Production reCAPTCHA settings loaded:', {
+      console.log('✅ [PRODUCTION] reCAPTCHA settings loaded:', {
         hasSiteKey: !!siteKey,
         hasSecretKey: !!secretKey,
+        siteKeyLength: siteKey?.length || 0,
+        secretKeyLength: secretKey?.length || 0,
         isConfigured,
         environment: 'PRODUCTION'
       });
 
+      if (!isConfigured) {
+        console.warn('⚠️ [PRODUCTION] reCAPTCHA is NOT properly configured - missing or empty keys');
+      }
+
     } catch (error) {
-      console.error('❌ Unexpected error loading reCAPTCHA settings:', error);
+      console.error('❌ [PRODUCTION] Unexpected error loading reCAPTCHA settings:', error);
       setError('Erreur inattendue lors du chargement');
+      
+      // En cas d'erreur, on bloque l'application
+      setSettings({
+        siteKey: null,
+        secretKey: null,
+        isLoaded: true,
+        isConfigured: false
+      });
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +94,7 @@ export const useRecaptchaSettings = () => {
   }, []);
 
   const refreshSettings = () => {
-    console.log('🔄 Refreshing production reCAPTCHA settings...');
+    console.log('🔄 [PRODUCTION] Manual refresh of reCAPTCHA settings...');
     loadSettings();
   };
 

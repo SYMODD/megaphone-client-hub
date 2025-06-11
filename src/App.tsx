@@ -1,123 +1,144 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
-import { SmartRedirect } from "./components/auth/SmartRedirect";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { RoleProtectedRoute } from "@/components/auth/RoleProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import AgentLogin from "./pages/AgentLogin";
-import AdminLogin from "./pages/AdminLogin";
-import SuperviseurLogin from "./pages/SuperviseurLogin";
-import BaseClients from "./pages/BaseClients";
 import NewClient from "./pages/NewClient";
+import BaseClients from "./pages/BaseClients";
+import UserManagement from "./pages/UserManagement";
+import ResetPassword from "./pages/ResetPassword";
+import NotFound from "./pages/NotFound";
 import CINScanner from "./pages/CINScanner";
 import PassportMarocainScanner from "./pages/PassportMarocainScanner";
 import PassportEtrangerScanner from "./pages/PassportEtrangerScanner";
 import CarteSejourScanner from "./pages/CarteSejourScanner";
-import UserManagement from "./pages/UserManagement";
+import AutoDocumentScanner from "./pages/AutoDocumentScanner";
 import Contracts from "./pages/Contracts";
-import NotFound from "./pages/NotFound";
+import AdminLogin from "./pages/AdminLogin";
+import SuperviseurLogin from "./pages/SuperviseurLogin";
+import AgentLogin from "./pages/AgentLogin";
+import AdminRecaptcha from "./pages/AdminRecaptcha";
+
+import "./App.css";
 
 const queryClient = new QueryClient();
 
-const App = () => {
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
+      <AuthProvider>
         <BrowserRouter>
-          <AuthProvider>
-            <Routes>
-              {/* Redirection intelligente selon le rôle */}
-              <Route path="/" element={<SmartRedirect />} />
-              
-              {/* Pages de connexion publiques */}
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/agent" element={<AgentLogin />} />
-              <Route path="/admin" element={<AdminLogin />} />
-              <Route path="/superviseur" element={<SuperviseurLogin />} />
-              
-              {/* Dashboard - accessible aux admin et superviseur */}
-              <Route path="/dashboard" element={
+          <Routes>
+            {/* Routes publiques */}
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/login/admin" element={<AdminLogin />} />
+            <Route path="/login/superviseur" element={<SuperviseurLogin />} />
+            <Route path="/login/agent" element={<AgentLogin />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+
+            {/* Routes protégées par authentification */}
+            <Route
+              path="/dashboard"
+              element={
                 <ProtectedRoute>
-                  <RoleProtectedRoute allowedRoles={['admin', 'superviseur']} redirectTo="/agent">
-                    <Index />
-                  </RoleProtectedRoute>
+                  <BaseClients />
                 </ProtectedRoute>
-              } />
-              
-              {/* Base Clients - accessible uniquement aux admin et superviseur */}
-              <Route path="/base-clients" element={
-                <ProtectedRoute>
-                  <RoleProtectedRoute allowedRoles={['admin', 'superviseur']} redirectTo="/nouveau-client">
-                    <BaseClients />
-                  </RoleProtectedRoute>
-                </ProtectedRoute>
-              } />
-              
-              {/* Pages protégées - accessible à tous les utilisateurs authentifiés */}
-              <Route path="/nouveau-client" element={
-                <ProtectedRoute>
+              }
+            />
+            <Route
+              path="/nouveau-client"
+              element={
+                <RoleProtectedRoute allowedRoles={["agent"]}>
                   <NewClient />
-                </ProtectedRoute>
-              } />
-
-              <Route path="/scanner-cin" element={
-                <ProtectedRoute>
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/scanner-cin"
+              element={
+                <RoleProtectedRoute allowedRoles={["agent"]}>
                   <CINScanner />
-                </ProtectedRoute>
-              } />
-
-              <Route path="/scanner-passeport-marocain" element={
-                <ProtectedRoute>
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/scanner-passeport-marocain"
+              element={
+                <RoleProtectedRoute allowedRoles={["agent"]}>
                   <PassportMarocainScanner />
-                </ProtectedRoute>
-              } />
-
-              <Route path="/scanner-passeport-etranger" element={
-                <ProtectedRoute>
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/scanner-passeport-etranger"
+              element={
+                <RoleProtectedRoute allowedRoles={["agent"]}>
                   <PassportEtrangerScanner />
-                </ProtectedRoute>
-              } />
-
-              <Route path="/scanner-carte-sejour" element={
-                <ProtectedRoute>
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/scanner-carte-sejour"
+              element={
+                <RoleProtectedRoute allowedRoles={["agent"]}>
                   <CarteSejourScanner />
-                </ProtectedRoute>
-              } />
-              
-              {/* Pages admin uniquement */}
-              <Route path="/users" element={
-                <RoleProtectedRoute allowedRoles={['admin']}>
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/scanner-auto"
+              element={
+                <RoleProtectedRoute allowedRoles={["agent"]}>
+                  <AutoDocumentScanner />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/clients"
+              element={
+                <RoleProtectedRoute allowedRoles={["admin", "superviseur"]}>
+                  <BaseClients />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/contracts"
+              element={
+                <RoleProtectedRoute allowedRoles={["admin", "superviseur"]}>
+                  <Contracts />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                   <UserManagement />
                 </RoleProtectedRoute>
-              } />
-              
-              {/* Routes pour les contrats */}
-              <Route path="/contracts" element={
-                <ProtectedRoute>
-                  <Contracts />
-                </ProtectedRoute>
-              } />
-              <Route path="/contrat" element={<Navigate to="/contracts" replace />} />
-              <Route path="/contrats" element={<Navigate to="/contracts" replace />} />
-              
-              <Route path="/404" element={<NotFound />} />
-              <Route path="*" element={<Navigate to="/404" replace />} />
-            </Routes>
-          </AuthProvider>
+              }
+            />
+            <Route
+              path="/admin/recaptcha"
+              element={
+                <RoleProtectedRoute allowedRoles={["admin"]}>
+                  <AdminRecaptcha />
+                </RoleProtectedRoute>
+              }
+            />
+
+            {/* Route 404 */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
         </BrowserRouter>
-      </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;
