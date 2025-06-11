@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRecaptchaSettings } from './useRecaptchaSettings';
+import { useRecaptchaSettings, notifyRecaptchaSettingsUpdate } from './useRecaptchaSettings';
 
 interface RecaptchaFormData {
   siteKey: string;
@@ -29,6 +29,8 @@ export const useRecaptchaManagement = () => {
     setSaving(true);
     
     try {
+      console.log('💾 [SAVE] Début de la sauvegarde des clés reCAPTCHA');
+      
       // Supprimer les anciennes clés
       await supabase
         .from('security_settings')
@@ -57,11 +59,20 @@ export const useRecaptchaManagement = () => {
 
       if (secretKeyError) throw secretKeyError;
 
+      console.log('✅ [SAVE] Clés reCAPTCHA sauvegardées avec succès');
       toast.success('Clés reCAPTCHA sauvegardées avec succès');
+      
+      // Déclencher la mise à jour immédiate de tous les hooks
+      console.log('🔄 [SAVE] Déclenchement de la mise à jour globale');
       refreshSettings();
       
+      // Notifier toutes les autres instances dans l'application
+      setTimeout(() => {
+        notifyRecaptchaSettingsUpdate();
+      }, 100); // Petit délai pour s'assurer que la DB est mise à jour
+      
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error);
+      console.error('❌ [SAVE] Erreur lors de la sauvegarde:', error);
       toast.error('Erreur lors de la sauvegarde des clés');
     } finally {
       setSaving(false);
@@ -72,6 +83,8 @@ export const useRecaptchaManagement = () => {
     setSaving(true);
     
     try {
+      console.log('🗑️ [CLEAR] Début de la suppression des clés reCAPTCHA');
+      
       const { error } = await supabase
         .from('security_settings')
         .delete()
@@ -79,11 +92,19 @@ export const useRecaptchaManagement = () => {
 
       if (error) throw error;
 
+      console.log('✅ [CLEAR] Clés reCAPTCHA supprimées avec succès');
       toast.success('Clés reCAPTCHA supprimées');
+      
+      // Déclencher la mise à jour immédiate
       refreshSettings();
       
+      // Notifier toutes les autres instances
+      setTimeout(() => {
+        notifyRecaptchaSettingsUpdate();
+      }, 100);
+      
     } catch (error) {
-      console.error('Erreur lors de la suppression:', error);
+      console.error('❌ [CLEAR] Erreur lors de la suppression:', error);
       toast.error('Erreur lors de la suppression des clés');
     } finally {
       setSaving(false);

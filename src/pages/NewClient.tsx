@@ -29,7 +29,11 @@ const NewClient = () => {
               <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
                 Nouveau Client
               </h1>
-              <RecaptchaStatusIndicator context="document_selection" showDebug={false} />
+              <RecaptchaStatusIndicator 
+                context="document_selection" 
+                showDebug={false} 
+                showRefreshButton={true}
+              />
             </div>
             <p className="text-sm sm:text-base text-slate-600">
               Enregistrez un nouveau client dans le système Sud Megaphone

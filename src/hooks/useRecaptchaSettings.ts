@@ -10,10 +10,34 @@ interface RecaptchaSettings {
   isConfigured: boolean;
 }
 
+// Event system pour la synchronisation entre hooks
+class RecaptchaSettingsEventEmitter {
+  private listeners: (() => void)[] = [];
+
+  subscribe(callback: () => void) {
+    this.listeners.push(callback);
+    return () => {
+      this.listeners = this.listeners.filter(cb => cb !== callback);
+    };
+  }
+
+  emit() {
+    this.listeners.forEach(callback => {
+      try {
+        callback();
+      } catch (error) {
+        console.error('❌ [EVENT_EMITTER] Erreur lors de l\'appel du callback:', error);
+      }
+    });
+  }
+}
+
+const recaptchaEventEmitter = new RecaptchaSettingsEventEmitter();
+
 // Cache global pour éviter les requêtes répétées
 let globalCache: RecaptchaSettings | null = null;
 let lastCacheTime = 0;
-const CACHE_DURATION = 30000; // 30 secondes
+const CACHE_DURATION = 10000; // Réduit à 10 secondes pour une meilleure réactivité
 
 export const useRecaptchaSettings = () => {
   const [settings, setSettings] = useState<RecaptchaSettings>({
@@ -26,6 +50,7 @@ export const useRecaptchaSettings = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
+  const isMountedRef = useRef(true);
 
   const loadSettings = async (forceRefresh = false) => {
     try {
@@ -36,14 +61,17 @@ export const useRecaptchaSettings = () => {
         forceRefresh,
         hasCache: !!globalCache,
         cacheAge: Date.now() - lastCacheTime,
-        cacheDuration: CACHE_DURATION
+        cacheDuration: CACHE_DURATION,
+        isMounted: isMountedRef.current
       });
 
       // Utiliser le cache si disponible et récent (sauf si refresh forcé)
       if (!forceRefresh && globalCache && (Date.now() - lastCacheTime) < CACHE_DURATION) {
         console.log('✅ [DEBUG] Utilisation du cache reCAPTCHA:', globalCache);
-        setSettings(globalCache);
-        setIsLoading(false);
+        if (isMountedRef.current) {
+          setSettings(globalCache);
+          setIsLoading(false);
+        }
         return;
       }
 
@@ -56,7 +84,9 @@ export const useRecaptchaSettings = () => {
 
       if (error) {
         console.error('❌ [DEBUG] Erreur Supabase:', error);
-        setError('Erreur lors du chargement des paramètres reCAPTCHA');
+        if (isMountedRef.current) {
+          setError('Erreur lors du chargement des paramètres reCAPTCHA');
+        }
         return;
       }
 
@@ -88,22 +118,43 @@ export const useRecaptchaSettings = () => {
       globalCache = newSettings;
       lastCacheTime = Date.now();
 
-      setSettings(newSettings);
+      if (isMountedRef.current) {
+        setSettings(newSettings);
+      }
 
     } catch (error) {
       console.error('❌ [DEBUG] Erreur inattendue:', error);
-      setError('Erreur inattendue lors du chargement');
+      if (isMountedRef.current) {
+        setError('Erreur inattendue lors du chargement');
+      }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    // Éviter les chargements multiples
+    isMountedRef.current = true;
+    
+    // Chargement initial
     if (!hasLoadedRef.current) {
       hasLoadedRef.current = true;
       loadSettings();
     }
+
+    // S'abonner aux événements de mise à jour
+    const unsubscribe = recaptchaEventEmitter.subscribe(() => {
+      console.log('🔄 [EVENT] Réception d\'un événement de mise à jour reCAPTCHA');
+      hasLoadedRef.current = false;
+      loadSettings(true);
+    });
+
+    // Cleanup
+    return () => {
+      isMountedRef.current = false;
+      unsubscribe();
+    };
   }, []);
 
   const refreshSettings = () => {
@@ -113,6 +164,9 @@ export const useRecaptchaSettings = () => {
     lastCacheTime = 0;
     hasLoadedRef.current = false;
     loadSettings(true);
+    
+    // Notifier les autres instances
+    recaptchaEventEmitter.emit();
   };
 
   // Fonction utilitaire pour vider le cache (pour les tests)
@@ -129,4 +183,12 @@ export const useRecaptchaSettings = () => {
     refreshSettings,
     clearCache
   };
+};
+
+// Export de l'émetteur d'événements pour usage externe
+export const notifyRecaptchaSettingsUpdate = () => {
+  console.log('📢 [NOTIFY] Notification de mise à jour des paramètres reCAPTCHA');
+  globalCache = null;
+  lastCacheTime = 0;
+  recaptchaEventEmitter.emit();
 };

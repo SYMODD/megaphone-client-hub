@@ -56,7 +56,11 @@ const SuperviseurLogin = () => {
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Sud Megaphone</h1>
           <div className="flex items-center justify-center gap-2 mb-2">
             <p className="text-slate-600">Connexion Superviseur</p>
-            <RecaptchaStatusIndicator context="login" size="sm" />
+            <RecaptchaStatusIndicator 
+              context="login" 
+              size="sm" 
+              showRefreshButton={true}
+            />
           </div>
         </div>
 

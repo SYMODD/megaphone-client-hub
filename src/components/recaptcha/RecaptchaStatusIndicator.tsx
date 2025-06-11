@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Badge } from "@/components/ui/badge";
-import { Shield, ShieldCheck, ShieldX, Loader2, Info } from "lucide-react";
+import { Shield, ShieldCheck, ShieldX, Loader2, Info, RefreshCw } from "lucide-react";
 import { useRecaptchaSettings } from "@/hooks/useRecaptchaSettings";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -9,15 +9,18 @@ interface RecaptchaStatusIndicatorProps {
   context?: 'login' | 'document_selection' | 'general';
   size?: 'sm' | 'md' | 'lg';
   showDebug?: boolean;
+  showRefreshButton?: boolean;
 }
 
 export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> = ({ 
   context = 'general',
   size = 'md',
-  showDebug = false
+  showDebug = false,
+  showRefreshButton = false
 }) => {
-  const { isConfigured, isLoading, error, siteKey, secretKey } = useRecaptchaSettings();
+  const { isConfigured, isLoading, error, siteKey, secretKey, refreshSettings } = useRecaptchaSettings();
   const { profile } = useAuth();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Logs de debug détaillés
   console.log('🎯 [INDICATOR] Rendu RecaptchaStatusIndicator:', {
@@ -32,23 +35,59 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
     secretKeyPreview: secretKey ? secretKey.substring(0, 20) + '...' : 'null'
   });
 
-  if (isLoading) {
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    console.log('🔄 [INDICATOR] Refresh manuel déclenché');
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 300)); // Délai visuel
+      refreshSettings();
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
+
+  if (isLoading || isRefreshing) {
     console.log('⏳ [INDICATOR] État de chargement');
     return (
-      <Badge variant="outline" className="flex items-center gap-1">
-        <Loader2 className="w-3 h-3 animate-spin" />
-        <span className="text-xs">Vérification...</span>
-      </Badge>
+      <div className="flex items-center gap-2">
+        <Badge variant="outline" className="flex items-center gap-1">
+          <Loader2 className="w-3 h-3 animate-spin" />
+          <span className="text-xs">
+            {isRefreshing ? 'Actualisation...' : 'Vérification...'}
+          </span>
+        </Badge>
+        {showRefreshButton && !isRefreshing && (
+          <button
+            onClick={handleRefresh}
+            className="p-1 hover:bg-gray-100 rounded"
+            title="Actualiser le statut"
+          >
+            <RefreshCw className="w-3 h-3 text-gray-500" />
+          </button>
+        )}
+      </div>
     );
   }
 
   if (error) {
     console.log('❌ [INDICATOR] État d\'erreur:', error);
     return (
-      <Badge variant="destructive" className="flex items-center gap-1">
-        <ShieldX className="w-3 h-3" />
-        <span className="text-xs">Erreur reCAPTCHA</span>
-      </Badge>
+      <div className="flex items-center gap-2">
+        <Badge variant="destructive" className="flex items-center gap-1">
+          <ShieldX className="w-3 h-3" />
+          <span className="text-xs">Erreur reCAPTCHA</span>
+        </Badge>
+        {showRefreshButton && (
+          <button
+            onClick={handleRefresh}
+            className="p-1 hover:bg-gray-100 rounded"
+            title="Réessayer"
+          >
+            <RefreshCw className="w-3 h-3 text-gray-500" />
+          </button>
+        )}
+      </div>
     );
   }
 
@@ -95,6 +134,15 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
             (Contexte: {context}, Rôle: {profile?.role || 'non défini'})
           </span>
         )}
+        {showRefreshButton && (
+          <button
+            onClick={handleRefresh}
+            className="p-1 hover:bg-gray-100 rounded"
+            title="Actualiser le statut"
+          >
+            <RefreshCw className="w-3 h-3 text-gray-500" />
+          </button>
+        )}
       </div>
     );
   }
@@ -113,6 +161,15 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
             (Clés manquantes: Site={!siteKey ? '❌' : '✅'}, Secret={!secretKey ? '❌' : '✅'})
           </span>
         )}
+        {showRefreshButton && (
+          <button
+            onClick={handleRefresh}
+            className="p-1 hover:bg-gray-100 rounded"
+            title="Actualiser le statut"
+          >
+            <RefreshCw className="w-3 h-3 text-gray-500" />
+          </button>
+        )}
       </div>
     );
   }
@@ -129,6 +186,15 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
         <span className="text-xs text-green-600">
           (Contexte: {context}, Configuré: ✅)
         </span>
+      )}
+      {showRefreshButton && (
+        <button
+          onClick={handleRefresh}
+          className="p-1 hover:bg-gray-100 rounded"
+          title="Actualiser le statut"
+        >
+          <RefreshCw className="w-3 h-3 text-gray-500" />
+        </button>
       )}
     </div>
   );
