@@ -92,9 +92,11 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
     return <>{children}</>;
   }
 
-  // Cloner l'élément enfant et ajouter le gestionnaire de clic avec indication visuelle
+  // CORRECTION MAJEURE : Cloner l'élément enfant et REMPLACER complètement son onClick
+  console.log('🔒 [RECAPTCHA_VERIFICATION] Enveloppement actif avec reCAPTCHA pour:', action);
+  
   return React.cloneElement(children as React.ReactElement, {
-    onClick: handleVerification,
+    onClick: handleVerification, // REMPLACE complètement l'onClick original
     disabled: disabled || isVerifying,
     className: `${(children as React.ReactElement).props.className || ''} ${
       isVerifying ? 'opacity-75 cursor-wait' : ''

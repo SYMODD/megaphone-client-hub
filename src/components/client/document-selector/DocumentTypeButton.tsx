@@ -28,11 +28,19 @@ export const DocumentTypeButton = ({
 }: DocumentTypeButtonProps) => {
   const IconComponent = iconMap[docType.icon as keyof typeof iconMap];
 
+  console.log('🔘 [BUTTON] Rendu DocumentTypeButton:', {
+    docType: docType.id,
+    shouldUseRecaptcha,
+    wrapper: shouldUseRecaptcha ? 'AVEC RecaptchaVerification' : 'SANS RecaptchaVerification'
+  });
+
   const buttonElement = (
     <Button
       variant="outline"
       className="w-full justify-start h-auto p-4 hover:bg-blue-50 hover:border-blue-300"
-      onClick={onTypeClick}
+      // CORRECTION MAJEURE : Pas d'onClick ici si reCAPTCHA est utilisé
+      // RecaptchaVerification gère entièrement le clic dans ce cas
+      {...(!shouldUseRecaptcha && { onClick: onTypeClick })}
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -46,8 +54,9 @@ export const DocumentTypeButton = ({
     </Button>
   );
 
-  // Seulement envelopper avec RecaptchaVerification si nécessaire
+  // Si reCAPTCHA est requis, envelopper avec RecaptchaVerification
   if (shouldUseRecaptcha) {
+    console.log('🔒 [BUTTON] Enveloppement avec RecaptchaVerification pour:', docType.id);
     return (
       <RecaptchaVerification
         action="agent_document_selection"
@@ -59,6 +68,7 @@ export const DocumentTypeButton = ({
     );
   }
 
-  // Sinon, retourner le bouton directement
+  // Sinon, retourner le bouton directement avec son gestionnaire onClick
+  console.log('⚡ [BUTTON] Bouton direct (sans reCAPTCHA) pour:', docType.id);
   return buttonElement;
 };
