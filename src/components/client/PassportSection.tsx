@@ -1,6 +1,5 @@
 
 import { DocumentScanner } from "./DocumentScanner";
-import { DocumentTypeSelector } from "./DocumentTypeSelector";
 import { MRZData } from "@/services/ocr";
 import { DocumentType } from "@/types/documentTypes";
 
@@ -16,29 +15,27 @@ export const PassportSection = ({
   scannedImage, 
   onImageScanned, 
   onMRZDataExtracted,
-  selectedDocumentType,
-  onDocumentTypeSelect 
+  selectedDocumentType
 }: PassportSectionProps) => {
   
-  const handleBackToSelection = () => {
-    onDocumentTypeSelect(null);
-  };
+  console.log('📄 [PASSPORT_SECTION] Rendu avec type:', selectedDocumentType);
+
+  // Afficher directement le scanner puisque le type est déjà sélectionné
+  if (!selectedDocumentType) {
+    return (
+      <div className="text-center p-4">
+        <p className="text-gray-500">Aucun type de document sélectionné</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      <DocumentTypeSelector
-        selectedType={selectedDocumentType}
-        onTypeSelect={onDocumentTypeSelect}
-        onBack={selectedDocumentType ? handleBackToSelection : undefined}
+      <DocumentScanner 
+        scannedImage={scannedImage}
+        onImageScanned={onImageScanned}
+        onDataExtracted={onMRZDataExtracted}
       />
-      
-      {selectedDocumentType && (
-        <DocumentScanner 
-          scannedImage={scannedImage}
-          onImageScanned={onImageScanned}
-          onDataExtracted={onMRZDataExtracted}
-        />
-      )}
     </div>
   );
 };
