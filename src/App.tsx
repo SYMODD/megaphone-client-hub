@@ -21,6 +21,7 @@ import PassportMarocainScanner from "./pages/PassportMarocainScanner";
 import PassportEtrangerScanner from "./pages/PassportEtrangerScanner";
 import CarteSejourScanner from "./pages/CarteSejourScanner";
 import UserManagement from "./pages/UserManagement";
+import AdminRecaptcha from "./pages/AdminRecaptcha";
 import Contracts from "./pages/Contracts";
 import NotFound from "./pages/NotFound";
 
@@ -98,6 +99,12 @@ const App = () => {
               <Route path="/users" element={
                 <RoleProtectedRoute allowedRoles={['admin']}>
                   <UserManagement />
+                </RoleProtectedRoute>
+              } />
+
+              <Route path="/admin/recaptcha" element={
+                <RoleProtectedRoute allowedRoles={['admin']}>
+                  <AdminRecaptcha />
                 </RoleProtectedRoute>
               } />
               

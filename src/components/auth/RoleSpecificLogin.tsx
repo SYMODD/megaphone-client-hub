@@ -3,6 +3,8 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, Eye, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { RecaptchaVerification } from "@/components/recaptcha/RecaptchaVerification";
+import { toast } from "sonner";
 
 interface RoleSpecificLoginProps {
   role: string;
@@ -67,6 +69,39 @@ export const RoleSpecificLogin = ({
 
   const roleInfo = getRoleInfo(role);
 
+  // Gestionnaire avec reCAPTCHA pour Admin et Superviseur
+  const handleLoginWithRecaptcha = async (recaptchaToken: string) => {
+    console.log('🔒 reCAPTCHA token reçu pour connexion:', role, recaptchaToken.substring(0, 20) + '...');
+    
+    // Récupérer les données de connexion depuis le localStorage temporaire
+    const tempData = localStorage.getItem('temp_login_data');
+    if (!tempData) {
+      toast.error('Données de connexion manquantes');
+      return;
+    }
+
+    try {
+      const { email, password } = JSON.parse(tempData);
+      console.log(`📝 Connexion ${role} validée par reCAPTCHA:`, email);
+      
+      // Effectuer la connexion après validation reCAPTCHA
+      await onLogin(email, password);
+      
+      // Nettoyer les données temporaires
+      localStorage.removeItem('temp_login_data');
+    } catch (error) {
+      console.error('❌ Erreur lors de la connexion:', error);
+      toast.error('Erreur lors de la connexion');
+      localStorage.removeItem('temp_login_data');
+    }
+  };
+
+  const handleRecaptchaError = (error: string) => {
+    console.error('❌ Erreur reCAPTCHA connexion:', error);
+    toast.error('Vérification de sécurité échouée');
+    localStorage.removeItem('temp_login_data');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -83,6 +118,34 @@ export const RoleSpecificLogin = ({
       console.log('📝 Connexion Agent directe (sans reCAPTCHA)');
       await onLogin(loginForm.email, loginForm.password);
     }
+  };
+
+  const LoginButton = () => {
+    const buttonElement = (
+      <Button 
+        type="submit" 
+        className={`w-full bg-gradient-to-r ${roleInfo.bgGradient} hover:opacity-90 transition-opacity`}
+        disabled={isLoading}
+      >
+        {isLoading ? "Connexion..." : `Se connecter comme ${role}`}
+      </Button>
+    );
+
+    // Pour Admin et Superviseur, envelopper le bouton avec reCAPTCHA
+    if (role === 'admin' || role === 'superviseur') {
+      return (
+        <RecaptchaVerification
+          action={`${role}_login`}
+          onSuccess={handleLoginWithRecaptcha}
+          onError={handleRecaptchaError}
+        >
+          {buttonElement}
+        </RecaptchaVerification>
+      );
+    }
+
+    // Pour les agents, bouton normal
+    return buttonElement;
   };
 
   return (
@@ -133,13 +196,7 @@ export const RoleSpecificLogin = ({
               />
             </div>
 
-            <Button 
-              type="submit" 
-              className={`w-full bg-gradient-to-r ${roleInfo.bgGradient} hover:opacity-90 transition-opacity`}
-              disabled={isLoading}
-            >
-              {isLoading ? "Connexion..." : `Se connecter comme ${role}`}
-            </Button>
+            <LoginButton />
           </form>
 
           {!hidePasswordReset && (
