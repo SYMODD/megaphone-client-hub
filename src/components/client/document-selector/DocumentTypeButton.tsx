@@ -31,16 +31,15 @@ export const DocumentTypeButton = ({
   console.log('🔘 [BUTTON] Rendu DocumentTypeButton:', {
     docType: docType.id,
     shouldUseRecaptcha,
-    wrapper: shouldUseRecaptcha ? 'AVEC RecaptchaVerification' : 'SANS RecaptchaVerification'
+    wrapper: shouldUseRecaptcha ? 'AVEC RecaptchaVerification' : 'DIRECT avec onClick'
   });
 
   const buttonElement = (
     <Button
       variant="outline"
       className="w-full justify-start h-auto p-4 hover:bg-blue-50 hover:border-blue-300"
-      // CORRECTION MAJEURE : Pas d'onClick ici si reCAPTCHA est utilisé
-      // RecaptchaVerification gère entièrement le clic dans ce cas
-      {...(!shouldUseRecaptcha && { onClick: onTypeClick })}
+      // CORRECTION MAJEURE : TOUJOURS avoir un onClick pour l'accessibilité
+      onClick={onTypeClick}
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -54,7 +53,8 @@ export const DocumentTypeButton = ({
     </Button>
   );
 
-  // Si reCAPTCHA est requis, envelopper avec RecaptchaVerification
+  // CORRECTION MAJEURE : Si reCAPTCHA est requis, envelopper avec RecaptchaVerification
+  // Sinon, retourner directement le bouton avec son onClick
   if (shouldUseRecaptcha) {
     console.log('🔒 [BUTTON] Enveloppement avec RecaptchaVerification pour:', docType.id);
     return (
@@ -68,7 +68,7 @@ export const DocumentTypeButton = ({
     );
   }
 
-  // Sinon, retourner le bouton directement avec son gestionnaire onClick
+  // Retour direct du bouton avec son onClick natif
   console.log('⚡ [BUTTON] Bouton direct (sans reCAPTCHA) pour:', docType.id);
   return buttonElement;
 };

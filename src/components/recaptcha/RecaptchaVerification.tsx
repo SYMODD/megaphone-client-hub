@@ -86,9 +86,9 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
     return <>{children}</>;
   }
 
-  // CORRECTION : Si reCAPTCHA n'est pas configuré, on rend les enfants directement SANS wrapper
+  // CORRECTION MAJEURE : Si reCAPTCHA n'est pas configuré, on rend les enfants directement SANS wrapper
   if (!isConfigured) {
-    console.log('⚡ [RECAPTCHA_VERIFICATION] reCAPTCHA non configuré - Rendu direct des enfants (BYPASS)');
+    console.log('⚡ [RECAPTCHA_VERIFICATION] reCAPTCHA non configuré - Rendu direct des enfants (BYPASS TOTAL)');
     return <>{children}</>;
   }
 
