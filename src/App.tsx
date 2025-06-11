@@ -1,6 +1,6 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -41,13 +41,23 @@ function App() {
             <Route path="/login/agent" element={<AgentLogin />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
+            {/* Redirection /admin vers /admin/recaptcha pour les admins */}
+            <Route 
+              path="/admin" 
+              element={
+                <RoleProtectedRoute allowedRoles={["admin"]}>
+                  <Navigate to="/admin/recaptcha" replace />
+                </RoleProtectedRoute>
+              } 
+            />
+
             {/* Routes protégées par authentification */}
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin", "superviseur"]}>
                   <BaseClients />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
               }
             />
             <Route

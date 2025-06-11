@@ -24,8 +24,18 @@ export const RoleProtectedRoute = ({
     );
   }
 
+  // SÉCURITÉ RENFORCÉE : Vérification stricte des rôles
   if (!profile || !allowedRoles.includes(profile.role)) {
-    return <Navigate to={redirectTo} replace />;
+    console.warn(`🚨 [SECURITY] Accès refusé - Rôle ${profile?.role || 'undefined'} non autorisé pour ${allowedRoles.join(', ')}`);
+    
+    // Redirection intelligente selon le rôle
+    if (profile?.role === "agent") {
+      return <Navigate to="/nouveau-client" replace />;
+    } else if (profile?.role === "admin" || profile?.role === "superviseur") {
+      return <Navigate to="/dashboard" replace />;
+    } else {
+      return <Navigate to="/login/agent" replace />;
+    }
   }
 
   return <>{children}</>;

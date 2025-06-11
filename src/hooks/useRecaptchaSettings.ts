@@ -26,7 +26,7 @@ export const useRecaptchaSettings = () => {
       setIsLoading(true);
       setError(null);
 
-      console.log('🔑 [PRODUCTION] Loading reCAPTCHA settings from database...');
+      console.log('🔑 [PRODUCTION] Chargement OBLIGATOIRE des clés reCAPTCHA...');
       
       const { data, error } = await supabase
         .from('security_settings')
@@ -34,10 +34,10 @@ export const useRecaptchaSettings = () => {
         .in('setting_key', ['recaptcha_site_key', 'recaptcha_secret_key']);
 
       if (error) {
-        console.error('❌ [PRODUCTION] Error loading reCAPTCHA settings:', error);
-        setError('Erreur lors du chargement des paramètres reCAPTCHA');
+        console.error('❌ [PRODUCTION CRITICAL] Erreur chargement reCAPTCHA:', error);
+        setError('Erreur critique lors du chargement des paramètres reCAPTCHA');
         
-        // En cas d'erreur, on bloque l'application
+        // SÉCURITÉ : En cas d'erreur, BLOQUER l'application
         setSettings({
           siteKey: null,
           secretKey: null,
@@ -50,8 +50,14 @@ export const useRecaptchaSettings = () => {
       const siteKey = data?.find(item => item.setting_key === 'recaptcha_site_key')?.setting_value || null;
       const secretKey = data?.find(item => item.setting_key === 'recaptcha_secret_key')?.setting_value || null;
 
-      // Validation stricte : les deux clés doivent être présentes ET non vides
-      const isConfigured = !!(siteKey && secretKey && siteKey.trim().length > 0 && secretKey.trim().length > 0);
+      // VALIDATION STRICTE RENFORCÉE : les deux clés doivent être présentes ET valides
+      const isConfigured = !!(
+        siteKey && 
+        secretKey && 
+        siteKey.trim().length > 30 && 
+        secretKey.trim().length > 30 &&
+        siteKey.startsWith('6L') // Format Google reCAPTCHA
+      );
 
       setSettings({
         siteKey: siteKey?.trim() || null,
@@ -60,24 +66,27 @@ export const useRecaptchaSettings = () => {
         isConfigured
       });
 
-      console.log('✅ [PRODUCTION] reCAPTCHA settings loaded:', {
+      console.log('🔒 [PRODUCTION] État reCAPTCHA:', {
         hasSiteKey: !!siteKey,
         hasSecretKey: !!secretKey,
-        siteKeyLength: siteKey?.length || 0,
-        secretKeyLength: secretKey?.length || 0,
+        siteKeyValid: siteKey?.startsWith('6L') && siteKey.length > 30,
+        secretKeyValid: secretKey && secretKey.length > 30,
         isConfigured,
         environment: 'PRODUCTION'
       });
 
       if (!isConfigured) {
-        console.warn('⚠️ [PRODUCTION] reCAPTCHA is NOT properly configured - missing or empty keys');
+        console.error('🚨 [PRODUCTION SECURITY] reCAPTCHA MAL CONFIGURÉ - APPLICATION BLOQUÉE');
+        toast.error('Configuration de sécurité incomplète. Contactez l\'administrateur.');
+      } else {
+        console.log('✅ [PRODUCTION] reCAPTCHA correctement configuré et opérationnel');
       }
 
     } catch (error) {
-      console.error('❌ [PRODUCTION] Unexpected error loading reCAPTCHA settings:', error);
-      setError('Erreur inattendue lors du chargement');
+      console.error('❌ [PRODUCTION CRITICAL] Erreur inattendue reCAPTCHA:', error);
+      setError('Erreur critique du système de sécurité');
       
-      // En cas d'erreur, on bloque l'application
+      // SÉCURITÉ : Bloquer l'application en cas d'erreur critique
       setSettings({
         siteKey: null,
         secretKey: null,
@@ -94,7 +103,7 @@ export const useRecaptchaSettings = () => {
   }, []);
 
   const refreshSettings = () => {
-    console.log('🔄 [PRODUCTION] Manual refresh of reCAPTCHA settings...');
+    console.log('🔄 [PRODUCTION] Actualisation manuelle des paramètres reCAPTCHA...');
     loadSettings();
   };
 
