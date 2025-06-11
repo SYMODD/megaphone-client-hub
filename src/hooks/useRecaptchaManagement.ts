@@ -60,16 +60,23 @@ export const useRecaptchaManagement = () => {
       if (secretKeyError) throw secretKeyError;
 
       console.log('✅ [SAVE] Clés reCAPTCHA sauvegardées avec succès');
-      toast.success('Clés reCAPTCHA sauvegardées avec succès');
       
-      // Déclencher la mise à jour immédiate de tous les hooks
-      console.log('🔄 [SAVE] Déclenchement de la mise à jour globale');
+      // CORRECTION : Synchronisation améliorée en plusieurs étapes
+      console.log('🔄 [SAVE] Déclenchement de la mise à jour globale...');
+      
+      // 1. Refresh local immédiat
       refreshSettings();
       
-      // Notifier toutes les autres instances dans l'application
+      // 2. Notification globale avec délai pour s'assurer que la DB est mise à jour
       setTimeout(() => {
+        console.log('📢 [SAVE] Notification globale des autres composants');
         notifyRecaptchaSettingsUpdate();
-      }, 100); // Petit délai pour s'assurer que la DB est mise à jour
+      }, 200);
+      
+      // 3. Toast de succès après la synchronisation
+      setTimeout(() => {
+        toast.success('✅ Clés reCAPTCHA sauvegardées et synchronisées');
+      }, 300);
       
     } catch (error) {
       console.error('❌ [SAVE] Erreur lors de la sauvegarde:', error);
@@ -93,15 +100,17 @@ export const useRecaptchaManagement = () => {
       if (error) throw error;
 
       console.log('✅ [CLEAR] Clés reCAPTCHA supprimées avec succès');
-      toast.success('Clés reCAPTCHA supprimées');
       
-      // Déclencher la mise à jour immédiate
+      // Synchronisation similaire à la sauvegarde
       refreshSettings();
       
-      // Notifier toutes les autres instances
       setTimeout(() => {
         notifyRecaptchaSettingsUpdate();
-      }, 100);
+      }, 200);
+      
+      setTimeout(() => {
+        toast.success('🗑️ Clés reCAPTCHA supprimées et synchronisées');
+      }, 300);
       
     } catch (error) {
       console.error('❌ [CLEAR] Erreur lors de la suppression:', error);

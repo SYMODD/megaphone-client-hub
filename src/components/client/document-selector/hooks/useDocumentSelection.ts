@@ -9,7 +9,7 @@ import { navigateToScanner, cleanupTempData, storeTempDocumentSelection } from "
 
 export const useDocumentSelection = () => {
   const navigate = useNavigate();
-  const { isConfigured } = useRecaptchaSettings();
+  const { isConfigured, isLoading } = useRecaptchaSettings();
   const { profile } = useAuth();
 
   // 🧹 Nettoyer les données temporaires au montage du composant
@@ -17,15 +17,16 @@ export const useDocumentSelection = () => {
     cleanupTempData();
   }, []);
 
-  // Vérifier si on doit utiliser reCAPTCHA pour cette action
-  // Seulement pour les agents ET seulement si reCAPTCHA est configuré
-  const shouldUseRecaptcha = profile?.role === "agent" && isConfigured;
+  // CORRECTION MAJEURE : Logique de bypass simplifiée
+  // reCAPTCHA est requis SEULEMENT si l'agent ET si reCAPTCHA est configuré
+  const shouldUseRecaptcha = profile?.role === "agent" && isConfigured && !isLoading;
 
-  console.log('📋 [DOCUMENT_SELECTOR] État actuel:', {
-    shouldUseRecaptcha,
+  console.log('📋 [DOCUMENT_SELECTOR] État actuel (CORRIGÉ):', {
     userRole: profile?.role,
     isConfigured,
-    hasStoredData: !!localStorage.getItem('temp_document_selection')
+    isLoading,
+    shouldUseRecaptcha,
+    logique: shouldUseRecaptcha ? 'AVEC reCAPTCHA' : 'SANS reCAPTCHA (bypass)'
   });
 
   // Gestionnaire avec reCAPTCHA pour la sélection de document (seulement si nécessaire)
@@ -70,15 +71,18 @@ export const useDocumentSelection = () => {
     console.log('🖱️ [CLICK] Clic sur type de document:', docType, {
       shouldUseRecaptcha,
       userRole: profile?.role,
-      isConfigured
+      isConfigured,
+      bypass: !shouldUseRecaptcha ? 'OUI - Navigation directe' : 'NON - reCAPTCHA requis'
     });
 
     if (shouldUseRecaptcha) {
+      // Stocker temporairement pour reCAPTCHA
       storeTempDocumentSelection(docType);
+      console.log('🔒 [CLICK] Stockage temporaire pour reCAPTCHA:', docType);
       // Le clic sur le bouton déclenchera automatiquement reCAPTCHA via RecaptchaVerification
     } else {
-      // Navigation directe sans reCAPTCHA
-      console.log('📝 [CLICK] Sélection de document directe (sans reCAPTCHA):', docType);
+      // BYPASS : Navigation directe sans reCAPTCHA
+      console.log('⚡ [CLICK] BYPASS reCAPTCHA - Navigation directe:', docType);
       if (onTypeSelect) {
         onTypeSelect(docType);
       } else {

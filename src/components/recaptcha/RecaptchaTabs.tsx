@@ -1,30 +1,28 @@
 
-import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, TestTube } from "lucide-react";
 import { RecaptchaConfigForm } from "./RecaptchaConfigForm";
 import { RecaptchaStatusTester } from "./RecaptchaStatusTester";
+import { RecaptchaValidationTester } from "./RecaptchaValidationTester";
 
-export const RecaptchaTabs: React.FC = () => {
+export const RecaptchaTabs = () => {
   return (
-    <Tabs defaultValue="config" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="config" className="flex items-center gap-2">
-          <Settings className="w-4 h-4" />
-          Configuration
-        </TabsTrigger>
-        <TabsTrigger value="testing" className="flex items-center gap-2">
-          <TestTube className="w-4 h-4" />
-          Tests & Statut
-        </TabsTrigger>
+    <Tabs defaultValue="config" className="w-full">
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="config">Configuration</TabsTrigger>
+        <TabsTrigger value="testing">Tests de Statut</TabsTrigger>
+        <TabsTrigger value="validation">Validation</TabsTrigger>
       </TabsList>
-
-      <TabsContent value="config">
+      
+      <TabsContent value="config" className="space-y-4">
         <RecaptchaConfigForm />
       </TabsContent>
-
-      <TabsContent value="testing">
+      
+      <TabsContent value="testing" className="space-y-4">
         <RecaptchaStatusTester />
+      </TabsContent>
+      
+      <TabsContent value="validation" className="space-y-4">
+        <RecaptchaValidationTester />
       </TabsContent>
     </Tabs>
   );

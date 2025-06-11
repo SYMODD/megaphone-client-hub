@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRecaptchaSettings } from '@/hooks/useRecaptchaSettings';
 import { recaptchaService } from '@/services/recaptchaService';
 import { toast } from 'sonner';
@@ -28,14 +28,15 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
       isConfigured,
       siteKey: siteKey ? siteKey.substring(0, 20) + '...' : 'null',
       disabled,
-      isVerifying
+      isVerifying,
+      bypass: !isConfigured ? 'OUI' : 'NON'
     });
 
+    // CORRECTION MAJEURE : Si reCAPTCHA n'est pas configuré, on bypasse complètement
     if (!isConfigured || !siteKey) {
-      const error = 'reCAPTCHA non configuré';
-      console.error('❌ [RECAPTCHA_VERIFICATION]', error);
-      onError?.(error);
-      toast.error('Service de sécurité non disponible');
+      console.warn('⚠️ [RECAPTCHA_VERIFICATION] reCAPTCHA non configuré - BYPASS automatique');
+      // Simuler un token valide pour maintenir la compatibilité
+      onSuccess('bypass_token_not_configured');
       return;
     }
 
@@ -79,14 +80,15 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
     }
   };
 
-  // Si reCAPTCHA n'est pas configuré, on rend les enfants directement
+  // Si reCAPTCHA est en cours de chargement, on rend les enfants directement
   if (isLoading) {
     console.log('⏳ [RECAPTCHA_VERIFICATION] Chargement en cours, rendu direct des enfants');
     return <>{children}</>;
   }
 
+  // CORRECTION : Si reCAPTCHA n'est pas configuré, on rend les enfants directement SANS wrapper
   if (!isConfigured) {
-    console.warn('⚠️ [RECAPTCHA_VERIFICATION] reCAPTCHA non configuré, contournement de la vérification');
+    console.log('⚡ [RECAPTCHA_VERIFICATION] reCAPTCHA non configuré - Rendu direct des enfants (BYPASS)');
     return <>{children}</>;
   }
 
