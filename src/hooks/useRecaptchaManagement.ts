@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRecaptchaSettings, notifyRecaptchaSettingsUpdate } from './useRecaptchaSettings';
+import { useRecaptchaSettings } from './useRecaptchaSettings';
+import { notifyRecaptchaSettingsUpdate } from './recaptcha/RecaptchaNotifications';
 
 interface RecaptchaFormData {
   siteKey: string;
