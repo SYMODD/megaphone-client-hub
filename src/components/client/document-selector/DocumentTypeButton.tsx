@@ -38,8 +38,8 @@ export const DocumentTypeButton = ({
     <Button
       variant="outline"
       className="w-full justify-start h-auto p-4 hover:bg-blue-50 hover:border-blue-300"
-      // CORRECTION MAJEURE : TOUJOURS avoir un onClick pour l'accessibilité
-      onClick={onTypeClick}
+      // CORRECTION MAJEURE : onClick conditionnel selon shouldUseRecaptcha
+      onClick={shouldUseRecaptcha ? undefined : onTypeClick}
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -54,7 +54,6 @@ export const DocumentTypeButton = ({
   );
 
   // CORRECTION MAJEURE : Si reCAPTCHA est requis, envelopper avec RecaptchaVerification
-  // Sinon, retourner directement le bouton avec son onClick
   if (shouldUseRecaptcha) {
     console.log('🔒 [BUTTON] Enveloppement avec RecaptchaVerification pour:', docType.id);
     return (

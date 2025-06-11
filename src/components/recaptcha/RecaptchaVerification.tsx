@@ -22,23 +22,29 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
   const { siteKey, isConfigured, isLoading } = useRecaptchaSettings();
   const [isVerifying, setIsVerifying] = useState(false);
 
-  const handleVerification = async () => {
-    console.log('🔍 [RECAPTCHA_VERIFICATION] Début de la vérification:', {
-      action,
-      isConfigured,
-      siteKey: siteKey ? siteKey.substring(0, 20) + '...' : 'null',
-      disabled,
-      isVerifying,
-      bypass: !isConfigured ? 'OUI' : 'NON'
-    });
+  console.log('🔍 [RECAPTCHA_VERIFICATION] État actuel:', {
+    action,
+    isConfigured,
+    siteKey: siteKey ? siteKey.substring(0, 20) + '...' : 'null',
+    disabled,
+    isVerifying,
+    shouldBypass: !isConfigured
+  });
 
-    // CORRECTION MAJEURE : Si reCAPTCHA n'est pas configuré, on bypasse complètement
-    if (!isConfigured || !siteKey) {
-      console.warn('⚠️ [RECAPTCHA_VERIFICATION] reCAPTCHA non configuré - BYPASS automatique');
-      // Simuler un token valide pour maintenir la compatibilité
-      onSuccess('bypass_token_not_configured');
-      return;
-    }
+  // Si reCAPTCHA est en cours de chargement, on rend les enfants directement
+  if (isLoading) {
+    console.log('⏳ [RECAPTCHA_VERIFICATION] Chargement en cours, rendu direct des enfants');
+    return <>{children}</>;
+  }
+
+  // CORRECTION MAJEURE : Si reCAPTCHA n'est pas configuré, on rend les enfants directement SANS modification
+  if (!isConfigured || !siteKey) {
+    console.log('⚡ [RECAPTCHA_VERIFICATION] reCAPTCHA non configuré - Rendu direct des enfants (BYPASS TOTAL)');
+    return <>{children}</>;
+  }
+
+  const handleVerification = async () => {
+    console.log('🔍 [RECAPTCHA_VERIFICATION] Début de la vérification pour:', action);
 
     if (disabled || isVerifying) {
       console.warn('⚠️ [RECAPTCHA_VERIFICATION] Vérification bloquée:', { disabled, isVerifying });
@@ -49,7 +55,6 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
       setIsVerifying(true);
       console.log(`🔍 [RECAPTCHA_VERIFICATION] Démarrage de la vérification pour l'action: ${action}`);
       
-      // Afficher un toast de début de vérification
       toast.info('🔒 Vérification de sécurité en cours...', {
         duration: 2000,
       });
@@ -58,7 +63,6 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
       
       console.log(`✅ [RECAPTCHA_VERIFICATION] Vérification réussie pour l'action: ${action}`);
       
-      // Afficher un toast de succès
       toast.success('✅ Vérification de sécurité réussie', {
         duration: 1500,
       });
@@ -68,7 +72,6 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
       const errorMessage = error instanceof Error ? error.message : 'Erreur de vérification';
       console.error(`❌ [RECAPTCHA_VERIFICATION] Échec de la vérification pour l'action ${action}:`, error);
       
-      // Afficher un toast d'erreur détaillé
       toast.error(`❌ Échec de la vérification: ${errorMessage}`, {
         duration: 4000,
       });
@@ -79,18 +82,6 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
       console.log(`🏁 [RECAPTCHA_VERIFICATION] Fin de la vérification pour l'action: ${action}`);
     }
   };
-
-  // Si reCAPTCHA est en cours de chargement, on rend les enfants directement
-  if (isLoading) {
-    console.log('⏳ [RECAPTCHA_VERIFICATION] Chargement en cours, rendu direct des enfants');
-    return <>{children}</>;
-  }
-
-  // CORRECTION MAJEURE : Si reCAPTCHA n'est pas configuré, on rend les enfants directement SANS wrapper
-  if (!isConfigured) {
-    console.log('⚡ [RECAPTCHA_VERIFICATION] reCAPTCHA non configuré - Rendu direct des enfants (BYPASS TOTAL)');
-    return <>{children}</>;
-  }
 
   // CORRECTION MAJEURE : Cloner l'élément enfant et REMPLACER complètement son onClick
   console.log('🔒 [RECAPTCHA_VERIFICATION] Enveloppement actif avec reCAPTCHA pour:', action);

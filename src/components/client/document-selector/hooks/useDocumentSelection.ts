@@ -17,23 +17,22 @@ export const useDocumentSelection = () => {
     cleanupTempData();
   }, []);
 
-  // CORRECTION MAJEURE : Aligner la logique sur useRecaptchaStatusLogic
-  // reCAPTCHA est requis si l'agent ET si reCAPTCHA est configuré
+  // CORRECTION : Logique simplifiée
   const isRequired = profile?.role === "agent";
   const shouldUseRecaptcha = isRequired && isConfigured && !isLoading;
 
-  console.log('📋 [DOCUMENT_SELECTOR] État actuel (CORRIGÉ v2):', {
+  console.log('📋 [DOCUMENT_SELECTOR] État actuel:', {
     userRole: profile?.role,
     isRequired,
     isConfigured,
     isLoading,
-    shouldUseRecaptcha,
-    logique: shouldUseRecaptcha ? 'AVEC reCAPTCHA' : isRequired && !isConfigured ? 'REQUIS MAIS NON CONFIGURÉ (bypass)' : 'SANS reCAPTCHA (bypass)'
+    shouldUseRecaptcha: shouldUseRecaptcha ? 'OUI' : 'NON',
+    logique: shouldUseRecaptcha ? 'AVEC reCAPTCHA' : 'SANS reCAPTCHA (bypass ou non requis)'
   });
 
-  // CORRECTION : Gestionnaire reCAPTCHA amélioré
+  // CORRECTION : Gestionnaire reCAPTCHA simplifié
   const handleDocumentSelectionWithRecaptcha = (recaptchaToken: string) => {
-    console.log('🔒 [RECAPTCHA_SUCCESS] Token reçu pour sélection document Agent:', recaptchaToken.substring(0, 20) + '...');
+    console.log('🔒 [RECAPTCHA_SUCCESS] Token reçu:', recaptchaToken.substring(0, 20) + '...');
     
     // Récupérer le type de document depuis le localStorage temporaire
     const tempData = localStorage.getItem('temp_document_selection');
@@ -45,48 +44,42 @@ export const useDocumentSelection = () => {
 
     try {
       const { docType } = JSON.parse(tempData);
-      console.log('📝 [RECAPTCHA_SUCCESS] Sélection de document validée par reCAPTCHA:', docType);
+      console.log('📝 [RECAPTCHA_SUCCESS] Navigation après validation reCAPTCHA:', docType);
       
-      // Nettoyer les données temporaires AVANT la navigation
+      // Nettoyer les données temporaires
       localStorage.removeItem('temp_document_selection');
-      console.log('🧹 [RECAPTCHA_SUCCESS] Données temporaires nettoyées');
       
-      // Effectuer la navigation après validation reCAPTCHA
+      // Navigation après validation reCAPTCHA
       navigateToScanner(docType, navigate);
       
     } catch (error) {
-      console.error('❌ [RECAPTCHA_SUCCESS] Erreur lors de la sélection de document:', error);
+      console.error('❌ [RECAPTCHA_SUCCESS] Erreur:', error);
       toast.error('Erreur lors de la sélection');
       localStorage.removeItem('temp_document_selection');
     }
   };
 
   const handleRecaptchaError = (error: string) => {
-    console.error('❌ [RECAPTCHA_ERROR] Erreur reCAPTCHA sélection document:', error);
+    console.error('❌ [RECAPTCHA_ERROR] Erreur reCAPTCHA:', error);
     toast.error('Vérification de sécurité échouée');
-    // Nettoyer les données temporaires en cas d'erreur
     localStorage.removeItem('temp_document_selection');
-    console.log('🧹 [RECAPTCHA_ERROR] Données temporaires nettoyées après erreur');
   };
 
-  // CORRECTION MAJEURE : Simplification de la logique de clic
+  // CORRECTION MAJEURE : Logique de clic simplifiée
   const handleTypeClick = (docType: DocumentType, onTypeSelect?: (type: DocumentType) => void) => {
     console.log('🖱️ [CLICK] Clic sur type de document:', docType, {
       shouldUseRecaptcha,
-      userRole: profile?.role,
-      isConfigured,
-      isRequired,
       action: shouldUseRecaptcha ? 'STOCKAGE pour reCAPTCHA' : 'NAVIGATION directe'
     });
 
     if (shouldUseRecaptcha) {
       // Pour les agents avec reCAPTCHA configuré : stocker temporairement
-      // Le clic réel sera géré par RecaptchaVerification
       console.log('🔒 [CLICK] Stockage temporaire pour reCAPTCHA:', docType);
       storeTempDocumentSelection(docType);
+      // Le clic réel sera géré par RecaptchaVerification
     } else {
       // Pour tous les autres cas : navigation directe
-      console.log('⚡ [CLICK] Navigation directe (BYPASS reCAPTCHA):', docType);
+      console.log('⚡ [CLICK] Navigation directe:', docType);
       if (onTypeSelect) {
         onTypeSelect(docType);
       } else {
