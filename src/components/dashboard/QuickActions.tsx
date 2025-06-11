@@ -71,7 +71,7 @@ export const QuickActions = () => {
       hoverBgGradient: "from-purple-100 to-purple-100"
     },
     {
-      to: "#",
+      to: null, // Utiliser null au lieu de "#" pour les actions non-cliquables
       title: "Statistiques",
       description: "Voir les rapports",
       icon: Users,
@@ -97,22 +97,32 @@ export const QuickActions = () => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {actionItems.map((action, index) => {
-        const CardWrapper = action.to !== "#" ? Link : "div";
-        const cardProps = action.to !== "#" ? { to: action.to } : {};
-
-        return (
-          <CardWrapper key={action.title} {...cardProps}>
-            <Card className="hover:shadow-xl transition-all duration-300 cursor-pointer group border-0 bg-gradient-to-br ${action.bgGradient} hover:${action.hoverBgGradient}">
-              <CardContent className="p-4 sm:p-6 text-center">
-                <div className={`w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br ${action.gradient} rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-                  <action.icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                </div>
-                <h3 className="font-bold text-slate-800 mb-2 text-sm sm:text-base">{action.title}</h3>
-                <p className="text-xs sm:text-sm text-slate-600">{action.description}</p>
-              </CardContent>
-            </Card>
-          </CardWrapper>
+        const cardContent = (
+          <Card className={`hover:shadow-xl transition-all duration-300 cursor-pointer group border-0 bg-gradient-to-br ${action.bgGradient} hover:${action.hoverBgGradient}`}>
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className={`w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br ${action.gradient} rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                <action.icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+              </div>
+              <h3 className="font-bold text-slate-800 mb-2 text-sm sm:text-base">{action.title}</h3>
+              <p className="text-xs sm:text-sm text-slate-600">{action.description}</p>
+            </CardContent>
+          </Card>
         );
+
+        // Si action.to existe, envelopper avec Link, sinon retourner directement le contenu
+        if (action.to) {
+          return (
+            <Link key={action.title} to={action.to}>
+              {cardContent}
+            </Link>
+          );
+        } else {
+          return (
+            <div key={action.title}>
+              {cardContent}
+            </div>
+          );
+        }
       })}
     </div>
   );
