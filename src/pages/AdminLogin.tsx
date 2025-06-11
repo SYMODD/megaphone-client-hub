@@ -1,22 +1,21 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
-import { RoleSpecificLoginWithRecaptcha } from "@/components/auth/RoleSpecificLoginWithRecaptcha";
-import { useLoginWithRecaptcha } from "@/hooks/auth/useLoginWithRecaptcha";
+import { RoleSpecificLogin } from "@/components/auth/RoleSpecificLogin";
+import { useAuthOperations } from "@/hooks/useAuthOperations";
 import { AuthAlert } from "@/components/auth/AuthAlert";
-import { useAuthErrorHandling } from "@/hooks/auth/useAuthErrorHandling";
 import { useEffect, useState } from "react";
 
 const AdminLogin = () => {
   const { user, profile, loading } = useAuth();
   const [shouldRedirect, setShouldRedirect] = useState(false);
-  const { error, success } = useAuthErrorHandling();
 
   const {
-    handleLogin,
+    error,
+    success,
     isLoading,
-    isRecaptchaConfigured
-  } = useLoginWithRecaptcha({ role: 'admin' });
+    handleLogin,
+  } = useAuthOperations();
 
   useEffect(() => {
     if (user && profile && !loading) {
@@ -59,11 +58,12 @@ const AdminLogin = () => {
 
         <AuthAlert error={error} success={success} />
 
-        <RoleSpecificLoginWithRecaptcha
+        <RoleSpecificLogin
           role="admin"
           onLogin={handleLogin}
+          onShowPasswordReset={() => {}} // Pas de reset pour admin via ce flow
           isLoading={isLoading}
-          isRecaptchaConfigured={isRecaptchaConfigured}
+          hidePasswordReset={false} // Admin garde l'option
         />
       </div>
     </div>
