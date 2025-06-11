@@ -71,9 +71,11 @@ export const RoleSpecificLogin = ({
   const { isConfigured } = useRecaptchaSettings();
   const roleInfo = getRoleInfo(role);
 
-  // Gestionnaire avec reCAPTCHA pour Admin et Superviseur (seulement si configuré)
+  console.log(`🔐 [SIMPLE] Connexion ${role} - reCAPTCHA:`, isConfigured ? 'ACTIVÉ' : 'DÉSACTIVÉ');
+
+  // Gestionnaire avec reCAPTCHA pour TOUS les rôles (si configuré)
   const handleLoginWithRecaptcha = async (recaptchaToken: string) => {
-    console.log('🔒 reCAPTCHA token reçu pour connexion:', role, recaptchaToken.substring(0, 20) + '...');
+    console.log('🔒 [SIMPLE] reCAPTCHA validé pour:', role, recaptchaToken.substring(0, 20) + '...');
     
     // Récupérer les données de connexion depuis le localStorage temporaire
     const tempData = localStorage.getItem('temp_login_data');
@@ -84,7 +86,7 @@ export const RoleSpecificLogin = ({
 
     try {
       const { email, password } = JSON.parse(tempData);
-      console.log(`📝 Connexion ${role} validée par reCAPTCHA:`, email);
+      console.log(`📝 [SIMPLE] Connexion ${role} après reCAPTCHA:`, email);
       
       // Effectuer la connexion après validation reCAPTCHA
       await onLogin(email, password);
@@ -92,14 +94,14 @@ export const RoleSpecificLogin = ({
       // Nettoyer les données temporaires
       localStorage.removeItem('temp_login_data');
     } catch (error) {
-      console.error('❌ Erreur lors de la connexion:', error);
+      console.error('❌ [SIMPLE] Erreur lors de la connexion:', error);
       toast.error('Erreur lors de la connexion');
       localStorage.removeItem('temp_login_data');
     }
   };
 
   const handleRecaptchaError = (error: string) => {
-    console.error('❌ Erreur reCAPTCHA connexion:', error);
+    console.error('❌ [SIMPLE] Erreur reCAPTCHA:', error);
     toast.error('Vérification de sécurité échouée');
     localStorage.removeItem('temp_login_data');
   };
@@ -107,23 +109,17 @@ export const RoleSpecificLogin = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Pour Admin et Superviseur, vérifier si reCAPTCHA est configuré
-    if (role === 'admin' || role === 'superviseur') {
-      if (isConfigured) {
-        console.log(`🔒 Stockage temporaire des données de connexion ${role}`);
-        localStorage.setItem('temp_login_data', JSON.stringify({
-          email: loginForm.email,
-          password: loginForm.password
-        }));
-        // Le clic sur le bouton déclenchera automatiquement reCAPTCHA via RecaptchaVerification
-      } else {
-        // Si reCAPTCHA n'est pas configuré pour les admins, permettre la connexion directe
-        console.log('⚠️ reCAPTCHA non configuré, connexion Admin directe pour configuration initiale');
-        await onLogin(loginForm.email, loginForm.password);
-      }
+    // LOGIQUE SIMPLIFIÉE : reCAPTCHA pour tous les rôles si configuré
+    if (isConfigured) {
+      console.log(`🔒 [SIMPLE] Stockage temporaire pour reCAPTCHA ${role}`);
+      localStorage.setItem('temp_login_data', JSON.stringify({
+        email: loginForm.email,
+        password: loginForm.password
+      }));
+      // Le clic sur le bouton déclenchera automatiquement reCAPTCHA via RecaptchaVerification
     } else {
-      // Pour les AGENTS, connexion directe SANS reCAPTCHA
-      console.log('📝 Connexion Agent directe (sans reCAPTCHA)');
+      // Si reCAPTCHA n'est pas configuré, connexion directe
+      console.log(`⚡ [SIMPLE] Connexion directe ${role} (reCAPTCHA non configuré)`);
       await onLogin(loginForm.email, loginForm.password);
     }
   };
@@ -139,8 +135,8 @@ export const RoleSpecificLogin = ({
       </Button>
     );
 
-    // Pour Admin et Superviseur, envelopper le bouton avec reCAPTCHA SEULEMENT si configuré
-    if ((role === 'admin' || role === 'superviseur') && isConfigured) {
+    // Si reCAPTCHA est configuré, envelopper TOUS les boutons
+    if (isConfigured) {
       return (
         <RecaptchaVerification
           action={`${role}_login`}
@@ -152,14 +148,14 @@ export const RoleSpecificLogin = ({
       );
     }
 
-    // Pour les agents ou si reCAPTCHA n'est pas configuré, bouton normal
+    // Si reCAPTCHA n'est pas configuré, bouton normal pour tous
     return buttonElement;
   };
 
   return (
     <div className="space-y-6">
-      {/* Avertissement si reCAPTCHA n'est pas configuré pour admin/superviseur */}
-      {(role === 'admin' || role === 'superviseur') && !isConfigured && (
+      {/* Avertissement reCAPTCHA non configuré pour tous les rôles */}
+      {!isConfigured && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -167,13 +163,12 @@ export const RoleSpecificLogin = ({
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-yellow-800">
-                Configuration reCAPTCHA requise
+                Configuration reCAPTCHA recommandée
               </h3>
               <div className="mt-2 text-sm text-yellow-700">
                 <p>
-                  Les clés reCAPTCHA ne sont pas encore configurées. 
-                  Vous pouvez vous connecter pour configurer la sécurité, 
-                  mais nous recommandons de configurer reCAPTCHA rapidement.
+                  Pour une sécurité optimale, nous recommandons de configurer reCAPTCHA.
+                  Contactez votre administrateur pour la configuration.
                 </p>
               </div>
             </div>
@@ -181,7 +176,7 @@ export const RoleSpecificLogin = ({
         </div>
       )}
 
-      {/* Carte de connexion spécifique au rôle */}
+      {/* Carte de connexion */}
       <Card className="border-2">
         <CardHeader className="text-center">
           <div className={`mx-auto w-16 h-16 rounded-full bg-gradient-to-r ${roleInfo.bgGradient} flex items-center justify-center mb-4`}>

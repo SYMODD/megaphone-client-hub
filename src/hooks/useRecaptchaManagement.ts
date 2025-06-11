@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRecaptchaSettings } from './useRecaptchaSettings';
-import { notifyRecaptchaSettingsUpdate } from './recaptcha/RecaptchaNotifications';
 
 interface RecaptchaFormData {
   siteKey: string;
@@ -30,7 +29,7 @@ export const useRecaptchaManagement = () => {
     setSaving(true);
     
     try {
-      console.log('💾 [SAVE] DÉBUT sauvegarde clés reCAPTCHA');
+      console.log('💾 [SIMPLE] Sauvegarde des clés reCAPTCHA');
       
       // Supprimer les anciennes clés
       await supabase
@@ -60,52 +59,16 @@ export const useRecaptchaManagement = () => {
 
       if (secretKeyError) throw secretKeyError;
 
-      console.log('✅ [SAVE] Clés reCAPTCHA sauvegardées - SYNCHRONISATION IMMÉDIATE');
-      
-      // Toast immédiat
+      console.log('✅ [SIMPLE] Clés sauvegardées avec succès');
       toast.success('✅ Clés reCAPTCHA sauvegardées');
       
-      // SYNCHRONISATION SUPER AGRESSIVE - 6 étapes
-      console.log('📢 [SAVE] DÉMARRAGE synchronisation super agressive');
-      
-      // Étape 1 : Refresh local immédiat
+      // Actualisation simple après 500ms
       setTimeout(() => {
-        console.log('📢 [SAVE] Étape 1 - Refresh local');
         refreshSettings();
-      }, 50);
-      
-      // Étape 2 : Première notification globale
-      setTimeout(() => {
-        console.log('📢 [SAVE] Étape 2 - Première notification');
-        notifyRecaptchaSettingsUpdate();
-      }, 100);
-      
-      // Étape 3 : Deuxième vague
-      setTimeout(() => {
-        console.log('📢 [SAVE] Étape 3 - Deuxième vague');
-        notifyRecaptchaSettingsUpdate();
-      }, 300);
-      
-      // Étape 4 : Troisième vague
-      setTimeout(() => {
-        console.log('📢 [SAVE] Étape 4 - Troisième vague');
-        notifyRecaptchaSettingsUpdate();
-      }, 600);
-      
-      // Étape 5 : Dernière vague pour être sûr
-      setTimeout(() => {
-        console.log('📢 [SAVE] Étape 5 - Dernière vague');
-        notifyRecaptchaSettingsUpdate();
-      }, 1000);
-      
-      // Étape 6 : Notification finale après 2 secondes
-      setTimeout(() => {
-        console.log('📢 [SAVE] Étape 6 - Notification finale');
-        notifyRecaptchaSettingsUpdate();
-      }, 2000);
+      }, 500);
       
     } catch (error) {
-      console.error('❌ [SAVE] Erreur lors de la sauvegarde:', error);
+      console.error('❌ [SIMPLE] Erreur lors de la sauvegarde:', error);
       toast.error('Erreur lors de la sauvegarde des clés');
     } finally {
       setSaving(false);
@@ -116,7 +79,7 @@ export const useRecaptchaManagement = () => {
     setSaving(true);
     
     try {
-      console.log('🗑️ [CLEAR] DÉBUT suppression clés reCAPTCHA');
+      console.log('🗑️ [SIMPLE] Suppression des clés reCAPTCHA');
       
       const { error } = await supabase
         .from('security_settings')
@@ -125,18 +88,16 @@ export const useRecaptchaManagement = () => {
 
       if (error) throw error;
 
-      console.log('✅ [CLEAR] Clés supprimées - SYNCHRONISATION IMMÉDIATE');
-      
+      console.log('✅ [SIMPLE] Clés supprimées avec succès');
       toast.success('🗑️ Clés reCAPTCHA supprimées');
       
-      // Synchronisation similaire à la sauvegarde
-      setTimeout(() => refreshSettings(), 50);
-      setTimeout(() => notifyRecaptchaSettingsUpdate(), 100);
-      setTimeout(() => notifyRecaptchaSettingsUpdate(), 300);
-      setTimeout(() => notifyRecaptchaSettingsUpdate(), 600);
+      // Actualisation simple après 500ms
+      setTimeout(() => {
+        refreshSettings();
+      }, 500);
       
     } catch (error) {
-      console.error('❌ [CLEAR] Erreur lors de la suppression:', error);
+      console.error('❌ [SIMPLE] Erreur lors de la suppression:', error);
       toast.error('Erreur lors de la suppression des clés');
     } finally {
       setSaving(false);

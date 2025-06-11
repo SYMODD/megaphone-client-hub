@@ -1,9 +1,13 @@
 
-import { useState, useEffect, useRef } from 'react';
-import { toast } from 'sonner';
-import { RecaptchaSettings, getCacheVersion, forceInvalidateCache } from './recaptcha/RecaptchaCache';
-import { loadRecaptchaSettings } from './recaptcha/RecaptchaSettingsLoader';
-import { recaptchaEventEmitter } from './recaptcha/RecaptchaEventEmitter';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface RecaptchaSettings {
+  siteKey: string | null;
+  secretKey: string | null;
+  isLoaded: boolean;
+  isConfigured: boolean;
+}
 
 export const useRecaptchaSettings = () => {
   const [settings, setSettings] = useState<RecaptchaSettings>({
@@ -12,85 +16,73 @@ export const useRecaptchaSettings = () => {
     isLoaded: false,
     isConfigured: false
   });
-
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const hasLoadedRef = useRef(false);
-  const isMountedRef = useRef(true);
-  const currentCacheVersionRef = useRef(0);
 
-  const performLoad = async (forceRefresh = false) => {
+  const loadSettings = async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const newSettings = await loadRecaptchaSettings(currentCacheVersionRef.current, forceRefresh);
-      currentCacheVersionRef.current = getCacheVersion();
+      console.log('🔍 [SIMPLE] Chargement direct des paramètres reCAPTCHA');
+      
+      const { data, error: fetchError } = await supabase
+        .from('security_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', ['recaptcha_site_key', 'recaptcha_secret_key']);
 
-      if (isMountedRef.current) {
-        setSettings(newSettings);
+      if (fetchError) {
+        console.error('❌ [SIMPLE] Erreur Supabase:', fetchError);
+        throw fetchError;
       }
 
-    } catch (error) {
-      console.error('❌ [SETTINGS] Erreur inattendue:', error);
-      if (isMountedRef.current) {
-        setError('Erreur inattendue lors du chargement');
-      }
+      const siteKey = data?.find(item => item.setting_key === 'recaptcha_site_key')?.setting_value || null;
+      const secretKey = data?.find(item => item.setting_key === 'recaptcha_secret_key')?.setting_value || null;
+
+      const isConfigured = !!(siteKey && siteKey.trim() && secretKey && secretKey.trim());
+
+      const newSettings = {
+        siteKey,
+        secretKey,
+        isLoaded: true,
+        isConfigured
+      };
+
+      console.log('✅ [SIMPLE] Paramètres chargés:', {
+        hasSiteKey: !!siteKey,
+        hasSecretKey: !!secretKey,
+        isConfigured,
+        status: isConfigured ? 'CONFIGURÉ' : 'NON CONFIGURÉ'
+      });
+
+      setSettings(newSettings);
+    } catch (err) {
+      console.error('❌ [SIMPLE] Erreur lors du chargement:', err);
+      setError('Erreur lors du chargement des paramètres');
     } finally {
-      if (isMountedRef.current) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    isMountedRef.current = true;
-    
-    // Chargement initial
-    if (!hasLoadedRef.current) {
-      hasLoadedRef.current = true;
-      console.log('🚀 [SETTINGS] Chargement initial');
-      performLoad();
-    }
-
-    // S'abonner aux événements de mise à jour avec refresh FORCÉ
-    const unsubscribe = recaptchaEventEmitter.subscribe(() => {
-      console.log('🔄 [EVENT] RÉCEPTION mise à jour - REFRESH IMMÉDIAT FORCÉ');
-      hasLoadedRef.current = false;
-      
-      // Triple notification pour s'assurer de la synchronisation
-      setTimeout(() => performLoad(true), 10);
-      setTimeout(() => performLoad(true), 100);
-      setTimeout(() => performLoad(true), 300);
-    });
-
-    // Cleanup
-    return () => {
-      isMountedRef.current = false;
-      unsubscribe();
-    };
+    loadSettings();
   }, []);
 
   const refreshSettings = () => {
-    console.log('🔄 [SETTINGS] REFRESH MANUEL DÉCLENCHÉ');
-    forceInvalidateCache();
-    hasLoadedRef.current = false;
-    performLoad(true);
-  };
-
-  const clearCache = () => {
-    console.log('🧹 [SETTINGS] NETTOYAGE CACHE MANUEL');
-    forceInvalidateCache();
+    console.log('🔄 [SIMPLE] Actualisation des paramètres');
+    loadSettings();
   };
 
   return {
     ...settings,
     isLoading,
     error,
-    refreshSettings,
-    clearCache
+    refreshSettings
   };
 };
 
-// Re-export the notification function for backward compatibility
-export { notifyRecaptchaSettingsUpdate } from './recaptcha/RecaptchaNotifications';
+// Export pour compatibilité
+export const notifyRecaptchaSettingsUpdate = () => {
+  console.log('📢 [SIMPLE] Notification de mise à jour (simplified)');
+  // Plus besoin de notifications complexes
+};

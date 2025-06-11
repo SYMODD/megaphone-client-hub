@@ -1,90 +1,116 @@
 
 import React from 'react';
-import { useRecaptchaStatusLogic } from "./hooks/useRecaptchaStatusLogic";
-import { LoadingStatusBadge } from "./components/LoadingStatusBadge";
-import { ErrorStatusBadge } from "./components/ErrorStatusBadge";
-import { NotRequiredStatusBadge } from "./components/NotRequiredStatusBadge";
-import { NotConfiguredStatusBadge } from "./components/NotConfiguredStatusBadge";
-import { ActiveStatusBadge } from "./components/ActiveStatusBadge";
-import { RecaptchaStatusIndicatorProps } from "./types/statusIndicatorTypes";
+import { useRecaptchaSettings } from "@/hooks/useRecaptchaSettings";
+import { Badge } from "@/components/ui/badge";
+import { ShieldCheck, ShieldX, RefreshCw, Loader2 } from "lucide-react";
+
+interface RecaptchaStatusIndicatorProps {
+  context?: string;
+  size?: 'sm' | 'md' | 'lg';
+  showDebug?: boolean;
+  showRefreshButton?: boolean;
+}
 
 export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> = ({ 
   context = 'general',
   size = 'md',
   showDebug = false,
-  showRefreshButton = true // Forcer l'affichage du bouton refresh par défaut
+  showRefreshButton = true
 }) => {
-  const {
+  const { isConfigured, isLoading, error, refreshSettings } = useRecaptchaSettings();
+
+  console.log('🎯 [SIMPLE] Indicateur reCAPTCHA:', {
+    context,
     isConfigured,
     isLoading,
-    error,
-    siteKey,
-    secretKey,
-    profile,
-    isRefreshing,
-    isRequired,
-    handleRefresh
-  } = useRecaptchaStatusLogic(context);
+    error: !!error
+  });
 
-  if (isLoading || isRefreshing) {
+  if (isLoading) {
     return (
-      <LoadingStatusBadge 
-        showRefreshButton={showRefreshButton}
-        onRefresh={handleRefresh}
-        isRefreshing={isRefreshing}
-      />
+      <div className="flex items-center gap-2">
+        <Badge variant="outline" className="flex items-center gap-1">
+          <Loader2 className="w-3 h-3 animate-spin" />
+          <span className="text-xs">Chargement...</span>
+        </Badge>
+        {showRefreshButton && (
+          <button
+            onClick={refreshSettings}
+            className="p-1 hover:bg-gray-100 rounded"
+            title="Actualiser"
+          >
+            <RefreshCw className="w-3 h-3 text-gray-500" />
+          </button>
+        )}
+      </div>
     );
   }
 
   if (error) {
     return (
-      <ErrorStatusBadge 
-        error={error}
-        showRefreshButton={showRefreshButton}
-        onRefresh={handleRefresh}
-      />
+      <div className="flex items-center gap-2">
+        <Badge variant="destructive" className="flex items-center gap-1">
+          <ShieldX className="w-3 h-3" />
+          <span className="text-xs">Erreur</span>
+        </Badge>
+        {showRefreshButton && (
+          <button
+            onClick={refreshSettings}
+            className="p-1 hover:bg-gray-100 rounded"
+            title="Réessayer"
+          >
+            <RefreshCw className="w-3 h-3 text-gray-500" />
+          </button>
+        )}
+      </div>
     );
   }
 
-  // Si reCAPTCHA n'est pas requis pour ce contexte/rôle
-  if (!isRequired) {
+  if (isConfigured) {
     return (
-      <NotRequiredStatusBadge 
-        showDebug={showDebug}
-        showRefreshButton={showRefreshButton}
-        context={context}
-        userRole={profile?.role}
-        onRefresh={handleRefresh}
-        isRefreshing={isRefreshing}
-      />
+      <div className="flex items-center gap-2">
+        <Badge variant="default" className="flex items-center gap-1 bg-green-100 text-green-800 border-green-300">
+          <ShieldCheck className="w-3 h-3" />
+          <span className="text-xs">reCAPTCHA actif</span>
+        </Badge>
+        {showDebug && (
+          <span className="text-xs text-green-600">
+            (Contexte: {context}, Status: CONFIGURÉ ✅)
+          </span>
+        )}
+        {showRefreshButton && (
+          <button
+            onClick={refreshSettings}
+            className="p-1 hover:bg-gray-100 rounded"
+            title="Actualiser"
+          >
+            <RefreshCw className="w-3 h-3 text-gray-500" />
+          </button>
+        )}
+      </div>
     );
   }
 
-  // Si reCAPTCHA est requis mais non configuré
-  if (!isConfigured) {
-    return (
-      <NotConfiguredStatusBadge 
-        showDebug={showDebug}
-        showRefreshButton={showRefreshButton}
-        context={context}
-        userRole={profile?.role}
-        siteKey={siteKey}
-        secretKey={secretKey}
-        onRefresh={handleRefresh}
-        isRefreshing={isRefreshing}
-      />
-    );
-  }
-
-  // Si reCAPTCHA est requis et configuré
   return (
-    <ActiveStatusBadge 
-      showDebug={showDebug}
-      showRefreshButton={showRefreshButton}
-      context={context}
-      userRole={profile?.role}
-      onRefresh={handleRefresh}
-      isRefreshing={isRefreshing}
-    />
+    <div className="flex items-center gap-2">
+      <Badge variant="outline" className="flex items-center gap-1 bg-gray-50 text-gray-600 border-gray-300">
+        <ShieldX className="w-3 h-3" />
+        <span className="text-xs">reCAPTCHA inactif</span>
+      </Badge>
+      {showDebug && (
+        <span className="text-xs text-gray-600">
+          (Contexte: {context}, Status: NON CONFIGURÉ ❌)
+        </span>
+      )}
+      {showRefreshButton && (
+        <button
+          onClick={refreshSettings}
+          className="p-1 hover:bg-gray-100 rounded"
+          title="Actualiser"
+        >
+          <RefreshCw className="w-3 h-3 text-gray-500" />
+        </button>
+      )}
+    </div>
   );
 };

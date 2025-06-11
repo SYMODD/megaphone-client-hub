@@ -2,7 +2,6 @@
 import { Button } from "@/components/ui/button";
 import { DocumentTypeOption } from "@/types/documentTypes";
 import { IdCard, BookOpen, Globe, CreditCard } from "lucide-react";
-import { RecaptchaVerification } from "@/components/recaptcha/RecaptchaVerification";
 
 const iconMap = {
   'id-card': IdCard,
@@ -13,32 +12,22 @@ const iconMap = {
 
 interface DocumentTypeButtonProps {
   docType: DocumentTypeOption;
-  shouldUseRecaptcha: boolean;
   onTypeClick: () => void;
-  onRecaptchaSuccess: (token: string) => void;
-  onRecaptchaError: (error: string) => void;
 }
 
 export const DocumentTypeButton = ({
   docType,
-  shouldUseRecaptcha,
-  onTypeClick,
-  onRecaptchaSuccess,
-  onRecaptchaError
+  onTypeClick
 }: DocumentTypeButtonProps) => {
   const IconComponent = iconMap[docType.icon as keyof typeof iconMap];
 
-  console.log('🔘 [BUTTON] Rendu DocumentTypeButton:', {
-    docType: docType.id,
-    shouldUseRecaptcha: shouldUseRecaptcha ? 'OUI' : 'NON',
-    wrapper: shouldUseRecaptcha ? 'AVEC RecaptchaVerification' : 'DIRECT onClick'
-  });
+  console.log('🔘 [SIMPLE] Bouton document sans reCAPTCHA:', docType.id);
 
-  const buttonElement = (
+  return (
     <Button
       variant="outline"
       className="w-full justify-start h-auto p-4 hover:bg-blue-50 hover:border-blue-300"
-      onClick={shouldUseRecaptcha ? undefined : onTypeClick}
+      onClick={onTypeClick}
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -51,20 +40,4 @@ export const DocumentTypeButton = ({
       </div>
     </Button>
   );
-
-  if (shouldUseRecaptcha) {
-    console.log('🔒 [BUTTON] ENVELOPPEMENT avec RecaptchaVerification pour:', docType.id);
-    return (
-      <RecaptchaVerification
-        action="agent_document_selection"
-        onSuccess={onRecaptchaSuccess}
-        onError={onRecaptchaError}
-      >
-        {buttonElement}
-      </RecaptchaVerification>
-    );
-  }
-
-  console.log('⚡ [BUTTON] Bouton DIRECT (sans reCAPTCHA) pour:', docType.id);
-  return buttonElement;
 };

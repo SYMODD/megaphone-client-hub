@@ -9,12 +9,7 @@ interface DocumentTypeListProps {
 }
 
 export const DocumentTypeList = ({ onTypeSelect }: DocumentTypeListProps) => {
-  const {
-    shouldUseRecaptcha,
-    handleDocumentSelectionWithRecaptcha,
-    handleRecaptchaError,
-    handleTypeClick
-  } = useDocumentSelection();
+  const { handleTypeClick } = useDocumentSelection();
 
   return (
     <CardContent className="space-y-3">
@@ -22,10 +17,7 @@ export const DocumentTypeList = ({ onTypeSelect }: DocumentTypeListProps) => {
         <div key={docType.id}>
           <DocumentTypeButton
             docType={docType}
-            shouldUseRecaptcha={shouldUseRecaptcha}
             onTypeClick={() => handleTypeClick(docType.id, onTypeSelect)}
-            onRecaptchaSuccess={handleDocumentSelectionWithRecaptcha}
-            onRecaptchaError={handleRecaptchaError}
           />
         </div>
       ))}
