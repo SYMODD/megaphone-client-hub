@@ -5,6 +5,8 @@ import { ArrowLeft, IdCard, BookOpen, Globe, CreditCard } from "lucide-react";
 import { DocumentType, documentTypes } from "@/types/documentTypes";
 import { useNavigate } from "react-router-dom";
 import { RecaptchaVerification } from "@/components/recaptcha/RecaptchaVerification";
+import { useRecaptchaSettings } from "@/hooks/useRecaptchaSettings";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 interface DocumentTypeSelectorProps {
@@ -22,8 +24,14 @@ const iconMap = {
 
 export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: DocumentTypeSelectorProps) => {
   const navigate = useNavigate();
+  const { isConfigured } = useRecaptchaSettings();
+  const { profile } = useAuth();
 
-  // Gestionnaire avec reCAPTCHA pour la sélection de document
+  // Vérifier si on doit utiliser reCAPTCHA pour cette action
+  // Seulement pour les agents ET seulement si reCAPTCHA est configuré
+  const shouldUseRecaptcha = profile?.role === "agent" && isConfigured;
+
+  // Gestionnaire avec reCAPTCHA pour la sélection de document (seulement si nécessaire)
   const handleDocumentSelectionWithRecaptcha = (recaptchaToken: string) => {
     console.log('🔒 reCAPTCHA token reçu pour sélection document Agent:', recaptchaToken.substring(0, 20) + '...');
     
@@ -77,14 +85,20 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
   };
 
   const handleTypeClick = (docType: DocumentType) => {
-    console.log('🔒 Stockage temporaire de la sélection document pour reCAPTCHA:', docType);
-    
-    // Stocker temporairement le type de document pour reCAPTCHA
-    localStorage.setItem('temp_document_selection', JSON.stringify({
-      docType: docType
-    }));
-    
-    // Le clic sur le bouton déclenchera automatiquement reCAPTCHA via RecaptchaVerification
+    if (shouldUseRecaptcha) {
+      console.log('🔒 Stockage temporaire de la sélection document pour reCAPTCHA:', docType);
+      
+      // Stocker temporairement le type de document pour reCAPTCHA
+      localStorage.setItem('temp_document_selection', JSON.stringify({
+        docType: docType
+      }));
+      
+      // Le clic sur le bouton déclenchera automatiquement reCAPTCHA via RecaptchaVerification
+    } else {
+      // Navigation directe sans reCAPTCHA
+      console.log('📝 Sélection de document directe (sans reCAPTCHA):', docType);
+      navigateToScanner(docType);
+    }
   };
 
   if (selectedType) {
@@ -119,29 +133,44 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
       <CardContent className="space-y-3">
         {documentTypes.map((docType) => {
           const IconComponent = iconMap[docType.icon as keyof typeof iconMap];
-          return (
-            <RecaptchaVerification
-              key={docType.id}
-              action="agent_document_selection"
-              onSuccess={handleDocumentSelectionWithRecaptcha}
-              onError={handleRecaptchaError}
+          
+          const buttonElement = (
+            <Button
+              variant="outline"
+              className="w-full justify-start h-auto p-4 hover:bg-blue-50 hover:border-blue-300"
+              onClick={() => handleTypeClick(docType.id)}
             >
-              <Button
-                variant="outline"
-                className="w-full justify-start h-auto p-4 hover:bg-blue-50 hover:border-blue-300"
-                onClick={() => handleTypeClick(docType.id)}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <IconComponent className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div className="text-left">
-                    <div className="font-medium text-slate-800">{docType.label}</div>
-                    <div className="text-sm text-slate-600">{docType.description}</div>
-                  </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <IconComponent className="w-5 h-5 text-blue-600" />
                 </div>
-              </Button>
-            </RecaptchaVerification>
+                <div className="text-left">
+                  <div className="font-medium text-slate-800">{docType.label}</div>
+                  <div className="text-sm text-slate-600">{docType.description}</div>
+                </div>
+              </div>
+            </Button>
+          );
+
+          // Seulement envelopper avec RecaptchaVerification si nécessaire
+          if (shouldUseRecaptcha) {
+            return (
+              <RecaptchaVerification
+                key={docType.id}
+                action="agent_document_selection"
+                onSuccess={handleDocumentSelectionWithRecaptcha}
+                onError={handleRecaptchaError}
+              >
+                {buttonElement}
+              </RecaptchaVerification>
+            );
+          }
+
+          // Sinon, retourner le bouton directement
+          return (
+            <div key={docType.id}>
+              {buttonElement}
+            </div>
           );
         })}
       </CardContent>
