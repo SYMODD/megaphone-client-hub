@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRecaptchaSettings } from '@/hooks/useRecaptchaSettings';
 import { recaptchaService } from '@/services/recaptchaService';
 import { toast } from 'sonner';
@@ -23,12 +23,11 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
   const [isVerifying, setIsVerifying] = useState(false);
 
   const handleVerification = async () => {
-    // CORRECTION CRITIQUE : Vérification stricte de la configuration
     if (!isConfigured || !siteKey) {
-      const error = 'reCAPTCHA non configuré. Accès bloqué pour des raisons de sécurité.';
-      console.error('❌ [PRODUCTION SECURITY BLOCK]', error);
+      const error = 'reCAPTCHA non configuré en production';
+      console.error('❌ [PRODUCTION]', error);
       onError?.(error);
-      toast.error('Service de sécurité non disponible. Contactez l\'administrateur.');
+      toast.error('Service de sécurité non disponible');
       return;
     }
 
@@ -38,44 +37,30 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
 
     try {
       setIsVerifying(true);
-      console.log(`🔒 [PRODUCTION] Démarrage vérification reCAPTCHA obligatoire pour: ${action}`);
+      console.log(`🔍 [PRODUCTION] Starting reCAPTCHA verification for action: ${action}`);
       
       const token = await recaptchaService.executeRecaptcha(siteKey, action);
       
-      if (!token || token.length === 0) {
-        throw new Error('Token reCAPTCHA invalide - Sécurité compromise');
-      }
-      
-      console.log(`✅ [PRODUCTION] reCAPTCHA validé avec succès pour: ${action}, token length:`, token.length);
+      console.log(`✅ [PRODUCTION] reCAPTCHA verification successful for action: ${action}`);
       onSuccess(token);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Échec de la vérification de sécurité';
-      console.error(`❌ [PRODUCTION SECURITY] Échec reCAPTCHA pour ${action}:`, error);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur de vérification';
+      console.error(`❌ [PRODUCTION] reCAPTCHA verification failed for action ${action}:`, error);
       onError?.(errorMessage);
-      toast.error('Vérification de sécurité échouée. Accès refusé.');
+      toast.error('Échec de la vérification de sécurité');
     } finally {
       setIsVerifying(false);
     }
   };
 
-  // Si reCAPTCHA est en cours de chargement
+  // Si reCAPTCHA n'est pas configuré, on rend les enfants directement
   if (isLoading) {
-    return React.cloneElement(children as React.ReactElement, {
-      disabled: true,
-      style: { opacity: 0.6 }
-    });
+    return <>{children}</>;
   }
 
-  // SÉCURITÉ RENFORCÉE : Si reCAPTCHA n'est pas configuré, bloquer complètement
   if (!isConfigured) {
-    console.warn('⚠️ [PRODUCTION SECURITY] reCAPTCHA non configuré - BLOCAGE TOTAL');
-    return React.cloneElement(children as React.ReactElement, {
-      onClick: () => {
-        toast.error('Service de sécurité non configuré. Accès refusé.');
-      },
-      disabled: true,
-      style: { opacity: 0.6, cursor: 'not-allowed' }
-    });
+    console.warn('⚠️ [PRODUCTION] reCAPTCHA not configured, bypassing verification');
+    return <>{children}</>;
   }
 
   // Cloner l'élément enfant et ajouter le gestionnaire de clic

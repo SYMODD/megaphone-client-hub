@@ -1,154 +1,123 @@
 
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Toaster } from "@/components/ui/sonner";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { RoleProtectedRoute } from "@/components/auth/RoleProtectedRoute";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
+import { SmartRedirect } from "./components/auth/SmartRedirect";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import NewClient from "./pages/NewClient";
-import BaseClients from "./pages/BaseClients";
-import UserManagement from "./pages/UserManagement";
 import ResetPassword from "./pages/ResetPassword";
-import NotFound from "./pages/NotFound";
+import AgentLogin from "./pages/AgentLogin";
+import AdminLogin from "./pages/AdminLogin";
+import SuperviseurLogin from "./pages/SuperviseurLogin";
+import BaseClients from "./pages/BaseClients";
+import NewClient from "./pages/NewClient";
 import CINScanner from "./pages/CINScanner";
 import PassportMarocainScanner from "./pages/PassportMarocainScanner";
 import PassportEtrangerScanner from "./pages/PassportEtrangerScanner";
 import CarteSejourScanner from "./pages/CarteSejourScanner";
-import AutoDocumentScanner from "./pages/AutoDocumentScanner";
+import UserManagement from "./pages/UserManagement";
 import Contracts from "./pages/Contracts";
-import AdminLogin from "./pages/AdminLogin";
-import SuperviseurLogin from "./pages/SuperviseurLogin";
-import AgentLogin from "./pages/AgentLogin";
-import AdminRecaptcha from "./pages/AdminRecaptcha";
-
-import "./App.css";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function App() {
+const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
         <BrowserRouter>
-          <Routes>
-            {/* Routes publiques */}
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/login/admin" element={<AdminLogin />} />
-            <Route path="/login/superviseur" element={<SuperviseurLogin />} />
-            <Route path="/login/agent" element={<AgentLogin />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-
-            {/* Redirection /admin vers /admin/recaptcha pour les admins */}
-            <Route 
-              path="/admin" 
-              element={
-                <RoleProtectedRoute allowedRoles={["admin"]}>
-                  <Navigate to="/admin/recaptcha" replace />
-                </RoleProtectedRoute>
-              } 
-            />
-
-            {/* Routes protégées par authentification */}
-            <Route
-              path="/dashboard"
-              element={
-                <RoleProtectedRoute allowedRoles={["admin", "superviseur"]}>
-                  <BaseClients />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="/nouveau-client"
-              element={
-                <RoleProtectedRoute allowedRoles={["agent"]}>
+          <AuthProvider>
+            <Routes>
+              {/* Redirection intelligente selon le rôle */}
+              <Route path="/" element={<SmartRedirect />} />
+              
+              {/* Pages de connexion publiques */}
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/agent" element={<AgentLogin />} />
+              <Route path="/admin" element={<AdminLogin />} />
+              <Route path="/superviseur" element={<SuperviseurLogin />} />
+              
+              {/* Dashboard - accessible aux admin et superviseur */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <RoleProtectedRoute allowedRoles={['admin', 'superviseur']} redirectTo="/agent">
+                    <Index />
+                  </RoleProtectedRoute>
+                </ProtectedRoute>
+              } />
+              
+              {/* Base Clients - accessible uniquement aux admin et superviseur */}
+              <Route path="/base-clients" element={
+                <ProtectedRoute>
+                  <RoleProtectedRoute allowedRoles={['admin', 'superviseur']} redirectTo="/nouveau-client">
+                    <BaseClients />
+                  </RoleProtectedRoute>
+                </ProtectedRoute>
+              } />
+              
+              {/* Pages protégées - accessible à tous les utilisateurs authentifiés */}
+              <Route path="/nouveau-client" element={
+                <ProtectedRoute>
                   <NewClient />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="/scanner-cin"
-              element={
-                <RoleProtectedRoute allowedRoles={["agent"]}>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/scanner-cin" element={
+                <ProtectedRoute>
                   <CINScanner />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="/scanner-passeport-marocain"
-              element={
-                <RoleProtectedRoute allowedRoles={["agent"]}>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/scanner-passeport-marocain" element={
+                <ProtectedRoute>
                   <PassportMarocainScanner />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="/scanner-passeport-etranger"
-              element={
-                <RoleProtectedRoute allowedRoles={["agent"]}>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/scanner-passeport-etranger" element={
+                <ProtectedRoute>
                   <PassportEtrangerScanner />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="/scanner-carte-sejour"
-              element={
-                <RoleProtectedRoute allowedRoles={["agent"]}>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/scanner-carte-sejour" element={
+                <ProtectedRoute>
                   <CarteSejourScanner />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="/scanner-auto"
-              element={
-                <RoleProtectedRoute allowedRoles={["agent"]}>
-                  <AutoDocumentScanner />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="/clients"
-              element={
-                <RoleProtectedRoute allowedRoles={["admin", "superviseur"]}>
-                  <BaseClients />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="/contracts"
-              element={
-                <RoleProtectedRoute allowedRoles={["admin", "superviseur"]}>
-                  <Contracts />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="/users"
-              element={
-                <RoleProtectedRoute allowedRoles={["admin"]}>
+                </ProtectedRoute>
+              } />
+              
+              {/* Pages admin uniquement */}
+              <Route path="/users" element={
+                <RoleProtectedRoute allowedRoles={['admin']}>
                   <UserManagement />
                 </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/recaptcha"
-              element={
-                <RoleProtectedRoute allowedRoles={["admin"]}>
-                  <AdminRecaptcha />
-                </RoleProtectedRoute>
-              }
-            />
-
-            {/* Route 404 */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster />
+              } />
+              
+              {/* Routes pour les contrats */}
+              <Route path="/contracts" element={
+                <ProtectedRoute>
+                  <Contracts />
+                </ProtectedRoute>
+              } />
+              <Route path="/contrat" element={<Navigate to="/contracts" replace />} />
+              <Route path="/contrats" element={<Navigate to="/contracts" replace />} />
+              
+              <Route path="/404" element={<NotFound />} />
+              <Route path="*" element={<Navigate to="/404" replace />} />
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
-      </AuthProvider>
+      </TooltipProvider>
     </QueryClientProvider>
   );
-}
+};
 
 export default App;

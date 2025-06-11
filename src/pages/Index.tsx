@@ -32,8 +32,8 @@ const Index = () => {
 
   // Early return for unauthenticated users - redirect to agent login
   if (!user) {
-    console.log("No user found, redirecting to /login/agent");
-    return <Navigate to="/login/agent" replace />;
+    console.log("No user found, redirecting to /agent");
+    return <Navigate to="/agent" replace />;
   }
 
   // Attendre que le profil soit chargé avant de faire des redirections
@@ -50,16 +50,16 @@ const Index = () => {
 
   console.log("Profile role:", profile.role);
 
-  // CORRECTION CRITIQUE : Redirection stricte des agents
+  // Redirect agents to their specific page
   if (profile.role === "agent") {
-    console.log("Agent detected, redirecting to /nouveau-client - NO DASHBOARD ACCESS");
+    console.log("Agent detected, redirecting to /nouveau-client");
     return <Navigate to="/nouveau-client" replace />;
   }
 
-  // SÉCURITÉ RENFORCÉE : Seuls admin et superviseur peuvent accéder au dashboard
+  // Only admin and superviseur can access the dashboard
   if (profile.role !== "admin" && profile.role !== "superviseur") {
-    console.log(`Role ${profile.role} not allowed on dashboard, redirecting to /login/agent`);
-    return <Navigate to="/login/agent" replace />;
+    console.log(`Role ${profile.role} not allowed on dashboard, redirecting to /agent`);
+    return <Navigate to="/agent" replace />;
   }
 
   console.log("User authorized for dashboard, loading components...");
