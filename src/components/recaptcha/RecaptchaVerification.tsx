@@ -22,29 +22,31 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
   const { siteKey, isConfigured, isLoading } = useRecaptchaSettings();
   const [isVerifying, setIsVerifying] = useState(false);
 
-  console.log('🔍 [RECAPTCHA_VERIFICATION] État actuel:', {
+  console.log('🔍 [RECAPTCHA_VERIFICATION] ÉTAT ACTUEL:', {
     action,
-    isConfigured,
-    siteKey: siteKey ? siteKey.substring(0, 20) + '...' : 'null',
+    isConfigured: isConfigured ? 'OUI' : 'NON',
+    siteKey: siteKey ? siteKey.substring(0, 20) + '...' : 'AUCUNE',
     disabled,
     isVerifying,
-    shouldBypass: !isConfigured
+    isLoading,
+    decision: isConfigured ? 'ENVELOPPEMENT ACTIF' : 'BYPASS TOTAL'
   });
 
   // Si reCAPTCHA est en cours de chargement, on rend les enfants directement
   if (isLoading) {
-    console.log('⏳ [RECAPTCHA_VERIFICATION] Chargement en cours, rendu direct des enfants');
+    console.log('⏳ [RECAPTCHA_VERIFICATION] Chargement → Rendu direct');
     return <>{children}</>;
   }
 
-  // CORRECTION MAJEURE : Si reCAPTCHA n'est pas configuré, on rend les enfants directement SANS modification
+  // CORRECTION : Si reCAPTCHA n'est pas configuré, BYPASS TOTAL
   if (!isConfigured || !siteKey) {
-    console.log('⚡ [RECAPTCHA_VERIFICATION] reCAPTCHA non configuré - Rendu direct des enfants (BYPASS TOTAL)');
+    console.log('⚡ [RECAPTCHA_VERIFICATION] NON CONFIGURÉ → BYPASS TOTAL (enfants inchangés)');
     return <>{children}</>;
   }
 
+  // CORRECTION : reCAPTCHA configuré → Enveloppement actif
   const handleVerification = async () => {
-    console.log('🔍 [RECAPTCHA_VERIFICATION] Début de la vérification pour:', action);
+    console.log('🔍 [RECAPTCHA_VERIFICATION] DÉMARRAGE vérification pour:', action);
 
     if (disabled || isVerifying) {
       console.warn('⚠️ [RECAPTCHA_VERIFICATION] Vérification bloquée:', { disabled, isVerifying });
@@ -53,41 +55,33 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
 
     try {
       setIsVerifying(true);
-      console.log(`🔍 [RECAPTCHA_VERIFICATION] Démarrage de la vérification pour l'action: ${action}`);
       
-      toast.info('🔒 Vérification de sécurité en cours...', {
-        duration: 2000,
-      });
+      toast.info('🔒 Vérification de sécurité en cours...', { duration: 2000 });
       
       const token = await recaptchaService.executeRecaptcha(siteKey, action);
       
-      console.log(`✅ [RECAPTCHA_VERIFICATION] Vérification réussie pour l'action: ${action}`);
+      console.log(`✅ [RECAPTCHA_VERIFICATION] Vérification RÉUSSIE pour: ${action}`);
       
-      toast.success('✅ Vérification de sécurité réussie', {
-        duration: 1500,
-      });
+      toast.success('✅ Vérification de sécurité réussie', { duration: 1500 });
       
       onSuccess(token);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur de vérification';
-      console.error(`❌ [RECAPTCHA_VERIFICATION] Échec de la vérification pour l'action ${action}:`, error);
+      console.error(`❌ [RECAPTCHA_VERIFICATION] ÉCHEC pour ${action}:`, error);
       
-      toast.error(`❌ Échec de la vérification: ${errorMessage}`, {
-        duration: 4000,
-      });
+      toast.error(`❌ Échec de la vérification: ${errorMessage}`, { duration: 4000 });
       
       onError?.(errorMessage);
     } finally {
       setIsVerifying(false);
-      console.log(`🏁 [RECAPTCHA_VERIFICATION] Fin de la vérification pour l'action: ${action}`);
+      console.log(`🏁 [RECAPTCHA_VERIFICATION] FIN vérification pour: ${action}`);
     }
   };
 
-  // CORRECTION MAJEURE : Cloner l'élément enfant et REMPLACER complètement son onClick
-  console.log('🔒 [RECAPTCHA_VERIFICATION] Enveloppement actif avec reCAPTCHA pour:', action);
+  console.log('🔒 [RECAPTCHA_VERIFICATION] ENVELOPPEMENT ACTIF avec reCAPTCHA pour:', action);
   
   return React.cloneElement(children as React.ReactElement, {
-    onClick: handleVerification, // REMPLACE complètement l'onClick original
+    onClick: handleVerification, // REMPLACE l'onClick original
     disabled: disabled || isVerifying,
     className: `${(children as React.ReactElement).props.className || ''} ${
       isVerifying ? 'opacity-75 cursor-wait' : ''

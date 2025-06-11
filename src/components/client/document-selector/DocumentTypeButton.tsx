@@ -30,15 +30,14 @@ export const DocumentTypeButton = ({
 
   console.log('🔘 [BUTTON] Rendu DocumentTypeButton:', {
     docType: docType.id,
-    shouldUseRecaptcha,
-    wrapper: shouldUseRecaptcha ? 'AVEC RecaptchaVerification' : 'DIRECT avec onClick'
+    shouldUseRecaptcha: shouldUseRecaptcha ? 'OUI' : 'NON',
+    wrapper: shouldUseRecaptcha ? 'AVEC RecaptchaVerification' : 'DIRECT onClick'
   });
 
   const buttonElement = (
     <Button
       variant="outline"
       className="w-full justify-start h-auto p-4 hover:bg-blue-50 hover:border-blue-300"
-      // CORRECTION MAJEURE : onClick conditionnel selon shouldUseRecaptcha
       onClick={shouldUseRecaptcha ? undefined : onTypeClick}
     >
       <div className="flex items-center gap-3">
@@ -53,9 +52,8 @@ export const DocumentTypeButton = ({
     </Button>
   );
 
-  // CORRECTION MAJEURE : Si reCAPTCHA est requis, envelopper avec RecaptchaVerification
   if (shouldUseRecaptcha) {
-    console.log('🔒 [BUTTON] Enveloppement avec RecaptchaVerification pour:', docType.id);
+    console.log('🔒 [BUTTON] ENVELOPPEMENT avec RecaptchaVerification pour:', docType.id);
     return (
       <RecaptchaVerification
         action="agent_document_selection"
@@ -67,7 +65,6 @@ export const DocumentTypeButton = ({
     );
   }
 
-  // Retour direct du bouton avec son onClick natif
-  console.log('⚡ [BUTTON] Bouton direct (sans reCAPTCHA) pour:', docType.id);
+  console.log('⚡ [BUTTON] Bouton DIRECT (sans reCAPTCHA) pour:', docType.id);
   return buttonElement;
 };

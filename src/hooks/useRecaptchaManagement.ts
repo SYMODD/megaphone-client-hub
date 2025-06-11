@@ -29,7 +29,7 @@ export const useRecaptchaManagement = () => {
     setSaving(true);
     
     try {
-      console.log('💾 [SAVE] Début de la sauvegarde des clés reCAPTCHA');
+      console.log('💾 [SAVE] DÉBUT sauvegarde clés reCAPTCHA');
       
       // Supprimer les anciennes clés
       await supabase
@@ -59,24 +59,29 @@ export const useRecaptchaManagement = () => {
 
       if (secretKeyError) throw secretKeyError;
 
-      console.log('✅ [SAVE] Clés reCAPTCHA sauvegardées avec succès');
+      console.log('✅ [SAVE] Clés reCAPTCHA sauvegardées - DÉCLENCHEMENT SYNCHRONISATION');
       
-      // CORRECTION : Synchronisation améliorée en plusieurs étapes
-      console.log('🔄 [SAVE] Déclenchement de la mise à jour globale...');
+      // CORRECTION MAJEURE : Synchronisation en 3 étapes avec attente
       
-      // 1. Refresh local immédiat
-      refreshSettings();
+      // 1. Toast immédiat
+      toast.success('✅ Clés reCAPTCHA sauvegardées');
       
-      // 2. Notification globale avec délai pour s'assurer que la DB est mise à jour
+      // 2. Refresh local immédiat
       setTimeout(() => {
-        console.log('📢 [SAVE] Notification globale des autres composants');
+        refreshSettings();
+      }, 100);
+      
+      // 3. Notification globale FORCÉE
+      setTimeout(() => {
+        console.log('📢 [SAVE] NOTIFICATION GLOBALE FORCÉE');
         notifyRecaptchaSettingsUpdate();
       }, 200);
       
-      // 3. Toast de succès après la synchronisation
+      // 4. Deuxième vague de notifications pour s'assurer
       setTimeout(() => {
-        toast.success('✅ Clés reCAPTCHA sauvegardées et synchronisées');
-      }, 300);
+        console.log('📢 [SAVE] DEUXIÈME VAGUE de notifications');
+        notifyRecaptchaSettingsUpdate();
+      }, 500);
       
     } catch (error) {
       console.error('❌ [SAVE] Erreur lors de la sauvegarde:', error);
@@ -90,7 +95,7 @@ export const useRecaptchaManagement = () => {
     setSaving(true);
     
     try {
-      console.log('🗑️ [CLEAR] Début de la suppression des clés reCAPTCHA');
+      console.log('🗑️ [CLEAR] DÉBUT suppression clés reCAPTCHA');
       
       const { error } = await supabase
         .from('security_settings')
@@ -99,18 +104,22 @@ export const useRecaptchaManagement = () => {
 
       if (error) throw error;
 
-      console.log('✅ [CLEAR] Clés reCAPTCHA supprimées avec succès');
+      console.log('✅ [CLEAR] Clés supprimées - DÉCLENCHEMENT SYNCHRONISATION');
       
       // Synchronisation similaire à la sauvegarde
-      refreshSettings();
+      toast.success('🗑️ Clés reCAPTCHA supprimées');
+      
+      setTimeout(() => {
+        refreshSettings();
+      }, 100);
       
       setTimeout(() => {
         notifyRecaptchaSettingsUpdate();
       }, 200);
       
       setTimeout(() => {
-        toast.success('🗑️ Clés reCAPTCHA supprimées et synchronisées');
-      }, 300);
+        notifyRecaptchaSettingsUpdate();
+      }, 500);
       
     } catch (error) {
       console.error('❌ [CLEAR] Erreur lors de la suppression:', error);

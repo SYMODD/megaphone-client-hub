@@ -17,22 +17,22 @@ export const useDocumentSelection = () => {
     cleanupTempData();
   }, []);
 
-  // CORRECTION : Logique simplifiée
+  // CORRECTION MAJEURE : Logique claire et simple
   const isRequired = profile?.role === "agent";
   const shouldUseRecaptcha = isRequired && isConfigured && !isLoading;
 
-  console.log('📋 [DOCUMENT_SELECTOR] État actuel:', {
+  console.log('📋 [DOCUMENT_SELECTOR] ÉTAT FINAL:', {
     userRole: profile?.role,
-    isRequired,
-    isConfigured,
-    isLoading,
-    shouldUseRecaptcha: shouldUseRecaptcha ? 'OUI' : 'NON',
-    logique: shouldUseRecaptcha ? 'AVEC reCAPTCHA' : 'SANS reCAPTCHA (bypass ou non requis)'
+    isRequired: isRequired ? 'OUI' : 'NON',
+    isConfigured: isConfigured ? 'OUI' : 'NON',
+    isLoading: isLoading ? 'OUI' : 'NON',
+    shouldUseRecaptcha: shouldUseRecaptcha ? 'ACTIF ✅' : 'BYPASS ⚡',
+    logique: shouldUseRecaptcha ? 'AVEC reCAPTCHA (clic → stockage → validation)' : 'SANS reCAPTCHA (clic → navigation directe)',
+    timestamp: new Date().toISOString()
   });
 
-  // CORRECTION : Gestionnaire reCAPTCHA simplifié
   const handleDocumentSelectionWithRecaptcha = (recaptchaToken: string) => {
-    console.log('🔒 [RECAPTCHA_SUCCESS] Token reçu:', recaptchaToken.substring(0, 20) + '...');
+    console.log('🔒 [RECAPTCHA_SUCCESS] Token reçu pour navigation:', recaptchaToken.substring(0, 20) + '...');
     
     // Récupérer le type de document depuis le localStorage temporaire
     const tempData = localStorage.getItem('temp_document_selection');
@@ -65,21 +65,20 @@ export const useDocumentSelection = () => {
     localStorage.removeItem('temp_document_selection');
   };
 
-  // CORRECTION MAJEURE : Logique de clic simplifiée
   const handleTypeClick = (docType: DocumentType, onTypeSelect?: (type: DocumentType) => void) => {
-    console.log('🖱️ [CLICK] Clic sur type de document:', docType, {
+    console.log('🖱️ [CLICK] Clic sur document:', docType, {
       shouldUseRecaptcha,
       action: shouldUseRecaptcha ? 'STOCKAGE pour reCAPTCHA' : 'NAVIGATION directe'
     });
 
     if (shouldUseRecaptcha) {
       // Pour les agents avec reCAPTCHA configuré : stocker temporairement
-      console.log('🔒 [CLICK] Stockage temporaire pour reCAPTCHA:', docType);
+      console.log('🔒 [CLICK] AGENT avec reCAPTCHA → Stockage temporaire:', docType);
       storeTempDocumentSelection(docType);
       // Le clic réel sera géré par RecaptchaVerification
     } else {
       // Pour tous les autres cas : navigation directe
-      console.log('⚡ [CLICK] Navigation directe:', docType);
+      console.log('⚡ [CLICK] BYPASS reCAPTCHA → Navigation directe:', docType);
       if (onTypeSelect) {
         onTypeSelect(docType);
       } else {
