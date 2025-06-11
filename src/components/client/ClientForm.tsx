@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { CINForm } from "./CINForm";
 import { PassportSection } from "./PassportSection";
 import { DocumentTypeSelector } from "./DocumentTypeSelector";
 import { DocumentType } from "@/types/documentTypes";
@@ -49,32 +48,7 @@ export const ClientForm = () => {
     );
   }
 
-  // Si CIN sélectionné, afficher le formulaire CIN
-  if (selectedDocumentType === 'cin') {
-    return (
-      <div className="space-y-4 sm:space-y-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center gap-3">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleBackToSelection}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Retour
-            </Button>
-            <CardTitle>🆔 Formulaire CIN</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CINForm />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Pour tous les autres types de documents (passeports, carte de séjour)
+  // Pour tous les types de documents - utiliser PassportSection comme routeur unifié
   return (
     <div className="space-y-4 sm:space-y-6">
       <Card>
@@ -91,7 +65,6 @@ export const ClientForm = () => {
           <CardTitle>📄 Formulaire {selectedDocumentType}</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* PassportSection SANS sélecteur de document puisque c'est déjà fait */}
           <PassportSection
             selectedDocumentType={selectedDocumentType}
             onDocumentTypeSelect={() => {}} // Pas besoin de changer le type ici

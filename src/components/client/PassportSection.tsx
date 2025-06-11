@@ -1,5 +1,8 @@
 
-import { DocumentScanner } from "./DocumentScanner";
+import { CINForm } from "./CINForm";
+import { PassportMarocainForm } from "./PassportMarocainForm";
+import { PassportEtrangerForm } from "./PassportEtrangerForm";
+import { CarteSejourForm } from "./CarteSejourForm";
 import { MRZData } from "@/services/ocr";
 import { DocumentType } from "@/types/documentTypes";
 
@@ -12,15 +15,12 @@ interface PassportSectionProps {
 }
 
 export const PassportSection = ({ 
-  scannedImage, 
-  onImageScanned, 
-  onMRZDataExtracted,
   selectedDocumentType
 }: PassportSectionProps) => {
   
   console.log('📄 [PASSPORT_SECTION] Rendu avec type:', selectedDocumentType);
 
-  // Afficher directement le scanner puisque le type est déjà sélectionné
+  // Afficher le formulaire approprié selon le type sélectionné
   if (!selectedDocumentType) {
     return (
       <div className="text-center p-4">
@@ -29,13 +29,21 @@ export const PassportSection = ({
     );
   }
 
-  return (
-    <div className="space-y-4">
-      <DocumentScanner 
-        scannedImage={scannedImage}
-        onImageScanned={onImageScanned}
-        onDataExtracted={onMRZDataExtracted}
-      />
-    </div>
-  );
+  // Afficher le formulaire correspondant au type de document sélectionné
+  switch (selectedDocumentType) {
+    case 'cin':
+      return <CINForm />;
+    case 'passeport_marocain':
+      return <PassportMarocainForm />;
+    case 'passeport_etranger':
+      return <PassportEtrangerForm />;
+    case 'carte_sejour':
+      return <CarteSejourForm />;
+    default:
+      return (
+        <div className="text-center p-4">
+          <p className="text-gray-500">Type de document non reconnu: {selectedDocumentType}</p>
+        </div>
+      );
+  }
 };
