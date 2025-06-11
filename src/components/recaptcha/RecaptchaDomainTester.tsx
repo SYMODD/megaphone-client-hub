@@ -8,10 +8,29 @@ import { useRecaptchaSettings } from "@/hooks/useRecaptchaSettings";
 import { AlertTriangle, CheckCircle, RefreshCw, Globe, Key } from "lucide-react";
 import { toast } from "sonner";
 
+interface DomainTestResults {
+  currentDomain: string;
+  currentUrl: string;
+  siteKey: string | null;
+  timestamp: string;
+  checks: {
+    hasValidSiteKey: boolean;
+    domainInfo: {
+      hostname: string;
+      protocol: string;
+      port: string;
+      fullOrigin: string;
+    };
+    expectedDomains: string[];
+    scriptLoaded?: boolean;
+    scriptError?: string;
+  };
+}
+
 export const RecaptchaDomainTester: React.FC = () => {
   const { siteKey, isConfigured, isLoading, refreshSettings } = useRecaptchaSettings();
   const [testing, setTesting] = useState(false);
-  const [testResults, setTestResults] = useState<any>(null);
+  const [testResults, setTestResults] = useState<DomainTestResults | null>(null);
 
   const currentDomain = window.location.hostname;
   const currentUrl = window.location.origin;
@@ -23,7 +42,7 @@ export const RecaptchaDomainTester: React.FC = () => {
     try {
       console.log('🧪 [DOMAIN_TEST] Test de compatibilité domaine-clé reCAPTCHA');
       
-      const results = {
+      const results: DomainTestResults = {
         currentDomain,
         currentUrl,
         siteKey,
@@ -41,7 +60,9 @@ export const RecaptchaDomainTester: React.FC = () => {
             'sudmegaphone.netlify.app', 
             'app.sudmegaphone.com',
             currentDomain
-          ]
+          ],
+          scriptLoaded: false,
+          scriptError: undefined
         }
       };
 
@@ -78,7 +99,7 @@ export const RecaptchaDomainTester: React.FC = () => {
         } catch (error) {
           console.error('❌ [DOMAIN_TEST] Erreur lors du test:', error);
           results.checks.scriptLoaded = false;
-          results.checks.scriptError = error.message;
+          results.checks.scriptError = error instanceof Error ? error.message : 'Erreur inconnue';
         }
       }
 
