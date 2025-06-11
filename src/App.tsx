@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
-import { AdminRoute } from "./components/auth/AdminRoute";
 import { SmartRedirect } from "./components/auth/SmartRedirect";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -22,7 +21,6 @@ import PassportMarocainScanner from "./pages/PassportMarocainScanner";
 import PassportEtrangerScanner from "./pages/PassportEtrangerScanner";
 import CarteSejourScanner from "./pages/CarteSejourScanner";
 import UserManagement from "./pages/UserManagement";
-import SecurityManagement from "./pages/SecurityManagement";
 import Contracts from "./pages/Contracts";
 import NotFound from "./pages/NotFound";
 
@@ -98,27 +96,9 @@ const App = () => {
               
               {/* Pages admin uniquement */}
               <Route path="/users" element={
-                <AdminRoute>
+                <RoleProtectedRoute allowedRoles={['admin']}>
                   <UserManagement />
-                </AdminRoute>
-              } />
-
-              <Route path="/gestion-utilisateurs" element={
-                <AdminRoute>
-                  <UserManagement />
-                </AdminRoute>
-              } />
-
-              <Route path="/security-management" element={
-                <AdminRoute>
-                  <SecurityManagement />
-                </AdminRoute>
-              } />
-
-              <Route path="/securite" element={
-                <AdminRoute>
-                  <SecurityManagement />
-                </AdminRoute>
+                </RoleProtectedRoute>
               } />
               
               {/* Routes pour les contrats */}

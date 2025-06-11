@@ -15,19 +15,20 @@ const AdminLogin = () => {
     success,
     isLoading,
     handleLogin,
-    requiresCaptcha,
-    isCaptchaVerified,
-    handleCaptchaVerification
   } = useAuthOperations();
 
   useEffect(() => {
     if (user && profile && !loading) {
-      if (profile.role === "admin" || user.email === "essbane.salim@gmail.com") {
+      // Si l'utilisateur est déjà connecté avec le bon rôle, rediriger
+      if (profile.role === "admin") {
         setShouldRedirect(true);
       }
+      // Si l'utilisateur est connecté avec un autre rôle, ne pas déconnecter automatiquement
+      // Laisser l'utilisateur voir qu'il doit se connecter avec le bon compte
     }
   }, [user, profile, loading]);
 
+  // Show loading while checking auth state
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -39,12 +40,10 @@ const AdminLogin = () => {
     );
   }
 
-  if (shouldRedirect && (profile?.role === "admin" || user?.email === "essbane.salim@gmail.com")) {
+  // Redirect admin to their dashboard
+  if (shouldRedirect && profile?.role === "admin") {
     return <Navigate to="/dashboard" replace />;
   }
-
-  // Ne pas exiger le CAPTCHA pour l'admin principal
-  const shouldRequireCaptcha = requiresCaptcha && user?.email !== "essbane.salim@gmail.com";
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
@@ -62,12 +61,9 @@ const AdminLogin = () => {
         <RoleSpecificLogin
           role="admin"
           onLogin={handleLogin}
-          onShowPasswordReset={() => {}}
+          onShowPasswordReset={() => {}} // Pas de reset pour admin via ce flow
           isLoading={isLoading}
-          hidePasswordReset={false}
-          requiresCaptcha={shouldRequireCaptcha}
-          isCaptchaVerified={isCaptchaVerified}
-          onCaptchaVerificationChange={handleCaptchaVerification}
+          hidePasswordReset={false} // Admin garde l'option
         />
       </div>
     </div>

@@ -1,43 +1,31 @@
 
-import { useState } from "react";
 import { useFormState } from "./useFormState";
-import { useBarcodeHandler } from "./useBarcodeHandler";
 import { useMRZHandler } from "./useMRZHandler";
+import { useBarcodeHandler } from "./useBarcodeHandler";
 import { useFormSubmission } from "./useFormSubmission";
 
-export const useClientForm = () => {
-  const { formData, setFormData, resetForm: resetFormState } = useFormState();
-  
-  const { handleBarcodeScanned } = useBarcodeHandler({ setFormData });
-  const { handleMRZDataExtracted } = useMRZHandler({ formData, setFormData });
-  
-  const resetForm = () => {
-    resetFormState();
-    console.log('🔄 Formulaire réinitialisé');
-  };
-  
-  // Pour le ClientForm principal, pas de CAPTCHA requis - c'est un formulaire simple
-  const { isSubmitting, handleSubmit } = useFormSubmission({ 
-    formData, 
-    resetForm,
-    isCaptchaVerified: true // Toujours true pour ce formulaire
-  });
+export const useClientFormLogic = () => {
+  const {
+    formData,
+    setFormData,
+    selectedDocumentType,
+    handleInputChange,
+    handleDocumentTypeSelect,
+    resetForm
+  } = useFormState();
 
-  // Helper function to update form data (for compatibility with components expecting onInputChange)
-  const updateFormData = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  const { handleMRZDataExtracted } = useMRZHandler({ formData, setFormData });
+  const { handleBarcodeScanned } = useBarcodeHandler({ setFormData });
+  const { isSubmitting, handleSubmit } = useFormSubmission({ formData, resetForm });
 
   return {
     formData,
-    updateFormData,
-    resetForm,
-    isSubmitting,
+    isLoading: isSubmitting, // 🔥 CORRECTION: utiliser isLoading au lieu de isSubmitting pour l'API
+    selectedDocumentType,
+    handleInputChange,
     handleSubmit,
-    handleBarcodeScanned,
-    handleMRZDataExtracted
+    handleMRZDataExtracted,
+    handleDocumentTypeSelect,
+    handleBarcodeScanned
   };
 };

@@ -20,13 +20,6 @@ const Auth = () => {
   const generalParam = searchParams.get('general');
   const showRoleSelection = !roleParam && !generalParam;
 
-  // Validate role parameter to ensure it's a valid role type
-  const validRoles = ['admin', 'superviseur', 'agent'] as const;
-  type ValidRole = typeof validRoles[number];
-  const validatedRole: ValidRole | null = roleParam && validRoles.includes(roleParam as ValidRole) 
-    ? roleParam as ValidRole 
-    : null;
-
   const {
     error,
     success,
@@ -143,10 +136,10 @@ const Auth = () => {
           </div>
         ) : showRoleSelection ? (
           <RoleLoginLinks />
-        ) : validatedRole ? (
+        ) : roleParam ? (
           <div className="max-w-md mx-auto">
             <RoleSpecificLogin
-              role={validatedRole}
+              role={roleParam}
               onLogin={handleLogin}
               onShowPasswordReset={handleShowPasswordReset}
               isLoading={isLoading}

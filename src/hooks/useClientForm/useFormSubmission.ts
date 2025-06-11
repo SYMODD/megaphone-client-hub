@@ -17,10 +17,9 @@ import { insertClientData } from "./submission/supabaseOperations";
 interface UseFormSubmissionProps {
   formData: ClientFormData;
   resetForm: () => void;
-  isCaptchaVerified: boolean;
 }
 
-export const useFormSubmission = ({ formData, resetForm, isCaptchaVerified }: UseFormSubmissionProps) => {
+export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,12 +27,6 @@ export const useFormSubmission = ({ formData, resetForm, isCaptchaVerified }: Us
     setIsSubmitting(true);
 
     logFormSubmissionStart(formData);
-
-    // Pour les pages spécifiques, le CAPTCHA sera vérifié sur chaque page
-    // Ici on considère que c'est déjà fait
-    if (!isCaptchaVerified) {
-      console.warn('⚠️ CAPTCHA non vérifié, mais on continue...');
-    }
 
     try {
       const user = await getAuthenticatedUser();

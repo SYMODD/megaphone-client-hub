@@ -5,13 +5,7 @@ import { useNewPassword } from "./auth/useNewPassword";
 import { useAuthErrorHandling } from "./auth/useAuthErrorHandling";
 
 export const useAuthOperations = () => {
-  const { 
-    handleLogin, 
-    isLoading: loginLoading,
-    requiresCaptcha, // 🔒 NOUVEAU
-    isCaptchaVerified, // 🔒 NOUVEAU
-    handleCaptchaVerification // 🔒 NOUVEAU
-  } = useLogin();
+  const { handleLogin, isLoading: loginLoading } = useLogin();
   const { handlePasswordReset, isLoading: resetLoading } = usePasswordReset();
   const { handleNewPassword, isLoading: passwordLoading } = useNewPassword();
   const { error, success, setError, setSuccess } = useAuthErrorHandling();
@@ -27,8 +21,5 @@ export const useAuthOperations = () => {
     handleLogin,
     handlePasswordReset,
     handleNewPassword,
-    requiresCaptcha, // 🔒 NOUVEAU
-    isCaptchaVerified, // 🔒 NOUVEAU
-    handleCaptchaVerification // 🔒 NOUVEAU
   };
 };

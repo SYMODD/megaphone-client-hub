@@ -145,22 +145,6 @@ export const AutoDocumentForm = () => {
     handleSubmit();
   };
 
-  const handleReset = () => {
-    setFormData({
-      nom: "",
-      prenom: "",
-      nationalite: "",
-      numero_passeport: "",
-      numero_telephone: "",
-      code_barre: "",
-      scannedImage: null,
-      observations: "",
-      date_enregistrement: new Date().toISOString().split('T')[0],
-      document_type: null
-    });
-    console.log("Reset form");
-  };
-
   return (
     <form onSubmit={handleFormSubmit} className="space-y-4 sm:space-y-6">
       <AutoDocumentScanner 
@@ -187,8 +171,8 @@ export const AutoDocumentForm = () => {
           />
 
           <FormActions 
-            isSubmitting={isLoading}
-            onReset={handleReset}
+            isLoading={isLoading}
+            onSubmit={handleSubmit}
           />
         </>
       )}
