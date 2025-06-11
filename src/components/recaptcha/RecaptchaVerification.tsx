@@ -1,17 +1,8 @@
 
-import React, { useState } from 'react';
-import { useRecaptchaSettings } from '@/hooks/useRecaptchaSettings';
-import { useAuth } from '@/contexts/AuthContext';
-import { recaptchaService } from '@/services/recaptchaService';
+import React from 'react';
 import { toast } from 'sonner';
-
-interface RecaptchaVerificationProps {
-  action: string;
-  onSuccess: (token: string) => void;
-  onError?: (error: string) => void;
-  children: React.ReactNode;
-  disabled?: boolean;
-}
+import { useRecaptchaVerification } from './verification/useRecaptchaVerification';
+import { RecaptchaVerificationProps } from './verification/types';
 
 export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
   action,
@@ -20,45 +11,18 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
   children,
   disabled = false
 }) => {
-  const { siteKey, isConfigured, isLoading } = useRecaptchaSettings();
-  const { profile } = useAuth();
-  const [isVerifying, setIsVerifying] = useState(false);
-
-  console.log('🔍 [UNIFIED_VERIFICATION] Vérification:', {
-    action,
-    userRole: profile?.role,
-    isConfigured,
-    decision: determineRequirement()
-  });
-
-  function determineRequirement() {
-    // RÈGLES UNIFIÉES CLAIRES :
-    // - Agent : TOUJOURS bypass (même si reCAPTCHA configuré)
-    // - Admin/Superviseur sur login : REQUIS si configuré
-    // - Tout le reste : BYPASS
-    const userRole = profile?.role || '';
-    
-    // RÈGLE 1 : Les agents sont TOUJOURS en bypass
-    if (userRole === 'agent') {
-      return 'BYPASS_AGENT';
-    }
-    
-    // RÈGLE 2 : Admin/Superviseur sur login
-    if (action.includes('login') && ['admin', 'superviseur'].includes(userRole)) {
-      return isConfigured ? 'VERIFICATION_REQUISE' : 'ERREUR_NON_CONFIGURE';
-    }
-    
-    // RÈGLE 3 : Tout le reste en bypass
-    return 'BYPASS_GENERAL';
-  }
+  const {
+    isLoading,
+    isVerifying,
+    requirement,
+    executeVerification
+  } = useRecaptchaVerification(action);
 
   // Chargement : rendu direct
   if (isLoading) {
     console.log('⏳ [UNIFIED_VERIFICATION] Chargement → Bypass temporaire');
     return <>{children}</>;
   }
-
-  const requirement = determineRequirement();
 
   // BYPASS pour agents et autres cas
   if (requirement === 'BYPASS_AGENT' || requirement === 'BYPASS_GENERAL') {
@@ -80,32 +44,11 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
 
   // VERIFICATION_REQUISE : Enveloppement actif
   const handleVerification = async () => {
-    console.log('🔒 [UNIFIED_VERIFICATION] Vérification REQUISE pour:', action);
-
     if (disabled || isVerifying) {
       return;
     }
 
-    try {
-      setIsVerifying(true);
-      
-      toast.info('🔒 Vérification de sécurité...', { duration: 2000 });
-      
-      const token = await recaptchaService.executeRecaptcha(siteKey!, action);
-      
-      console.log(`✅ [UNIFIED_VERIFICATION] SUCCÈS: ${action}`);
-      toast.success('✅ Vérification réussie', { duration: 1500 });
-      
-      onSuccess(token);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erreur de vérification';
-      console.error(`❌ [UNIFIED_VERIFICATION] ÉCHEC ${action}:`, error);
-      
-      toast.error(`❌ ${errorMessage}`, { duration: 4000 });
-      onError?.(errorMessage);
-    } finally {
-      setIsVerifying(false);
-    }
+    await executeVerification(onSuccess, onError);
   };
 
   console.log('🔒 [UNIFIED_VERIFICATION] ENVELOPPEMENT ACTIF pour:', action);
