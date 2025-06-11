@@ -1,5 +1,5 @@
 
-import { LucideIcon } from "lucide-react";
+import React from "react";
 
 export interface RoleSpecificLoginProps {
   role: string;
@@ -12,7 +12,7 @@ export interface RoleSpecificLoginProps {
 export interface RoleInfo {
   title: string;
   description: string;
-  icon: LucideIcon;
+  icon: React.ReactNode;
   color: string;
   bgGradient: string;
   placeholder: string;
