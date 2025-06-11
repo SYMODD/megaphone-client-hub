@@ -17,16 +17,18 @@ export const useDocumentSelection = () => {
     cleanupTempData();
   }, []);
 
-  // CORRECTION MAJEURE : Logique de bypass simplifiée
-  // reCAPTCHA est requis SEULEMENT si l'agent ET si reCAPTCHA est configuré
-  const shouldUseRecaptcha = profile?.role === "agent" && isConfigured && !isLoading;
+  // CORRECTION MAJEURE : Aligner la logique sur useRecaptchaStatusLogic
+  // reCAPTCHA est requis si l'agent ET si reCAPTCHA est configuré
+  const isRequired = profile?.role === "agent";
+  const shouldUseRecaptcha = isRequired && isConfigured && !isLoading;
 
-  console.log('📋 [DOCUMENT_SELECTOR] État actuel (CORRIGÉ):', {
+  console.log('📋 [DOCUMENT_SELECTOR] État actuel (CORRIGÉ v2):', {
     userRole: profile?.role,
+    isRequired,
     isConfigured,
     isLoading,
     shouldUseRecaptcha,
-    logique: shouldUseRecaptcha ? 'AVEC reCAPTCHA' : 'SANS reCAPTCHA (bypass)'
+    logique: shouldUseRecaptcha ? 'AVEC reCAPTCHA' : isRequired && !isConfigured ? 'REQUIS MAIS NON CONFIGURÉ (bypass)' : 'SANS reCAPTCHA (bypass)'
   });
 
   // CORRECTION : Gestionnaire reCAPTCHA amélioré
@@ -73,11 +75,12 @@ export const useDocumentSelection = () => {
       shouldUseRecaptcha,
       userRole: profile?.role,
       isConfigured,
+      isRequired,
       action: shouldUseRecaptcha ? 'STOCKAGE pour reCAPTCHA' : 'NAVIGATION directe'
     });
 
     if (shouldUseRecaptcha) {
-      // Pour les agents avec reCAPTCHA : stocker temporairement
+      // Pour les agents avec reCAPTCHA configuré : stocker temporairement
       // Le clic réel sera géré par RecaptchaVerification
       console.log('🔒 [CLICK] Stockage temporaire pour reCAPTCHA:', docType);
       storeTempDocumentSelection(docType);
