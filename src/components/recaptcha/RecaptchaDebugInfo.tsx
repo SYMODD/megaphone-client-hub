@@ -8,7 +8,7 @@ import { Bug, Shield, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const RecaptchaDebugInfo: React.FC = () => {
-  const { isConfigured, isLoading, error, siteKey, secretKey, refreshSettings, clearCache } = useRecaptchaSettings();
+  const { isConfigured, isLoading, error, siteKey, secretKey, refreshSettings } = useRecaptchaSettings();
   const { profile } = useAuth();
 
   // Seuls les admins peuvent voir les infos de debug
@@ -25,7 +25,7 @@ export const RecaptchaDebugInfo: React.FC = () => {
   const getContextRequirements = () => {
     return [
       { context: 'login', roles: ['admin', 'superviseur'], description: 'Connexion Admin/Superviseur' },
-      { context: 'document_selection', roles: ['agent'], description: 'Sélection de document Agent' },
+      { context: 'document_selection', roles: ['agent'], description: 'Sélection de document Agent (DÉSACTIVÉ)' },
       { context: 'general', roles: [], description: 'Vérification générale' }
     ];
   };
@@ -129,13 +129,17 @@ export const RecaptchaDebugInfo: React.FC = () => {
                     {req.roles.length > 0 ? req.roles.join(', ') : 'Tous'}
                   </span>
                   <Badge variant={
-                    req.roles.length === 0 || req.roles.includes(profile?.role || '') 
-                      ? (isConfigured ? "default" : "destructive")
-                      : "secondary"
+                    req.context === 'document_selection' 
+                      ? "secondary" // Toujours grisé pour document_selection
+                      : req.roles.length === 0 || req.roles.includes(profile?.role || '') 
+                        ? (isConfigured ? "default" : "destructive")
+                        : "secondary"
                   } className="text-xs">
-                    {req.roles.length === 0 || req.roles.includes(profile?.role || '') 
-                      ? (isConfigured ? "✓" : "✗")
-                      : "N/A"}
+                    {req.context === 'document_selection' 
+                      ? "DÉSACTIVÉ"
+                      : req.roles.length === 0 || req.roles.includes(profile?.role || '') 
+                        ? (isConfigured ? "✓" : "✗")
+                        : "N/A"}
                   </Badge>
                 </div>
               </div>
@@ -154,20 +158,14 @@ export const RecaptchaDebugInfo: React.FC = () => {
           >
             Actualiser
           </Button>
-          <Button 
-            size="sm" 
-            variant="outline" 
-            onClick={clearCache}
-            className="text-xs"
-          >
-            Vider Cache
-          </Button>
         </div>
 
         {/* Note technique */}
         <div className="p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
           <strong>Note:</strong> Les indicateurs de statut utilisent cette configuration en temps réel. 
           Si vous modifiez les clés, utilisez "Actualiser" pour mettre à jour les indicateurs.
+          <br />
+          <strong>Approche simplifiée:</strong> reCAPTCHA désactivé pour la sélection de documents.
         </div>
       </CardContent>
     </Card>
