@@ -1,8 +1,7 @@
-
 import { MRZData } from "@/types/ocrTypes";
 import { extractPhoneNumber } from "./phoneExtractor";
 import { extractBarcode } from "./barcodeExtractor";
-import { normalizeNationality } from "@/utils/nationalityNationalizer";
+import { normalizeNationality } from "@/utils/nationalityNormalizer";
 import { extractPassportMarocainMRZData } from "./passportMarocainExtractor";
 
 export const extractMRZData = (text: string): MRZData => {
