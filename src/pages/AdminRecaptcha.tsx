@@ -62,6 +62,11 @@ const AdminRecaptcha = () => {
       return;
     }
 
+    if (!profile?.id) {
+      toast.error('Utilisateur non identifié');
+      return;
+    }
+
     setSaving(true);
     
     try {
@@ -71,21 +76,27 @@ const AdminRecaptcha = () => {
         .delete()
         .in('setting_key', ['recaptcha_site_key', 'recaptcha_secret_key']);
 
-      // Insérer les nouvelles clés
-      const { error } = await supabase
+      // Insérer la clé publique
+      const { error: siteKeyError } = await supabase
         .from('security_settings')
-        .insert([
-          {
-            setting_key: 'recaptcha_site_key',
-            setting_value: formData.siteKey.trim()
-          },
-          {
-            setting_key: 'recaptcha_secret_key',
-            setting_value: formData.secretKey.trim()
-          }
-        ]);
+        .insert({
+          setting_key: 'recaptcha_site_key',
+          setting_value: formData.siteKey.trim(),
+          updated_by: profile.id
+        });
 
-      if (error) throw error;
+      if (siteKeyError) throw siteKeyError;
+
+      // Insérer la clé secrète
+      const { error: secretKeyError } = await supabase
+        .from('security_settings')
+        .insert({
+          setting_key: 'recaptcha_secret_key',
+          setting_value: formData.secretKey.trim(),
+          updated_by: profile.id
+        });
+
+      if (secretKeyError) throw secretKeyError;
 
       toast.success('Clés reCAPTCHA sauvegardées avec succès');
       
