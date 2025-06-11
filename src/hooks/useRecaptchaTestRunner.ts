@@ -56,6 +56,8 @@ export const useRecaptchaTestRunner = () => {
     
     console.log('🧪 [TEST_RUNNER] Tests reCAPTCHA réels avec:', siteKey.substring(0, 20) + '...');
 
+    const finalResults: TestResult[] = [];
+
     for (const scenario of scenarios) {
       try {
         console.log(`🔍 [TEST_RUNNER] Test ${scenario.role} - ${scenario.action}`);
@@ -69,6 +71,7 @@ export const useRecaptchaTestRunner = () => {
             token: 'bypassed_for_agent',
             timestamp: new Date()
           };
+          finalResults.push(result);
           setResults(prev => [...prev, result]);
           console.log(`✅ [TEST_RUNNER] ${scenario.role} - Bypass réussi (règles unifiées)`);
           continue;
@@ -85,6 +88,7 @@ export const useRecaptchaTestRunner = () => {
           timestamp: new Date()
         };
 
+        finalResults.push(result);
         setResults(prev => [...prev, result]);
         console.log(`✅ [TEST_RUNNER] ${scenario.role} - Succès reCAPTCHA`);
         
@@ -100,6 +104,7 @@ export const useRecaptchaTestRunner = () => {
           timestamp: new Date()
         };
 
+        finalResults.push(result);
         setResults(prev => [...prev, result]);
         console.error(`❌ [TEST_RUNNER] ${scenario.role} - Échec:`, error);
       }
@@ -107,20 +112,17 @@ export const useRecaptchaTestRunner = () => {
 
     setTesting(false);
     
-    // Calcul final avec les résultats actuels
-    setTimeout(() => {
-      const finalResults = results.length > 0 ? results : [];
-      const successCount = finalResults.filter(r => r.success).length;
-      const totalCount = scenarios.length;
-      
-      console.log(`🧪 [TEST_RUNNER] Tests terminés - ${successCount}/${totalCount} réussis`);
-      
-      if (successCount === totalCount) {
-        toast.success(`✅ Tous les tests réussis (${successCount}/${totalCount}) selon les règles unifiées`);
-      } else {
-        toast.warning(`⚠️ Tests partiellement réussis (${successCount}/${totalCount})`);
-      }
-    }, 100);
+    // Calcul final avec les résultats finaux (pas l'état qui peut être en retard)
+    const successCount = finalResults.filter(r => r.success).length;
+    const totalCount = scenarios.length;
+    
+    console.log(`🧪 [TEST_RUNNER] Tests terminés - ${successCount}/${totalCount} réussis`);
+    
+    if (successCount === totalCount) {
+      toast.success(`✅ Tous les tests réussis (${successCount}/${totalCount}) selon les règles unifiées`);
+    } else {
+      toast.warning(`⚠️ Tests partiellement réussis (${successCount}/${totalCount})`);
+    }
   };
 
   const clearResults = () => {
