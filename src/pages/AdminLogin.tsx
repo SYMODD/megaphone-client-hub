@@ -5,6 +5,8 @@ import { RoleSpecificLogin } from "@/components/auth/RoleSpecificLogin";
 import { useAuthOperations } from "@/hooks/useAuthOperations";
 import { AuthAlert } from "@/components/auth/AuthAlert";
 import { useEffect, useState } from "react";
+import { RecaptchaVerification } from "@/components/recaptcha/RecaptchaVerification";
+import { toast } from "sonner";
 
 const AdminLogin = () => {
   const { user, profile, loading } = useAuth();
@@ -45,6 +47,39 @@ const AdminLogin = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
+  // Gestionnaire de login avec reCAPTCHA
+  const handleLoginWithRecaptcha = async (recaptchaToken: string) => {
+    console.log('🔒 reCAPTCHA token reçu pour login Admin:', recaptchaToken.substring(0, 20) + '...');
+    
+    // Récupérer les données du formulaire depuis le localStorage temporaire
+    const loginData = localStorage.getItem('temp_login_data');
+    if (!loginData) {
+      toast.error('Données de connexion manquantes');
+      return;
+    }
+
+    try {
+      const { email, password } = JSON.parse(loginData);
+      console.log('📝 Tentative de connexion Admin avec reCAPTCHA validé');
+      
+      // Effectuer la connexion
+      await handleLogin(email, password);
+      
+      // Nettoyer les données temporaires
+      localStorage.removeItem('temp_login_data');
+    } catch (error) {
+      console.error('❌ Erreur lors de la connexion Admin:', error);
+      toast.error('Erreur lors de la connexion');
+      localStorage.removeItem('temp_login_data');
+    }
+  };
+
+  const handleRecaptchaError = (error: string) => {
+    console.error('❌ Erreur reCAPTCHA Admin login:', error);
+    toast.error('Vérification de sécurité échouée');
+    localStorage.removeItem('temp_login_data');
+  };
+
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -58,13 +93,19 @@ const AdminLogin = () => {
 
         <AuthAlert error={error} success={success} />
 
-        <RoleSpecificLogin
-          role="admin"
-          onLogin={handleLogin}
-          onShowPasswordReset={() => {}} // Pas de reset pour admin via ce flow
-          isLoading={isLoading}
-          hidePasswordReset={false} // Admin garde l'option
-        />
+        <RecaptchaVerification
+          action="admin_login"
+          onSuccess={handleLoginWithRecaptcha}
+          onError={handleRecaptchaError}
+        >
+          <RoleSpecificLogin
+            role="admin"
+            onLogin={handleLogin}
+            onShowPasswordReset={() => {}} // Pas de reset pour admin via ce flow
+            isLoading={isLoading}
+            hidePasswordReset={false} // Admin garde l'option
+          />
+        </RecaptchaVerification>
       </div>
     </div>
   );

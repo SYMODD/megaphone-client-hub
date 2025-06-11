@@ -69,7 +69,19 @@ export const RoleSpecificLogin = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onLogin(loginForm.email, loginForm.password);
+    
+    // Pour Admin et Superviseur, stocker temporairement les données pour reCAPTCHA
+    if (role === 'admin' || role === 'superviseur') {
+      console.log(`🔒 Stockage temporaire des données de connexion ${role}`);
+      localStorage.setItem('temp_login_data', JSON.stringify({
+        email: loginForm.email,
+        password: loginForm.password
+      }));
+      // Le clic sur le bouton déclenchera automatiquement reCAPTCHA via RecaptchaVerification
+    } else {
+      // Pour les agents, connexion directe sans reCAPTCHA
+      await onLogin(loginForm.email, loginForm.password);
+    }
   };
 
   return (
