@@ -2,11 +2,25 @@
 import { MRZData } from "@/types/ocrTypes";
 import { extractPhoneNumber } from "./phoneExtractor";
 import { extractBarcode } from "./barcodeExtractor";
-import { normalizeNationality } from "@/utils/nationalityNormalizer";
+import { normalizeNationality } from "@/utils/nationalityNationalizer";
+import { extractPassportMarocainMRZData } from "./passportMarocainExtractor";
 
 export const extractMRZData = (text: string): MRZData => {
   console.log("🔍 EXTRACTION MRZ - Extracting data from text:", text);
   
+  // Détecter si c'est un passeport marocain
+  const isMaroccanPassport = text.includes('ROYAUME DU MAROC') || 
+                           text.includes('KINGDOM OF MOROCCO') || 
+                           text.includes('PASSEPORT') ||
+                           text.includes('MAR') ||
+                           /SY\d{6,8}/.test(text);
+
+  if (isMaroccanPassport) {
+    console.log("🇲🇦 Passeport marocain détecté, utilisation de l'extracteur spécialisé");
+    return extractPassportMarocainMRZData(text);
+  }
+
+  // Logique originale pour les autres types de passeports
   const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   
   const mrzData: MRZData = {};
