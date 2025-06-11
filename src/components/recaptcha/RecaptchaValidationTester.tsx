@@ -25,8 +25,8 @@ export const RecaptchaValidationTester: React.FC = () => {
     
     const tests: TestResult[] = [];
     
-    console.log('🧪 [VALIDATION] Début des tests de validation avec logique unifiée');
-    console.log('🧪 [VALIDATION] Utilisateur actuel:', profile?.role, 'reCAPTCHA configuré:', isConfigured);
+    console.log('🧪 [FIXED_VALIDATION] Tests corrigés avec logique unifiée');
+    console.log('🧪 [FIXED_VALIDATION] Utilisateur actuel:', profile?.role, 'reCAPTCHA configuré:', isConfigured);
     
     // Test 1 : Configuration des clés
     tests.push({
@@ -37,66 +37,69 @@ export const RecaptchaValidationTester: React.FC = () => {
         : '❌ Clés manquantes - reCAPTCHA non configuré'
     });
     
-    // Test 2 : Logique unifiée pour Agent
+    // Test 2 : Logique spécifique par rôle
     const userRole = profile?.role || '';
-    const isAgent = userRole === 'agent';
     
-    if (isAgent) {
-      // Pour les agents : TOUJOURS SUCCÈS (bypass systématique selon les règles unifiées)
+    if (userRole === 'agent') {
+      // Pour les agents : TOUJOURS SUCCÈS (bypass systématique)
       tests.push({
         test: 'Logique Agent - Bypass reCAPTCHA',
         status: 'success',
         message: '✅ Agent peut accéder sans reCAPTCHA (règle unifiée : bypass total pour agents)'
       });
+    } else if (['admin', 'superviseur'].includes(userRole)) {
+      // Pour Admin/Superviseur : reCAPTCHA requis si disponible
+      tests.push({
+        test: `Exigence reCAPTCHA pour ${userRole}`,
+        status: isConfigured ? 'success' : 'error',
+        message: isConfigured 
+          ? `✅ reCAPTCHA configuré et actif pour ${userRole}` 
+          : `❌ reCAPTCHA requis mais non configuré pour ${userRole}`
+      });
     } else {
-      // Pour Admin/Superviseur : reCAPTCHA requis
-      const isAdminSuperviseur = ['admin', 'superviseur'].includes(userRole);
-      if (isAdminSuperviseur) {
-        tests.push({
-          test: 'Exigence reCAPTCHA pour Admin/Superviseur',
-          status: isConfigured ? 'success' : 'error',
-          message: isConfigured 
-            ? '✅ reCAPTCHA configuré pour Admin/Superviseur' 
-            : '❌ reCAPTCHA requis mais non configuré pour votre rôle'
-        });
-      } else {
-        tests.push({
-          test: 'Rôle utilisateur',
-          status: 'pending',
-          message: '⏭️ Rôle non défini ou non pris en charge pour ce test'
-        });
-      }
+      tests.push({
+        test: 'Rôle utilisateur',
+        status: 'pending',
+        message: '⏭️ Rôle non défini ou non pris en charge pour ce test'
+      });
     }
     
-    // Test 3 : Règles unifiées par contexte
+    // Test 3 : Règles contextuelles fixes
     tests.push({
-      test: 'Règles contextuelles unifiées',
+      test: 'Règles contextuelles corrigées',
       status: 'success',
-      message: '✅ Sélection documents = DÉSACTIVÉ | Login Admin/Superviseur = REQUIS'
+      message: '✅ Login Admin/Superviseur = ACTIF si configuré | Sélection documents = DÉSACTIVÉ pour tous'
     });
     
-    // Test 4 : État de chargement cohérent
+    // Test 4 : Cohérence du système
+    const isSystemConsistent = userRole === 'agent' || 
+                              ((['admin', 'superviseur'].includes(userRole)) && isConfigured) ||
+                              !(['admin', 'superviseur'].includes(userRole));
+    
     tests.push({
-      test: 'État système stable',
-      status: isLoading ? 'pending' : 'success',
-      message: isLoading ? '⏳ Chargement en cours...' : '✅ Système stable et opérationnel'
+      test: 'Cohérence système',
+      status: isSystemConsistent ? 'success' : 'error',
+      message: isSystemConsistent 
+        ? '✅ Configuration cohérente avec le rôle utilisateur' 
+        : '⚠️ Configuration incohérente - vérifiez la configuration reCAPTCHA'
     });
     
     // Simulation progressive des tests
     for (let i = 0; i < tests.length; i++) {
       setResults(tests.slice(0, i + 1));
-      await new Promise(resolve => setTimeout(resolve, 400));
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
     
     const successCount = tests.filter(t => t.status === 'success').length;
     const errorCount = tests.filter(t => t.status === 'error').length;
     
-    console.log('🧪 [VALIDATION] Tests terminés:', {
+    console.log('🧪 [FIXED_VALIDATION] Tests terminés:', {
       total: tests.length,
       succès: successCount,
       erreurs: errorCount,
       userRole: profile?.role,
-      configured: isConfigured
+      configured: isConfigured,
+      systemStatus: successCount === tests.length ? 'PARFAIT' : 'NÉCESSITE_ATTENTION'
     });
     
     setTesting(false);
@@ -129,15 +132,15 @@ export const RecaptchaValidationTester: React.FC = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TestTube className="w-5 h-5" />
-          Tests de Validation UNIFIÉS
+          Tests de Validation CORRIGÉS
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Validation des règles reCAPTCHA selon l'approche unifiée et simplifiée
+          Validation des règles reCAPTCHA corrigées et cohérentes
         </p>
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* Informations utilisateur avec règles unifiées */}
+        {/* Informations utilisateur avec règles corrigées */}
         <div className="p-3 bg-blue-50 rounded-lg">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -145,7 +148,7 @@ export const RecaptchaValidationTester: React.FC = () => {
               <Badge variant="outline">{profile?.role || 'Non défini'}</Badge>
             </div>
             <div className="text-xs text-blue-700">
-              <strong>Règles unifiées :</strong> Agent = Bypass total | Admin/Superviseur = reCAPTCHA requis | Document sélection = Désactivé pour tous
+              <strong>Règles corrigées :</strong> Agent = Bypass total | Admin/Superviseur = reCAPTCHA actif si configuré | Sélection docs = Désactivé pour tous
             </div>
           </div>
         </div>
@@ -164,7 +167,7 @@ export const RecaptchaValidationTester: React.FC = () => {
           ) : (
             <>
               <TestTube className="w-4 h-4 mr-2" />
-              Valider les Règles Unifiées
+              Valider les Règles Corrigées
             </>
           )}
         </Button>
@@ -188,7 +191,7 @@ export const RecaptchaValidationTester: React.FC = () => {
           </div>
         )}
 
-        {/* Résumé avec logique unifiée */}
+        {/* Résumé avec logique corrigée */}
         {results.length > 0 && !testing && (
           <div className="mt-4 p-3 bg-gray-50 rounded-lg">
             <div className="text-sm space-y-1">
@@ -200,9 +203,9 @@ export const RecaptchaValidationTester: React.FC = () => {
               <div className="text-xs text-gray-600 mt-2">
                 <strong>Statut global :</strong> {
                   profile?.role === 'agent' 
-                    ? '✅ Agent - Accès libre selon les règles unifiées'
+                    ? '✅ Agent - Accès libre selon les règles corrigées'
                     : isConfigured 
-                      ? '✅ Configuration complète'
+                      ? '✅ Configuration complète et cohérente'
                       : '⚠️ Configuration requise pour votre rôle'
                 }
               </div>

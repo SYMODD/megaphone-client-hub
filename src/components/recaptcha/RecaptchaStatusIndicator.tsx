@@ -26,7 +26,7 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
     return null;
   }
 
-  console.log('🎯 [UNIFIED_INDICATOR] Indicateur unifié:', {
+  console.log('🎯 [FIXED_INDICATOR] Indicateur corrigé:', {
     context,
     userRole: profile?.role,
     isConfigured,
@@ -36,15 +36,18 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
   function getDecision() {
     const userRole = profile?.role || '';
     
-    // RÈGLES UNIFIÉES CLAIRES
+    // RÈGLES CORRIGÉES ET CLAIRES
+    if (context === 'login' && ['admin', 'superviseur'].includes(userRole)) {
+      // Pour login admin/superviseur : si configuré = ACTIF, sinon = REQUIS_NON_CONFIGURÉ
+      return isConfigured ? 'RECAPTCHA_ACTIF' : 'REQUIS_MAIS_NON_CONFIGURÉ';
+    }
+    
     if (context === 'document_selection') {
+      // Sélection documents = toujours désactivé pour tous
       return 'DÉSACTIVÉ_POUR_TOUS';
     }
     
-    if (context === 'login' && ['admin', 'superviseur'].includes(userRole)) {
-      return isConfigured ? 'REQUIS_ET_CONFIGURÉ' : 'REQUIS_MAIS_NON_CONFIGURÉ';
-    }
-    
+    // Général = non requis
     return 'NON_REQUIS';
   }
 
@@ -92,16 +95,7 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
   
   const getDisplayInfo = () => {
     switch (decision) {
-      case 'DÉSACTIVÉ_POUR_TOUS':
-        return {
-          variant: 'secondary' as const,
-          icon: ShieldX,
-          text: 'reCAPTCHA désactivé',
-          bgColor: 'bg-gray-100 border-gray-300',
-          textColor: 'text-gray-600'
-        };
-      
-      case 'REQUIS_ET_CONFIGURÉ':
+      case 'RECAPTCHA_ACTIF':
         return {
           variant: 'default' as const,
           icon: ShieldCheck,
@@ -117,6 +111,15 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
           text: 'reCAPTCHA requis',
           bgColor: 'bg-red-100 border-red-300',
           textColor: 'text-red-800'
+        };
+      
+      case 'DÉSACTIVÉ_POUR_TOUS':
+        return {
+          variant: 'secondary' as const,
+          icon: ShieldX,
+          text: 'reCAPTCHA désactivé',
+          bgColor: 'bg-gray-100 border-gray-300',
+          textColor: 'text-gray-600'
         };
       
       default: // NON_REQUIS
