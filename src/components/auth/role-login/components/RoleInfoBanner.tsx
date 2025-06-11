@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Users, Shield } from "lucide-react";
+import { Users, Shield, CheckCircle, AlertTriangle } from "lucide-react";
 
 interface RoleInfoBannerProps {
   role: string;
@@ -8,7 +8,7 @@ interface RoleInfoBannerProps {
 }
 
 export const RoleInfoBanner: React.FC<RoleInfoBannerProps> = ({ role, isConfigured }) => {
-  // Information pour les agents
+  // Information pour les agents - toujours connexion simplifiée
   if (role === 'agent') {
     return (
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -18,11 +18,11 @@ export const RoleInfoBanner: React.FC<RoleInfoBannerProps> = ({ role, isConfigur
           </div>
           <div className="ml-3">
             <h3 className="text-sm font-medium text-blue-800">
-              Connexion simplifiée
+              Connexion simplifiée pour Agent
             </h3>
             <div className="mt-2 text-sm text-blue-700">
               <p>
-                Connexion directe pour les agents - aucune vérification de sécurité supplémentaire requise.
+                ✅ Connexion directe automatique - aucune vérification de sécurité supplémentaire.
               </p>
             </div>
           </div>
@@ -31,21 +31,23 @@ export const RoleInfoBanner: React.FC<RoleInfoBannerProps> = ({ role, isConfigur
     );
   }
 
-  // Information pour Admin/Superviseur avec reCAPTCHA configuré
+  // Information pour Admin/Superviseur avec reCAPTCHA BIEN configuré
   if (role !== 'agent' && isConfigured) {
     return (
       <div className="bg-green-50 border border-green-200 rounded-lg p-4">
         <div className="flex">
           <div className="flex-shrink-0">
-            <Shield className="h-5 w-5 text-green-400" />
+            <CheckCircle className="h-5 w-5 text-green-400" />
           </div>
           <div className="ml-3">
             <h3 className="text-sm font-medium text-green-800">
-              reCAPTCHA activé
+              🔒 Sécurité renforcée activée
             </h3>
             <div className="mt-2 text-sm text-green-700">
               <p>
-                Sécurité renforcée activée pour les connexions {role}.
+                ✅ reCAPTCHA v3 configuré et actif pour les connexions {role}.
+                <br />
+                Une vérification de sécurité sera effectuée avant la connexion.
               </p>
             </div>
           </div>
@@ -54,22 +56,23 @@ export const RoleInfoBanner: React.FC<RoleInfoBannerProps> = ({ role, isConfigur
     );
   }
 
-  // Message corrigé pour Admin/Superviseur sans reCAPTCHA
+  // Information pour Admin/Superviseur SANS reCAPTCHA configuré
   if (role !== 'agent' && !isConfigured) {
     return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
         <div className="flex">
           <div className="flex-shrink-0">
-            <Shield className="h-5 w-5 text-blue-400" />
+            <AlertTriangle className="h-5 w-5 text-amber-400" />
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-blue-800">
-              Connexion directe autorisée
+            <h3 className="text-sm font-medium text-amber-800">
+              ⚠️ Connexion {role} sans sécurité renforcée
             </h3>
-            <div className="mt-2 text-sm text-blue-700">
+            <div className="mt-2 text-sm text-amber-700">
               <p>
-                La connexion {role} est actuellement possible sans reCAPTCHA. 
-                Pour une sécurité renforcée, contactez votre administrateur pour configurer reCAPTCHA.
+                La connexion {role} est actuellement possible sans reCAPTCHA.
+                <br />
+                <strong>Recommandation :</strong> Configurez reCAPTCHA dans les paramètres Admin pour une sécurité optimale.
               </p>
             </div>
           </div>

@@ -8,21 +8,21 @@ export const loadRecaptchaSettings = async (
 ): Promise<RecaptchaSettings> => {
   const needsRefresh = shouldRefreshCache(currentCacheVersion, forceRefresh);
 
-  console.log('🔑 [SETTINGS] État de chargement:', {
+  console.log('🔑 [FIXED_LOADER] Chargement avec validation stricte:', {
     forceRefresh,
     hasCache: !!getGlobalCache(),
     currentVersion: currentCacheVersion,
     globalVersion: getCacheVersion(),
     needsRefresh,
-    decision: needsRefresh ? 'CHARGEMENT FRAIS' : 'CACHE HIT'
+    decision: needsRefresh ? 'CHARGEMENT_FRAIS' : 'CACHE_VALIDE'
   });
 
   if (!needsRefresh && getGlobalCache()) {
-    console.log('✅ [SETTINGS] Cache HIT valide:', getGlobalCache());
+    console.log('✅ [FIXED_LOADER] Cache valide utilisé:', getGlobalCache());
     return getGlobalCache()!;
   }
 
-  console.log('🔍 [SETTINGS] CHARGEMENT FRAIS depuis Supabase');
+  console.log('🔍 [FIXED_LOADER] Chargement FRAIS depuis Supabase avec validation stricte');
   
   const { data, error } = await supabase
     .from('security_settings')
@@ -30,19 +30,19 @@ export const loadRecaptchaSettings = async (
     .in('setting_key', ['recaptcha_site_key', 'recaptcha_secret_key']);
 
   if (error) {
-    console.error('❌ [SETTINGS] Erreur Supabase:', error);
+    console.error('❌ [FIXED_LOADER] Erreur Supabase:', error);
     throw new Error('Erreur lors du chargement des paramètres reCAPTCHA');
   }
 
-  console.log('📊 [SETTINGS] Données FRAÎCHES reçues:', data);
+  console.log('📊 [FIXED_LOADER] Données brutes reçues:', data);
 
   const siteKey = data?.find(item => item.setting_key === 'recaptcha_site_key')?.setting_value || null;
   const secretKey = data?.find(item => item.setting_key === 'recaptcha_secret_key')?.setting_value || null;
 
-  // Validation stricte avec logging détaillé
-  const hasSiteKey = !!(siteKey && siteKey.trim() !== '');
-  const hasSecretKey = !!(secretKey && secretKey.trim() !== '');
-  const isConfigured = hasSiteKey && hasSecretKey;
+  // VALIDATION STRICTE RENFORCÉE
+  const siteKeyValid = !!(siteKey && siteKey.trim() !== '' && siteKey.length > 10 && siteKey.startsWith('6L'));
+  const secretKeyValid = !!(secretKey && secretKey.trim() !== '' && secretKey.length > 10 && secretKey.startsWith('6L'));
+  const isConfigured = siteKeyValid && secretKeyValid;
 
   const newSettings: RecaptchaSettings = {
     siteKey,
@@ -51,17 +51,18 @@ export const loadRecaptchaSettings = async (
     isConfigured
   };
 
-  console.log('✅ [SETTINGS] NOUVEAU STATUT reCAPTCHA:', {
-    hasSiteKey,
-    hasSecretKey,
-    siteKeyPreview: siteKey ? siteKey.substring(0, 10) + '...' : 'VIDE',
-    secretKeyPreview: secretKey ? secretKey.substring(0, 10) + '...' : 'VIDE',
-    isConfigured,
-    status: isConfigured ? 'CONFIGURÉ ✅' : 'NON CONFIGURÉ ❌',
-    timestamp: new Date().toISOString()
+  console.log('✅ [FIXED_LOADER] VALIDATION STRICTE appliquée:', {
+    siteKeyValid: siteKeyValid ? 'VALIDE ✅' : 'INVALIDE ❌',
+    secretKeyValid: secretKeyValid ? 'VALIDE ✅' : 'INVALIDE ❌',
+    siteKeyLength: siteKey?.length || 0,
+    secretKeyLength: secretKey?.length || 0,
+    siteKeyStart: siteKey ? siteKey.substring(0, 5) + '...' : 'VIDE',
+    secretKeyStart: secretKey ? secretKey.substring(0, 5) + '...' : 'VIDE',
+    isConfigured: isConfigured ? 'CONFIGURÉ ✅' : 'NON CONFIGURÉ ❌',
+    finalStatus: isConfigured ? 'ACTIF_ET_PRET' : 'CONFIGURATION_REQUISE'
   });
 
-  // Mise à jour IMMÉDIATE du cache avec nouvelle version
+  // Mise à jour du cache avec les nouveaux paramètres validés
   setGlobalCache(newSettings);
 
   return newSettings;

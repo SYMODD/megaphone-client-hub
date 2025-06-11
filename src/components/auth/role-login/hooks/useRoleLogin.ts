@@ -15,20 +15,22 @@ export const useRoleLogin = (
 
   const { isConfigured } = useRecaptchaSettings();
 
-  // RÈGLES FINALES CORRIGÉES :
-  // - Agent : TOUJOURS connexion directe (pas de reCAPTCHA)
-  // - Admin/Superviseur : reCAPTCHA uniquement si configuré
+  // RÈGLES FINALES SIMPLIFIÉES ET CLAIRES :
+  // - Agent : TOUJOURS connexion directe (pas de reCAPTCHA jamais)
+  // - Admin/Superviseur : reCAPTCHA UNIQUEMENT si configuré
   const requiresRecaptcha = role !== 'agent' && isConfigured;
 
-  console.log(`🔐 [CORRECTED_LOGIN] Connexion ${role} avec logique corrigée:`, {
-    requiresRecaptcha,
+  console.log(`🔐 [FIXED_LOGIN] Logique de connexion clarifiée pour ${role}:`, {
+    role,
     isConfigured,
-    rule: role === 'agent' ? 'BYPASS_AGENT' : (isConfigured ? 'RECAPTCHA_REQUIRED' : 'DIRECT_LOGIN')
+    requiresRecaptcha,
+    decision: role === 'agent' ? 'BYPASS_TOTAL_AGENT' : 
+              (isConfigured ? 'RECAPTCHA_OBLIGATOIRE' : 'CONNEXION_DIRECTE_AUTORISÉE')
   });
 
-  // Gestionnaire avec reCAPTCHA pour Admin/Superviseur (si configuré)
+  // Gestionnaire avec reCAPTCHA pour Admin/Superviseur configuré
   const handleLoginWithRecaptcha = async (recaptchaToken: string) => {
-    console.log('🔒 [CORRECTED_LOGIN] reCAPTCHA validé pour:', role, recaptchaToken.substring(0, 20) + '...');
+    console.log('🔒 [FIXED_LOGIN] Connexion avec reCAPTCHA validé:', role, recaptchaToken.substring(0, 20) + '...');
     
     const tempData = localStorage.getItem('temp_login_data');
     if (!tempData) {
@@ -38,19 +40,21 @@ export const useRoleLogin = (
 
     try {
       const { email, password } = JSON.parse(tempData);
-      console.log(`📝 [CORRECTED_LOGIN] Connexion ${role} après reCAPTCHA:`, email);
+      console.log(`📝 [FIXED_LOGIN] Connexion ${role} après validation reCAPTCHA:`, email);
       
       await onLogin(email, password);
       localStorage.removeItem('temp_login_data');
+      
+      toast.success(`✅ Connexion ${role} réussie avec sécurité renforcée`);
     } catch (error) {
-      console.error('❌ [CORRECTED_LOGIN] Erreur lors de la connexion:', error);
+      console.error('❌ [FIXED_LOGIN] Erreur lors de la connexion:', error);
       toast.error('Erreur lors de la connexion');
       localStorage.removeItem('temp_login_data');
     }
   };
 
   const handleRecaptchaError = (error: string) => {
-    console.error('❌ [CORRECTED_LOGIN] Erreur reCAPTCHA:', error);
+    console.error('❌ [FIXED_LOGIN] Erreur reCAPTCHA:', error);
     toast.error('Vérification de sécurité échouée');
     localStorage.removeItem('temp_login_data');
   };
@@ -61,19 +65,27 @@ export const useRoleLogin = (
       return;
     }
 
-    // LOGIQUE CORRIGÉE ET CLAIRE
+    // LOGIQUE CLAIRE ET DÉFINITIVE
     if (requiresRecaptcha) {
-      // Admin/Superviseur avec reCAPTCHA configuré
-      console.log(`🔒 [CORRECTED_LOGIN] Stockage temporaire pour reCAPTCHA ${role}`);
+      // Admin/Superviseur avec reCAPTCHA configuré → Stockage temporaire
+      console.log(`🔒 [FIXED_LOGIN] ${role} avec reCAPTCHA configuré - stockage temporaire`);
       localStorage.setItem('temp_login_data', JSON.stringify({
         email: loginForm.email,
         password: loginForm.password
       }));
-      // Le composant RecaptchaVerification s'occupera du reste
+      toast.info('🔒 Préparation de la vérification de sécurité...');
+      // Le composant RecaptchaVerification prendra le relais
     } else {
-      // Agent OU Admin/Superviseur sans reCAPTCHA
-      console.log(`⚡ [CORRECTED_LOGIN] Connexion directe ${role}`);
-      await onLogin(loginForm.email, loginForm.password);
+      // Agent OU Admin/Superviseur sans reCAPTCHA → Connexion directe
+      const connectionType = role === 'agent' ? 'Agent (bypass automatique)' : `${role} (reCAPTCHA non configuré)`;
+      console.log(`⚡ [FIXED_LOGIN] Connexion directe: ${connectionType}`);
+      
+      try {
+        await onLogin(loginForm.email, loginForm.password);
+        toast.success(`✅ Connexion ${role} réussie`);
+      } catch (error) {
+        console.error('❌ [FIXED_LOGIN] Erreur connexion directe:', error);
+      }
     }
   };
 

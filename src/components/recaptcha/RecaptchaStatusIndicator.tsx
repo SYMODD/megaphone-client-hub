@@ -3,7 +3,7 @@ import React from 'react';
 import { useRecaptchaSettings } from "@/hooks/useRecaptchaSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, ShieldX, RefreshCw, Loader2 } from "lucide-react";
+import { ShieldCheck, ShieldX, RefreshCw, Loader2, AlertTriangle } from "lucide-react";
 
 interface RecaptchaStatusIndicatorProps {
   context?: string;
@@ -26,34 +26,29 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
     return null;
   }
 
-  console.log('🎯 [CORRECTED_INDICATOR] Indicateur avec logique corrigée:', {
+  console.log('🎯 [FIXED_INDICATOR] Indicateur avec logique finale:', {
     context,
     userRole: profile?.role,
     isConfigured,
-    decision: getDecision()
+    decision: getStatusDecision()
   });
 
-  function getDecision() {
+  function getStatusDecision() {
     const userRole = profile?.role || '';
     
-    // RÈGLES FINALES CORRIGÉES ET CLAIRES
+    // RÈGLES FINALES ET CLAIRES
     if (context === 'login' && ['admin', 'superviseur'].includes(userRole)) {
-      // Pour login admin/superviseur : statut suit la configuration
-      return isConfigured ? 'RECAPTCHA_ACTIF' : 'REQUIS_MAIS_NON_CONFIGURÉ';
+      // Login admin/superviseur : statut dépend de la configuration
+      return isConfigured ? 'SECURITE_ACTIVE' : 'SECURITE_RECOMMANDEE';
     }
     
-    if (context === 'document_selection') {
-      // Sélection documents = toujours désactivé pour TOUS les rôles
-      return 'DÉSACTIVÉ_POUR_TOUS';
-    }
-    
-    // Général pour admin/superviseur = suit la configuration
+    // Autres contextes pour admin/superviseur
     if (['admin', 'superviseur'].includes(userRole)) {
-      return isConfigured ? 'RECAPTCHA_ACTIF' : 'REQUIS_MAIS_NON_CONFIGURÉ';
+      return isConfigured ? 'SECURITE_ACTIVE' : 'SECURITE_RECOMMANDEE';
     }
     
-    // Autres cas = non requis
-    return 'NON_REQUIS';
+    // Autres cas
+    return 'NON_APPLICABLE';
   }
 
   if (isLoading) {
@@ -61,7 +56,7 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
       <div className="flex items-center gap-2">
         <Badge variant="outline" className="flex items-center gap-1">
           <Loader2 className="w-3 h-3 animate-spin" />
-          <span className="text-xs">Chargement...</span>
+          <span className="text-xs">Vérification...</span>
         </Badge>
         {showRefreshButton && (
           <button
@@ -81,7 +76,7 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
       <div className="flex items-center gap-2">
         <Badge variant="destructive" className="flex items-center gap-1">
           <ShieldX className="w-3 h-3" />
-          <span className="text-xs">Erreur</span>
+          <span className="text-xs">Erreur config</span>
         </Badge>
         {showRefreshButton && (
           <button
@@ -96,44 +91,35 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
     );
   }
 
-  const decision = getDecision();
+  const decision = getStatusDecision();
   
   const getDisplayInfo = () => {
     switch (decision) {
-      case 'RECAPTCHA_ACTIF':
+      case 'SECURITE_ACTIVE':
         return {
           variant: 'default' as const,
           icon: ShieldCheck,
-          text: 'reCAPTCHA actif',
+          text: '🔒 reCAPTCHA actif',
           bgColor: 'bg-green-100 border-green-300',
           textColor: 'text-green-800'
         };
       
-      case 'REQUIS_MAIS_NON_CONFIGURÉ':
+      case 'SECURITE_RECOMMANDEE':
         return {
-          variant: 'destructive' as const,
-          icon: ShieldX,
-          text: 'reCAPTCHA requis',
-          bgColor: 'bg-red-100 border-red-300',
-          textColor: 'text-red-800'
+          variant: 'outline' as const,
+          icon: AlertTriangle,
+          text: '⚠️ reCAPTCHA recommandé',
+          bgColor: 'bg-amber-100 border-amber-300',
+          textColor: 'text-amber-800'
         };
       
-      case 'DÉSACTIVÉ_POUR_TOUS':
-        return {
-          variant: 'secondary' as const,
-          icon: ShieldX,
-          text: 'reCAPTCHA désactivé',
-          bgColor: 'bg-gray-100 border-gray-300',
-          textColor: 'text-gray-600'
-        };
-      
-      default: // NON_REQUIS
+      default: // NON_APPLICABLE
         return {
           variant: 'outline' as const,
           icon: ShieldX,
-          text: 'reCAPTCHA non requis',
-          bgColor: 'bg-blue-100 border-blue-300',
-          textColor: 'text-blue-800'
+          text: 'Non applicable',
+          bgColor: 'bg-gray-100 border-gray-300',
+          textColor: 'text-gray-600'
         };
     }
   };

@@ -28,37 +28,40 @@ export const useRecaptchaSettings = () => {
       setIsLoading(true);
       setError(null);
 
-      console.log('🔑 [CORRECTED_HOOK] Chargement des paramètres reCAPTCHA', {
+      console.log('🔑 [FIXED_HOOK] Chargement reCAPTCHA avec validation stricte', {
         forceRefresh,
         currentCacheVersion: cacheVersion
       });
       
       const newSettings = await loadRecaptchaSettings(cacheVersion, forceRefresh);
       
-      // LOGIQUE CORRIGÉE : Validation stricte avec trim
-      const hasSiteKey = !!(newSettings.siteKey && newSettings.siteKey.trim() !== '');
-      const hasSecretKey = !!(newSettings.secretKey && newSettings.secretKey.trim() !== '');
-      const isConfigured = hasSiteKey && hasSecretKey;
+      // VALIDATION STRICTE ET CORRIGÉE
+      const siteKeyValid = !!(newSettings.siteKey && newSettings.siteKey.trim() !== '' && newSettings.siteKey.length > 10);
+      const secretKeyValid = !!(newSettings.secretKey && newSettings.secretKey.trim() !== '' && newSettings.secretKey.length > 10);
+      const isConfigured = siteKeyValid && secretKeyValid;
 
-      const correctedSettings = {
+      const validatedSettings = {
         ...newSettings,
-        isConfigured
+        isConfigured,
+        isLoaded: true
       };
 
-      console.log('✅ [CORRECTED_HOOK] Configuration CORRIGÉE:', {
-        hasSiteKey,
-        hasSecretKey,
-        isConfigured: isConfigured ? 'OUI ✅' : 'NON ❌',
+      console.log('✅ [FIXED_HOOK] Configuration STRICTEMENT validée:', {
+        siteKeyValid: siteKeyValid ? 'OUI ✅' : 'NON ❌',
+        secretKeyValid: secretKeyValid ? 'OUI ✅' : 'NON ❌',
+        isConfigured: isConfigured ? 'CONFIGURÉ ✅' : 'NON CONFIGURÉ ❌',
+        siteKeyLength: newSettings.siteKey?.length || 0,
+        secretKeyLength: newSettings.secretKey?.length || 0,
         siteKeyPreview: newSettings.siteKey ? newSettings.siteKey.substring(0, 15) + '...' : 'VIDE',
         secretKeyPreview: newSettings.secretKey ? newSettings.secretKey.substring(0, 15) + '...' : 'VIDE'
       });
 
-      setSettings(correctedSettings);
+      setSettings(validatedSettings);
       setCacheVersion(getCacheVersion());
       
     } catch (err) {
-      console.error('❌ [CORRECTED_HOOK] Erreur:', err);
-      setError('Erreur lors du chargement');
+      console.error('❌ [FIXED_HOOK] Erreur lors du chargement:', err);
+      setError('Erreur lors du chargement des paramètres reCAPTCHA');
       setSettings({
         siteKey: null,
         secretKey: null,
@@ -77,7 +80,7 @@ export const useRecaptchaSettings = () => {
   // Synchronisation automatique avec les événements globaux
   useEffect(() => {
     const unsubscribe = recaptchaEventEmitter.subscribe(() => {
-      console.log('🔄 [CORRECTED_HOOK] Synchronisation automatique détectée');
+      console.log('🔄 [FIXED_HOOK] Synchronisation automatique détectée');
       loadSettings(true);
     });
 
@@ -85,7 +88,7 @@ export const useRecaptchaSettings = () => {
   }, []);
 
   const refreshSettings = () => {
-    console.log('🔄 [CORRECTED_HOOK] Actualisation manuelle demandée');
+    console.log('🔄 [FIXED_HOOK] Actualisation manuelle demandée');
     loadSettings(true);
   };
 
