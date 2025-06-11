@@ -10,9 +10,15 @@ export const ActiveStatusBadge: React.FC<ActiveStatusBadgeProps> = ({
   showDebug, 
   showRefreshButton, 
   context, 
-  onRefresh 
+  userRole,
+  onRefresh,
+  isRefreshing
 }) => {
-  console.log('✅ [INDICATOR] reCAPTCHA requis et configuré');
+  console.log('✅ [BADGE] reCAPTCHA requis et CONFIGURÉ:', {
+    context,
+    userRole,
+    status: 'ACTIF'
+  });
   
   return (
     <div className="flex items-center gap-2">
@@ -22,16 +28,17 @@ export const ActiveStatusBadge: React.FC<ActiveStatusBadgeProps> = ({
       </Badge>
       {showDebug && (
         <span className="text-xs text-green-600">
-          (Contexte: {context}, Configuré: ✅)
+          (Contexte: {context}, Rôle: {userRole}, Status: CONFIGURÉ ✅)
         </span>
       )}
       {showRefreshButton && onRefresh && (
         <button
           onClick={onRefresh}
-          className="p-1 hover:bg-gray-100 rounded"
+          disabled={isRefreshing}
+          className="p-1 hover:bg-gray-100 rounded disabled:opacity-50"
           title="Actualiser le statut"
         >
-          <RefreshCw className="w-3 h-3 text-gray-500" />
+          <RefreshCw className={`w-3 h-3 text-gray-500 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
       )}
     </div>

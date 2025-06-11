@@ -12,11 +12,19 @@ interface NotConfiguredStatusBadgeProps extends StatusBadgeProps {
 export const NotConfiguredStatusBadge: React.FC<NotConfiguredStatusBadgeProps> = ({ 
   showDebug, 
   showRefreshButton, 
+  context,
+  userRole,
   siteKey, 
   secretKey, 
-  onRefresh 
+  onRefresh,
+  isRefreshing
 }) => {
-  console.log('⚠️ [INDICATOR] reCAPTCHA requis mais non configuré');
+  console.log('⚠️ [BADGE] reCAPTCHA requis mais NON CONFIGURÉ:', {
+    context,
+    userRole,
+    siteKey: siteKey ? 'PRÉSENTE' : 'MANQUANTE',
+    secretKey: secretKey ? 'PRÉSENTE' : 'MANQUANTE'
+  });
   
   return (
     <div className="flex items-center gap-2">
@@ -26,16 +34,17 @@ export const NotConfiguredStatusBadge: React.FC<NotConfiguredStatusBadgeProps> =
       </Badge>
       {showDebug && (
         <span className="text-xs text-yellow-600">
-          (Clés manquantes: Site={!siteKey ? '❌' : '✅'}, Secret={!secretKey ? '❌' : '✅'})
+          (Contexte: {context}, Rôle: {userRole}, Site: {siteKey ? '✅' : '❌'}, Secret: {secretKey ? '✅' : '❌'})
         </span>
       )}
       {showRefreshButton && onRefresh && (
         <button
           onClick={onRefresh}
-          className="p-1 hover:bg-gray-100 rounded"
+          disabled={isRefreshing}
+          className="p-1 hover:bg-gray-100 rounded disabled:opacity-50"
           title="Actualiser le statut"
         >
-          <RefreshCw className="w-3 h-3 text-gray-500" />
+          <RefreshCw className={`w-3 h-3 text-gray-500 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
       )}
     </div>
