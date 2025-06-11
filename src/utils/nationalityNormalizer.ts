@@ -1,4 +1,3 @@
-
 // Utilitaire pour normaliser les nationalités extraites par OCR
 export const normalizeNationality = (nationality: string | undefined): string => {
   if (!nationality) return "";
@@ -122,7 +121,6 @@ export const normalizeNationality = (nationality: string | undefined): string =>
     // Suisse
     'che': 'Suisse',
     'switzerland': 'Suisse',
-    'suisse': 'Suisse',
     'suisse': 'Suisse',
     'swiss': 'Suisse'
   };
