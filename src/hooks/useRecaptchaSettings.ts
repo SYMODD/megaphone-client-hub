@@ -10,24 +10,27 @@ interface RecaptchaSettings {
   isConfigured: boolean;
 }
 
-// Event system pour synchronisation globale
+// Event system pour synchronisation globale IMMÉDIATE
 class RecaptchaSettingsEventEmitter {
   private listeners: (() => void)[] = [];
 
   subscribe(callback: () => void) {
     this.listeners.push(callback);
+    console.log('📢 [EVENT_EMITTER] Nouvel abonné, total:', this.listeners.length);
     return () => {
       this.listeners = this.listeners.filter(cb => cb !== callback);
+      console.log('📢 [EVENT_EMITTER] Désabonnement, restant:', this.listeners.length);
     };
   }
 
   emit() {
-    console.log('📢 [EVENT_EMITTER] Notification IMMÉDIATE à', this.listeners.length, 'listeners');
-    this.listeners.forEach(callback => {
+    console.log('📢 [EVENT_EMITTER] DIFFUSION IMMÉDIATE à', this.listeners.length, 'listeners');
+    this.listeners.forEach((callback, index) => {
       try {
+        console.log(`📢 [EVENT_EMITTER] Notification listener ${index + 1}`);
         callback();
       } catch (error) {
-        console.error('❌ [EVENT_EMITTER] Erreur callback:', error);
+        console.error(`❌ [EVENT_EMITTER] Erreur listener ${index + 1}:`, error);
       }
     });
   }
@@ -35,20 +38,16 @@ class RecaptchaSettingsEventEmitter {
 
 const recaptchaEventEmitter = new RecaptchaSettingsEventEmitter();
 
-// Cache global avec invalidation IMMÉDIATE
+// Cache global avec invalidation IMMÉDIATE et FORCÉE
 let globalCache: RecaptchaSettings | null = null;
-let lastCacheTime = 0;
-const CACHE_DURATION = 500; // 500ms seulement pour forcer les refreshs
+let cacheVersion = 0; // Version du cache pour forcer les mises à jour
 
-// Fonction pour invalider le cache - CORRECTION MAJEURE
-const invalidateGlobalCache = () => {
-  console.log('🗑️ [CACHE] INVALIDATION FORCÉE du cache global');
+// Fonction pour invalider IMMÉDIATEMENT le cache
+const forceInvalidateCache = () => {
+  console.log('🗑️ [CACHE] INVALIDATION IMMÉDIATE ET FORCÉE');
   globalCache = null;
-  lastCacheTime = 0;
-  // Forcer aussi la notification immédiate
-  setTimeout(() => {
-    recaptchaEventEmitter.emit();
-  }, 10);
+  cacheVersion++;
+  console.log('🗑️ [CACHE] Nouvelle version du cache:', cacheVersion);
 };
 
 export const useRecaptchaSettings = () => {
@@ -63,23 +62,28 @@ export const useRecaptchaSettings = () => {
   const [error, setError] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
   const isMountedRef = useRef(true);
+  const currentCacheVersionRef = useRef(0);
 
   const loadSettings = async (forceRefresh = false) => {
     try {
       setIsLoading(true);
       setError(null);
 
-      console.log('🔑 [SETTINGS] Chargement reCAPTCHA:', {
+      const needsRefresh = forceRefresh || 
+                          !globalCache || 
+                          currentCacheVersionRef.current !== cacheVersion;
+
+      console.log('🔑 [SETTINGS] État de chargement:', {
         forceRefresh,
         hasCache: !!globalCache,
-        cacheAge: Date.now() - lastCacheTime,
-        cacheDuration: CACHE_DURATION,
-        shouldUseCache: !forceRefresh && globalCache && (Date.now() - lastCacheTime) < CACHE_DURATION
+        currentVersion: currentCacheVersionRef.current,
+        globalVersion: cacheVersion,
+        needsRefresh,
+        decision: needsRefresh ? 'CHARGEMENT FRAIS' : 'CACHE HIT'
       });
 
-      // CORRECTION : Cache plus agressif, mais bypass si force refresh
-      if (!forceRefresh && globalCache && (Date.now() - lastCacheTime) < CACHE_DURATION) {
-        console.log('✅ [SETTINGS] Cache HIT:', globalCache);
+      if (!needsRefresh && globalCache) {
+        console.log('✅ [SETTINGS] Cache HIT valide:', globalCache);
         if (isMountedRef.current) {
           setSettings(globalCache);
           setIsLoading(false);
@@ -87,7 +91,7 @@ export const useRecaptchaSettings = () => {
         return;
       }
 
-      console.log('🔍 [SETTINGS] Chargement FRAIS depuis Supabase (force:', forceRefresh, ')');
+      console.log('🔍 [SETTINGS] CHARGEMENT FRAIS depuis Supabase');
       
       const { data, error } = await supabase
         .from('security_settings')
@@ -107,7 +111,7 @@ export const useRecaptchaSettings = () => {
       const siteKey = data?.find(item => item.setting_key === 'recaptcha_site_key')?.setting_value || null;
       const secretKey = data?.find(item => item.setting_key === 'recaptcha_secret_key')?.setting_value || null;
 
-      // CORRECTION : Validation stricte ET logging détaillé
+      // Validation stricte avec logging détaillé
       const hasSiteKey = !!(siteKey && siteKey.trim() !== '');
       const hasSecretKey = !!(secretKey && secretKey.trim() !== '');
       const isConfigured = hasSiteKey && hasSecretKey;
@@ -122,16 +126,16 @@ export const useRecaptchaSettings = () => {
       console.log('✅ [SETTINGS] NOUVEAU STATUT reCAPTCHA:', {
         hasSiteKey,
         hasSecretKey,
-        siteKeyLength: siteKey?.length || 0,
-        secretKeyLength: secretKey?.length || 0,
+        siteKeyPreview: siteKey ? siteKey.substring(0, 10) + '...' : 'VIDE',
+        secretKeyPreview: secretKey ? secretKey.substring(0, 10) + '...' : 'VIDE',
         isConfigured,
         status: isConfigured ? 'CONFIGURÉ ✅' : 'NON CONFIGURÉ ❌',
         timestamp: new Date().toISOString()
       });
 
-      // CORRECTION : Mise à jour IMMÉDIATE du cache
+      // Mise à jour IMMÉDIATE du cache avec nouvelle version
       globalCache = newSettings;
-      lastCacheTime = Date.now();
+      currentCacheVersionRef.current = cacheVersion;
 
       if (isMountedRef.current) {
         setSettings(newSettings);
@@ -155,14 +159,19 @@ export const useRecaptchaSettings = () => {
     // Chargement initial
     if (!hasLoadedRef.current) {
       hasLoadedRef.current = true;
+      console.log('🚀 [SETTINGS] Chargement initial');
       loadSettings();
     }
 
-    // S'abonner aux événements de mise à jour
+    // S'abonner aux événements de mise à jour avec refresh FORCÉ
     const unsubscribe = recaptchaEventEmitter.subscribe(() => {
-      console.log('🔄 [EVENT] RÉCEPTION mise à jour reCAPTCHA - REFRESH FORCÉ');
+      console.log('🔄 [EVENT] RÉCEPTION mise à jour - REFRESH IMMÉDIAT FORCÉ');
       hasLoadedRef.current = false;
-      loadSettings(true); // Force refresh
+      
+      // Triple notification pour s'assurer de la synchronisation
+      setTimeout(() => loadSettings(true), 10);
+      setTimeout(() => loadSettings(true), 100);
+      setTimeout(() => loadSettings(true), 300);
     });
 
     // Cleanup
@@ -173,15 +182,15 @@ export const useRecaptchaSettings = () => {
   }, []);
 
   const refreshSettings = () => {
-    console.log('🔄 [SETTINGS] REFRESH MANUEL FORCÉ');
-    invalidateGlobalCache();
+    console.log('🔄 [SETTINGS] REFRESH MANUEL DÉCLENCHÉ');
+    forceInvalidateCache();
     hasLoadedRef.current = false;
     loadSettings(true);
   };
 
   const clearCache = () => {
     console.log('🧹 [SETTINGS] NETTOYAGE CACHE MANUEL');
-    invalidateGlobalCache();
+    forceInvalidateCache();
   };
 
   return {
@@ -193,8 +202,24 @@ export const useRecaptchaSettings = () => {
   };
 };
 
-// CORRECTION : Export fonction pour notifier les mises à jour IMMÉDIATEMENT
+// Export fonction pour notifier les mises à jour avec INVALIDATION FORCÉE
 export const notifyRecaptchaSettingsUpdate = () => {
-  console.log('📢 [NOTIFY] NOTIFICATION IMMÉDIATE de mise à jour reCAPTCHA');
-  invalidateGlobalCache();
+  console.log('📢 [NOTIFY] INVALIDATION + NOTIFICATION IMMÉDIATE');
+  forceInvalidateCache();
+  
+  // Triple émission pour garantir la réception
+  setTimeout(() => {
+    console.log('📢 [NOTIFY] Émission 1/3');
+    recaptchaEventEmitter.emit();
+  }, 10);
+  
+  setTimeout(() => {
+    console.log('📢 [NOTIFY] Émission 2/3');
+    recaptchaEventEmitter.emit();
+  }, 100);
+  
+  setTimeout(() => {
+    console.log('📢 [NOTIFY] Émission 3/3');
+    recaptchaEventEmitter.emit();
+  }, 300);
 };

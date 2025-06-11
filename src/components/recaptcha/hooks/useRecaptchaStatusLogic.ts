@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useRecaptchaSettings } from "@/hooks/useRecaptchaSettings";
+import { useRecaptchaSettings, notifyRecaptchaSettingsUpdate } from "@/hooks/useRecaptchaSettings";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const useRecaptchaStatusLogic = (context: string) => {
@@ -20,17 +20,42 @@ export const useRecaptchaStatusLogic = (context: string) => {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    console.log('🔄 [STATUS_LOGIC] Refresh manuel déclenché');
+    console.log('🔄 [STATUS_LOGIC] REFRESH MANUEL SUPER AGRESSIF');
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 300)); // Délai visuel
+      // Délai visuel court
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Triple refresh pour garantir la synchronisation
+      console.log('🔄 [STATUS_LOGIC] Triple refresh en cours...');
+      
+      // Refresh 1
       refreshSettings();
+      
+      // Refresh 2 après 100ms
+      setTimeout(() => {
+        console.log('🔄 [STATUS_LOGIC] Refresh 2/3');
+        refreshSettings();
+      }, 100);
+      
+      // Refresh 3 après 300ms
+      setTimeout(() => {
+        console.log('🔄 [STATUS_LOGIC] Refresh 3/3');
+        refreshSettings();
+      }, 300);
+      
+      // Notification globale en plus
+      setTimeout(() => {
+        console.log('🔄 [STATUS_LOGIC] Notification globale supplémentaire');
+        notifyRecaptchaSettingsUpdate();
+      }, 500);
+      
     } finally {
-      setTimeout(() => setIsRefreshing(false), 500);
+      setTimeout(() => setIsRefreshing(false), 800);
     }
   };
 
-  // CORRECTION : Logique d'exigence simplifiée et plus claire
+  // Logique d'exigence simplifiée et plus claire
   const isRequiredForContext = () => {
     const userRole = profile?.role || '';
     
@@ -50,7 +75,7 @@ export const useRecaptchaStatusLogic = (context: string) => {
       case 'document_selection':
         return userRole === 'agent';
       default:
-        return false; // Pour le contexte général, pas d'exigence
+        return false;
     }
   };
 

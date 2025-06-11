@@ -383,26 +383,6 @@ export type Database = {
       }
     }
     Functions: {
-      armor: {
-        Args: { "": string }
-        Returns: string
-      }
-      dearmor: {
-        Args: { "": string }
-        Returns: string
-      }
-      gen_random_bytes: {
-        Args: { "": number }
-        Returns: string
-      }
-      gen_random_uuid: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      gen_salt: {
-        Args: { "": string }
-        Returns: string
-      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -414,14 +394,6 @@ export type Database = {
       is_user_active: {
         Args: { _user_id: string }
         Returns: boolean
-      }
-      pgp_armor_headers: {
-        Args: { "": string }
-        Returns: Record<string, unknown>[]
-      }
-      pgp_key_id: {
-        Args: { "": string }
-        Returns: string
       }
       upsert_security_setting: {
         Args: {

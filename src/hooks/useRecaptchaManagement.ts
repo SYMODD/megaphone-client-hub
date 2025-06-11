@@ -59,29 +59,49 @@ export const useRecaptchaManagement = () => {
 
       if (secretKeyError) throw secretKeyError;
 
-      console.log('✅ [SAVE] Clés reCAPTCHA sauvegardées - DÉCLENCHEMENT SYNCHRONISATION');
+      console.log('✅ [SAVE] Clés reCAPTCHA sauvegardées - SYNCHRONISATION IMMÉDIATE');
       
-      // CORRECTION MAJEURE : Synchronisation en 3 étapes avec attente
-      
-      // 1. Toast immédiat
+      // Toast immédiat
       toast.success('✅ Clés reCAPTCHA sauvegardées');
       
-      // 2. Refresh local immédiat
+      // SYNCHRONISATION SUPER AGRESSIVE - 6 étapes
+      console.log('📢 [SAVE] DÉMARRAGE synchronisation super agressive');
+      
+      // Étape 1 : Refresh local immédiat
       setTimeout(() => {
+        console.log('📢 [SAVE] Étape 1 - Refresh local');
         refreshSettings();
+      }, 50);
+      
+      // Étape 2 : Première notification globale
+      setTimeout(() => {
+        console.log('📢 [SAVE] Étape 2 - Première notification');
+        notifyRecaptchaSettingsUpdate();
       }, 100);
       
-      // 3. Notification globale FORCÉE
+      // Étape 3 : Deuxième vague
       setTimeout(() => {
-        console.log('📢 [SAVE] NOTIFICATION GLOBALE FORCÉE');
+        console.log('📢 [SAVE] Étape 3 - Deuxième vague');
         notifyRecaptchaSettingsUpdate();
-      }, 200);
+      }, 300);
       
-      // 4. Deuxième vague de notifications pour s'assurer
+      // Étape 4 : Troisième vague
       setTimeout(() => {
-        console.log('📢 [SAVE] DEUXIÈME VAGUE de notifications');
+        console.log('📢 [SAVE] Étape 4 - Troisième vague');
         notifyRecaptchaSettingsUpdate();
-      }, 500);
+      }, 600);
+      
+      // Étape 5 : Dernière vague pour être sûr
+      setTimeout(() => {
+        console.log('📢 [SAVE] Étape 5 - Dernière vague');
+        notifyRecaptchaSettingsUpdate();
+      }, 1000);
+      
+      // Étape 6 : Notification finale après 2 secondes
+      setTimeout(() => {
+        console.log('📢 [SAVE] Étape 6 - Notification finale');
+        notifyRecaptchaSettingsUpdate();
+      }, 2000);
       
     } catch (error) {
       console.error('❌ [SAVE] Erreur lors de la sauvegarde:', error);
@@ -104,22 +124,15 @@ export const useRecaptchaManagement = () => {
 
       if (error) throw error;
 
-      console.log('✅ [CLEAR] Clés supprimées - DÉCLENCHEMENT SYNCHRONISATION');
+      console.log('✅ [CLEAR] Clés supprimées - SYNCHRONISATION IMMÉDIATE');
       
-      // Synchronisation similaire à la sauvegarde
       toast.success('🗑️ Clés reCAPTCHA supprimées');
       
-      setTimeout(() => {
-        refreshSettings();
-      }, 100);
-      
-      setTimeout(() => {
-        notifyRecaptchaSettingsUpdate();
-      }, 200);
-      
-      setTimeout(() => {
-        notifyRecaptchaSettingsUpdate();
-      }, 500);
+      // Synchronisation similaire à la sauvegarde
+      setTimeout(() => refreshSettings(), 50);
+      setTimeout(() => notifyRecaptchaSettingsUpdate(), 100);
+      setTimeout(() => notifyRecaptchaSettingsUpdate(), 300);
+      setTimeout(() => notifyRecaptchaSettingsUpdate(), 600);
       
     } catch (error) {
       console.error('❌ [CLEAR] Erreur lors de la suppression:', error);

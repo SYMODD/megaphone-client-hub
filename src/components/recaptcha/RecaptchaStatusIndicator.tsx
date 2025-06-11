@@ -12,7 +12,7 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
   context = 'general',
   size = 'md',
   showDebug = false,
-  showRefreshButton = false
+  showRefreshButton = true // Forcer l'affichage du bouton refresh par défaut
 }) => {
   const {
     isConfigured,
