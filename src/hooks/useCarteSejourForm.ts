@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { normalizeNationality } from "@/utils/nationalityNormalizer";
 
 interface FormData {
   nom: string;
@@ -15,7 +15,7 @@ interface FormData {
   date_enregistrement: string;
   observations: string;
   scannedImage: string | null;
-  code_barre_image_url: string; // 🎯 AJOUT: URL de l'image du code-barres
+  code_barre_image_url: string;
 }
 
 export const useCarteSejourForm = () => {
@@ -34,7 +34,7 @@ export const useCarteSejourForm = () => {
     date_enregistrement: new Date().toISOString().split('T')[0],
     observations: "",
     scannedImage: null,
-    code_barre_image_url: "" // 🎯 AJOUT: Initialisation
+    code_barre_image_url: ""
   });
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -45,21 +45,41 @@ export const useCarteSejourForm = () => {
     setFormData(prev => ({ ...prev, scannedImage: imageData }));
   };
 
-  const handleCarteDataExtracted = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
-    console.log("🎯 CARTE SÉJOUR - Données extraites:", {
-      barcode,
-      phone,
-      barcodeImageUrl,
-      barcodeImageUrl_present: barcodeImageUrl ? "✅ OUI" : "❌ NON"
-    });
+  const handleCarteDataExtracted = (extractedData: any) => {
+    console.log("🔍 CARTE SÉJOUR FORM - Données extraites:", extractedData);
 
+    // Normaliser la nationalité
+    const nationalite = extractedData.nationalite ? normalizeNationality(extractedData.nationalite) : "";
+    
     setFormData(prev => ({
       ...prev,
-      code_barre: barcode || "",
-      numero_telephone: phone || "",
-      code_barre_image_url: barcodeImageUrl || "", // 🎯 CRUCIAL: Sauvegarder l'URL
-      observations: prev.observations || `Données extraites automatiquement via OCR le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')} - Type de document: Carte de séjour`
+      nom: extractedData.nom || prev.nom,
+      prenom: extractedData.prenom || prev.prenom,
+      nationalite: nationalite || prev.nationalite,
+      numero_passeport: extractedData.numero_carte || extractedData.numero_passeport || prev.numero_passeport,
+      // Ne pas écraser les données du code-barres si elles existent déjà
+      ...(extractedData.code_barre && { code_barre: extractedData.code_barre }),
+      ...(extractedData.numero_telephone && { numero_telephone: extractedData.numero_telephone }),
+      ...(extractedData.code_barre_image_url && { code_barre_image_url: extractedData.code_barre_image_url })
     }));
+
+    const extractionInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: Carte de séjour`;
+    setFormData(prev => ({
+      ...prev,
+      observations: prev.observations ? `${prev.observations}\n\n${extractionInfo}` : extractionInfo
+    }));
+
+    // Log des champs extraits pour debug
+    const extractedFields = [];
+    if (extractedData.nom) extractedFields.push("nom");
+    if (extractedData.prenom) extractedFields.push("prénom");
+    if (extractedData.nationalite) extractedFields.push("nationalité");
+    if (extractedData.numero_carte || extractedData.numero_passeport) extractedFields.push("numéro document");
+    
+    toast({
+      title: "✅ Données extraites",
+      description: `Champs remplis: ${extractedFields.join(", ")}`,
+    });
   };
 
   const handleSubmit = async () => {

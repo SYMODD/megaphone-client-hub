@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PassportEtrangerData } from "@/types/passportEtrangerTypes";
+import { normalizeNationality } from "@/utils/nationalityNormalizer";
 
 interface FormData {
   nom: string;
@@ -51,20 +51,42 @@ export const usePassportEtrangerForm = () => {
   };
 
   const handlePassportDataExtracted = (extractedData: PassportEtrangerData, documentType: 'passeport_etranger' | 'carte_sejour') => {
-    console.log("🎯 PASSEPORT ÉTRANGER - Données extraites:", extractedData);
+    console.log("🔍 PASSEPORT ÉTRANGER FORM - Données extraites:", extractedData);
 
+    // Normaliser la nationalité
+    const nationalite = extractedData.nationalite ? normalizeNationality(extractedData.nationalite) : "";
+    
     setFormData(prev => ({
       ...prev,
-      nom: extractedData.nom || "",
-      prenom: extractedData.prenom || "",
-      nationalite: extractedData.nationalite || "",
-      numero_passeport: extractedData.numero_passeport || "",
-      date_naissance: extractedData.date_naissance || "",
-      date_expiration: extractedData.date_expiration || "",
-      code_barre: extractedData.code_barre || extractedData.numero_passeport || "",
-      numero_telephone: extractedData.numero_telephone || "",
-      observations: prev.observations || `Données extraites automatiquement via OCR le ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')} - Type de document: ${documentType}`
+      nom: extractedData.nom || prev.nom,
+      prenom: extractedData.prenom || prev.prenom,
+      nationalite: nationalite || prev.nationalite,
+      numero_passeport: extractedData.numero_passeport || prev.numero_passeport,
+      date_naissance: extractedData.date_naissance || prev.date_naissance,
+      date_expiration: extractedData.date_expiration || prev.date_expiration,
+      // Ne pas écraser les données du code-barres si elles existent déjà
+      ...(extractedData.code_barre && { code_barre: extractedData.code_barre }),
+      ...(extractedData.numero_telephone && { numero_telephone: extractedData.numero_telephone }),
+      ...(extractedData.code_barre_image_url && { code_barre_image_url: extractedData.code_barre_image_url })
     }));
+
+    const extractionInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: ${documentType}`;
+    setFormData(prev => ({
+      ...prev,
+      observations: prev.observations ? `${prev.observations}\n\n${extractionInfo}` : extractionInfo
+    }));
+
+    // Log des champs extraits pour debug
+    const extractedFields = [];
+    if (extractedData.nom) extractedFields.push("nom");
+    if (extractedData.prenom) extractedFields.push("prénom");
+    if (extractedData.nationalite) extractedFields.push("nationalité");
+    if (extractedData.numero_passeport) extractedFields.push("numéro passeport");
+    
+    toast({
+      title: "✅ Données extraites",
+      description: `Champs remplis: ${extractedFields.join(", ")}`,
+    });
   };
 
   const handleSubmit = async () => {
