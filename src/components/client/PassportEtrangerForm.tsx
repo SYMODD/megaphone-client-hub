@@ -42,6 +42,11 @@ export const PassportEtrangerForm = () => {
     handleSubmit();
   };
 
+  const handleReset = () => {
+    // Implementation for reset functionality if needed
+    console.log("Reset form");
+  };
+
   return (
     <form onSubmit={handleFormSubmit} className="space-y-4 sm:space-y-6">
       <AutoDocumentScanner 
@@ -68,8 +73,8 @@ export const PassportEtrangerForm = () => {
       />
 
       <FormActions 
-        isLoading={isLoading}
-        onSubmit={handleSubmit}
+        isSubmitting={isLoading}
+        onReset={handleReset}
       />
     </form>
   );

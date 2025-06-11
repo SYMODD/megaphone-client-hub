@@ -12,8 +12,9 @@ const initialFormData: ClientFormData = {
   code_barre_image_url: "",
   observations: "",
   date_enregistrement: new Date().toISOString().split('T')[0],
+  document_type: "",
   scannedImage: null,
-  photo_url: null
+  photo_url: ""
 };
 
 export const useFormState = () => {
