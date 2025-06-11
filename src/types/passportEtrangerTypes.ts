@@ -8,6 +8,7 @@ export interface PassportEtrangerData {
   date_expiration?: string;
   code_barre?: string;
   numero_telephone?: string;
+  code_barre_image_url?: string;
 }
 
 export interface PassportExtractionContext {
