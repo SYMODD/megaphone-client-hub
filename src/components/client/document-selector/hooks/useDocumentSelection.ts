@@ -12,17 +12,19 @@ export const useDocumentSelection = () => {
     cleanupTempData();
   }, []);
 
-  console.log('📋 [UNIFIED_SELECTION] Hook de sélection documents - APPROCHE UNIFIÉE');
+  console.log('📋 [UNIFIED_SELECTION] Hook de sélection documents - Navigation simplifiée');
 
   const handleTypeClick = (docType: DocumentType, onTypeSelect?: (type: DocumentType) => void) => {
     console.log('🖱️ [UNIFIED_SELECTION] Clic sur type de document:', docType);
-    console.log('🚀 [UNIFIED_SELECTION] Navigation directe (pas de reCAPTCHA pour sélection)');
-
+    
+    // LOGIQUE SIMPLIFIÉE : Plus de reCAPTCHA pour la sélection de documents
+    // Navigation directe selon le contexte
+    
     if (onTypeSelect) {
-      console.log('📝 [UNIFIED_SELECTION] Utilisation du callback onTypeSelect');
+      console.log('📝 [UNIFIED_SELECTION] Utilisation du callback onTypeSelect (mode intégré)');
       onTypeSelect(docType);
     } else {
-      console.log('🧭 [UNIFIED_SELECTION] Navigation directe vers scanner');
+      console.log('🧭 [UNIFIED_SELECTION] Navigation vers scanner dédié');
       navigateToScanner(docType, navigate);
     }
   };

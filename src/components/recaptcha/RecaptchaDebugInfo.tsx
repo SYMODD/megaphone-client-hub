@@ -10,17 +10,17 @@ export const RecaptchaDebugInfo: React.FC = () => {
   const { profile } = useAuth();
   const { isConfigured, isLoading, siteKey, secretKey, refreshSettings } = useRecaptchaSettings();
 
-  // Afficher uniquement pour les admins
-  if (!profile || profile.role !== 'admin') {
+  // Masquer complètement pour les agents - ils n'ont pas besoin de voir ces informations
+  if (!profile || profile.role === 'agent') {
     return null;
   }
 
-  console.log('🐛 [DEBUG_INFO] Affichage informations de debug unifiées:', {
-    userRole: profile.role,
-    isConfigured,
-    hasSiteKey: !!siteKey,
-    hasSecretKey: !!secretKey
-  });
+  // Afficher uniquement pour les admins et superviseurs
+  if (profile.role !== 'admin' && profile.role !== 'superviseur') {
+    return null;
+  }
+
+  console.log('🐛 [DEBUG_INFO] Affichage informations de debug pour:', profile.role);
 
   const getStatusInfo = () => {
     if (isLoading) {
@@ -53,7 +53,7 @@ export const RecaptchaDebugInfo: React.FC = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-sm">
           <Info className="w-4 h-4" />
-          Debug reCAPTCHA (Admin uniquement)
+          Debug reCAPTCHA ({profile.role})
           <button
             onClick={refreshSettings}
             className="ml-auto p-1 hover:bg-blue-100 rounded"

@@ -5,6 +5,7 @@ import { RecaptchaDebugInfo } from "@/components/recaptcha/RecaptchaDebugInfo";
 import { DocumentTypeSelectorHeader } from "./document-selector/DocumentTypeSelectorHeader";
 import { DocumentTypeList } from "./document-selector/DocumentTypeList";
 import { SelectedDocumentCard } from "./document-selector/SelectedDocumentCard";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DocumentTypeSelectorProps {
   selectedType: DocumentType | null;
@@ -13,10 +14,13 @@ interface DocumentTypeSelectorProps {
 }
 
 export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: DocumentTypeSelectorProps) => {
+  const { profile } = useAuth();
+
   console.log('📋 [DOCUMENT_SELECTOR] Rendu sélecteur (version unifiée):', {
     selectedType,
     hasCallback: !!onTypeSelect,
-    hasBack: !!onBack
+    hasBack: !!onBack,
+    userRole: profile?.role
   });
 
   if (selectedType) {
@@ -37,7 +41,7 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
         <DocumentTypeList onTypeSelect={onTypeSelect} />
       </Card>
 
-      {/* Informations de debug pour les admins uniquement */}
+      {/* Informations de debug - masquées pour les agents */}
       <RecaptchaDebugInfo />
     </>
   );

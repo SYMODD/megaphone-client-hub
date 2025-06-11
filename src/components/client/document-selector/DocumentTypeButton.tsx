@@ -21,10 +21,10 @@ export const DocumentTypeButton = ({
 }: DocumentTypeButtonProps) => {
   const IconComponent = iconMap[docType.icon as keyof typeof iconMap];
 
-  console.log('🔘 [UNIFIED_BUTTON] Rendu bouton document:', docType.id, '- Handler unifié');
+  console.log('🔘 [UNIFIED_BUTTON] Rendu bouton document:', docType.id, '- Navigation simplifiée');
 
   const handleClick = () => {
-    console.log('🖱️ [UNIFIED_BUTTON] Clic détecté sur:', docType.id);
+    console.log('🖱️ [UNIFIED_BUTTON] Clic détecté sur:', docType.id, '- Pas de reCAPTCHA requis');
     onTypeClick();
   };
 

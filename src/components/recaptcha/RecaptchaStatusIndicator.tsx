@@ -21,6 +21,11 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
   const { isConfigured, isLoading, error, refreshSettings } = useRecaptchaSettings();
   const { profile } = useAuth();
 
+  // Masquer complètement pour les agents - ils n'ont pas besoin de voir le statut reCAPTCHA
+  if (profile?.role === 'agent') {
+    return null;
+  }
+
   console.log('🎯 [UNIFIED_INDICATOR] Indicateur unifié:', {
     context,
     userRole: profile?.role,
