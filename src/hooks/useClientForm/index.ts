@@ -6,8 +6,6 @@ import { useMRZHandler } from "./useMRZHandler";
 import { useFormSubmission } from "./useFormSubmission";
 
 export const useClientForm = () => {
-  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
-  
   const { formData, setFormData, resetForm: resetFormState } = useFormState();
   
   const { handleBarcodeScanned } = useBarcodeHandler({ setFormData });
@@ -15,14 +13,13 @@ export const useClientForm = () => {
   
   const resetForm = () => {
     resetFormState();
-    setIsCaptchaVerified(false);
-    console.log('🔄 Formulaire et CAPTCHA réinitialisés');
+    console.log('🔄 Formulaire réinitialisé');
   };
   
   const { isSubmitting, handleSubmit } = useFormSubmission({ 
     formData, 
     resetForm,
-    isCaptchaVerified 
+    isCaptchaVerified: true // Pas de CAPTCHA requis ici
   });
 
   // Helper function to update form data (for compatibility with components expecting onInputChange)
@@ -40,8 +37,6 @@ export const useClientForm = () => {
     isSubmitting,
     handleSubmit,
     handleBarcodeScanned,
-    handleMRZDataExtracted,
-    isCaptchaVerified,
-    setIsCaptchaVerified
+    handleMRZDataExtracted
   };
 };

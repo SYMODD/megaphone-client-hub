@@ -4,9 +4,13 @@ import { PersonalInfoSection } from "./PersonalInfoSection";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { RegistrationSection } from "./RegistrationSection";
 import { FormActions } from "./FormActions";
+import { CaptchaSection } from "./CaptchaSection";
 import { useCarteSejourForm } from "@/hooks/useCarteSejourForm";
+import { useState } from "react";
 
 export const CarteSejourForm = () => {
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
+  
   const {
     formData,
     isLoading,
@@ -15,13 +19,11 @@ export const CarteSejourForm = () => {
     handleCarteDataExtracted
   } = useCarteSejourForm();
 
-  // Fonction pour gérer l'image scannée
   const handleImageScanned = (imageData: string) => {
     console.log("🖼️ Image carte de séjour scannée reçue");
     handleInputChange("scannedImage", imageData);
   };
 
-  // Fonction pour gérer le scan du code-barres
   const handleBarcodeScanned = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
     console.log("🔥 CARTE SEJOUR - RÉCEPTION BARCODE:", {
       barcode,
@@ -44,12 +46,22 @@ export const CarteSejourForm = () => {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isCaptchaVerified) {
+      return; // Le message d'erreur sera affiché par FormActions
+    }
+    
     handleSubmit();
   };
 
+  const handleCaptchaVerificationChange = (isVerified: boolean) => {
+    console.log('🔒 [CarteSejourForm] Changement de statut CAPTCHA:', isVerified);
+    setIsCaptchaVerified(isVerified);
+  };
+
   const handleReset = () => {
-    // Implementation for reset functionality if needed
     console.log("Reset form");
+    setIsCaptchaVerified(false);
   };
 
   return (
@@ -77,9 +89,15 @@ export const CarteSejourForm = () => {
         onInputChange={handleInputChange}
       />
 
+      <CaptchaSection 
+        onVerificationChange={handleCaptchaVerificationChange}
+        required={true}
+      />
+
       <FormActions 
         isSubmitting={isLoading}
         onReset={handleReset}
+        isCaptchaVerified={isCaptchaVerified}
       />
     </form>
   );

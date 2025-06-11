@@ -5,9 +5,13 @@ import { ContactInfoSection } from "./ContactInfoSection";
 import { RegistrationSection } from "./RegistrationSection";
 import { FormActions } from "./FormActions";
 import { BarcodeScanner } from "./BarcodeScanner";
+import { CaptchaSection } from "./CaptchaSection";
 import { useCINForm } from "@/hooks/useCINForm";
+import { useState } from "react";
 
 export const CINForm = () => {
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
+  
   const {
     formData,
     isLoading,
@@ -17,7 +21,6 @@ export const CINForm = () => {
     handleSubmit
   } = useCINForm();
 
-  // Fonction pour gérer le scan du code-barres
   const handleBarcodeScanned = (barcode: string, phone?: string, barcodeImageUrl?: string) => {
     console.log("🔥 CIN FORM - RÉCEPTION BARCODE:", {
       barcode,
@@ -40,12 +43,22 @@ export const CINForm = () => {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isCaptchaVerified) {
+      return; // Le message d'erreur sera affiché par FormActions
+    }
+    
     handleSubmit();
   };
 
+  const handleCaptchaVerificationChange = (isVerified: boolean) => {
+    console.log('🔒 [CINForm] Changement de statut CAPTCHA:', isVerified);
+    setIsCaptchaVerified(isVerified);
+  };
+
   const handleReset = () => {
-    // Implementation for reset functionality if needed
     console.log("Reset form");
+    setIsCaptchaVerified(false);
   };
 
   return (
@@ -76,9 +89,15 @@ export const CINForm = () => {
         onInputChange={handleInputChange}
       />
 
+      <CaptchaSection 
+        onVerificationChange={handleCaptchaVerificationChange}
+        required={true}
+      />
+
       <FormActions 
         isSubmitting={isLoading}
         onReset={handleReset}
+        isCaptchaVerified={isCaptchaVerified}
       />
     </form>
   );
