@@ -1,8 +1,11 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, IdCard, BookOpen, Globe, CreditCard } from "lucide-react";
 import { DocumentType, documentTypes } from "@/types/documentTypes";
 import { useNavigate } from "react-router-dom";
+import { RecaptchaVerification } from "@/components/recaptcha/RecaptchaVerification";
+import { toast } from "sonner";
 
 interface DocumentTypeSelectorProps {
   selectedType: DocumentType | null;
@@ -20,8 +23,41 @@ const iconMap = {
 export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: DocumentTypeSelectorProps) => {
   const navigate = useNavigate();
 
-  const handleTypeClick = (docType: DocumentType) => {
-    // Navigate to specific scanner page based on document type
+  // Gestionnaire avec reCAPTCHA pour la sélection de document
+  const handleDocumentSelectionWithRecaptcha = (recaptchaToken: string) => {
+    console.log('🔒 reCAPTCHA token reçu pour sélection document Agent:', recaptchaToken.substring(0, 20) + '...');
+    
+    // Récupérer le type de document depuis le localStorage temporaire
+    const tempData = localStorage.getItem('temp_document_selection');
+    if (!tempData) {
+      toast.error('Données de sélection manquantes');
+      return;
+    }
+
+    try {
+      const { docType } = JSON.parse(tempData);
+      console.log('📝 Sélection de document validée par reCAPTCHA:', docType);
+      
+      // Effectuer la navigation après validation reCAPTCHA
+      navigateToScanner(docType);
+      
+      // Nettoyer les données temporaires
+      localStorage.removeItem('temp_document_selection');
+    } catch (error) {
+      console.error('❌ Erreur lors de la sélection de document:', error);
+      toast.error('Erreur lors de la sélection');
+      localStorage.removeItem('temp_document_selection');
+    }
+  };
+
+  const handleRecaptchaError = (error: string) => {
+    console.error('❌ Erreur reCAPTCHA sélection document:', error);
+    toast.error('Vérification de sécurité échouée');
+    localStorage.removeItem('temp_document_selection');
+  };
+
+  const navigateToScanner = (docType: DocumentType) => {
+    // Navigation vers les pages spécifiques selon le type de document
     switch (docType) {
       case 'cin':
         navigate('/scanner-cin');
@@ -38,6 +74,17 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
       default:
         onTypeSelect(docType);
     }
+  };
+
+  const handleTypeClick = (docType: DocumentType) => {
+    console.log('🔒 Stockage temporaire de la sélection document pour reCAPTCHA:', docType);
+    
+    // Stocker temporairement le type de document pour reCAPTCHA
+    localStorage.setItem('temp_document_selection', JSON.stringify({
+      docType: docType
+    }));
+    
+    // Le clic sur le bouton déclenchera automatiquement reCAPTCHA via RecaptchaVerification
   };
 
   if (selectedType) {
@@ -73,22 +120,28 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
         {documentTypes.map((docType) => {
           const IconComponent = iconMap[docType.icon as keyof typeof iconMap];
           return (
-            <Button
+            <RecaptchaVerification
               key={docType.id}
-              variant="outline"
-              className="w-full justify-start h-auto p-4 hover:bg-blue-50 hover:border-blue-300"
-              onClick={() => handleTypeClick(docType.id)}
+              action="agent_document_selection"
+              onSuccess={handleDocumentSelectionWithRecaptcha}
+              onError={handleRecaptchaError}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <IconComponent className="w-5 h-5 text-blue-600" />
+              <Button
+                variant="outline"
+                className="w-full justify-start h-auto p-4 hover:bg-blue-50 hover:border-blue-300"
+                onClick={() => handleTypeClick(docType.id)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <IconComponent className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-slate-800">{docType.label}</div>
+                    <div className="text-sm text-slate-600">{docType.description}</div>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <div className="font-medium text-slate-800">{docType.label}</div>
-                  <div className="text-sm text-slate-600">{docType.description}</div>
-                </div>
-              </div>
-            </Button>
+              </Button>
+            </RecaptchaVerification>
           );
         })}
       </CardContent>

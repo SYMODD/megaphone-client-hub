@@ -45,6 +45,7 @@ const AgentLogin = () => {
     return <Navigate to="/nouveau-client" replace />;
   }
 
+  // Les Agents se connectent SANS reCAPTCHA (contrairement aux Admin/Superviseur)
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
