@@ -2,7 +2,7 @@
 import React, { memo, useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Database, FileText, Shield, UserPlus, Menu, X } from "lucide-react";
+import { Users, Plus, Database, FileText, Shield, UserPlus, Menu, X, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { RoleIndicator } from "../dashboard/RoleIndicator";
@@ -31,7 +31,10 @@ const Navigation = memo(() => {
       ];
 
       if (isAdmin) {
-        baseItems.push({ to: "/users", icon: Shield, label: "Gestion Utilisateurs", color: "from-red-500 to-red-600" });
+        baseItems.push(
+          { to: "/users", icon: Shield, label: "Gestion Utilisateurs", color: "from-red-500 to-red-600" },
+          { to: "/admin/recaptcha", icon: Settings, label: "Configuration reCAPTCHA", color: "from-orange-500 to-orange-600" }
+        );
       }
 
       return baseItems;
@@ -115,6 +118,7 @@ const Navigation = memo(() => {
                           {item.label === "Base Clients" && "Consulter la liste"}
                           {item.label === "Contrats" && "Générer PDF"}
                           {item.label === "Gestion Utilisateurs" && "Administration"}
+                          {item.label === "Configuration reCAPTCHA" && "Sécurité"}
                         </div>
                       </div>
                     </Button>
