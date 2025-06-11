@@ -8,10 +8,10 @@ import { useFormSubmission } from "./useFormSubmission";
 export const useClientForm = () => {
   const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
   
-  const { formData, updateFormData, resetForm: resetFormState } = useFormState();
+  const { formData, setFormData, resetForm: resetFormState } = useFormState();
   
-  const { handleBarcodeData } = useBarcodeHandler({ updateFormData });
-  const { handleMRZData } = useMRZHandler({ updateFormData });
+  const { handleBarcodeScanned } = useBarcodeHandler({ setFormData });
+  const { handleMRZDataExtracted } = useMRZHandler({ formData, setFormData });
   
   const resetForm = () => {
     resetFormState();
@@ -25,14 +25,22 @@ export const useClientForm = () => {
     isCaptchaVerified 
   });
 
+  // Helper function to update form data (for compatibility with components expecting onInputChange)
+  const updateFormData = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   return {
     formData,
     updateFormData,
     resetForm,
     isSubmitting,
     handleSubmit,
-    handleBarcodeData,
-    handleMRZData,
+    handleBarcodeScanned,
+    handleMRZDataExtracted,
     isCaptchaVerified,
     setIsCaptchaVerified
   };

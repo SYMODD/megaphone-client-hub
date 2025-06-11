@@ -15,6 +15,7 @@ export const ClientForm = () => {
     resetForm,
     isSubmitting,
     handleSubmit,
+    handleMRZDataExtracted,
     isCaptchaVerified,
     setIsCaptchaVerified
   } = useClientForm();
@@ -24,26 +25,31 @@ export const ClientForm = () => {
     setIsCaptchaVerified(isVerified);
   };
 
+  const handleImageScanned = (image: string) => {
+    updateFormData("scannedImage", image);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <PersonalInfoSection 
         formData={formData} 
-        updateFormData={updateFormData} 
+        onInputChange={updateFormData} 
       />
       
       <ContactInfoSection 
         formData={formData} 
-        updateFormData={updateFormData} 
+        onInputChange={updateFormData} 
       />
       
       <DocumentScanner 
-        formData={formData} 
-        updateFormData={updateFormData} 
+        onDataExtracted={handleMRZDataExtracted}
+        onImageScanned={handleImageScanned}
+        scannedImage={formData.scannedImage}
       />
       
       <RegistrationSection 
         formData={formData} 
-        updateFormData={updateFormData} 
+        onInputChange={updateFormData} 
       />
 
       <CaptchaSection 
