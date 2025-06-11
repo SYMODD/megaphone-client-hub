@@ -9,20 +9,37 @@ export const useStatusIndicator = (context: string) => {
   const { profile } = useAuth();
 
   const getStatusDecision = (): StatusDecision => {
-    const userRole = profile?.role || '';
+    // LOGIQUE CORRIGÉE : Analyser le CONTEXTE au lieu du rôle uniquement
+    // Car pour les pages de login, l'utilisateur n'est pas encore connecté
     
-    // RÈGLES FINALES ET CLAIRES
-    if (context === 'login' && ['admin', 'superviseur'].includes(userRole)) {
-      // Login admin/superviseur : statut dépend de la configuration
+    console.log('🎯 [CORRECTED_STATUS] Analyse du contexte:', {
+      context,
+      userRole: profile?.role || 'NON_CONNECTE',
+      isConfigured
+    });
+    
+    // RÈGLE 1 : Contexte de login (admin/superviseur)
+    if (context === 'login') {
+      // Sur les pages de login, le statut dépend de la configuration
       return isConfigured ? 'SECURITE_ACTIVE' : 'SECURITE_RECOMMANDEE';
     }
     
-    // Autres contextes pour admin/superviseur
-    if (['admin', 'superviseur'].includes(userRole)) {
+    // RÈGLE 2 : Contexte agent ou utilisateur connecté en tant qu'agent
+    if (context.includes('agent') || profile?.role === 'agent') {
+      return 'NON_APPLICABLE';
+    }
+    
+    // RÈGLE 3 : Autres contextes pour admin/superviseur connectés
+    if (profile && ['admin', 'superviseur'].includes(profile.role)) {
       return isConfigured ? 'SECURITE_ACTIVE' : 'SECURITE_RECOMMANDEE';
     }
     
-    // Autres cas
+    // RÈGLE 4 : Contextes généraux
+    if (context === 'general') {
+      return isConfigured ? 'SECURITE_ACTIVE' : 'SECURITE_RECOMMANDEE';
+    }
+    
+    // RÈGLE 5 : Autres cas
     return 'NON_APPLICABLE';
   };
 
@@ -60,11 +77,12 @@ export const useStatusIndicator = (context: string) => {
   const decision = getStatusDecision();
   const displayInfo = getDisplayInfo(decision);
 
-  console.log('🎯 [FIXED_INDICATOR] Indicateur avec logique finale:', {
+  console.log('🎯 [CORRECTED_STATUS] Décision finale:', {
     context,
-    userRole: profile?.role,
+    userRole: profile?.role || 'NON_CONNECTE',
     isConfigured,
-    decision
+    decision,
+    statusText: displayInfo.text
   });
 
   return {
@@ -73,7 +91,7 @@ export const useStatusIndicator = (context: string) => {
     decision,
     displayInfo,
     refreshSettings,
-    userRole: profile?.role,
-    shouldHide: profile?.role === 'agent'
+    userRole: profile?.role || 'NON_CONNECTE',
+    shouldHide: false // Ne plus masquer pour permettre le diagnostic
   };
 };

@@ -12,28 +12,40 @@ export const useRecaptchaVerification = (action: string) => {
   const [isVerifying, setIsVerifying] = useState(false);
 
   const determineRequirement = (): RequirementDecision => {
-    // RÈGLES UNIFIÉES CLAIRES :
-    // - Agent : TOUJOURS bypass (même si reCAPTCHA configuré)
-    // - Admin/Superviseur sur login : REQUIS si configuré
-    // - Tout le reste : BYPASS
-    const userRole = profile?.role || '';
+    // RÈGLES CORRIGÉES : Analyser l'ACTION au lieu du rôle utilisateur
+    // Car pendant le login, l'utilisateur n'est pas encore connecté
     
-    // RÈGLE 1 : Les agents sont TOUJOURS en bypass
-    if (userRole === 'agent') {
+    // RÈGLE 1 : Actions d'agents - TOUJOURS bypass
+    if (action.includes('agent') || action.includes('document_selection')) {
       return 'BYPASS_AGENT';
     }
     
-    // RÈGLE 2 : Admin/Superviseur sur login
-    if (action.includes('login') && ['admin', 'superviseur'].includes(userRole)) {
+    // RÈGLE 2 : Actions de login admin/superviseur
+    if (action.includes('login') && (action.includes('admin') || action.includes('superviseur'))) {
       return isConfigured ? 'VERIFICATION_REQUISE' : 'ERREUR_NON_CONFIGURE';
     }
     
-    // RÈGLE 3 : Tout le reste en bypass
+    // RÈGLE 3 : Pour les utilisateurs déjà connectés, vérifier leur rôle
+    if (profile) {
+      const userRole = profile.role || '';
+      
+      // Agents connectés : toujours bypass
+      if (userRole === 'agent') {
+        return 'BYPASS_AGENT';
+      }
+      
+      // Admin/Superviseur connectés : vérification si configuré
+      if (['admin', 'superviseur'].includes(userRole)) {
+        return isConfigured ? 'VERIFICATION_REQUISE' : 'ERREUR_NON_CONFIGURE';
+      }
+    }
+    
+    // RÈGLE 4 : Tout le reste en bypass
     return 'BYPASS_GENERAL';
   };
 
   const executeVerification = async (onSuccess: (token: string) => void, onError?: (error: string) => void) => {
-    console.log('🔒 [UNIFIED_VERIFICATION] Vérification REQUISE pour:', action);
+    console.log('🔒 [CORRECTED_VERIFICATION] Vérification REQUISE pour:', action);
 
     try {
       setIsVerifying(true);
@@ -42,13 +54,13 @@ export const useRecaptchaVerification = (action: string) => {
       
       const token = await recaptchaService.executeRecaptcha(siteKey!, action);
       
-      console.log(`✅ [UNIFIED_VERIFICATION] SUCCÈS: ${action}`);
+      console.log(`✅ [CORRECTED_VERIFICATION] SUCCÈS: ${action}`);
       toast.success('✅ Vérification réussie', { duration: 1500 });
       
       onSuccess(token);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur de vérification';
-      console.error(`❌ [UNIFIED_VERIFICATION] ÉCHEC ${action}:`, error);
+      console.error(`❌ [CORRECTED_VERIFICATION] ÉCHEC ${action}:`, error);
       
       toast.error(`❌ ${errorMessage}`, { duration: 4000 });
       onError?.(errorMessage);
@@ -57,17 +69,22 @@ export const useRecaptchaVerification = (action: string) => {
     }
   };
 
-  console.log('🔍 [UNIFIED_VERIFICATION] Vérification:', {
+  const requirement = determineRequirement();
+
+  console.log('🔍 [CORRECTED_VERIFICATION] Analyse corrigée:', {
     action,
-    userRole: profile?.role,
+    userRole: profile?.role || 'NON_CONNECTE',
     isConfigured,
-    decision: determineRequirement()
+    decision: requirement,
+    actionType: action.includes('login') ? 'LOGIN' : 
+                action.includes('agent') ? 'AGENT_ACTION' : 
+                'OTHER_ACTION'
   });
 
   return {
     isLoading,
     isVerifying,
-    requirement: determineRequirement(),
+    requirement,
     executeVerification
   };
 };
