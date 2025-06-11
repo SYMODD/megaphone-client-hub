@@ -1,127 +1,175 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Eye, EyeOff, Settings, Shield, User } from "lucide-react";
+import React from 'react';
 import { useRecaptchaSettings } from "@/hooks/useRecaptchaSettings";
 import { useAuth } from "@/contexts/AuthContext";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Bug, Shield, User, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const RecaptchaDebugInfo: React.FC = () => {
-  const [showDetails, setShowDetails] = useState(false);
-  const { siteKey, secretKey, isConfigured, isLoading, error } = useRecaptchaSettings();
-  const { profile, user } = useAuth();
+  const { isConfigured, isLoading, error, siteKey, secretKey, refreshSettings, clearCache } = useRecaptchaSettings();
+  const { profile } = useAuth();
 
-  const isAdmin = profile?.role === 'admin' || user?.email?.toLowerCase() === 'essbane.salim@gmail.com';
+  // Seuls les admins peuvent voir les infos de debug
+  if (profile?.role !== 'admin') {
+    return null;
+  }
 
-  if (!isAdmin) return null;
+  const formatKeyPreview = (key: string | null) => {
+    if (!key) return 'Non définie';
+    if (key.length < 10) return 'Trop courte';
+    return `${key.substring(0, 10)}...${key.substring(key.length - 4)}`;
+  };
+
+  const getContextRequirements = () => {
+    return [
+      { context: 'login', roles: ['admin', 'superviseur'], description: 'Connexion Admin/Superviseur' },
+      { context: 'document_selection', roles: ['agent'], description: 'Sélection de document Agent' },
+      { context: 'general', roles: [], description: 'Vérification générale' }
+    ];
+  };
 
   return (
-    <Card className="mt-4 border-blue-200 bg-blue-50">
+    <Card className="mt-4 border-amber-200 bg-amber-50">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-blue-800">
-            <Settings className="w-4 h-4" />
-            Debug reCAPTCHA (Admin uniquement)
-          </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowDetails(!showDetails)}
-            className="text-blue-600 border-blue-300 hover:bg-blue-100"
-          >
-            {showDetails ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          </Button>
-        </div>
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <Bug className="w-4 h-4" />
+          Debug reCAPTCHA (Admin uniquement)
+        </CardTitle>
+        <CardDescription className="text-xs">
+          Informations techniques pour le diagnostic des problèmes reCAPTCHA
+        </CardDescription>
       </CardHeader>
       
-      {showDetails && (
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <h4 className="font-medium text-slate-700 flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                Configuration
-              </h4>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span>Configuré:</span>
-                  <Badge variant={isConfigured ? "default" : "secondary"}>
-                    {isConfigured ? "✅ Oui" : "❌ Non"}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span>Clé publique:</span>
-                  <Badge variant={siteKey ? "default" : "secondary"}>
-                    {siteKey ? "✅ Présente" : "❌ Manquante"}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span>Clé secrète:</span>
-                  <Badge variant={secretKey ? "default" : "secondary"}>
-                    {secretKey ? "✅ Présente" : "❌ Manquante"}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span>Chargement:</span>
-                  <Badge variant={isLoading ? "default" : "secondary"}>
-                    {isLoading ? "🔄 En cours" : "✅ Terminé"}
-                  </Badge>
-                </div>
-                {error && (
-                  <div className="flex justify-between">
-                    <span>Erreur:</span>
-                    <Badge variant="destructive" className="text-xs">
-                      {error}
-                    </Badge>
-                  </div>
-                )}
-              </div>
+      <CardContent className="space-y-4">
+        {/* État général */}
+        <div className="space-y-2">
+          <h5 className="font-medium text-sm flex items-center gap-1">
+            <Settings className="w-3 h-3" />
+            État de Configuration
+          </h5>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="flex justify-between">
+              <span>Chargement:</span>
+              <Badge variant={isLoading ? "default" : "secondary"}>
+                {isLoading ? "En cours" : "Terminé"}
+              </Badge>
             </div>
-
-            <div className="space-y-2">
-              <h4 className="font-medium text-slate-700 flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Utilisateur actuel
-              </h4>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span>Rôle:</span>
-                  <Badge variant="outline">{profile?.role || 'Non défini'}</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span>reCAPTCHA Login:</span>
-                  <Badge variant={['admin', 'superviseur'].includes(profile?.role || '') ? "default" : "secondary"}>
-                    {['admin', 'superviseur'].includes(profile?.role || '') ? "✅ Requis" : "❌ Non requis"}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span>reCAPTCHA Doc:</span>
-                  <Badge variant={profile?.role === 'agent' ? "default" : "secondary"}>
-                    {profile?.role === 'agent' ? "✅ Requis" : "❌ Non requis"}
-                  </Badge>
-                </div>
-              </div>
+            <div className="flex justify-between">
+              <span>Configuré:</span>
+              <Badge variant={isConfigured ? "default" : "destructive"}>
+                {isConfigured ? "Oui" : "Non"}
+              </Badge>
+            </div>
+            <div className="flex justify-between">
+              <span>Erreur:</span>
+              <Badge variant={error ? "destructive" : "secondary"}>
+                {error ? "Oui" : "Non"}
+              </Badge>
+            </div>
+            <div className="flex justify-between">
+              <span>Utilisateur:</span>
+              <Badge variant="outline">
+                {profile?.role || 'Non défini'}
+              </Badge>
             </div>
           </div>
-
-          {siteKey && (
-            <div className="mt-3 p-3 bg-blue-100 rounded-lg">
-              <p className="text-xs text-blue-800">
-                <strong>Clé publique (partiellement masquée):</strong> 
-                <br />
-                <code className="text-xs">{siteKey.substring(0, 20)}...{siteKey.substring(siteKey.length - 10)}</code>
-              </p>
+          {error && (
+            <div className="p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+              <strong>Erreur:</strong> {error}
             </div>
           )}
+        </div>
 
-          <div className="mt-3 p-3 bg-yellow-100 rounded-lg">
-            <p className="text-xs text-yellow-800">
-              <strong>Test en cours:</strong> Cet indicateur permet de vérifier que reCAPTCHA est bien configuré et actif selon les règles métier de l'application.
-            </p>
+        {/* Clés de configuration */}
+        <div className="space-y-2">
+          <h5 className="font-medium text-sm flex items-center gap-1">
+            <Shield className="w-3 h-3" />
+            Clés de Configuration
+          </h5>
+          <div className="space-y-1 text-xs">
+            <div className="flex justify-between items-center">
+              <span>Site Key:</span>
+              <div className="flex items-center gap-1">
+                <code className="bg-slate-100 px-1 rounded text-xs">
+                  {formatKeyPreview(siteKey)}
+                </code>
+                <Badge variant={siteKey ? "default" : "destructive"} className="text-xs">
+                  {siteKey ? "✓" : "✗"}
+                </Badge>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>Secret Key:</span>
+              <div className="flex items-center gap-1">
+                <code className="bg-slate-100 px-1 rounded text-xs">
+                  {formatKeyPreview(secretKey)}
+                </code>
+                <Badge variant={secretKey ? "default" : "destructive"} className="text-xs">
+                  {secretKey ? "✓" : "✗"}
+                </Badge>
+              </div>
+            </div>
           </div>
-        </CardContent>
-      )}
+        </div>
+
+        {/* Exigences par contexte */}
+        <div className="space-y-2">
+          <h5 className="font-medium text-sm flex items-center gap-1">
+            <User className="w-3 h-3" />
+            Exigences par Contexte
+          </h5>
+          <div className="space-y-1">
+            {getContextRequirements().map((req) => (
+              <div key={req.context} className="flex justify-between items-center text-xs">
+                <span className="flex-1">{req.description}:</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-slate-500">
+                    {req.roles.length > 0 ? req.roles.join(', ') : 'Tous'}
+                  </span>
+                  <Badge variant={
+                    req.roles.length === 0 || req.roles.includes(profile?.role || '') 
+                      ? (isConfigured ? "default" : "destructive")
+                      : "secondary"
+                  } className="text-xs">
+                    {req.roles.length === 0 || req.roles.includes(profile?.role || '') 
+                      ? (isConfigured ? "✓" : "✗")
+                      : "N/A"}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Actions de debug */}
+        <div className="flex gap-2 pt-2 border-t border-amber-200">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={refreshSettings}
+            disabled={isLoading}
+            className="text-xs"
+          >
+            Actualiser
+          </Button>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={clearCache}
+            className="text-xs"
+          >
+            Vider Cache
+          </Button>
+        </div>
+
+        {/* Note technique */}
+        <div className="p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+          <strong>Note:</strong> Les indicateurs de statut utilisent cette configuration en temps réel. 
+          Si vous modifiez les clés, utilisez "Actualiser" pour mettre à jour les indicateurs.
+        </div>
+      </CardContent>
     </Card>
   );
 };
