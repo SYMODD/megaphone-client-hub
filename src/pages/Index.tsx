@@ -12,17 +12,27 @@ import { useAdminFilters } from "@/hooks/useAdminFilters";
 import { useAgentData } from "@/hooks/useAgentData";
 
 const Index = () => {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, profileLoading } = useAuth();
 
-  console.log("Dashboard Index - User:", !!user, "Profile:", profile?.role, "Loading:", loading);
+  console.log("📊 [DASHBOARD] Dashboard Index state:", {
+    hasUser: !!user,
+    hasProfile: !!profile,
+    userRole: profile?.role,
+    loading,
+    profileLoading,
+    timestamp: new Date().toISOString()
+  });
 
-  // Show loading while checking auth state
-  if (loading) {
+  // Show loading while checking auth state or profile loading
+  if (loading || profileLoading) {
+    console.log("⏳ [DASHBOARD] Loading state active");
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-slate-600">Chargement...</p>
+          <p className="mt-2 text-slate-600">
+            {loading ? "Chargement..." : "Chargement du profil..."}
+          </p>
         </div>
       </div>
     );
@@ -30,38 +40,31 @@ const Index = () => {
 
   // If not authenticated, redirect to agent login
   if (!user) {
-    console.log("No user found, redirecting to /agent");
+    console.log("❌ [DASHBOARD] No user found, redirecting to /agent");
     return <Navigate to="/agent" replace />;
   }
 
   // Wait for profile to load before making redirections
   if (!profile) {
-    console.log("Profile is loading...");
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-slate-600">Chargement du profil...</p>
-        </div>
-      </div>
-    );
+    console.log("⚠️ [DASHBOARD] Profile missing, redirecting to /agent");
+    return <Navigate to="/agent" replace />;
   }
 
-  console.log("Profile role verified:", profile.role);
+  console.log("✅ [DASHBOARD] Profile role verified:", profile.role);
 
   // Only redirect agents - admin and superviseur should stay on dashboard
   if (profile.role === "agent") {
-    console.log("Agent detected, redirecting to /nouveau-client");
+    console.log("👤 [DASHBOARD] Agent detected, redirecting to /nouveau-client");
     return <Navigate to="/nouveau-client" replace />;
   }
 
   // Ensure only admin and superviseur can access the dashboard
   if (profile.role !== "admin" && profile.role !== "superviseur") {
-    console.log(`Unauthorized role ${profile.role}, redirecting to /nouveau-client`);
+    console.log(`❌ [DASHBOARD] Unauthorized role ${profile.role}, redirecting to /nouveau-client`);
     return <Navigate to="/nouveau-client" replace />;
   }
 
-  console.log("User authorized for dashboard, role:", profile.role);
+  console.log("🎯 [DASHBOARD] User authorized for dashboard, role:", profile.role);
 
   // Now we can safely call hooks since we know we're not redirecting
   const adminFilters = useAdminFilters();
@@ -71,14 +74,15 @@ const Index = () => {
   const agentData = useAgentData(isAdminOrSuperviseur ? adminFilters.filters : undefined);
 
   // Debug pour vérifier que les données arrivent bien
-  console.log("🎯 DASHBOARD - Données reçues:", {
+  console.log("📈 [DASHBOARD] Dashboard data loaded:", {
     totalClients: agentData.totalClients,
     nationalityData: agentData.nationalityData.length,
     registrationData: agentData.registrationData.length,
     recentClients: agentData.recentClients.length,
     filters: adminFilters.filters,
     loading: agentData.loading,
-    userRole: profile.role
+    userRole: profile.role,
+    timestamp: new Date().toISOString()
   });
 
   return (
