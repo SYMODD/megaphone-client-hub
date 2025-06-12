@@ -28,7 +28,7 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
     shouldHide
   } = useStatusIndicator(context);
 
-  // Masquer pour les agents - ils n'ont pas besoin de voir le statut reCAPTCHA
+  // Masquer pour les agents uniquement si c'est leur contexte spécifique
   if (shouldHide) {
     return null;
   }

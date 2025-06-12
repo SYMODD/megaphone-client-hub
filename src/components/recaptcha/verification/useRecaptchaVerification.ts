@@ -25,7 +25,7 @@ export const useRecaptchaVerification = (action: string) => {
       return 'BYPASS_AGENT';
     }
     
-    // RÈGLE 2 : Actions de login admin/superviseur
+    // RÈGLE 2 : Actions de login admin/superviseur - NÉCESSITE CONFIGURATION
     if (action.includes('login') && (action.includes('admin') || action.includes('superviseur'))) {
       console.log('🔒 [VERIFICATION] Login admin/superviseur détecté:', {
         isConfigured,
@@ -44,7 +44,7 @@ export const useRecaptchaVerification = (action: string) => {
         return 'BYPASS_AGENT';
       }
       
-      // Admin/Superviseur connectés : vérification si configuré
+      // Admin/Superviseur connectés : vérification obligatoire si configuré
       if (['admin', 'superviseur'].includes(userRole)) {
         console.log('🔒 [VERIFICATION] Utilisateur admin/superviseur connecté:', {
           userRole,
@@ -55,7 +55,7 @@ export const useRecaptchaVerification = (action: string) => {
       }
     }
     
-    // RÈGLE 4 : Tout le reste en bypass
+    // RÈGLE 4 : Tout le reste en bypass par défaut
     console.log('⚡ [VERIFICATION] BYPASS_GENERAL par défaut');
     return 'BYPASS_GENERAL';
   };
@@ -67,7 +67,7 @@ export const useRecaptchaVerification = (action: string) => {
       setIsVerifying(true);
       
       if (!siteKey) {
-        throw new Error('Clé reCAPTCHA manquante');
+        throw new Error('Clé reCAPTCHA manquante - veuillez configurer reCAPTCHA');
       }
       
       toast.info('🔒 Vérification de sécurité en cours...', { duration: 2000 });

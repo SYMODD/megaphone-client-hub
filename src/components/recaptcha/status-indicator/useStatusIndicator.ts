@@ -9,37 +9,42 @@ export const useStatusIndicator = (context: string) => {
   const { profile } = useAuth();
 
   const getStatusDecision = (): StatusDecision => {
-    // LOGIQUE CORRIGÉE : Analyser le CONTEXTE au lieu du rôle uniquement
-    // Car pour les pages de login, l'utilisateur n'est pas encore connecté
-    
-    console.log('🎯 [CORRECTED_STATUS] Analyse du contexte:', {
+    console.log('🎯 [STATUS] Analyse du contexte:', {
       context,
       userRole: profile?.role || 'NON_CONNECTE',
-      isConfigured
+      isConfigured,
+      timestamp: new Date().toISOString()
     });
     
-    // RÈGLE 1 : Contexte de login (admin/superviseur)
+    // RÈGLE 1 : Contexte de login (pages de connexion)
     if (context === 'login') {
-      // Sur les pages de login, le statut dépend de la configuration
+      console.log('🔑 [STATUS] Page de login détectée, statut basé sur configuration');
       return isConfigured ? 'SECURITE_ACTIVE' : 'SECURITE_RECOMMANDEE';
     }
     
     // RÈGLE 2 : Contexte agent ou utilisateur connecté en tant qu'agent
     if (context.includes('agent') || profile?.role === 'agent') {
+      console.log('⚡ [STATUS] Contexte agent - Non applicable');
       return 'NON_APPLICABLE';
     }
     
-    // RÈGLE 3 : Autres contextes pour admin/superviseur connectés
+    // RÈGLE 3 : Utilisateurs admin/superviseur connectés
     if (profile && ['admin', 'superviseur'].includes(profile.role)) {
+      console.log('🔒 [STATUS] Admin/Superviseur connecté:', {
+        role: profile.role,
+        isConfigured
+      });
       return isConfigured ? 'SECURITE_ACTIVE' : 'SECURITE_RECOMMANDEE';
     }
     
-    // RÈGLE 4 : Contextes généraux
+    // RÈGLE 4 : Contexte général
     if (context === 'general') {
+      console.log('🔍 [STATUS] Contexte général');
       return isConfigured ? 'SECURITE_ACTIVE' : 'SECURITE_RECOMMANDEE';
     }
     
-    // RÈGLE 5 : Autres cas
+    // RÈGLE 5 : Autres cas - non applicable par défaut
+    console.log('⚡ [STATUS] Contexte non spécifique - Non applicable');
     return 'NON_APPLICABLE';
   };
 
@@ -67,7 +72,7 @@ export const useStatusIndicator = (context: string) => {
         return {
           variant: 'outline' as const,
           icon: ShieldX,
-          text: 'Non applicable',
+          text: '⚡ reCAPTCHA non requis',
           bgColor: 'bg-gray-100 border-gray-300',
           textColor: 'text-gray-600'
         };
@@ -77,7 +82,7 @@ export const useStatusIndicator = (context: string) => {
   const decision = getStatusDecision();
   const displayInfo = getDisplayInfo(decision);
 
-  console.log('🎯 [CORRECTED_STATUS] Décision finale:', {
+  console.log('🎯 [STATUS] Décision finale:', {
     context,
     userRole: profile?.role || 'NON_CONNECTE',
     isConfigured,
@@ -92,6 +97,6 @@ export const useStatusIndicator = (context: string) => {
     displayInfo,
     refreshSettings,
     userRole: profile?.role || 'NON_CONNECTE',
-    shouldHide: false // Ne plus masquer pour permettre le diagnostic
+    shouldHide: decision === 'NON_APPLICABLE' && context.includes('agent')
   };
 };

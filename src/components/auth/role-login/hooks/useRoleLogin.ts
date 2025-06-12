@@ -13,7 +13,7 @@ export const useRoleLogin = (
 
   const { isConfigured } = useRecaptchaSettings();
 
-  // LOGIQUE CORRIGÉE : reCAPTCHA requis pour admin/superviseur si configuré
+  // LOGIQUE CORRIGÉE : reCAPTCHA requis pour admin/superviseur SI configuré
   const requiresRecaptcha = ['admin', 'superviseur'].includes(role) && isConfigured;
 
   const handleDirectLogin = async () => {

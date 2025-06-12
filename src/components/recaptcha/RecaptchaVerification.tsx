@@ -18,27 +18,28 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
     executeVerification
   } = useRecaptchaVerification(action);
 
-  // Chargement : rendu direct
+  // Chargement : rendu direct temporaire
   if (isLoading) {
-    console.log('⏳ [UNIFIED_VERIFICATION] Chargement → Bypass temporaire');
+    console.log('⏳ [VERIFICATION] Chargement → Bypass temporaire');
     return <>{children}</>;
   }
 
   // BYPASS pour agents et autres cas
   if (requirement === 'BYPASS_AGENT' || requirement === 'BYPASS_GENERAL') {
-    console.log(`⚡ [UNIFIED_VERIFICATION] ${requirement} - Rendu direct`);
+    console.log(`⚡ [VERIFICATION] ${requirement} - Rendu direct`);
     return <>{children}</>;
   }
 
   // Erreur de configuration pour Admin/Superviseur
   if (requirement === 'ERREUR_NON_CONFIGURE') {
-    console.error('❌ [UNIFIED_VERIFICATION] Admin/Superviseur sans reCAPTCHA configuré');
+    console.error('❌ [VERIFICATION] Admin/Superviseur sans reCAPTCHA configuré');
     return React.cloneElement(children as React.ReactElement, {
       onClick: () => {
-        toast.error('❌ reCAPTCHA non configuré pour votre rôle');
+        toast.error('❌ reCAPTCHA non configuré. Veuillez contacter l\'administrateur.');
         onError?.('reCAPTCHA non configuré');
       },
-      disabled: true
+      disabled: true,
+      className: `${(children as React.ReactElement).props.className || ''} opacity-50 cursor-not-allowed`.trim()
     });
   }
 
@@ -51,7 +52,7 @@ export const RecaptchaVerification: React.FC<RecaptchaVerificationProps> = ({
     await executeVerification(onSuccess, onError);
   };
 
-  console.log('🔒 [UNIFIED_VERIFICATION] ENVELOPPEMENT ACTIF pour:', action);
+  console.log('🔒 [VERIFICATION] ENVELOPPEMENT ACTIF pour:', action);
   
   return React.cloneElement(children as React.ReactElement, {
     onClick: handleVerification,
