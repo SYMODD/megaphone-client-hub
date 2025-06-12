@@ -2,6 +2,8 @@
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
 import { ClientForm } from "@/components/client/ClientForm";
+import { NewClientInfoCards } from "@/components/client/NewClientInfoCards";
+import { ClientFormFooterCards } from "@/components/client/ClientFormFooterCards";
 import { useEffect } from "react";
 
 const NewClient = () => {
@@ -26,15 +28,21 @@ const NewClient = () => {
           {/* En-tête simple */}
           <div className="px-1">
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">
-              Nouveau Client
+              Nouveau Client ✨
             </h1>
             <p className="text-sm sm:text-base text-slate-600">
-              Enregistrez un nouveau client dans le système Sud Megaphone
+              Créez un nouveau dossier client en quelques étapes simples. Notre système intelligent vous guide pour une saisie rapide et précise.
             </p>
           </div>
 
+          {/* Cartes d'information en haut */}
+          <NewClientInfoCards />
+
           {/* UN SEUL COMPOSANT : ClientForm */}
           <ClientForm />
+
+          {/* Cartes d'information en bas */}
+          <ClientFormFooterCards />
         </div>
       </main>
     </div>

@@ -25,13 +25,16 @@ export const useRecaptchaVerification = (action: string) => {
       return 'BYPASS_AGENT';
     }
     
-    // RÈGLE 2 : Actions de login admin/superviseur - NÉCESSITE CONFIGURATION
+    // RÈGLE 2 : Actions de login admin/superviseur - NÉCESSITE CONFIGURATION STRICTE
     if (action.includes('login') && (action.includes('admin') || action.includes('superviseur'))) {
       console.log('🔒 [VERIFICATION] Login admin/superviseur détecté:', {
         isConfigured,
-        decision: isConfigured ? 'VERIFICATION_REQUISE' : 'ERREUR_NON_CONFIGURE'
+        siteKey: siteKey ? 'PRESENT' : 'ABSENT',
+        decision: isConfigured && siteKey ? 'VERIFICATION_REQUISE' : 'ERREUR_NON_CONFIGURE'
       });
-      return isConfigured ? 'VERIFICATION_REQUISE' : 'ERREUR_NON_CONFIGURE';
+      
+      // VALIDATION STRICTE : il faut isConfigured ET siteKey présente
+      return (isConfigured && siteKey) ? 'VERIFICATION_REQUISE' : 'ERREUR_NON_CONFIGURE';
     }
     
     // RÈGLE 3 : Pour les utilisateurs déjà connectés, vérifier leur rôle
@@ -49,9 +52,10 @@ export const useRecaptchaVerification = (action: string) => {
         console.log('🔒 [VERIFICATION] Utilisateur admin/superviseur connecté:', {
           userRole,
           isConfigured,
-          decision: isConfigured ? 'VERIFICATION_REQUISE' : 'ERREUR_NON_CONFIGURE'
+          siteKey: siteKey ? 'PRESENT' : 'ABSENT',
+          decision: (isConfigured && siteKey) ? 'VERIFICATION_REQUISE' : 'ERREUR_NON_CONFIGURE'
         });
-        return isConfigured ? 'VERIFICATION_REQUISE' : 'ERREUR_NON_CONFIGURE';
+        return (isConfigured && siteKey) ? 'VERIFICATION_REQUISE' : 'ERREUR_NON_CONFIGURE';
       }
     }
     
@@ -66,20 +70,26 @@ export const useRecaptchaVerification = (action: string) => {
     try {
       setIsVerifying(true);
       
-      if (!siteKey) {
-        throw new Error('Clé reCAPTCHA manquante - veuillez configurer reCAPTCHA');
+      // VALIDATION STRICTE des prérequis
+      if (!siteKey || siteKey.trim() === '') {
+        throw new Error('Configuration reCAPTCHA incomplète - clé publique manquante');
+      }
+      
+      if (!isConfigured) {
+        throw new Error('reCAPTCHA non configuré - veuillez configurer les clés');
       }
       
       toast.info('🔒 Vérification de sécurité en cours...', { duration: 2000 });
       
-      console.log('🔍 [VERIFICATION] Exécution reCAPTCHA avec:', {
+      console.log('🔍 [VERIFICATION] Exécution reCAPTCHA avec validation stricte:', {
         siteKey: siteKey.substring(0, 15) + '...',
-        action
+        action,
+        isConfigured
       });
       
       const token = await recaptchaService.executeRecaptcha(siteKey, action);
       
-      console.log('✅ [VERIFICATION] Token reCAPTCHA généré:', {
+      console.log('✅ [VERIFICATION] Token reCAPTCHA généré avec succès:', {
         action,
         tokenLength: token.length,
         tokenPreview: token.substring(0, 20) + '...'
@@ -90,9 +100,11 @@ export const useRecaptchaVerification = (action: string) => {
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur de vérification';
-      console.error('❌ [VERIFICATION] Échec:', {
+      console.error('❌ [VERIFICATION] Échec avec détails:', {
         action,
         error: errorMessage,
+        siteKey: siteKey ? 'PRESENT' : 'ABSENT',
+        isConfigured,
         fullError: error
       });
       
@@ -105,10 +117,11 @@ export const useRecaptchaVerification = (action: string) => {
 
   const requirement = determineRequirement();
 
-  console.log('🎯 [VERIFICATION] Décision finale:', {
+  console.log('🎯 [VERIFICATION] Décision finale avec validation stricte:', {
     action,
     userRole: profile?.role || 'NON_CONNECTE',
     isConfigured,
+    siteKeyPresent: !!siteKey,
     requirement,
     willVerify: requirement === 'VERIFICATION_REQUISE'
   });

@@ -18,7 +18,6 @@ export const useLogin = () => {
       console.log("Original email:", email);
       console.log("Normalized email:", normalizedEmail);
       console.log("Password length:", password.length);
-      console.log("Password first 3 chars:", password.substring(0, 3) + "...");
       
       console.log("Attempting sign in...");
       const { data, error } = await signIn(normalizedEmail, password);
@@ -42,12 +41,17 @@ export const useLogin = () => {
         console.error("Error message:", error.message);
         console.error("Error status:", error.status);
         
-        // Gestion d'erreurs améliorée
+        // Gestion d'erreurs améliorée pour les cas reCAPTCHA
         let errorMessage = "Email ou mot de passe incorrect";
         
         switch (error.code) {
           case "invalid_credentials":
-            errorMessage = "Les identifiants sont incorrects. Vérifiez votre email et mot de passe.";
+            // Vérifier si c'est un problème lié à reCAPTCHA
+            if (error.message?.includes('recaptcha') || error.message?.includes('verification')) {
+              errorMessage = "Erreur de vérification de sécurité. Veuillez réessayer.";
+            } else {
+              errorMessage = "Les identifiants sont incorrects. Vérifiez votre email et mot de passe.";
+            }
             break;
           case "email_not_confirmed":
             errorMessage = "Veuillez confirmer votre email avant de vous connecter.";
@@ -58,8 +62,18 @@ export const useLogin = () => {
           case "account_inactive":
             errorMessage = error.message;
             break;
+          case "signup_disabled":
+            errorMessage = "Les inscriptions sont désactivées.";
+            break;
           default:
-            errorMessage = `Erreur de connexion: ${error.message}`;
+            // Pour les erreurs de sécurité/reCAPTCHA non identifiées
+            if (error.message?.toLowerCase().includes('security') || 
+                error.message?.toLowerCase().includes('verification') ||
+                error.message?.toLowerCase().includes('recaptcha')) {
+              errorMessage = "Erreur de vérification de sécurité. Vérifiez la configuration reCAPTCHA.";
+            } else {
+              errorMessage = `Erreur de connexion: ${error.message}`;
+            }
         }
         
         handleAuthError(error, errorMessage);
@@ -83,7 +97,17 @@ export const useLogin = () => {
       console.error("Error type:", typeof error);
       console.error("Error constructor:", error?.constructor?.name);
       
-      handleAuthError(error, "Une erreur inattendue s'est produite lors de la connexion");
+      // Gestion spéciale pour les erreurs reCAPTCHA
+      let errorMessage = "Une erreur inattendue s'est produite lors de la connexion";
+      if (error instanceof Error) {
+        if (error.message?.toLowerCase().includes('recaptcha') ||
+            error.message?.toLowerCase().includes('verification') ||
+            error.message?.toLowerCase().includes('security')) {
+          errorMessage = "Erreur de vérification de sécurité. Vérifiez la configuration reCAPTCHA.";
+        }
+      }
+      
+      handleAuthError(error, errorMessage);
       console.log("=== DEBUG LOGIN END (CATCH) ===");
     } finally {
       setIsLoading(false);

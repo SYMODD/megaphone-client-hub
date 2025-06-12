@@ -40,17 +40,16 @@ const AgentLogin = () => {
     );
   }
 
-  // Redirect agent to their dashboard
+  // Redirect agent to their main page
   if (shouldRedirect && profile?.role === "agent") {
     return <Navigate to="/nouveau-client" replace />;
   }
 
-  // Les Agents se connectent SANS reCAPTCHA (contrairement aux Admin/Superviseur)
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 mb-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+          <div className="mx-auto w-16 h-16 mb-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
             <span className="text-white font-bold text-xl">SM</span>
           </div>
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Sud Megaphone</h1>
@@ -62,10 +61,17 @@ const AgentLogin = () => {
         <RoleSpecificLogin
           role="agent"
           onLogin={handleLogin}
-          onShowPasswordReset={() => {}} // Pas utilisé
+          onShowPasswordReset={() => {}} // Pas utilisé pour agent
           isLoading={isLoading}
-          hidePasswordReset={true} // Masquer pour agent
+          hidePasswordReset={true} // Masquer le lien pour agent
         />
+
+        {/* Texte d'information pour agent */}
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg text-center">
+          <p className="text-sm text-gray-600">
+            Pour réinitialiser votre mot de passe, contactez votre administrateur
+          </p>
+        </div>
       </div>
     </div>
   );
