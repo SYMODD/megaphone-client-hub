@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoginButton } from "./LoginButton";
 import { RecaptchaVerification } from "@/components/recaptcha/RecaptchaVerification";
-import { RoleInfo, LoginCardProps } from "../types";
+import { LoginCardProps } from "../types";
 
 export const LoginCard: React.FC<LoginCardProps> = ({
   role,
@@ -21,6 +21,7 @@ export const LoginCard: React.FC<LoginCardProps> = ({
   onRecaptchaError
 }) => {
   const canSubmit = loginForm.email && loginForm.password && !isLoading;
+  const IconComponent = roleInfo.icon; // Extraire le composant d'icône
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +37,7 @@ export const LoginCard: React.FC<LoginCardProps> = ({
       <CardHeader className="space-y-1">
         <div className="flex items-center gap-3">
           <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${roleInfo.bgGradient} flex items-center justify-center`}>
-            <roleInfo.icon className="w-4 h-4 text-white" />
+            <IconComponent className="w-4 h-4 text-white" />
           </div>
           <div>
             <CardTitle className="text-xl">{roleInfo.title}</CardTitle>
