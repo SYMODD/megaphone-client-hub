@@ -21,6 +21,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!user) {
+    console.log("User not authenticated, redirecting to /agent");
     return <Navigate to="/agent" replace />;
   }
 

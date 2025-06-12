@@ -25,17 +25,19 @@ export const SmartRedirect = () => {
     return <Navigate to="/agent" replace />;
   }
 
-  // Redirect based on user role
+  // Redirect based on user role with specific paths
   switch (profile.role) {
     case "admin":
+      console.log("Admin detected, redirecting to /dashboard");
+      return <Navigate to="/dashboard" replace />;
     case "superviseur":
-      console.log(`${profile.role} detected, redirecting to /dashboard`);
+      console.log("Superviseur detected, redirecting to /dashboard");
       return <Navigate to="/dashboard" replace />;
     case "agent":
       console.log("Agent detected, redirecting to /nouveau-client");
       return <Navigate to="/nouveau-client" replace />;
     default:
-      console.log("Unknown role, redirecting to /agent");
+      console.log("Unknown role:", profile.role, "redirecting to /agent");
       return <Navigate to="/agent" replace />;
   }
 };

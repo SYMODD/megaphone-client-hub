@@ -14,9 +14,7 @@ import { useAgentData } from "@/hooks/useAgentData";
 const Index = () => {
   const { user, profile, loading } = useAuth();
 
-  console.log("Dashboard - User:", user);
-  console.log("Dashboard - Profile:", profile);
-  console.log("Dashboard - Loading:", loading);
+  console.log("Dashboard Index - User:", !!user, "Profile:", profile?.role, "Loading:", loading);
 
   // Show loading while checking auth state
   if (loading) {
@@ -30,13 +28,13 @@ const Index = () => {
     );
   }
 
-  // Early return for unauthenticated users - redirect to agent login
+  // If not authenticated, redirect to agent login
   if (!user) {
     console.log("No user found, redirecting to /agent");
     return <Navigate to="/agent" replace />;
   }
 
-  // Attendre que le profil soit chargé avant de faire des redirections
+  // Wait for profile to load before making redirections
   if (!profile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
@@ -50,7 +48,7 @@ const Index = () => {
 
   console.log("Profile role:", profile.role);
 
-  // Redirect agents to their specific page
+  // Redirect agents to their specific page - they should not access dashboard
   if (profile.role === "agent") {
     console.log("Agent detected, redirecting to /nouveau-client");
     return <Navigate to="/nouveau-client" replace />;
@@ -58,8 +56,8 @@ const Index = () => {
 
   // Only admin and superviseur can access the dashboard
   if (profile.role !== "admin" && profile.role !== "superviseur") {
-    console.log(`Role ${profile.role} not allowed on dashboard, redirecting to /agent`);
-    return <Navigate to="/agent" replace />;
+    console.log(`Role ${profile.role} not allowed on dashboard, redirecting to /nouveau-client`);
+    return <Navigate to="/nouveau-client" replace />;
   }
 
   console.log("User authorized for dashboard, loading components...");

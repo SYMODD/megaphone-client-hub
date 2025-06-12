@@ -46,10 +46,10 @@ const App = () => {
               <Route path="/admin" element={<AdminLogin />} />
               <Route path="/superviseur" element={<SuperviseurLogin />} />
               
-              {/* Dashboard - accessible aux admin et superviseur */}
+              {/* Dashboard - accessible aux admin et superviseur UNIQUEMENT */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>
-                  <RoleProtectedRoute allowedRoles={['admin', 'superviseur']} redirectTo="/agent">
+                  <RoleProtectedRoute allowedRoles={['admin', 'superviseur']} redirectTo="/nouveau-client">
                     <Index />
                   </RoleProtectedRoute>
                 </ProtectedRoute>
@@ -97,18 +97,22 @@ const App = () => {
               
               {/* Pages admin uniquement */}
               <Route path="/users" element={
-                <RoleProtectedRoute allowedRoles={['admin']}>
-                  <UserManagement />
-                </RoleProtectedRoute>
+                <ProtectedRoute>
+                  <RoleProtectedRoute allowedRoles={['admin']} redirectTo="/nouveau-client">
+                    <UserManagement />
+                  </RoleProtectedRoute>
+                </ProtectedRoute>
               } />
 
               <Route path="/admin/recaptcha" element={
-                <RoleProtectedRoute allowedRoles={['admin']}>
-                  <AdminRecaptcha />
-                </RoleProtectedRoute>
+                <ProtectedRoute>
+                  <RoleProtectedRoute allowedRoles={['admin']} redirectTo="/nouveau-client">
+                    <AdminRecaptcha />
+                  </RoleProtectedRoute>
+                </ProtectedRoute>
               } />
               
-              {/* Routes pour les contrats */}
+              {/* Routes pour les contrats - accessible à tous les utilisateurs authentifiés */}
               <Route path="/contracts" element={
                 <ProtectedRoute>
                   <Contracts />
@@ -117,6 +121,7 @@ const App = () => {
               <Route path="/contrat" element={<Navigate to="/contracts" replace />} />
               <Route path="/contrats" element={<Navigate to="/contracts" replace />} />
               
+              {/* Gestion des erreurs 404 */}
               <Route path="/404" element={<NotFound />} />
               <Route path="*" element={<Navigate to="/404" replace />} />
             </Routes>

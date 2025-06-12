@@ -12,7 +12,7 @@ interface RoleProtectedRouteProps {
 export const RoleProtectedRoute = ({ 
   children, 
   allowedRoles, 
-  redirectTo = "/" 
+  redirectTo = "/nouveau-client" 
 }: RoleProtectedRouteProps) => {
   const { profile, loading } = useAuth();
 
@@ -25,6 +25,7 @@ export const RoleProtectedRoute = ({
   }
 
   if (!profile || !allowedRoles.includes(profile.role)) {
+    console.log(`Access denied. User role: ${profile?.role}, Allowed roles: ${allowedRoles.join(', ')}, Redirecting to: ${redirectTo}`);
     return <Navigate to={redirectTo} replace />;
   }
 
