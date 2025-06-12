@@ -20,7 +20,7 @@ export const useRecaptchaVerification = (action: string) => {
     });
 
     // RÈGLE 1 : Actions d'agents - TOUJOURS bypass (aucune vérification)
-    if (action.includes('agent') || action.includes('document_selection') || profile?.role === 'agent') {
+    if (action.includes('agent') || action.includes('document_selection')) {
       console.log('⚡ [VERIFICATION] BYPASS_AGENT détecté - Aucune vérification');
       return 'BYPASS_AGENT';
     }

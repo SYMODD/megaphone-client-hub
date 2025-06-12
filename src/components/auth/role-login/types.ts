@@ -22,3 +22,17 @@ export interface LoginForm {
   email: string;
   password: string;
 }
+
+export interface LoginCardProps {
+  role: string;
+  roleInfo: RoleInfo;
+  loginForm: LoginForm;
+  setLoginForm: React.Dispatch<React.SetStateAction<LoginForm>>;
+  isLoading: boolean;
+  requiresRecaptcha: boolean;
+  hidePasswordReset?: boolean;
+  onSubmit: (e: React.FormEvent) => void;
+  onShowPasswordReset?: () => void;
+  onLoginWithRecaptcha: (token: string) => void;
+  onRecaptchaError: (error: string) => void;
+}
