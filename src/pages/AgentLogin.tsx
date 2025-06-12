@@ -4,7 +4,6 @@ import { Navigate } from "react-router-dom";
 import { RoleSpecificLogin } from "@/components/auth/RoleSpecificLogin";
 import { useAuthOperations } from "@/hooks/useAuthOperations";
 import { AuthAlert } from "@/components/auth/AuthAlert";
-import { RecaptchaStatusIndicator } from "@/components/recaptcha/RecaptchaStatusIndicator";
 import { useEffect, useState } from "react";
 
 const AgentLogin = () => {
@@ -55,10 +54,7 @@ const AgentLogin = () => {
             <span className="text-white font-bold text-xl">SM</span>
           </div>
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Sud Megaphone</h1>
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <p className="text-slate-600">Connexion Agent</p>
-            <RecaptchaStatusIndicator context="login" size="sm" />
-          </div>
+          <p className="text-slate-600">Connexion Agent</p>
         </div>
 
         <AuthAlert error={error} success={success} />

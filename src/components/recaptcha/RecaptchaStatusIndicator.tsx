@@ -28,8 +28,9 @@ export const RecaptchaStatusIndicator: React.FC<RecaptchaStatusIndicatorProps> =
     shouldHide
   } = useStatusIndicator(context);
 
-  // Masquer pour les agents uniquement si c'est leur contexte spécifique
+  // MASQUAGE COMPLET pour les agents et la sélection de documents
   if (shouldHide) {
+    console.log('👻 [INDICATOR] Masquage complet pour:', { context, userRole });
     return null;
   }
 

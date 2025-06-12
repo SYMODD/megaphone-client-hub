@@ -16,16 +16,16 @@ export const useStatusIndicator = (context: string) => {
       timestamp: new Date().toISOString()
     });
     
-    // RÈGLE 1 : Contexte de login (pages de connexion)
+    // RÈGLE 1 : Masquer complètement pour les agents (contexte agent OU utilisateur agent)
+    if (context.includes('agent') || context === 'document_selection' || profile?.role === 'agent') {
+      console.log('⚡ [STATUS] Agent détecté - Masquage complet');
+      return 'NON_APPLICABLE';
+    }
+    
+    // RÈGLE 2 : Contexte de login (pages de connexion admin/superviseur)
     if (context === 'login') {
       console.log('🔑 [STATUS] Page de login détectée, statut basé sur configuration');
       return isConfigured ? 'SECURITE_ACTIVE' : 'SECURITE_RECOMMANDEE';
-    }
-    
-    // RÈGLE 2 : Contexte agent ou utilisateur connecté en tant qu'agent
-    if (context.includes('agent') || profile?.role === 'agent') {
-      console.log('⚡ [STATUS] Contexte agent - Non applicable');
-      return 'NON_APPLICABLE';
     }
     
     // RÈGLE 3 : Utilisateurs admin/superviseur connectés
@@ -54,26 +54,26 @@ export const useStatusIndicator = (context: string) => {
         return {
           variant: 'default' as const,
           icon: ShieldCheck,
-          text: '🔒 reCAPTCHA actif',
-          bgColor: 'bg-green-100 border-green-300',
-          textColor: 'text-green-800'
+          text: 'reCAPTCHA actif',
+          bgColor: 'bg-green-50 border-green-200',
+          textColor: 'text-green-700'
         };
       
       case 'SECURITE_RECOMMANDEE':
         return {
           variant: 'outline' as const,
           icon: AlertTriangle,
-          text: '⚠️ reCAPTCHA recommandé',
-          bgColor: 'bg-amber-100 border-amber-300',
-          textColor: 'text-amber-800'
+          text: 'reCAPTCHA recommandé',
+          bgColor: 'bg-amber-50 border-amber-200',
+          textColor: 'text-amber-700'
         };
       
       default: // NON_APPLICABLE
         return {
           variant: 'outline' as const,
           icon: ShieldX,
-          text: '⚡ reCAPTCHA non requis',
-          bgColor: 'bg-gray-100 border-gray-300',
+          text: 'reCAPTCHA non requis',
+          bgColor: 'bg-gray-50 border-gray-200',
           textColor: 'text-gray-600'
         };
     }
@@ -87,7 +87,8 @@ export const useStatusIndicator = (context: string) => {
     userRole: profile?.role || 'NON_CONNECTE',
     isConfigured,
     decision,
-    statusText: displayInfo.text
+    statusText: displayInfo.text,
+    shouldHide: decision === 'NON_APPLICABLE'
   });
 
   return {
@@ -97,6 +98,6 @@ export const useStatusIndicator = (context: string) => {
     displayInfo,
     refreshSettings,
     userRole: profile?.role || 'NON_CONNECTE',
-    shouldHide: decision === 'NON_APPLICABLE' && context.includes('agent')
+    shouldHide: decision === 'NON_APPLICABLE'
   };
 };

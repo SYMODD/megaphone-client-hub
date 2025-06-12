@@ -13,7 +13,7 @@ export const useRoleLogin = (
 
   const { isConfigured } = useRecaptchaSettings();
 
-  // LOGIQUE CORRIGÉE : reCAPTCHA requis pour admin/superviseur SI configuré
+  // LOGIQUE SIMPLIFIÉE : reCAPTCHA requis pour admin/superviseur SI configuré
   const requiresRecaptcha = ['admin', 'superviseur'].includes(role) && isConfigured;
 
   const handleDirectLogin = async () => {
@@ -38,7 +38,7 @@ export const useRoleLogin = (
 
   console.log('🎯 [ROLE_LOGIN] Configuration finale:', {
     role,
-    isConfigured,
+    isConfigured: isConfigured ? 'OUI ✅' : 'NON ❌',
     requiresRecaptcha: requiresRecaptcha ? 'OUI ✅' : 'NON ❌',
     hasCredentials: !!(loginForm.email && loginForm.password),
     loginMethod: requiresRecaptcha ? 'AVEC_RECAPTCHA' : 'DIRECT'

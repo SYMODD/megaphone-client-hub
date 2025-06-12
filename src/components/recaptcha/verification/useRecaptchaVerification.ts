@@ -19,9 +19,9 @@ export const useRecaptchaVerification = (action: string) => {
       timestamp: new Date().toISOString()
     });
 
-    // RÈGLE 1 : Actions d'agents - TOUJOURS bypass
-    if (action.includes('agent') || action.includes('document_selection')) {
-      console.log('⚡ [VERIFICATION] BYPASS_AGENT détecté');
+    // RÈGLE 1 : Actions d'agents - TOUJOURS bypass (aucune vérification)
+    if (action.includes('agent') || action.includes('document_selection') || profile?.role === 'agent') {
+      console.log('⚡ [VERIFICATION] BYPASS_AGENT détecté - Aucune vérification');
       return 'BYPASS_AGENT';
     }
     

@@ -26,7 +26,10 @@ export const RoleInfoBanner: React.FC<RoleInfoBannerProps> = ({
             Sécurité renforcée
           </h3>
           <p className="text-xs text-blue-600 mt-1">
-            Cette connexion est protégée par reCAPTCHA
+            {isConfigured 
+              ? "Cette connexion est protégée par reCAPTCHA" 
+              : "reCAPTCHA non configuré - connexion directe autorisée"
+            }
           </p>
         </div>
         <RecaptchaStatusIndicator 
