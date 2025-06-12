@@ -36,6 +36,7 @@ const Index = () => {
 
   // Wait for profile to load before making redirections
   if (!profile) {
+    console.log("Profile is loading...");
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
@@ -46,21 +47,21 @@ const Index = () => {
     );
   }
 
-  console.log("Profile role:", profile.role);
+  console.log("Profile role verified:", profile.role);
 
-  // Redirect agents to their specific page - they should not access dashboard
+  // Only redirect agents - admin and superviseur should stay on dashboard
   if (profile.role === "agent") {
     console.log("Agent detected, redirecting to /nouveau-client");
     return <Navigate to="/nouveau-client" replace />;
   }
 
-  // Only admin and superviseur can access the dashboard
+  // Ensure only admin and superviseur can access the dashboard
   if (profile.role !== "admin" && profile.role !== "superviseur") {
-    console.log(`Role ${profile.role} not allowed on dashboard, redirecting to /nouveau-client`);
+    console.log(`Unauthorized role ${profile.role}, redirecting to /nouveau-client`);
     return <Navigate to="/nouveau-client" replace />;
   }
 
-  console.log("User authorized for dashboard, loading components...");
+  console.log("User authorized for dashboard, role:", profile.role);
 
   // Now we can safely call hooks since we know we're not redirecting
   const adminFilters = useAdminFilters();
@@ -76,7 +77,8 @@ const Index = () => {
     registrationData: agentData.registrationData.length,
     recentClients: agentData.recentClients.length,
     filters: adminFilters.filters,
-    loading: agentData.loading
+    loading: agentData.loading,
+    userRole: profile.role
   });
 
   return (
