@@ -12,16 +12,25 @@ export const useRecaptchaVerification = (action: string) => {
   const [isVerifying, setIsVerifying] = useState(false);
 
   const determineRequirement = (): RequirementDecision => {
-    // RÈGLES CORRIGÉES : Analyser l'ACTION au lieu du rôle utilisateur
-    // Car pendant le login, l'utilisateur n'est pas encore connecté
-    
+    console.log('🔍 [VERIFICATION] Analyse de l\'action:', {
+      action,
+      userRole: profile?.role || 'NON_CONNECTE',
+      isConfigured,
+      timestamp: new Date().toISOString()
+    });
+
     // RÈGLE 1 : Actions d'agents - TOUJOURS bypass
     if (action.includes('agent') || action.includes('document_selection')) {
+      console.log('⚡ [VERIFICATION] BYPASS_AGENT détecté');
       return 'BYPASS_AGENT';
     }
     
     // RÈGLE 2 : Actions de login admin/superviseur
     if (action.includes('login') && (action.includes('admin') || action.includes('superviseur'))) {
+      console.log('🔒 [VERIFICATION] Login admin/superviseur détecté:', {
+        isConfigured,
+        decision: isConfigured ? 'VERIFICATION_REQUISE' : 'ERREUR_NON_CONFIGURE'
+      });
       return isConfigured ? 'VERIFICATION_REQUISE' : 'ERREUR_NON_CONFIGURE';
     }
     
@@ -31,36 +40,61 @@ export const useRecaptchaVerification = (action: string) => {
       
       // Agents connectés : toujours bypass
       if (userRole === 'agent') {
+        console.log('⚡ [VERIFICATION] Utilisateur agent connecté - BYPASS');
         return 'BYPASS_AGENT';
       }
       
       // Admin/Superviseur connectés : vérification si configuré
       if (['admin', 'superviseur'].includes(userRole)) {
+        console.log('🔒 [VERIFICATION] Utilisateur admin/superviseur connecté:', {
+          userRole,
+          isConfigured,
+          decision: isConfigured ? 'VERIFICATION_REQUISE' : 'ERREUR_NON_CONFIGURE'
+        });
         return isConfigured ? 'VERIFICATION_REQUISE' : 'ERREUR_NON_CONFIGURE';
       }
     }
     
     // RÈGLE 4 : Tout le reste en bypass
+    console.log('⚡ [VERIFICATION] BYPASS_GENERAL par défaut');
     return 'BYPASS_GENERAL';
   };
 
   const executeVerification = async (onSuccess: (token: string) => void, onError?: (error: string) => void) => {
-    console.log('🔒 [CORRECTED_VERIFICATION] Vérification REQUISE pour:', action);
+    console.log('🔒 [VERIFICATION] Démarrage vérification pour:', action);
 
     try {
       setIsVerifying(true);
       
-      toast.info('🔒 Vérification de sécurité...', { duration: 2000 });
+      if (!siteKey) {
+        throw new Error('Clé reCAPTCHA manquante');
+      }
       
-      const token = await recaptchaService.executeRecaptcha(siteKey!, action);
+      toast.info('🔒 Vérification de sécurité en cours...', { duration: 2000 });
       
-      console.log(`✅ [CORRECTED_VERIFICATION] SUCCÈS: ${action}`);
+      console.log('🔍 [VERIFICATION] Exécution reCAPTCHA avec:', {
+        siteKey: siteKey.substring(0, 15) + '...',
+        action
+      });
+      
+      const token = await recaptchaService.executeRecaptcha(siteKey, action);
+      
+      console.log('✅ [VERIFICATION] Token reCAPTCHA généré:', {
+        action,
+        tokenLength: token.length,
+        tokenPreview: token.substring(0, 20) + '...'
+      });
+      
       toast.success('✅ Vérification réussie', { duration: 1500 });
-      
       onSuccess(token);
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur de vérification';
-      console.error(`❌ [CORRECTED_VERIFICATION] ÉCHEC ${action}:`, error);
+      console.error('❌ [VERIFICATION] Échec:', {
+        action,
+        error: errorMessage,
+        fullError: error
+      });
       
       toast.error(`❌ ${errorMessage}`, { duration: 4000 });
       onError?.(errorMessage);
@@ -71,14 +105,12 @@ export const useRecaptchaVerification = (action: string) => {
 
   const requirement = determineRequirement();
 
-  console.log('🔍 [CORRECTED_VERIFICATION] Analyse corrigée:', {
+  console.log('🎯 [VERIFICATION] Décision finale:', {
     action,
     userRole: profile?.role || 'NON_CONNECTE',
     isConfigured,
-    decision: requirement,
-    actionType: action.includes('login') ? 'LOGIN' : 
-                action.includes('agent') ? 'AGENT_ACTION' : 
-                'OTHER_ACTION'
+    requirement,
+    willVerify: requirement === 'VERIFICATION_REQUISE'
   });
 
   return {

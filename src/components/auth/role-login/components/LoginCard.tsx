@@ -14,6 +14,8 @@ interface LoginCardProps {
     description: string;
     icon: React.ReactNode;
     color: string;
+    bgGradient: string;
+    placeholder: string;
   };
   loginForm: {
     email: string;
@@ -60,6 +62,7 @@ export const LoginCard: React.FC<LoginCardProps> = ({
               id="email"
               type="email"
               value={loginForm.email}
+              placeholder={roleInfo.placeholder}
               onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
               required
             />
@@ -88,6 +91,7 @@ export const LoginCard: React.FC<LoginCardProps> = ({
                   isLoading={isLoading}
                   disabled={!isFormValid}
                   role={role}
+                  roleInfo={roleInfo}
                 />
               </RecaptchaVerification>
             ) : (
@@ -95,6 +99,7 @@ export const LoginCard: React.FC<LoginCardProps> = ({
                 isLoading={isLoading}
                 disabled={!isFormValid}
                 role={role}
+                roleInfo={roleInfo}
                 type="submit"
               />
             )}
