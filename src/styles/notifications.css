@@ -1,0 +1,46 @@
+
+/* =============================================================================
+   NOTIFICATION/TOAST FIXES
+   ============================================================================= */
+
+/* Toast notifications - force white background */
+[data-radix-toast-viewport],
+[data-radix-toast-root],
+.toast,
+.sonner-toast {
+  background-color: white !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  z-index: 100 !important;
+}
+
+/* Toast content styling */
+[data-radix-toast-title],
+.toast-title {
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+[data-radix-toast-description],
+.toast-description {
+  color: #64748b !important;
+}
+
+/* Sonner specific overrides */
+[data-sonner-toast] {
+  background-color: white !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+[data-sonner-toast] [data-description] {
+  color: #64748b !important;
+}
+
+/* Toast viewport positioning */
+[data-radix-toast-viewport] {
+  position: fixed !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  z-index: 100 !important;
+}

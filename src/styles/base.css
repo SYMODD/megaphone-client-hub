@@ -1,0 +1,78 @@
+
+/* Base Styles and Typography */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-white text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    color: rgb(15 23 42) !important;
+    background-color: white !important;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.025em;
+    color: rgb(15 23 42) !important;
+  }
+
+  /* Forcer la couleur du texte pour tous les éléments */
+  p, span, div, label, button, td, th, li, a {
+    color: rgb(51 65 85) !important;
+  }
+
+  /* Couleurs spécifiques pour différents types de texte */
+  .text-primary, .primary-text {
+    color: rgb(15 23 42) !important;
+  }
+
+  .text-secondary, .secondary-text {
+    color: rgb(51 65 85) !important;
+  }
+
+  .text-muted, .muted-text {
+    color: rgb(100 116 139) !important;
+  }
+
+  .text-light, .light-text {
+    color: rgb(148 163 184) !important;
+  }
+
+  /* Forcer les couleurs dans les tables et listes */
+  table, table * {
+    color: rgb(51 65 85) !important;
+  }
+
+  ul, ol, li {
+    color: rgb(51 65 85) !important;
+  }
+
+  /* Couleurs pour les liens */
+  a {
+    color: rgb(59 130 246) !important;
+  }
+
+  a:hover {
+    color: rgb(37 99 235) !important;
+  }
+
+  /* Suppression complète de tout arrière-plan jaune */
+  html, body, #root {
+    background-color: white !important;
+  }
+
+  /* Correction globale pour éliminer complètement le jaune */
+  * {
+    color: inherit;
+  }
+
+  /* Override pour tous les éléments potentiellement jaunes */
+  body *, html *, #root *, .app * {
+    background-color: inherit !important;
+  }
+}

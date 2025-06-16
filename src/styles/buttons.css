@@ -1,0 +1,139 @@
+
+/* =============================================================================
+   BOUTONS RECTANGULAIRES FORCÉS - SPÉCIFICITÉ MAXIMALE
+   ============================================================================= */
+
+/* Force TOUS les boutons à être rectangulaires avec spécificité maximale */
+html button,
+body button,
+div button,
+section button,
+main button,
+article button,
+[role="button"],
+.btn,
+button,
+button[class*="bg-"],
+button[class*="border-"],
+button[class*="rounded"],
+[data-testid*="button"],
+[class*="Button"],
+.relative.inline-flex,
+.inline-flex.items-center {
+  border-radius: 6px !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24) !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Boutons primaires avec force absolue */
+html button[class*="bg-primary"],
+body button[class*="bg-primary"],
+div button[class*="bg-primary"],
+section button[class*="bg-primary"],
+main button[class*="bg-primary"],
+html button[class*="bg-blue"],
+body button[class*="bg-blue"],
+div button[class*="bg-blue"],
+section button[class*="bg-blue"],
+main button[class*="bg-blue"] {
+  background-color: #2563eb !important;
+  border-color: #1d4ed8 !important;
+  color: white !important;
+  border-radius: 6px !important;
+}
+
+html button[class*="bg-primary"]:hover,
+body button[class*="bg-primary"]:hover,
+div button[class*="bg-primary"]:hover,
+section button[class*="bg-primary"]:hover,
+main button[class*="bg-primary"]:hover,
+html button[class*="bg-blue"]:hover,
+body button[class*="bg-blue"]:hover,
+div button[class*="bg-blue"]:hover,
+section button[class*="bg-blue"]:hover,
+main button[class*="bg-blue"]:hover {
+  background-color: #1d4ed8 !important;
+  border-color: #1e40af !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Boutons outline avec force absolue */
+html button[class*="border-input"],
+body button[class*="border-input"],
+div button[class*="border-input"],
+section button[class*="border-input"],
+main button[class*="border-input"],
+html button[class*="border-slate"],
+body button[class*="border-slate"],
+div button[class*="border-slate"],
+section button[class*="border-slate"],
+main button[class*="border-slate"],
+html button[class*="variant-outline"],
+body button[class*="variant-outline"],
+div button[class*="variant-outline"],
+section button[class*="variant-outline"],
+main button[class*="variant-outline"] {
+  background-color: white !important;
+  border-color: #cbd5e0 !important;
+  color: #374151 !important;
+  border-radius: 6px !important;
+}
+
+html button[class*="border-input"]:hover,
+body button[class*="border-input"]:hover,
+div button[class*="border-input"]:hover,
+section button[class*="border-input"]:hover,
+main button[class*="border-input"]:hover,
+html button[class*="border-slate"]:hover,
+body button[class*="border-slate"]:hover,
+div button[class*="border-slate"]:hover,
+section button[class*="border-slate"]:hover,
+main button[class*="border-slate"]:hover,
+html button[class*="variant-outline"]:hover,
+body button[class*="variant-outline"]:hover,
+div button[class*="variant-outline"]:hover,
+section button[class*="variant-outline"]:hover,
+main button[class*="variant-outline"]:hover {
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Boutons secondaires avec force absolue */
+html button[class*="bg-secondary"],
+body button[class*="bg-secondary"],
+div button[class*="bg-secondary"],
+section button[class*="bg-secondary"],
+main button[class*="bg-secondary"] {
+  background-color: #e2e8f0 !important;
+  border-color: #cbd5e0 !important;
+  color: #1e293b !important;
+  border-radius: 6px !important;
+}
+
+html button[class*="bg-secondary"]:hover,
+body button[class*="bg-secondary"]:hover,
+div button[class*="bg-secondary"]:hover,
+section button[class*="bg-secondary"]:hover,
+main button[class*="bg-secondary"]:hover {
+  background-color: #cbd5e0 !important;
+  border-color: #94a3b8 !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Force sur les boutons avec gradients */
+html button[class*="bg-gradient"],
+body button[class*="bg-gradient"],
+div button[class*="bg-gradient"],
+section button[class*="bg-gradient"],
+main button[class*="bg-gradient"] {
+  border-radius: 6px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
