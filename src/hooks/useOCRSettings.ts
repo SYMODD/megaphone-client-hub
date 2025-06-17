@@ -14,7 +14,8 @@ interface KeyInfo {
 }
 
 export const useOCRSettings = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const isAdmin = profile?.role === "admin";
   
   // Initialiser avec la clé sauvegardée ou la clé par défaut
   const getStoredKey = () => {
@@ -38,9 +39,8 @@ export const useOCRSettings = () => {
 
       try {
         const { data, error } = await supabase
-          .from('ocr_settings')
+          .from('ocr_global_settings')
           .select('api_key')
-          .eq('user_id', user.id)
           .single();
 
         if (error) {
@@ -49,7 +49,7 @@ export const useOCRSettings = () => {
         }
 
         if (data?.api_key) {
-          console.log("✅ Clé OCR chargée depuis la base de données");
+          console.log("✅ Clé OCR globale chargée depuis la base de données");
           setApiKey(data.api_key);
           localStorage.setItem(STORAGE_KEY, data.api_key);
         }
@@ -228,28 +228,32 @@ export const useOCRSettings = () => {
       return false;
     }
 
+    // Vérifier si l'utilisateur est admin
+    if (!isAdmin) {
+      toast.error("❌ Seuls les administrateurs peuvent modifier la clé API");
+      return false;
+    }
+
     setIsSaving(true);
-    console.log("💾 Sauvegarde de la clé API OCR pour tous les documents:", keyToSave.substring(0, 8) + "...");
+    console.log("💾 Sauvegarde de la clé API OCR globale:", keyToSave.substring(0, 8) + "...");
 
     try {
       // Sauvegarder dans localStorage
       localStorage.setItem(STORAGE_KEY, keyToSave);
       
-      // Sauvegarder dans la base de données si l'utilisateur est connecté
-      if (user) {
-        const { error } = await supabase
-          .from('ocr_settings')
-          .upsert({
-            user_id: user.id,
-            api_key: keyToSave,
-            updated_at: new Date().toISOString()
-          });
+      // Sauvegarder dans la base de données
+      const { error } = await supabase
+        .from('ocr_global_settings')
+        .upsert({
+          api_key: keyToSave,
+          updated_at: new Date().toISOString(),
+          updated_by: user?.id
+        });
 
-        if (error) {
-          console.error("Erreur lors de la sauvegarde en base de données:", error);
-          toast.error("❌ Erreur lors de la sauvegarde de la clé API");
-          return false;
-        }
+      if (error) {
+        console.error("Erreur lors de la sauvegarde en base de données:", error);
+        toast.error("❌ Erreur lors de la sauvegarde de la clé API");
+        return false;
       }
       
       // Dispatch un événement custom pour notifier les autres composants
@@ -262,9 +266,9 @@ export const useOCRSettings = () => {
       
       // Afficher un message de succès
       const isPro = detectKeyType(keyToSave);
-      toast.success(`✅ Clé ${isPro ? 'PRO' : 'FREE'} sauvegardée avec succès pour tous les documents OCR`);
+      toast.success(`✅ Clé ${isPro ? 'PRO' : 'FREE'} sauvegardée avec succès pour tous les utilisateurs`);
       
-      console.log("✅ Clé API sauvegardée avec succès");
+      console.log("✅ Clé API globale sauvegardée avec succès");
       return true;
       
     } catch (error) {
@@ -274,7 +278,7 @@ export const useOCRSettings = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [user]);
+  }, [user, isAdmin]);
 
   const resetToDefault = useCallback(() => {
     console.log("🔄 Reset vers clé par défaut");
@@ -301,6 +305,7 @@ export const useOCRSettings = () => {
     validateApiKey,
     updateApiKey,
     saveApiKey,
-    resetToDefault
+    resetToDefault,
+    isAdmin
   };
 };
