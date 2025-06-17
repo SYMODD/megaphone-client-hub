@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const DEFAULT_OCR_API_KEY = "helloworld";
 const STORAGE_KEY = "ocr_api_key_global";
+const GLOBAL_OCR_KEY_ID = "00000000-0000-0000-0000-000000000001";
 
 interface KeyInfo {
   isPro: boolean;
@@ -245,7 +246,7 @@ export const useOCRSettings = () => {
       const { error } = await supabase
         .from('ocr_global_settings')
         .upsert({
-          id: '1', // Clé unique fixe pour s'assurer qu'il n'y a qu'une seule ligne (en string)
+          id: GLOBAL_OCR_KEY_ID, // Utilisation de l'UUID fixe
           api_key: keyToSave,
           updated_at: new Date().toISOString(),
           updated_by: user?.id

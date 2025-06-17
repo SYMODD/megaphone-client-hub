@@ -1,4 +1,7 @@
--- Création de la table ocr_global_settings
+-- Supprimer la table existante si elle existe
+DROP TABLE IF EXISTS public.ocr_global_settings;
+
+-- Recréer la table avec la bonne structure
 CREATE TABLE IF NOT EXISTS public.ocr_global_settings (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     api_key TEXT NOT NULL,
@@ -12,7 +15,7 @@ INSERT INTO public.ocr_global_settings (id, api_key)
 VALUES ('00000000-0000-0000-0000-000000000001', 'helloworld')
 ON CONFLICT (id) DO NOTHING;
 
--- Politiques RLS
+-- Configurer les politiques RLS
 ALTER TABLE public.ocr_global_settings ENABLE ROW LEVEL SECURITY;
 
 -- Tout le monde peut lire la clé
