@@ -241,13 +241,16 @@ export const useOCRSettings = () => {
       // Sauvegarder dans localStorage
       localStorage.setItem(STORAGE_KEY, keyToSave);
       
-      // Sauvegarder dans la base de données
+      // CORRECTION : Utiliser upsert avec une clé unique pour s'assurer qu'il n'y a qu'une seule ligne
       const { error } = await supabase
         .from('ocr_global_settings')
         .upsert({
+          id: '1', // Clé unique fixe pour s'assurer qu'il n'y a qu'une seule ligne (en string)
           api_key: keyToSave,
           updated_at: new Date().toISOString(),
           updated_by: user?.id
+        }, {
+          onConflict: 'id' // Spécifier la colonne de conflit
         });
 
       if (error) {
