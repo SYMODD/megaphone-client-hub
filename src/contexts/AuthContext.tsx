@@ -36,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string) => {
     try {
-      console.log("🔍 [AUTH] Fetching profile for user:", userId);
+      console.log("🔍 [AUTH] Fetching profile for user", userId);
       setProfileLoading(true);
       
       const { data, error } = await supabase
@@ -44,6 +44,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .select("*")
         .eq("id", userId)
         .single();
+
+        console.log("data=========0", data)
 
       if (error) {
         if (error.code === "PGRST116") {
@@ -112,28 +114,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("🔍 [AUTH] Checking for existing session...");
         const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error("❌ [AUTH] Error getting session:", error);
-        }
+        // if (error) {
+        //   console.error("❌ [AUTH] Error getting session:", error);
+        // }
         
-        if (!mounted) return;
+        // if (!mounted) return;
         
-        console.log("📋 [AUTH] Initial session check:", {
-          hasSession: !!session,
-          userId: session?.user?.id,
-          timestamp: new Date().toISOString()
-        });
+        // console.log("📋 [AUTH] Initial session check:", {
+        //   hasSession: !!session,
+        //   userId: session?.user?.id,
+        //   timestamp: new Date().toISOString()
+        // });
         
-        setSession(session);
-        setUser(session?.user ?? null);
+        // setSession(session);
+        // setUser(session?.user ?? null);
         
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
-          setProfileLoading(false);
-        }
+        // if (session?.user) {
+        //   await fetchProfile(session.user.id);
+        // } else {
+        //   setProfileLoading(false);
+        // }
         
-        setLoading(false);
+        // setLoading(false);
       } catch (error) {
         console.error("❌ [AUTH] Exception during auth initialization:", error);
         if (mounted) {

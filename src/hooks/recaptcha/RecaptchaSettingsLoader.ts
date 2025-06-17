@@ -24,20 +24,24 @@ export const loadRecaptchaSettings = async (
 
   console.log('🔍 [FIXED_LOADER] Chargement FRAIS depuis Supabase avec validation stricte');
   
-  const { data, error } = await supabase
-    .from('security_settings')
-    .select('setting_key, setting_value')
-    .in('setting_key', ['recaptcha_site_key', 'recaptcha_secret_key']);
+  // const { data, error } = await supabase
+  //   .from('security_settings')
+  //   .select('setting_key, setting_value')
+  //   .in('setting_key', ['recaptcha_site_key', 'recaptcha_secret_key']);
 
-  if (error) {
-    console.error('❌ [FIXED_LOADER] Erreur Supabase:', error);
-    throw new Error('Erreur lors du chargement des paramètres reCAPTCHA');
-  }
+  //   console.log("data============", data)
 
-  console.log('📊 [FIXED_LOADER] Données brutes reçues:', data);
+  // if (error) {
+  //   console.error('❌ [FIXED_LOADER] Erreur Supabase:', error);
+  //   throw new Error('Erreur lors du chargement des paramètres reCAPTCHA');
+  // }
 
-  const siteKey = data?.find(item => item.setting_key === 'recaptcha_site_key')?.setting_value || null;
-  const secretKey = data?.find(item => item.setting_key === 'recaptcha_secret_key')?.setting_value || null;
+  // console.log('📊 [FIXED_LOADER] Données brutes reçues:', data);
+
+  // const siteKey = data?.find(item => item.setting_key === 'recaptcha_site_key')?.setting_value || null;
+  // const secretKey = data?.find(item => item.setting_key === 'recaptcha_secret_key')?.setting_value || null;
+  const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY
+  const secretKey = import.meta.env.VITE_RECATPCHA_SECRET_KEY
 
   // VALIDATION STRICTE RENFORCÉE
   const siteKeyValid = !!(siteKey && siteKey.trim() !== '' && siteKey.length > 10 && siteKey.startsWith('6L'));
