@@ -53,11 +53,6 @@ export const CINForm = () => {
         onDataExtracted={handleCINDataExtracted}
       />
 
-      <BarcodeScanner 
-        onBarcodeScanned={handleBarcodeScanned}
-        currentBarcode={formData.code_barre}
-      />
-
       <PersonalInfoSection 
         formData={formData}
         onInputChange={handleInputChange}

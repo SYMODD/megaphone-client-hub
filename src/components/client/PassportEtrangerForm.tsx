@@ -47,7 +47,6 @@ export const PassportEtrangerForm = () => {
         scannedImage={formData.scannedImage}
         onImageScanned={handleImageScanned}
         onDataExtracted={handlePassportDataExtracted}
-        onBarcodeScanned={handleBarcodeScanned}
         currentBarcode={formData.code_barre}
       />
 

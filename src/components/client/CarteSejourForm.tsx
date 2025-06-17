@@ -61,7 +61,6 @@ export const CarteSejourForm = () => {
         scannedImage={formData.scannedImage}
         onImageScanned={handleImageScanned}
         onDataExtracted={handleCarteDataExtracted}
-        onBarcodeScanned={handleBarcodeScanned}
         currentBarcode={formData.code_barre}
       />
 

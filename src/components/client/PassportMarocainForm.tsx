@@ -67,11 +67,6 @@ export const PassportMarocainForm = () => {
         onDataExtracted={handleMRZDataExtracted}
       />
 
-      <BarcodeScanner 
-        onBarcodeScanned={handleBarcodeScanned}
-        currentBarcode={formData.code_barre}
-      />
-
       <PersonalInfoSection 
         formData={formData}
         onInputChange={handleInputChange}
