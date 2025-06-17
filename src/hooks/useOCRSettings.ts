@@ -1,7 +1,8 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { detectKeyType } from "@/services/ocr/keyDetection";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const DEFAULT_OCR_API_KEY = "helloworld";
 const STORAGE_KEY = "ocr_api_key_global";
@@ -13,6 +14,8 @@ interface KeyInfo {
 }
 
 export const useOCRSettings = () => {
+  const { user } = useAuth();
+  
   // Initialiser avec la clé sauvegardée ou la clé par défaut
   const getStoredKey = () => {
     try {
@@ -27,6 +30,36 @@ export const useOCRSettings = () => {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isValid, setIsValid] = useState<boolean | null>(null);
   const [keyInfo, setKeyInfo] = useState<KeyInfo | null>(null);
+
+  // Charger la clé depuis la base de données à la connexion
+  useEffect(() => {
+    const loadKeyFromDatabase = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('ocr_settings')
+          .select('api_key')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) {
+          console.error("Erreur lors du chargement de la clé OCR:", error);
+          return;
+        }
+
+        if (data?.api_key) {
+          console.log("✅ Clé OCR chargée depuis la base de données");
+          setApiKey(data.api_key);
+          localStorage.setItem(STORAGE_KEY, data.api_key);
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement de la clé OCR:", error);
+      }
+    };
+
+    loadKeyFromDatabase();
+  }, [user]);
 
   // CORRECTION : Ajouter un listener pour les changements localStorage depuis d'autres onglets/composants
   useEffect(() => {
@@ -202,7 +235,24 @@ export const useOCRSettings = () => {
       // Sauvegarder dans localStorage
       localStorage.setItem(STORAGE_KEY, keyToSave);
       
-      // CORRECTION : Dispatch un événement custom pour notifier les autres composants dans le même onglet
+      // Sauvegarder dans la base de données si l'utilisateur est connecté
+      if (user) {
+        const { error } = await supabase
+          .from('ocr_settings')
+          .upsert({
+            user_id: user.id,
+            api_key: keyToSave,
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) {
+          console.error("Erreur lors de la sauvegarde en base de données:", error);
+          toast.error("❌ Erreur lors de la sauvegarde de la clé API");
+          return false;
+        }
+      }
+      
+      // Dispatch un événement custom pour notifier les autres composants
       window.dispatchEvent(new CustomEvent('localStorageChange', {
         detail: { key: STORAGE_KEY, newValue: keyToSave }
       }));
@@ -214,7 +264,7 @@ export const useOCRSettings = () => {
       const isPro = detectKeyType(keyToSave);
       toast.success(`✅ Clé ${isPro ? 'PRO' : 'FREE'} sauvegardée avec succès pour tous les documents OCR`);
       
-      console.log("✅ Clé API sauvegardée avec succès dans localStorage");
+      console.log("✅ Clé API sauvegardée avec succès");
       return true;
       
     } catch (error) {
@@ -224,7 +274,7 @@ export const useOCRSettings = () => {
     } finally {
       setIsSaving(false);
     }
-  }, []);
+  }, [user]);
 
   const resetToDefault = useCallback(() => {
     console.log("🔄 Reset vers clé par défaut");

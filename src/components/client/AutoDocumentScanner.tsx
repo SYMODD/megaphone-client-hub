@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -28,7 +28,7 @@ export const AutoDocumentScanner = ({
   currentBarcode 
 }: AutoDocumentScannerProps) => {
   const [showRawText, setShowRawText] = useState(false);
-  const { apiKey } = useOCRSettings();
+  const { apiKey, updateApiKey, saveApiKey } = useOCRSettings();
   const [hasClearedState, setHasClearedState] = useState(false);
 
   const { 
@@ -123,12 +123,28 @@ export const AutoDocumentScanner = ({
     }
   };
 
+  const handleApiKeyUpdate = useCallback(async (keyToSave: string) => {
+    try {
+      // Mettre à jour l'état local
+      updateApiKey(keyToSave);
+      
+      // Sauvegarder dans la base de données et le localStorage
+      await saveApiKey(keyToSave);
+      
+      toast.success("Clé API OCR mise à jour avec succès");
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour de la clé OCR:", error);
+      toast.error("Erreur lors de la mise à jour de la clé OCR");
+    }
+  }, [updateApiKey, saveApiKey]);
+
   return (
     <div className="space-y-4">
       <Label>Scanner automatiquement un passeport étranger ou une carte de séjour</Label>
       
       <AdminOCRKeyValidator
         initialKey={apiKey}
+        onKeyChange={handleApiKeyUpdate}
       />
 
       <Card>
