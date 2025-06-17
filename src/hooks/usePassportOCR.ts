@@ -39,8 +39,8 @@ export const usePassportOCR = () => {
       };
       
       // Extraire les données MRZ directement du texte
-      const { extractMRZData } = await import("@/services/ocr/mrzDataExtractor");
-      const mrzData = extractMRZData(ocrText);
+      const { extractPassportEtrangerData } = await import("@/utils/passportEtranger/dataExtractor");
+      const mrzData = extractPassportEtrangerData(ocrText);
       
       if (mrzData && (mrzData.nom || mrzData.prenom || mrzData.numero_passeport)) {
         setExtractedData(mrzData);

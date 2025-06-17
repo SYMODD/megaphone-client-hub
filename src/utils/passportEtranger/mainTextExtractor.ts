@@ -44,10 +44,10 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
       }
     }
     
-    // PATTERN SÉQUENTIEL PRÉNOM : Given names/Prinoma -> ligne suivante (formats multiples)
-    if (!passportData.prenom && (lineUpper.includes('GIVEN') || lineUpper.includes('PRINOMA') ||
-                                 lineUpper.includes('VORNAMEN') || lineUpper.includes('GIVON') ||
-                                 lineUpper.includes('PRÉNOMS'))) {
+    // PATTERN SÉQUENTIEL PRÉNOM : Given Names/Prenoms -> ligne suivante
+    if (!passportData.prenom && (lineUpper.includes('GIVEN NAMES') || 
+                                lineUpper.includes('PRENOMS') || 
+                                lineUpper.includes('PRENOM'))) {
       console.log(`✅ Ligne indicatrice prénom trouvée ligne ${i+1}:`, line);
       
       if (i + 1 < lines.length) {
@@ -57,19 +57,22 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
         if (nextLine && nextLine.length >= 2 && 
             /^[A-Z\s]+$/.test(nextLine) && 
             !nextLine.includes('NAME') && 
-            !nextLine.includes('NATIONALITY') &&
+            !nextLine.includes('GIVEN') &&
             !nextLine.includes('PASSPORT') &&
+            !nextLine.includes('REPUBLIC') &&
             !nextLine.includes('/') &&
-            nextLine !== passportData.nom) {
+            !nextLine.includes('NATIONALITY')) {
           
-          passportData.prenom = nextLine;
+          passportData.prenom = nextLine.trim();
           console.log("✅ Prénom extrait (pattern séquentiel):", passportData.prenom);
         }
       }
     }
     
     // PATTERN SÉQUENTIEL NATIONALITÉ : Nationality/Nation -> ligne suivante
-    if (!passportData.nationalite && (lineUpper.includes('NATIONALITY') || lineUpper.includes('/NATION'))) {
+    if (!passportData.nationalite && (lineUpper.includes('NATIONALITY') || 
+                                     lineUpper.includes('/NATION') ||
+                                     lineUpper.includes('NANIONALTON'))) {
       console.log(`✅ Ligne indicatrice nationalité trouvée ligne ${i+1}:`, line);
       
       if (i + 1 < lines.length) {
@@ -187,7 +190,7 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
       
       // Pattern alternatif: ligne avec seulement des lettres majuscules (potentiel nom)
       // MAIS EXCLURE LES MOTS COMMUNS DES PASSEPORTS
-      if (!passportData.nom && /^[A-Z]{3,20}$/.test(line.trim()) && 
+      if (!passportData.nom && /^[A-Z]{5,20}$/.test(line.trim()) && 
           !['PASSPORT', 'PASSEPORT', 'REPUBLIC', 'KINGDOM', 'NATIONALITY', 'CANADA', 'CANADIAN'].includes(line.trim())) {
         passportData.nom = line.trim();
         console.log("✅ Nom extrait (pattern isolé fallback):", passportData.nom);
