@@ -10,6 +10,7 @@ import { PassportEtrangerDataDisplay } from "./PassportEtrangerDataDisplay";
 import { CarteSejourDataDisplay } from "./CarteSejourDataDisplay";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { useAutoDocumentOCR } from "@/hooks/useAutoDocumentOCR";
+import { useOCRSettings } from "@/hooks/useOCRSettings";
 
 interface AutoDocumentScannerProps {
   onDataExtracted: (data: any, documentType: 'passeport_etranger' | 'carte_sejour') => void;
@@ -27,7 +28,7 @@ export const AutoDocumentScanner = ({
   currentBarcode 
 }: AutoDocumentScannerProps) => {
   const [showRawText, setShowRawText] = useState(false);
-  const [apiKey, setApiKey] = useState("helloworld"); // Clé par défaut valide
+  const { apiKey } = useOCRSettings();
   const [hasClearedState, setHasClearedState] = useState(false);
 
   const { 
@@ -127,7 +128,6 @@ export const AutoDocumentScanner = ({
       <Label>Scanner automatiquement un passeport étranger ou une carte de séjour</Label>
       
       <AdminOCRKeyValidator
-        onKeyChange={setApiKey}
         initialKey={apiKey}
       />
 
