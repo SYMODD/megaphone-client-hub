@@ -45,7 +45,10 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
     }
     
     // PATTERN SÉQUENTIEL PRÉNOM : Given Names/Prenoms -> ligne suivante
+    // ✨ SUPPORT OCR IMPARFAIT : marocain + allemand
     if (!passportData.prenom && (lineUpper.includes('GIVEN NAMES') || 
+                                lineUpper.includes('GIVON NAMES') ||    // ← pour OCR allemand
+                                lineUpper.includes('GIVEN NAMED') ||    // ← pour OCR marocain
                                 lineUpper.includes('PRENOMS') || 
                                 lineUpper.includes('PRENOM'))) {
       console.log(`✅ Ligne indicatrice prénom trouvée ligne ${i+1}:`, line);
@@ -70,9 +73,10 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
     }
     
     // PATTERN SÉQUENTIEL NATIONALITÉ : Nationality/Nation -> ligne suivante
+    // ✨ SUPPORT OCR IMPARFAIT : marocain
     if (!passportData.nationalite && (lineUpper.includes('NATIONALITY') || 
-                                     lineUpper.includes('/NATION') ||
-                                     lineUpper.includes('NANIONALTON'))) {
+                                     lineUpper.includes('NANIONALTON') ||   // ← pour OCR marocain
+                                     lineUpper.includes('/NATION'))) {
       console.log(`✅ Ligne indicatrice nationalité trouvée ligne ${i+1}:`, line);
       
       if (i + 1 < lines.length) {
@@ -189,9 +193,9 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
       }
       
       // Pattern alternatif: ligne avec seulement des lettres majuscules (potentiel nom)
-      // MAIS EXCLURE LES MOTS COMMUNS DES PASSEPORTS
+      // MAIS EXCLURE LES MOTS COMMUNS DES PASSEPORTS ET CODES PAYS
       if (!passportData.nom && /^[A-Z]{5,20}$/.test(line.trim()) && 
-          !['PASSPORT', 'PASSEPORT', 'REPUBLIC', 'KINGDOM', 'NATIONALITY', 'CANADA', 'CANADIAN'].includes(line.trim())) {
+          !['PASSPORT', 'PASSEPORT', 'REPUBLIC', 'KINGDOM', 'NATIONALITY', 'CANADA', 'CANADIAN', 'MAR'].includes(line.trim())) {
         passportData.nom = line.trim();
         console.log("✅ Nom extrait (pattern isolé fallback):", passportData.nom);
       }
@@ -232,9 +236,10 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
       }
       
       // Patterns spécifiques pour NATIONALITY
+      // ✨ SUPPORT OCR IMPARFAIT dans fallback aussi
       const nationalityPatterns = [
-        /(?:NATIONALITY|NATIONALITE|CITIZEN\s*OF)\s*[\/:]?\s*([A-Z\s\/]{3,30})/i,
-        /(?:3\.\s*)?(?:NATIONALITY)\s*[\/:]?\s*([A-Z\s\/]{3,30})/i
+        /(?:NATIONALITY|NATIONALITE|NANIONALTON|CITIZEN\s*OF)\s*[\/:]?\s*([A-Z\s\/]{3,30})/i,
+        /(?:3\.\s*)?(?:NATIONALITY|NANIONALTON)\s*[\/:]?\s*([A-Z\s\/]{3,30})/i
       ];
       
       for (const pattern of nationalityPatterns) {

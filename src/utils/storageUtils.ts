@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -24,13 +23,31 @@ export const ensureStorageBucket = async (bucketName: string = 'client-photos') 
   }
 };
 
+// Fonction utilitaire pour convertir base64 en Blob directement
+const base64ToBlob = (base64Data: string, contentType: string = 'image/jpeg'): Blob => {
+  // Extraire seulement les données base64 (enlever le préfixe data:image/jpeg;base64,)
+  const base64WithoutPrefix = base64Data.split(',')[1] || base64Data;
+  
+  // Convertir base64 en bytes
+  const bytes = atob(base64WithoutPrefix);
+  const arrayBuffer = new ArrayBuffer(bytes.length);
+  const uint8Array = new Uint8Array(arrayBuffer);
+  
+  for (let i = 0; i < bytes.length; i++) {
+    uint8Array[i] = bytes.charCodeAt(i);
+  }
+  
+  return new Blob([arrayBuffer], { type: contentType });
+};
+
 export const uploadClientPhoto = async (imageBase64: string, documentType: string = 'cin'): Promise<string | null> => {
   try {
     console.log("📤 UPLOAD PHOTO CLIENT - Début de l'upload vers client-photos");
 
-    // Convertir base64 en blob
-    const response = await fetch(imageBase64);
-    const blob = await response.blob();
+    // ✨ FIX CSP : Convertir base64 en blob directement (sans fetch)
+    console.log("🔄 Conversion base64 vers Blob...");
+    const blob = base64ToBlob(imageBase64, 'image/jpeg');
+    console.log("✅ Conversion réussie - Taille du blob:", blob.size, "bytes");
     
     // Générer un nom de fichier unique
     const timestamp = Date.now();
