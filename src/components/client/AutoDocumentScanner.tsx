@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { AdminOCRKeyValidator } from "./AdminOCRKeyValidator";
 import { PassportImageCapture } from "./PassportImageCapture";
 import { PassportEtrangerDataDisplay } from "./PassportEtrangerDataDisplay";
 import { CarteSejourDataDisplay } from "./CarteSejourDataDisplay";
@@ -142,11 +141,6 @@ export const AutoDocumentScanner = ({
     <div className="space-y-4">
       <Label>Scanner automatiquement un passeport étranger ou une carte de séjour</Label>
       
-      <AdminOCRKeyValidator
-        initialKey={apiKey}
-        onKeyChange={handleApiKeyUpdate}
-      />
-
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
