@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { DateRange } from "react-day-picker";
 import { ClientFilters } from "./types";
@@ -29,10 +28,10 @@ export const useClientFilters = () => {
 
     // Vérifier si les filtres ont vraiment changé
     const hasChanged = 
-      newFilters.searchTerm !== serverFilters.searchTerm ||
-      newFilters.nationality !== serverFilters.nationality ||
-      newFilters.dateFrom?.getTime() !== serverFilters.dateFrom?.getTime() ||
-      newFilters.dateTo?.getTime() !== serverFilters.dateTo?.getTime();
+      newFilters?.searchTerm !== serverFilters?.searchTerm ||
+      newFilters?.nationality !== serverFilters?.nationality ||
+      newFilters?.dateFrom?.getTime() !== serverFilters?.dateFrom?.getTime() ||
+      newFilters?.dateTo?.getTime() !== serverFilters?.dateTo?.getTime();
 
     if (hasChanged) {
       console.log('✅ Filtres modifiés, mise à jour du serveur...');

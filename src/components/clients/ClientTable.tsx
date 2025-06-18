@@ -1,4 +1,3 @@
-
 import { Client } from "@/hooks/useClientData/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { ClientTableHeader } from "./table/ClientTableHeader";
@@ -29,7 +28,7 @@ export const ClientTable = ({
         <table className="w-full text-sm text-left">
           <ClientTableHeader />
           <tbody>
-            {clients.length > 0 ? (
+            {(clients || []).length > 0 ? (
               clients.map(client => (
                 <ClientTableRow
                   key={client.id}

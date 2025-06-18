@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,17 +5,16 @@ import { DateRange } from "react-day-picker";
 import { useClientFilters } from "./useClientFilters";
 import { useClientFetcher } from "./useClientFetcher";
 import { usePagination } from "./usePagination";
+import { Client, FetchClientsResult } from "./types";
 
 export const useClientData = () => {
   const { user } = useAuth();
   const { serverFilters, applyServerFilters, isApplyingFilters } = useClientFilters();
-  const {
-    clients,
-    loading,
-    error,
-    totalCount,
-    fetchClients
-  } = useClientFetcher();
+  const { fetchClients } = useClientFetcher();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
   const { currentPage, totalPages, handlePageChange, setCurrentPage } = usePagination(totalCount);
   const [nationalities, setNationalities] = useState<string[]>([]);
 
@@ -38,30 +36,43 @@ export const useClientData = () => {
     console.log('🔄 fetchClientsWithFilters appelé avec:', { 
       page, 
       forceRefresh, 
-      totalCurrentClients: clients.length,
+      totalCurrentClients: clients?.length || 0,
       filters: currentFilters
     });
 
-    const result = await fetchClients(user.id, {
-      searchTerm: currentFilters.searchTerm || "",
-      nationality: currentFilters.nationality || "",
-      dateFrom: currentFilters.dateFrom,
-      dateTo: currentFilters.dateTo
-    }, page, forceRefresh);
+    try {
+      setLoading(true);
+      const result = await fetchClients(user.id, {
+        searchTerm: currentFilters?.searchTerm || "",
+        nationality: currentFilters?.nationality || "",
+        dateFrom: currentFilters?.dateFrom,
+        dateTo: currentFilters?.dateTo
+      }, page, forceRefresh);
 
-    // Si on doit revenir à la page précédente (page vide après suppression)
-    if (result && result.shouldGoToPreviousPage && result.newPage) {
-      console.log('📄 Changement automatique vers la page', result.newPage);
-      setCurrentPage(result.newPage);
-      // Re-fetch avec la nouvelle page
-      await fetchClients(user.id, {
-        searchTerm: currentFilters.searchTerm || "",
-        nationality: currentFilters.nationality || "",
-        dateFrom: currentFilters.dateFrom,
-        dateTo: currentFilters.dateTo
-      }, result.newPage, true);
+      setClients(result.clients);
+      setTotalCount(result.totalCount);
+
+      // Si on doit revenir à la page précédente (page vide après suppression)
+      if (result.shouldGoToPreviousPage && result.newPage) {
+        console.log('📄 Changement automatique vers la page', result.newPage);
+        setCurrentPage(result.newPage);
+        // Re-fetch avec la nouvelle page
+        const newResult = await fetchClients(user.id, {
+          searchTerm: currentFilters?.searchTerm || "",
+          nationality: currentFilters?.nationality || "",
+          dateFrom: currentFilters?.dateFrom,
+          dateTo: currentFilters?.dateTo
+        }, result.newPage, true);
+        setClients(newResult.clients);
+        setTotalCount(newResult.totalCount);
+      }
+    } catch (err) {
+      console.error('❌ Erreur lors du chargement des clients:', err);
+      setError(err instanceof Error ? err : new Error('Une erreur est survenue'));
+    } finally {
+      setLoading(false);
     }
-  }, [user, serverFilters, currentPage, fetchClients, clients.length, setCurrentPage]);
+  }, [user, serverFilters, currentPage, fetchClients, clients?.length, setCurrentPage]);
 
   const applyFiltersAndFetch = useCallback((
     searchTerm: string,

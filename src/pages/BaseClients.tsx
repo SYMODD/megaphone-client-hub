@@ -1,4 +1,3 @@
-
 import { AuthenticatedHeader } from "@/components/layout/AuthenticatedHeader";
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
@@ -71,7 +70,7 @@ const BaseClients = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-              <p className="text-red-600 font-medium">{error}</p>
+              <p className="text-red-600 font-medium">{error?.message || 'Une erreur est survenue'}</p>
               <Button 
                 onClick={handleRetry} 
                 className="mt-4"

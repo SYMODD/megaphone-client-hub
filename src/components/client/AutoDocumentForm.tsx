@@ -1,8 +1,6 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PersonalInfoSection } from "./PersonalInfoSection";
 import { ContactInfoSection } from "./ContactInfoSection";
@@ -10,6 +8,7 @@ import { RegistrationSection } from "./RegistrationSection";
 import { FormActions } from "./FormActions";
 import { AutoDocumentScanner } from "./AutoDocumentScanner";
 import { uploadClientPhoto } from "@/utils/storageUtils";
+import { useClientMutation } from "@/hooks/useClientForm/useClientMutation";
 
 interface AutoDocumentFormData {
   nom: string;
@@ -27,7 +26,7 @@ interface AutoDocumentFormData {
 export const AutoDocumentForm = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const mutation = useClientMutation();
   
   const [formData, setFormData] = useState<AutoDocumentFormData>({
     nom: "",
@@ -84,8 +83,6 @@ export const AutoDocumentForm = () => {
       return;
     }
 
-    setIsLoading(true);
-
     try {
       console.log("Données du formulaire à enregistrer:", formData);
       
@@ -110,33 +107,20 @@ export const AutoDocumentForm = () => {
         photo_url: photoUrl,
         observations: formData.observations,
         date_enregistrement: formData.date_enregistrement,
-        agent_id: user.id
+        document_type: formData.document_type,
+        agent_id: user.id,
+        code_barre_image_url: formData.code_barre || "",
+        scannedImage: formData.scannedImage
       };
 
-      console.log("Données client à insérer:", clientData);
-
-      const { error } = await supabase
-        .from('clients')
-        .insert(clientData);
-
-      if (error) {
-        console.error('Error inserting client:', error);
-        if (error.code === '23505') {
-          toast.error("Ce numéro de document existe déjà dans la base de données");
-        } else {
-          toast.error(`Erreur lors de l'enregistrement du client: ${error.message}`);
-        }
-        return;
-      }
-
+      await mutation.mutateAsync(clientData);
+      
       const documentLabel = formData.document_type === 'passeport_etranger' ? 'passeport étranger' : 'carte de séjour';
       toast.success(`Client avec ${documentLabel} enregistré avec succès!`);
       navigate("/");
     } catch (error) {
       console.error('Error:', error);
       toast.error("Une erreur inattendue s'est produite");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -171,7 +155,7 @@ export const AutoDocumentForm = () => {
           />
 
           <FormActions 
-            isLoading={isLoading}
+            isLoading={mutation.isPending}
             onSubmit={handleSubmit}
           />
         </>

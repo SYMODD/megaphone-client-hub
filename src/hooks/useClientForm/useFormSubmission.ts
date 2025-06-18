@@ -1,9 +1,7 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { ClientFormData } from "./types";
 import { validateBarcodeImageUrl, logValidationError } from "./validation/formValidation";
-import { prepareSubmissionPayload } from "./submission/dataPreparation";
 import { 
   logFormSubmissionStart, 
   logPayloadValidation, 
@@ -11,8 +9,7 @@ import {
   logGeneralError, 
   logSubmissionEnd 
 } from "./submission/submissionLogger";
-import { getAuthenticatedUser } from "./submission/authHandler";
-import { insertClientData } from "./submission/supabaseOperations";
+import { useClientMutation } from "./useClientMutation";
 
 interface UseFormSubmissionProps {
   formData: ClientFormData;
@@ -21,6 +18,7 @@ interface UseFormSubmissionProps {
 
 export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const mutation = useClientMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,30 +27,21 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
     logFormSubmissionStart(formData);
 
     try {
-      const user = await getAuthenticatedUser();
-      if (!user) {
-        setIsSubmitting(false);
-        return;
-      }
+      const isUrlValid = validateBarcodeImageUrl(formData.code_barre_image_url);
 
-      const dataToInsert = prepareSubmissionPayload(formData, user.id);
-      const isUrlValid = validateBarcodeImageUrl(dataToInsert.code_barre_image_url);
-
-      logPayloadValidation(dataToInsert, isUrlValid);
+      logPayloadValidation(formData, isUrlValid);
 
       if (!isUrlValid) {
-        logValidationError(dataToInsert.code_barre_image_url);
+        logValidationError(formData.code_barre_image_url);
         toast.error("🚨 Erreur critique: Image du code-barres manquante. Veuillez rescanner.");
         setIsSubmitting(false);
         return;
       }
 
-      const result = await insertClientData(dataToInsert, formData);
+      await mutation.mutateAsync(formData);
       
-      if (result.success) {
-        logFormReset();
-        resetForm();
-      }
+      logFormReset();
+      resetForm();
 
     } catch (error) {
       logGeneralError(error);

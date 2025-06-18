@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 
 interface Client {
@@ -22,7 +21,7 @@ interface ClientStatisticsProps {
 }
 
 export const ClientStatistics = ({ totalCount, clients, nationalities }: ClientStatisticsProps) => {
-  const newThisMonth = clients.filter(c => 
+  const newThisMonth = (clients || []).filter(c => 
     new Date(c.date_enregistrement) >= new Date(Date.now() - 30*24*60*60*1000)
   ).length;
 
