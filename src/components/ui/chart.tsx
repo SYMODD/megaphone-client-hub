@@ -1,5 +1,5 @@
 import * as React from "react"
-import * as RechartsPrimitive from "recharts"
+// ❌ SUPPRIMÉ: import * as RechartsPrimitive from "recharts"
 
 import { cn } from "@/lib/utils"
 
@@ -32,13 +32,17 @@ function useChart() {
   return context
 }
 
+// ✅ LAZY LOADING - Composant ResponsiveContainer chargé dynamiquement
+const LazyResponsiveContainer = React.lazy(async () => {
+  const { ResponsiveContainer } = await import("recharts");
+  return { default: ResponsiveContainer };
+});
+
 const ChartContainer = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     config: ChartConfig
-    children: React.ComponentProps<
-      typeof RechartsPrimitive.ResponsiveContainer
-    >["children"]
+    children: React.ComponentProps<any>["children"] // Type générique pour éviter la dépendance
   }
 >(({ id, className, children, config, ...props }, ref) => {
   const uniqueId = React.useId()
@@ -56,9 +60,15 @@ const ChartContainer = React.forwardRef<
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
-        <RechartsPrimitive.ResponsiveContainer>
-          {children}
-        </RechartsPrimitive.ResponsiveContainer>
+        <React.Suspense fallback={
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-pulse text-gray-500">Chargement...</div>
+          </div>
+        }>
+          <LazyResponsiveContainer>
+            {children}
+          </LazyResponsiveContainer>
+        </React.Suspense>
       </div>
     </ChartContext.Provider>
   )
@@ -98,11 +108,15 @@ ${colorConfig
   )
 }
 
-const ChartTooltip = RechartsPrimitive.Tooltip
+// ✅ LAZY LOADING - Tooltip chargé dynamiquement
+const ChartTooltip = React.lazy(async () => {
+  const { Tooltip } = await import("recharts");
+  return { default: Tooltip };
+});
 
 const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
+  React.ComponentProps<any> &
     React.ComponentProps<"div"> & {
       hideLabel?: boolean
       hideIndicator?: boolean
@@ -254,12 +268,16 @@ const ChartTooltipContent = React.forwardRef<
 )
 ChartTooltipContent.displayName = "ChartTooltip"
 
-const ChartLegend = RechartsPrimitive.Legend
+// ✅ LAZY LOADING - Legend chargé dynamiquement
+const ChartLegend = React.lazy(async () => {
+  const { Legend } = await import("recharts");
+  return { default: Legend };
+});
 
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> &
-    Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
+    Pick<any, "payload" | "verticalAlign"> & {
       hideIcon?: boolean
       nameKey?: string
     }
