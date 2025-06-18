@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
+import { performanceOptimizer } from "@/utils/performanceOptimizer";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -48,6 +49,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       console.log("Profile fetched:", data);
       setProfile(data);
+      
+      // ✅ PERFORMANCE - Initialiser l'optimiseur avec le rôle utilisateur
+      if (data?.role) {
+        requestIdleCallback(() => {
+          performanceOptimizer.initialize(data.role);
+        });
+      }
     } catch (error) {
       console.error("Error fetching profile:", error);
     }

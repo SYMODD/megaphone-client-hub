@@ -1,120 +1,218 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
 import { SmartRedirect } from "./components/auth/SmartRedirect";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import AgentLogin from "./pages/AgentLogin";
-import AdminLogin from "./pages/AdminLogin";
-import SuperviseurLogin from "./pages/SuperviseurLogin";
-import BaseClients from "./pages/BaseClients";
-import NewClient from "./pages/NewClient";
-import CINScanner from "./pages/CINScanner";
-import PassportMarocainScanner from "./pages/PassportMarocainScanner";
-import PassportEtrangerScanner from "./pages/PassportEtrangerScanner";
-import CarteSejourScanner from "./pages/CarteSejourScanner";
-import UserManagement from "./pages/UserManagement";
-import Contracts from "./pages/Contracts";
-import NotFound from "./pages/NotFound";
+import { Suspense, lazy, useEffect } from "react";
 
-const queryClient = new QueryClient();
+const SuspenseFallback = ({ message = "Chargement..." }: { message?: string }) => (
+  <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+      <p className="mt-2 text-slate-600">{message}</p>
+    </div>
+  </div>
+);
+
+const Auth = lazy(() => import("./pages/Auth"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const AgentLogin = lazy(() => import("./pages/AgentLogin"));
+const AdminLogin = lazy(() => import("./pages/AdminLogin"));
+const SuperviseurLogin = lazy(() => import("./pages/SuperviseurLogin"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+const Index = lazy(() => 
+  import("./pages/Index").then(module => {
+    import("./components/dashboard/DashboardStats");
+    import("./components/dashboard/QuickActions");
+    return module;
+  })
+);
+
+const BaseClients = lazy(() => 
+  import("./pages/BaseClients").then(module => {
+    import("./components/clients/ClientTable");
+    import("./components/clients/ClientFilters");
+    return module;
+  })
+);
+
+const UserManagement = lazy(() => import("./pages/UserManagement"));
+
+const NewClient = lazy(() => 
+  import("./pages/NewClient").then(module => {
+    import("./components/client/ClientForm");
+    import("./components/client/DocumentScanner");
+    return module;
+  })
+);
+
+const CINScanner = lazy(() => import("./pages/CINScanner"));
+const PassportMarocainScanner = lazy(() => import("./pages/PassportMarocainScanner"));
+const PassportEtrangerScanner = lazy(() => import("./pages/PassportEtrangerScanner"));
+const CarteSejourScanner = lazy(() => import("./pages/CarteSejourScanner"));
+
+const Contracts = lazy(() => 
+  import("./pages/Contracts").then(module => {
+    if (window.location.pathname.includes('contracts')) {
+      import("./components/contracts/PDFContractGenerator");
+    }
+    return module;
+  })
+);
+
+import { queryClient } from "./lib/queryClient";
 
 const App = () => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const currentPath = window.location.pathname;
+      
+      if (currentPath.includes('/dashboard') || currentPath === '/') {
+        import("./pages/BaseClients");
+        import("./pages/UserManagement");
+      } else if (currentPath.includes('/nouveau-client')) {
+        import("./pages/CINScanner");
+        import("./pages/PassportMarocainScanner");
+      }
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
         <BrowserRouter>
           <AuthProvider>
             <Routes>
-              {/* Redirection intelligente selon le rôle */}
               <Route path="/" element={<SmartRedirect />} />
               
-              {/* Pages de connexion publiques */}
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/agent" element={<AgentLogin />} />
-              <Route path="/admin" element={<AdminLogin />} />
-              <Route path="/superviseur" element={<SuperviseurLogin />} />
+              <Route path="/auth" element={
+                <Suspense fallback={<SuspenseFallback message="Chargement de la connexion..." />}>
+                  <Auth />
+                </Suspense>
+              } />
               
-              {/* Dashboard - accessible aux admin et superviseur */}
+              <Route path="/reset-password" element={
+                <Suspense fallback={<SuspenseFallback message="Chargement..." />}>
+                  <ResetPassword />
+                </Suspense>
+              } />
+              
+              <Route path="/agent" element={
+                <Suspense fallback={<SuspenseFallback message="Chargement de la connexion agent..." />}>
+                  <AgentLogin />
+                </Suspense>
+              } />
+              
+              <Route path="/admin" element={
+                <Suspense fallback={<SuspenseFallback message="Chargement de la connexion admin..." />}>
+                  <AdminLogin />
+                </Suspense>
+              } />
+              
+              <Route path="/superviseur" element={
+                <Suspense fallback={<SuspenseFallback message="Chargement de la connexion superviseur..." />}>
+                  <SuperviseurLogin />
+                </Suspense>
+              } />
+              
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <RoleProtectedRoute allowedRoles={['admin', 'superviseur']} redirectTo="/agent">
-                    <Index />
+                    <Suspense fallback={<SuspenseFallback message="Chargement du tableau de bord..." />}>
+                      <Index />
+                    </Suspense>
                   </RoleProtectedRoute>
                 </ProtectedRoute>
               } />
               
-              {/* Base Clients - accessible uniquement aux admin et superviseur */}
               <Route path="/base-clients" element={
                 <ProtectedRoute>
                   <RoleProtectedRoute allowedRoles={['admin', 'superviseur']} redirectTo="/nouveau-client">
-                    <BaseClients />
+                    <Suspense fallback={<SuspenseFallback message="Chargement de la base clients..." />}>
+                      <BaseClients />
+                    </Suspense>
                   </RoleProtectedRoute>
                 </ProtectedRoute>
               } />
               
-              {/* Pages protégées - accessible à tous les utilisateurs authentifiés */}
               <Route path="/nouveau-client" element={
                 <ProtectedRoute>
-                  <NewClient />
+                  <Suspense fallback={<SuspenseFallback message="Chargement du formulaire client..." />}>
+                    <NewClient />
+                  </Suspense>
                 </ProtectedRoute>
               } />
 
               <Route path="/scanner-cin" element={
                 <ProtectedRoute>
-                  <CINScanner />
+                  <Suspense fallback={<SuspenseFallback message="Chargement du scanner CIN..." />}>
+                    <CINScanner />
+                  </Suspense>
                 </ProtectedRoute>
               } />
 
               <Route path="/scanner-passeport-marocain" element={
                 <ProtectedRoute>
-                  <PassportMarocainScanner />
+                  <Suspense fallback={<SuspenseFallback message="Chargement du scanner passeport..." />}>
+                    <PassportMarocainScanner />
+                  </Suspense>
                 </ProtectedRoute>
               } />
 
               <Route path="/scanner-passeport-etranger" element={
                 <ProtectedRoute>
-                  <PassportEtrangerScanner />
+                  <Suspense fallback={<SuspenseFallback message="Chargement du scanner passeport étranger..." />}>
+                    <PassportEtrangerScanner />
+                  </Suspense>
                 </ProtectedRoute>
               } />
 
               <Route path="/scanner-carte-sejour" element={
                 <ProtectedRoute>
-                  <CarteSejourScanner />
+                  <Suspense fallback={<SuspenseFallback message="Chargement du scanner carte de séjour..." />}>
+                    <CarteSejourScanner />
+                  </Suspense>
                 </ProtectedRoute>
               } />
               
-              {/* Pages admin uniquement */}
               <Route path="/users" element={
                 <RoleProtectedRoute allowedRoles={['admin']}>
-                  <UserManagement />
+                  <Suspense fallback={<SuspenseFallback message="Chargement de la gestion utilisateurs..." />}>
+                    <UserManagement />
+                  </Suspense>
                 </RoleProtectedRoute>
               } />
               
-              {/* Routes pour les contrats */}
               <Route path="/contracts" element={
                 <ProtectedRoute>
-                  <Contracts />
+                  <Suspense fallback={<SuspenseFallback message="Chargement des contrats..." />}>
+                    <Contracts />
+                  </Suspense>
                 </ProtectedRoute>
               } />
+              
               <Route path="/contrat" element={<Navigate to="/contracts" replace />} />
               <Route path="/contrats" element={<Navigate to="/contracts" replace />} />
               
-              <Route path="/404" element={<NotFound />} />
+              <Route path="/404" element={
+                <Suspense fallback={<SuspenseFallback />}>
+                  <NotFound />
+                </Suspense>
+              } />
               <Route path="*" element={<Navigate to="/404" replace />} />
             </Routes>
           </AuthProvider>
         </BrowserRouter>
+        
+        <Toaster />
+        <Sonner />
       </TooltipProvider>
     </QueryClientProvider>
   );

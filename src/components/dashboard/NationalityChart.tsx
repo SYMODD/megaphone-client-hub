@@ -2,34 +2,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 // ❌ SUPPRIMÉ: import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { useEffect, useState, Suspense, lazy } from "react";
 
-// ✅ LAZY LOADING - Chargement dynamique du PieChart
-const LazyPieChart = lazy(async () => {
-  const { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } = await import("recharts");
-  
-  return {
-    default: ({ data }: { data: Array<{ name: string; value: number; color: string }> }) => (
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart key={JSON.stringify(data)}>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={60}
-            outerRadius={100}
-            dataKey="value"
-            label={({ name, value }) => `${name}: ${value}`}
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}-${entry.name}`} fill={entry.color} />
-            ))}
-          </Pie>
-          <Tooltip formatter={(value, name) => [value, name]} />
-          <Legend />
-        </PieChart>
-      </ResponsiveContainer>
-    )
-  };
-});
+// ✅ LAZY LOADING SIMPLIFIÉ - Chargement dynamique de tout le module recharts
+const LazyPieChart = lazy(() => import("./charts/LazyPieChart"));
 
 interface NationalityChartProps {
   data: {
