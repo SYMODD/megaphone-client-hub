@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Printer } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import DOMPurify from 'dompurify';
 
 interface Client {
   id: string;
@@ -270,7 +271,7 @@ export const ContractPreview = ({ client, template }: ContractPreviewProps) => {
             .contract-content .signature-line { border-bottom: 1px solid #000; height: 50px; margin: 10px 0; }
             .contract-content p { margin: 10px 0; }
           `}</style>
-          <div dangerouslySetInnerHTML={{ __html: contractHTML }} />
+          <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(contractHTML) }} />
         </div>
       </CardContent>
     </Card>

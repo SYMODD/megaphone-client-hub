@@ -32,7 +32,7 @@ export const NewPasswordForm = ({ onNewPassword, isLoading }: NewPasswordFormPro
             setNewPasswordForm({ ...newPasswordForm, password: e.target.value })
           }
           required
-          minLength={6}
+          minLength={8}
         />
       </div>
       <div className="space-y-2">
@@ -45,7 +45,7 @@ export const NewPasswordForm = ({ onNewPassword, isLoading }: NewPasswordFormPro
             setNewPasswordForm({ ...newPasswordForm, confirmPassword: e.target.value })
           }
           required
-          minLength={6}
+          minLength={8}
         />
       </div>
       <Button type="submit" className="w-full" disabled={isLoading}>
