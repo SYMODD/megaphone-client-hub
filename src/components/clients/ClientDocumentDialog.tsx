@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Download, FileImage, FileSpreadsheet } from "lucide-react";
-import jsPDF from 'jspdf';
+// ❌ SUPPRIMÉ: import jsPDF from 'jspdf';
 
 interface Client {
   id: string;
@@ -38,6 +37,8 @@ export const ClientDocumentDialog = ({ client, open, onOpenChange }: ClientDocum
       setGenerating(true);
       console.log('Génération de la fiche client pour:', client);
 
+      // ✅ LAZY LOADING - Chargement dynamique de jsPDF
+      const { default: jsPDF } = await import('jspdf');
       const doc = new jsPDF();
       
       // En-tête
