@@ -1,10 +1,35 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { useEffect, useMemo } from "react";
+// ❌ SUPPRIMÉ: import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useEffect, useMemo, useState, Suspense, lazy } from "react";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ClientData } from "@/types/agentDataTypes";
+
+// ✅ LAZY LOADING - Chargement dynamique des composants Recharts
+const LazyLineChart = lazy(async () => {
+  const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = await import("recharts");
+  
+  return {
+    default: ({ data }: { data: any[] }) => (
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} key={JSON.stringify(data)}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="month" />
+          <YAxis />
+          <Tooltip />
+          <Line 
+            type="monotone" 
+            dataKey="clients" 
+            stroke="#10B981" 
+            strokeWidth={3}
+            dot={{ fill: "#10B981", strokeWidth: 2, r: 4 }}
+            activeDot={{ r: 6 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    )
+  };
+});
 
 interface RegistrationChartProps {
   data: {
@@ -14,6 +39,7 @@ interface RegistrationChartProps {
 
 export const RegistrationChart = ({ data }: RegistrationChartProps) => {
   const { clients } = data;
+  const [chartVisible, setChartVisible] = useState(false);
 
   // Générer les données d'enregistrement basées sur les clients filtrés
   const registrationData = useMemo(() => {
@@ -46,6 +72,15 @@ export const RegistrationChart = ({ data }: RegistrationChartProps) => {
     console.log("🔄 RegistrationChart RE-RENDER avec nouvelles données:", registrationData);
   }, [registrationData]);
 
+  // ✅ Chargement différé - Le chart ne se charge que quand on en a besoin
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setChartVisible(true);
+    }, 100); // Petit délai pour laisser le composant principal se charger
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <Card>
       <CardHeader>
@@ -59,22 +94,19 @@ export const RegistrationChart = ({ data }: RegistrationChartProps) => {
       </CardHeader>
       <CardContent>
         <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={registrationData} key={JSON.stringify(registrationData)}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Line 
-                type="monotone" 
-                dataKey="clients" 
-                stroke="#10B981" 
-                strokeWidth={3}
-                dot={{ fill: "#10B981", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          {chartVisible ? (
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-pulse text-gray-500">Chargement du graphique...</div>
+              </div>
+            }>
+              <LazyLineChart data={registrationData} />
+            </Suspense>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <div className="animate-pulse text-gray-500">Préparation du graphique...</div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

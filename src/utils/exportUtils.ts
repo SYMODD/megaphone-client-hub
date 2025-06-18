@@ -1,6 +1,5 @@
-
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+// ❌ SUPPRIMÉ: import jsPDF from 'jspdf';
+// ❌ SUPPRIMÉ: import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -78,7 +77,13 @@ export const exportToCSV = (clients: Client[], filename: string = 'clients') => 
   document.body.removeChild(link);
 };
 
-export const exportToPDF = (clients: Client[], filename: string = 'clients') => {
+export const exportToPDF = async (clients: Client[], filename: string = 'clients') => {
+  // ✅ LAZY LOADING - Chargement dynamique des librairies PDF
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable')
+  ]);
+  
   const doc = new jsPDF('landscape'); // Format paysage pour plus de colonnes
   
   // Titre
