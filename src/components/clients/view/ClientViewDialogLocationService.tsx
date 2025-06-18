@@ -28,7 +28,7 @@ export const ClientViewDialogLocationService = ({ client }: ClientViewDialogLoca
         <div>
           <span className="text-sm font-medium text-gray-600">Catégorie :</span>
           <Badge variant="secondary" className="mt-1 capitalize">
-            {getCategorie(client.categorie)}
+                            {getCategorie(client.categorie, client.point_operation)}
           </Badge>
         </div>
       </div>

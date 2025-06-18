@@ -36,6 +36,17 @@ export const getPointOperation = (pointOperation: string | undefined): string =>
   return pointOperation || "agence_centrale";
 };
 
-export const getCategorie = (categorie: string | undefined): string => {
-  return categorie || "agence";
+export const getCategorie = (categorie: string | undefined, pointOperation?: string): string => {
+  // Si on a déjà une catégorie valide, l'utiliser
+  if (categorie && categorie !== '') return categorie;
+  
+  // Sinon, déduire de point_operation
+  if (pointOperation) {
+    const normalizedPoint = pointOperation.toLowerCase();
+    if (normalizedPoint.includes('aeroport')) return 'aeroport';
+    if (normalizedPoint.includes('navire') || normalizedPoint.includes('port')) return 'navire';
+  }
+  
+  // Fallback par défaut
+  return "agence";
 };

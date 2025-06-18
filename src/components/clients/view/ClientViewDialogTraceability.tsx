@@ -50,7 +50,7 @@ export const ClientViewDialogTraceability = ({ client }: ClientViewDialogTraceab
           </div>
           <div className="flex items-center gap-1 text-green-600">
             <MapPin className="w-3 h-3" />
-            <span>Catégorie : ✅ {getCategorie(client.categorie)}</span>
+                            <span>Catégorie : ✅ {getCategorie(client.categorie, client.point_operation)}</span>
           </div>
         </div>
       </div>

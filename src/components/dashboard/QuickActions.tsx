@@ -1,13 +1,33 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Users, FileText, Database } from "lucide-react";
+import { Plus, Users, FileText, Database, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { fixClientCategories } from "@/utils/migrationHelper";
+import { useState } from "react";
 
 export const QuickActions = () => {
   const { profile } = useAuth();
   const isAgent = profile?.role === "agent";
+  const [isFixingCategories, setIsFixingCategories] = useState(false);
+
+  const handleFixCategories = async () => {
+    setIsFixingCategories(true);
+    try {
+      const result = await fixClientCategories();
+      if (result.success) {
+        alert("✅ Catégories corrigées avec succès ! Rechargez la page pour voir les changements.");
+      } else {
+        alert("❌ Erreur lors de la correction des catégories.");
+      }
+    } catch (error) {
+      console.error("Erreur:", error);
+      alert("❌ Erreur lors de la correction des catégories.");
+    } finally {
+      setIsFixingCategories(false);
+    }
+  };
 
   if (isAgent) {
     // Actions limitées pour les agents
@@ -42,7 +62,7 @@ export const QuickActions = () => {
 
   // Actions complètes pour admin et superviseur
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
       <Link to="/nouveau-client">
         <Card className="hover:shadow-xl transition-all duration-300 cursor-pointer group border-0 bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100">
           <CardContent className="p-4 sm:p-6 text-center">
@@ -86,6 +106,24 @@ export const QuickActions = () => {
           </div>
           <h3 className="font-bold text-slate-800 mb-2 text-sm sm:text-base">Statistiques</h3>
           <p className="text-xs sm:text-sm text-slate-600">Voir les rapports</p>
+        </CardContent>
+      </Card>
+
+      {/* Bouton temporaire de correction des catégories */}
+      <Card 
+        className="hover:shadow-xl transition-all duration-300 cursor-pointer group border-2 border-yellow-300 bg-gradient-to-br from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100"
+        onClick={handleFixCategories}
+      >
+        <CardContent className="p-4 sm:p-6 text-center">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+            <Settings className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+          </div>
+          <h3 className="font-bold text-slate-800 mb-2 text-sm sm:text-base">
+            {isFixingCategories ? "Correction..." : "Corriger Catégories"}
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-600">
+            {isFixingCategories ? "En cours..." : "Fix bug catégories"}
+          </p>
         </CardContent>
       </Card>
     </div>

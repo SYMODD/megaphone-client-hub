@@ -49,7 +49,7 @@ export const ClientTableRow = ({
             {getPointOperation(client.point_operation)}
           </span>
           <span className="text-xs text-slate-500 capitalize">
-            {getCategorie(client.categorie)}
+            {getCategorie(client.categorie, client.point_operation)}
           </span>
         </div>
       </td>
