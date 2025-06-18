@@ -19,4 +19,16 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // AJOUT - Configuration d'optimisation
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'pdf-tools': ['jspdf', 'jspdf-autotable'],
+          'ui-radix': ['@radix-ui/react-dialog', '@radix-ui/react-select']
+        }
+      }
+    }
+  }
 }));
