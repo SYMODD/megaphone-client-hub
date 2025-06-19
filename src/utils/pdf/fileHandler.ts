@@ -27,12 +27,24 @@ export const downloadPDFContract = (pdfBytes: Uint8Array, filename: string): voi
 export const previewPDFContract = (pdfBytes: Uint8Array): string => {
   try {
     console.log('🔄 Création de la prévisualisation PDF...');
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    
+    if (!pdfBytes || pdfBytes.length === 0) {
+      throw new Error('Données PDF vides ou invalides');
+    }
+    
+    const blob = new Blob([pdfBytes], { 
+      type: 'application/pdf'
+    });
+    
+    if (blob.size === 0) {
+      throw new Error('Impossible de créer le blob PDF');
+    }
+    
     const url = URL.createObjectURL(blob);
-    console.log('✅ URL de prévisualisation créée:', url);
+    console.log('✅ URL de prévisualisation créée:', url, 'Taille du blob:', blob.size, 'bytes');
     return url;
   } catch (error) {
     console.error('❌ Erreur lors de la création de la prévisualisation:', error);
-    throw new Error('Impossible de créer la prévisualisation PDF');
+    throw new Error(`Impossible de créer la prévisualisation PDF: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
   }
 };

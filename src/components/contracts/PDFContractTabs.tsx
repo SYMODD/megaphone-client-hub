@@ -6,6 +6,7 @@ import { FileText, Settings, FileDown, Lock, Info } from "lucide-react";
 import { PDFTemplateUpload } from "./PDFTemplateUpload";
 import { PDFTemplateSelector } from "./PDFTemplateSelector";
 import { PDFFieldMapping } from "./PDFFieldMapping";
+import { PDFTemplateDiagnostic } from "./PDFTemplateDiagnostic";
 import { ClientSelector } from "./ClientSelector";
 import { PDFGenerationTab } from "./PDFGenerationTab";
 import { PDFTemplate, FieldMapping } from "@/hooks/usePDFTemplates";
@@ -82,7 +83,7 @@ export const PDFContractTabs = ({
 
   return (
     <Tabs defaultValue="templates" className="space-y-6">
-      <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
+      <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-3'}`}>
         <TabsTrigger value="templates" className="flex items-center gap-2">
           <FileText className="w-4 h-4" />
           Templates
@@ -101,6 +102,12 @@ export const PDFContractTabs = ({
           <FileDown className="w-4 h-4" />
           Générer
         </TabsTrigger>
+        {isAdmin && (
+          <TabsTrigger value="diagnostic" className="flex items-center gap-2">
+            <Info className="w-4 h-4" />
+            Diagnostic
+          </TabsTrigger>
+        )}
       </TabsList>
 
       <TabsContent value="templates">
@@ -165,6 +172,12 @@ export const PDFContractTabs = ({
         )}
         <PDFGenerationTab />
       </TabsContent>
+
+      {isAdmin && (
+        <TabsContent value="diagnostic">
+          <PDFTemplateDiagnostic />
+        </TabsContent>
+      )}
     </Tabs>
   );
 };

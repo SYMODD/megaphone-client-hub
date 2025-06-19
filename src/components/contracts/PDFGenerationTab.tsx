@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { FileDown, Eye, AlertCircle, CheckCircle } from "lucide-react";
 import { usePDFContract } from './provider/PDFContractContext';
 import { useToast } from "@/hooks/use-toast";
+import { PDFPreview } from './PDFPreview';
 
 export const PDFGenerationTab = () => {
   const {
@@ -178,18 +179,13 @@ export const PDFGenerationTab = () => {
               </Button>
             </div>
 
-            {/* Prévisualisation */}
+            {/* Prévisualisation améliorée */}
             {previewUrl && (
-              <div className="mt-6">
-                <h4 className="font-medium mb-3">Prévisualisation du contrat</h4>
-                <div className="border rounded-lg overflow-hidden">
-                  <iframe
-                    src={previewUrl}
-                    className="w-full h-96"
-                    title="Prévisualisation du contrat PDF"
-                  />
-                </div>
-              </div>
+              <PDFPreview 
+                previewUrl={previewUrl}
+                onDownload={handleDownloadPDF}
+                title="Prévisualisation du contrat"
+              />
             )}
           </div>
         </CardContent>
