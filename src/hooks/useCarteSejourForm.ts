@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useImageUpload } from "@/hooks/useImageUpload";
@@ -100,6 +99,30 @@ export const useCarteSejourForm = () => {
         throw new Error("Utilisateur non connecté");
       }
 
+      // 🔧 CORRECTION: Récupérer le profil pour point_operation
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error("❌ Erreur récupération profil:", profileError);
+        throw new Error("Impossible de récupérer le profil utilisateur");
+      }
+
+      // 🔧 CORRECTION: Appliquer la même logique que dataPreparation.ts
+      const getCategorie = (pointOperation: string | undefined): string => {
+        if (!pointOperation) return 'agence';
+        
+        if (pointOperation.startsWith('aeroport')) return 'aeroport';
+        if (pointOperation.startsWith('navire')) return 'navire';
+        return 'agence';
+      };
+
+      const pointOperation = profile?.point_operation || 'agence_centrale';
+      const categorie = getCategorie(pointOperation);
+
       // 🎯 CRUCIAL: S'assurer que l'URL du code-barres est bien présente
       console.log("💾 VÉRIFICATION AVANT INSERTION - URL code-barres:", {
         code_barre_image_url_from_form: formData.code_barre_image_url,
@@ -119,7 +142,10 @@ export const useCarteSejourForm = () => {
         date_enregistrement: formData.date_enregistrement,
         document_type: 'carte_sejour',
         agent_id: user.id,
-        code_barre_image_url: formData.code_barre_image_url || null // 🎯 CRUCIAL: Inclure l'URL
+        code_barre_image_url: formData.code_barre_image_url || null, // 🎯 CRUCIAL: Inclure l'URL
+        // 🔧 CORRECTION: Ajouter point_operation et categorie
+        point_operation: pointOperation,
+        categorie: categorie
       };
 
       console.log("💾 INSERTION CLIENT CARTE SÉJOUR - Données finales:", {

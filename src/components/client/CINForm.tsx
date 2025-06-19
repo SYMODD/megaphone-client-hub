@@ -70,7 +70,6 @@ export const CINForm = () => {
 
       <FormActions 
         isLoading={isLoading}
-        onSubmit={handleSubmit}
       />
     </form>
   );

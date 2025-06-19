@@ -81,7 +81,6 @@ export const CarteSejourForm = () => {
 
       <FormActions 
         isLoading={isLoading}
-        onSubmit={handleSubmit}
       />
     </form>
   );

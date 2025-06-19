@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -108,6 +107,30 @@ export const usePassportMarocainForm = () => {
         }
       }
 
+      // 🔧 CORRECTION: Récupérer le profil pour point_operation
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error("❌ Erreur récupération profil:", profileError);
+        throw new Error("Impossible de récupérer le profil utilisateur");
+      }
+
+      // 🔧 CORRECTION: Appliquer la même logique que dataPreparation.ts
+      const getCategorie = (pointOperation: string | undefined): string => {
+        if (!pointOperation) return 'agence';
+        
+        if (pointOperation.startsWith('aeroport')) return 'aeroport';
+        if (pointOperation.startsWith('navire')) return 'navire';
+        return 'agence';
+      };
+
+      const pointOperation = profile?.point_operation || 'agence_centrale';
+      const categorie = getCategorie(pointOperation);
+
       const clientData = {
         nom: formData.nom.trim(),
         prenom: formData.prenom.trim(),
@@ -120,7 +143,10 @@ export const usePassportMarocainForm = () => {
         observations: formData.observations?.trim() || null,
         date_enregistrement: formData.date_enregistrement,
         document_type: formData.document_type,
-        agent_id: user.id
+        agent_id: user.id,
+        // 🔧 CORRECTION: Ajouter point_operation et categorie
+        point_operation: pointOperation,
+        categorie: categorie
       };
 
       console.log("💾 INSERTION CLIENT PASSEPORT MAROCAIN - Données finales:", {

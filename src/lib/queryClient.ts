@@ -4,8 +4,8 @@ import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
 // ✅ Cache intelligent avec gestion d'erreurs optimisée
 const queryCache = new QueryCache({
   onError: (error, query) => {
-    // Log uniquement les erreurs importantes
-    if (query.state.data !== undefined) {
+    // Log uniquement les erreurs importantes en mode développement
+    if (process.env.NODE_ENV === 'development' && query.state.data !== undefined) {
       console.warn('Query error with cached data:', error);
     }
   },
@@ -13,7 +13,9 @@ const queryCache = new QueryCache({
 
 const mutationCache = new MutationCache({
   onError: (error) => {
-    console.error('Mutation error:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Mutation error:', error);
+    }
   },
 });
 
@@ -22,9 +24,9 @@ export const queryClient = new QueryClient({
   mutationCache,
   defaultOptions: {
     queries: {
-      // ✅ PERFORMANCE - Cache agressif pour réduire les requêtes
-      staleTime: 15 * 60 * 1000, // 15 minutes (3x plus long)
-      gcTime: 30 * 60 * 1000,    // 30 minutes en cache (3x plus long)
+      // ✅ PERFORMANCE - Cache optimisé pour la vitesse
+      staleTime: 5 * 60 * 1000,  // 5 minutes (plus rapide)
+      gcTime: 15 * 60 * 1000,    // 15 minutes en cache
       
       // ✅ PERFORMANCE - Stratégie de retry intelligente
       retry: (failureCount, error: any) => {
@@ -32,19 +34,17 @@ export const queryClient = new QueryClient({
         if (error?.status >= 400 && error?.status < 500) {
           return false;
         }
-        return failureCount < 2; // Maximum 2 retries
+        return failureCount < 1; // Maximum 1 retry pour plus de rapidité
       },
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+      retryDelay: 1500, // Délai fixe de 1.5s
       
       // ✅ PERFORMANCE - Optimisations de refetch
       refetchOnWindowFocus: false,
       refetchOnReconnect: 'always',
       refetchOnMount: false, // Utilise le cache si disponible
       
-      // ✅ PERFORMANCE - Prefetching intelligent
+      // ✅ PERFORMANCE - Network mode optimisé
       networkMode: 'online',
-      
-
       
       // ✅ PERFORMANCE - Placeholders pour UX fluide
       placeholderData: (previousData) => previousData,
@@ -67,8 +67,6 @@ export const queryClient = new QueryClient({
         console.error('Mutation failed:', error);
       },
       
-
-      
       // ✅ PERFORMANCE - Timeout pour mutations
       meta: {
         timeout: 15000, // 15 secondes pour les mutations
@@ -77,14 +75,10 @@ export const queryClient = new QueryClient({
   },
 });
 
-// ✅ PERFORMANCE - Prefetching automatique des routes critiques
+// ✅ PERFORMANCE - Prefetching automatique des routes critiques (simplifié)
 export const prefetchCriticalData = async () => {
   // Prefetch des données critiques pour le dashboard
-  const criticalQueries = [
-    'dashboard-stats',
-    'user-profile',
-    'operation-points'
-  ];
+  const criticalQueries = ['dashboard-stats', 'user-profile'];
   
   for (const queryKey of criticalQueries) {
     try {
@@ -93,7 +87,10 @@ export const prefetchCriticalData = async () => {
         staleTime: 10 * 60 * 1000, // 10 minutes
       });
     } catch (error) {
-      console.warn(`Failed to prefetch ${queryKey}:`, error);
+      // Ignore silencieusement les erreurs de prefetch
+      if (process.env.NODE_ENV === 'development') {
+        console.debug(`Failed to prefetch ${queryKey}:`, error);
+      }
     }
   }
 };
@@ -141,7 +138,6 @@ export const cacheUtils = {
 
 // ✅ PERFORMANCE - Configuration pour le développement
 if (process.env.NODE_ENV === 'development') {
-  // Logging optimisé pour le dev disponible via les outils de développement
   console.log('Query Client optimisé activé pour le développement');
 }
 

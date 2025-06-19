@@ -84,7 +84,6 @@ export const PassportMarocainForm = () => {
 
       <FormActions 
         isLoading={isLoading}
-        onSubmit={handleSubmit}
       />
     </form>
   );

@@ -47,7 +47,7 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
         <CardHeader className="pb-3">
           <div className="flex items-center gap-3">
             {onBack && (
-              <Button variant="outline" size="sm" onClick={onBack}>
+              <Button variant="outline" size="sm" type="button" onClick={onBack}>
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             )}
@@ -75,6 +75,7 @@ export const DocumentTypeSelector = ({ selectedType, onTypeSelect, onBack }: Doc
           return (
             <Button
               key={docType.id}
+              type="button"
               variant="outline"
               className="w-full justify-start h-auto p-4 hover:bg-blue-50 hover:border-blue-300"
               onClick={() => handleTypeClick(docType.id)}

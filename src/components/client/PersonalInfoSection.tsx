@@ -1,4 +1,3 @@
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,22 +22,7 @@ export const PersonalInfoSection = ({ formData, onInputChange }: PersonalInfoSec
   const documentFieldLabel = getDocumentFieldLabel(documentType);
   const documentFieldPlaceholder = getDocumentFieldPlaceholder(documentType);
 
-  // Debug - Log quand les données changent
-  useEffect(() => {
-    console.log("🔍 PERSONAL INFO SECTION - Données reçues:", {
-      nom: formData.nom,
-      prenom: formData.prenom,
-      nationalite: formData.nationalite,
-      numero_passeport: formData.numero_passeport,
-      timestamp: new Date().toISOString()
-    });
-  }, [formData]);
-
   const handleNationalityChange = (value: string) => {
-    console.log("🌍 PERSONAL INFO - Changement nationalité:", {
-      ancienne: formData.nationalite,
-      nouvelle: value
-    });
     onInputChange("nationalite", value);
   };
 

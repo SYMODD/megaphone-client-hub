@@ -1,11 +1,6 @@
-
 import { ClientFormData } from "../types";
-import { useAuth } from "@/contexts/AuthContext";
 
-export const prepareSubmissionPayload = (formData: ClientFormData, userId: string) => {
-  // Get the profile data to determine point_operation and categorie
-  const { profile } = useAuth();
-  
+export const prepareSubmissionPayload = (formData: ClientFormData, userId: string, profile: any) => {
   // Determine the categorie based on point_operation
   const getCategorie = (pointOperation: string | undefined): string => {
     if (!pointOperation) return 'agence';
@@ -35,15 +30,6 @@ export const prepareSubmissionPayload = (formData: ClientFormData, userId: strin
     point_operation: pointOperation,
     categorie: categorie
   };
-
-  console.log("📝 Données préparées pour insertion:", {
-    point_operation: dataToInsert.point_operation,
-    categorie: dataToInsert.categorie,
-    profileData: {
-      point_operation: profile?.point_operation,
-      role: profile?.role
-    }
-  });
 
   return dataToInsert;
 };

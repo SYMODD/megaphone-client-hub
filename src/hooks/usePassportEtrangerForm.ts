@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { PassportEtrangerData } from "@/types/passportEtrangerTypes";
 
 interface FormData {
@@ -98,11 +98,35 @@ export const usePassportEtrangerForm = () => {
         console.log("✅ Image passeport étranger uploadée:", photoUrl);
       }
 
-      // Récupérer l'ID de l'agent connecté
+      // Récupérer l'utilisateur et son profil
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error("Utilisateur non connecté");
       }
+
+      // 🔧 CORRECTION: Récupérer le profil pour point_operation
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error("❌ Erreur récupération profil:", profileError);
+        throw new Error("Impossible de récupérer le profil utilisateur");
+      }
+
+      // 🔧 CORRECTION: Appliquer la même logique que dataPreparation.ts
+      const getCategorie = (pointOperation: string | undefined): string => {
+        if (!pointOperation) return 'agence';
+        
+        if (pointOperation.startsWith('aeroport')) return 'aeroport';
+        if (pointOperation.startsWith('navire')) return 'navire';
+        return 'agence';
+      };
+
+      const pointOperation = profile?.point_operation || 'agence_centrale';
+      const categorie = getCategorie(pointOperation);
 
       console.log("💾 VÉRIFICATION AVANT INSERTION - URL code-barres:", {
         code_barre_image_url_from_form: formData.code_barre_image_url,
@@ -122,7 +146,10 @@ export const usePassportEtrangerForm = () => {
         date_enregistrement: formData.date_enregistrement,
         document_type: 'passeport_etranger',
         agent_id: user.id,
-        code_barre_image_url: formData.code_barre_image_url || null
+        code_barre_image_url: formData.code_barre_image_url || null,
+        // 🔧 CORRECTION: Ajouter point_operation et categorie
+        point_operation: pointOperation,
+        categorie: categorie
       };
 
       console.log("💾 INSERTION CLIENT PASSEPORT ÉTRANGER - Données finales:", {

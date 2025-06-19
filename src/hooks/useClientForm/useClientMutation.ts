@@ -14,7 +14,7 @@ export const useClientMutation = () => {
       throw new Error("Utilisateur non authentifié");
     }
 
-    const dataToInsert = prepareSubmissionPayload(formData, user.id);
+    const dataToInsert = prepareSubmissionPayload(formData, user.id, user.user_metadata);
     
     const { data, error } = await supabase
       .from('clients')
@@ -35,9 +35,19 @@ export const useClientMutation = () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       toast.success("Client créé avec succès");
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       console.error("Erreur lors de la création du client:", error);
-      toast.error(`Erreur: ${error.message}`);
+      
+      // Gestion spécifique de l'erreur de doublon
+      if (error.code === '23505' && error.message.includes('clients_numero_passeport_key')) {
+        toast.error("⚠️ Ce numéro de passeport existe déjà dans la base de données", {
+          description: "Veuillez vérifier le numéro ou consulter le client existant.",
+          duration: 5000,
+        });
+      } else {
+        // Autres erreurs
+        toast.error(`Erreur: ${error.message}`);
+      }
     }
   });
 

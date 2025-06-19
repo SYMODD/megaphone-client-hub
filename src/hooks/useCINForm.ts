@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -76,36 +75,39 @@ export const useCINForm = () => {
       nationalite_à_appliquer: normalizedNationality
     });
 
-    // Mise à jour DIRECTE et FORCÉE de tous les champs
+    // ✅ CORRECTION: Une seule mise à jour d'état pour éviter les re-renders multiples
+    const extractionInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: CIN`;
+    
     const updatedFormData = {
       ...formData,
       nom: extractedData.nom || formData.nom,
       prenom: extractedData.prenom || formData.prenom,
-      nationalite: normalizedNationality, // ✅ MAINTENANT "Maroc" au lieu de "Marocaine"
+      nationalite: normalizedNationality,
       numero_passeport: extractedData.cin || extractedData.numero_cin || formData.numero_passeport,
       code_barre: extractedData.code_barre || formData.code_barre,
-      code_barre_image_url: extractedData.code_barre_image_url || formData.code_barre_image_url
+      code_barre_image_url: extractedData.code_barre_image_url || formData.code_barre_image_url,
+      observations: formData.observations ? `${formData.observations}\n\n${extractionInfo}` : extractionInfo
     };
 
-    console.log("✅ MISE À JOUR DIRECTE - Nouveau state complet:", {
+    console.log("✅ MISE À JOUR UNIQUE - Nouveau state complet:", {
       nationalite_avant: formData.nationalite,
       nationalite_après: updatedFormData.nationalite,
       données_complètes: updatedFormData
     });
 
-    // Application directe du nouvel état
+    // Application directe du nouvel état EN UNE SEULE FOIS
     setFormData(updatedFormData);
-
-    const extractionInfo = `Données extraites automatiquement via OCR le ${new Date().toLocaleString('fr-FR')} - Type de document: CIN`;
-    setFormData(prev => ({
-      ...prev,
-      observations: prev.observations ? `${prev.observations}\n\n${extractionInfo}` : extractionInfo
-    }));
 
     console.log("✅ TERMINÉ - Données CIN appliquées au formulaire avec nationalité:", normalizedNationality);
   };
 
   const handleSubmit = async () => {
+    // ✅ PROTECTION: Éviter les soumissions accidentelles
+    if (!formData.nom && !formData.prenom && !formData.numero_passeport) {
+      console.log("🛡️ PROTECTION: Soumission bloquée - formulaire vide");
+      return;
+    }
+
     if (!user) {
       toast.error("Vous devez être connecté pour ajouter un client");
       return;
@@ -143,6 +145,30 @@ export const useCINForm = () => {
         }
       }
 
+      // 🔧 CORRECTION: Récupérer le profil pour point_operation
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error("❌ Erreur récupération profil:", profileError);
+        throw new Error("Impossible de récupérer le profil utilisateur");
+      }
+
+      // 🔧 CORRECTION: Appliquer la même logique que dataPreparation.ts
+      const getCategorie = (pointOperation: string | undefined): string => {
+        if (!pointOperation) return 'agence';
+        
+        if (pointOperation.startsWith('aeroport')) return 'aeroport';
+        if (pointOperation.startsWith('navire')) return 'navire';
+        return 'agence';
+      };
+
+      const pointOperation = profile?.point_operation || 'agence_centrale';
+      const categorie = getCategorie(pointOperation);
+
       const clientData = {
         nom: formData.nom.trim(),
         prenom: formData.prenom.trim(),
@@ -155,7 +181,10 @@ export const useCINForm = () => {
         observations: formData.observations?.trim() || null,
         date_enregistrement: formData.date_enregistrement,
         document_type: formData.document_type,
-        agent_id: user.id
+        agent_id: user.id,
+        // 🔧 CORRECTION: Ajouter point_operation et categorie
+        point_operation: pointOperation,
+        categorie: categorie
       };
 
       console.log("💾 INSERTION CLIENT CIN COMPLÈTE - Données finales:", {

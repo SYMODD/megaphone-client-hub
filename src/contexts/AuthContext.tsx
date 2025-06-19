@@ -50,11 +50,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Profile fetched:", data);
       setProfile(data);
       
-      // ✅ PERFORMANCE - Initialiser l'optimiseur avec le rôle utilisateur
+      // ✅ PERFORMANCE - Initialiser l'optimiseur avec le rôle utilisateur (avec délai)
       if (data?.role) {
-        requestIdleCallback(() => {
-          performanceOptimizer.initialize(data.role);
-        });
+        setTimeout(() => {
+          try {
+            performanceOptimizer.initialize(data.role);
+          } catch (error) {
+            console.debug('Performance optimizer initialization skipped:', error);
+          }
+        }, 2000);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);

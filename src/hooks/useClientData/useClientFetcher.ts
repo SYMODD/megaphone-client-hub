@@ -29,6 +29,29 @@ export const useClientFetcher = () => {
       );
     }
 
+    if (filters?.nationality && filters.nationality !== '') {
+      console.log("🌍 Application du filtre nationalité:", filters.nationality);
+      baseQuery = baseQuery.eq("nationalite", filters.nationality);
+    }
+
+    if (filters?.dateFrom) {
+      console.log("📅 Application du filtre date début");
+      const dateFrom = filters.dateFrom;
+      if (dateFrom instanceof Date) {
+        const fromDate = dateFrom.toISOString().split('T')[0];
+        baseQuery = baseQuery.gte("date_enregistrement", fromDate);
+      }
+    }
+
+    if (filters?.dateTo) {
+      console.log("📅 Application du filtre date fin");
+      const dateTo = filters.dateTo;
+      if (dateTo instanceof Date) {
+        const toDate = dateTo.toISOString().split('T')[0];
+        baseQuery = baseQuery.lte("date_enregistrement", toDate);
+      }
+    }
+
     if (filters?.status && filters.status !== "all") {
       baseQuery = baseQuery.eq("status", filters.status);
     }
@@ -60,11 +83,12 @@ export const useClientFetcher = () => {
 
     console.log("✅ Clients fetched successfully:", { 
       count: data?.length, 
-      total: count 
+      total: count,
+      hasFilters: !!(filters?.searchTerm || filters?.nationality || filters?.dateFrom || filters?.dateTo)
     });
 
     const result: FetchClientsResult = {
-      clients: (data as Client[]) || [],
+      clients: (data as any[]) || [],
       totalCount: count || 0,
       totalPages: Math.ceil((count || 0) / ITEMS_PER_PAGE)
     };

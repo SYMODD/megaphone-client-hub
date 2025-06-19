@@ -33,9 +33,7 @@ export const useFormSubmission = ({ formData, resetForm }: UseFormSubmissionProp
 
       if (!isUrlValid) {
         logValidationError(formData.code_barre_image_url);
-        toast.error("🚨 Erreur critique: Image du code-barres manquante. Veuillez rescanner.");
-        setIsSubmitting(false);
-        return;
+        toast.info("💡 Conseil: Le scan du code-barres améliore la traçabilité");
       }
 
       await mutation.mutateAsync(formData);

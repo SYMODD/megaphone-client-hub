@@ -100,14 +100,15 @@ export class IntelligentPreloader {
 
     const moduleLoader = routeModuleMap[route];
     if (moduleLoader) {
-      // Préchargement avec gestion d'erreur
+      // Préchargement avec gestion d'erreur silencieuse
       moduleLoader()
         .then(() => {
           this.preloadedModules.add(route);
           console.log(`🚀 Préchargement réussi pour ${route}`);
         })
         .catch(error => {
-          console.warn(`⚠️ Échec du préchargement pour ${route}:`, error);
+          // Gestion silencieuse des erreurs de préchargement
+          console.debug(`Préchargement ignoré pour ${route}:`, error);
         });
     }
   }
@@ -116,16 +117,15 @@ export class IntelligentPreloader {
     const routes = this.criticalRoutes.get(userRole) || [];
     routes.forEach(route => {
       // Préchargement différé pour éviter de bloquer le thread principal
-      requestIdleCallback(() => {
+      setTimeout(() => {
         this.preloadRoute(route);
-      });
+      }, 100);
     });
   }
 }
 
-// ✅ PERFORMANCE - Optimiseur de mémoire
+// ✅ PERFORMANCE - Optimiseur de mémoire (simplifié)
 export class MemoryOptimizer {
-  private memoryThreshold = 50 * 1024 * 1024; // 50MB
   private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor() {
@@ -133,40 +133,28 @@ export class MemoryOptimizer {
   }
 
   private startMemoryMonitoring() {
-    // Nettoyage automatique toutes les 5 minutes
+    // Nettoyage automatique toutes les 10 minutes (moins agressif)
     this.cleanupInterval = setInterval(() => {
       this.performCleanup();
-    }, 5 * 60 * 1000);
+    }, 10 * 60 * 1000);
   }
 
   private performCleanup() {
-    // Nettoyage des queries inactives
-    queryClient.getQueryCache().clear();
+    // Nettoyage léger des queries très anciennes uniquement
+    const queries = queryClient.getQueryCache().getAll();
+    const now = Date.now();
     
-    // Nettoyage des images en cache
-    this.cleanupImageCache();
-    
-    // Force garbage collection si disponible
-    if (window.gc) {
-      window.gc();
-    }
-    
-    console.log('🧹 Nettoyage mémoire effectué');
-  }
-
-  private cleanupImageCache() {
-    // Suppression des images non utilisées du cache
-    const images = document.querySelectorAll('img[data-cached="true"]');
-    images.forEach(img => {
-      if (!this.isElementVisible(img)) {
-        img.remove();
+    queries.forEach(query => {
+      const lastUpdated = query.state.dataUpdatedAt;
+      const age = now - lastUpdated;
+      
+      // Supprimer seulement les queries très anciennes (plus de 30 minutes)
+      if (age > 30 * 60 * 1000) {
+        queryClient.removeQueries({ queryKey: query.queryKey });
       }
     });
-  }
-
-  private isElementVisible(element: Element): boolean {
-    const rect = element.getBoundingClientRect();
-    return rect.top < window.innerHeight && rect.bottom > 0;
+    
+    console.log('🧹 Nettoyage mémoire léger effectué');
   }
 
   public destroy() {
@@ -176,48 +164,7 @@ export class MemoryOptimizer {
   }
 }
 
-// ✅ PERFORMANCE - Optimiseur de bundle
-export class BundleOptimizer {
-  private loadedChunks = new Set<string>();
-  
-  public async optimizeInitialLoad() {
-    // Chargement prioritaire des chunks critiques
-    const criticalChunks = [
-      'vendor-react',
-      'vendor-data',
-      'vendor-utils'
-    ];
-    
-    for (const chunk of criticalChunks) {
-      await this.loadChunk(chunk);
-    }
-  }
-
-  private async loadChunk(chunkName: string): Promise<void> {
-    if (this.loadedChunks.has(chunkName)) return;
-    
-    try {
-      // Simulation du chargement de chunk
-      const chunkPath = `/assets/js/${chunkName}-[hash].js`;
-      await this.loadScript(chunkPath);
-      this.loadedChunks.add(chunkName);
-    } catch (error) {
-      console.warn(`Erreur lors du chargement du chunk ${chunkName}:`, error);
-    }
-  }
-
-  private loadScript(src: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = src;
-      script.onload = () => resolve();
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-  }
-}
-
-// ✅ PERFORMANCE - Moniteur de performance
+// ✅ PERFORMANCE - Moniteur de performance (simplifié)
 export class PerformanceMonitor {
   private metrics: PerformanceMetrics = {
     bundleSize: 0,
@@ -227,9 +174,12 @@ export class PerformanceMonitor {
   };
 
   public startMonitoring() {
-    this.measureLoadTime();
-    this.measureRenderTime();
-    this.measureCachePerformance();
+    // Démarrage différé pour éviter d'impacter le chargement initial
+    setTimeout(() => {
+      this.measureLoadTime();
+      this.measureRenderTime();
+      this.measureCachePerformance();
+    }, 2000);
   }
 
   private measureLoadTime() {
@@ -263,41 +213,43 @@ export class PerformanceMonitor {
   public reportPerformance() {
     console.log('📊 Métriques de performance:', this.metrics);
     
-    // Rapport de performance optimisé
-    if (this.metrics.loadTime > 3000) {
+    // Rapport de performance moins verbeux
+    if (this.metrics.loadTime > 5000) {
       console.warn('⚠️ Temps de chargement élevé:', this.metrics.loadTime, 'ms');
     }
     
-    if (this.metrics.cacheHitRate < 70) {
+    if (this.metrics.cacheHitRate < 50) {
       console.warn('⚠️ Taux de cache faible:', this.metrics.cacheHitRate, '%');
     }
   }
 }
 
-// ✅ PERFORMANCE - Instance globale de l'optimiseur
+// ✅ PERFORMANCE - Instance globale de l'optimiseur (simplifiée)
 export const performanceOptimizer = {
   preloader: new IntelligentPreloader(),
   memoryOptimizer: new MemoryOptimizer(),
-  bundleOptimizer: new BundleOptimizer(),
   performanceMonitor: new PerformanceMonitor(),
 
-  // Initialisation complète
+  // Initialisation non-bloquante
   initialize(userRole?: string) {
-    console.log('🚀 Initialisation de l\'optimiseur de performance ultra-avancé');
+    console.log('🚀 Initialisation de l\'optimiseur de performance');
     
-    // Démarrage des optimisations
-    this.performanceMonitor.startMonitoring();
-    this.bundleOptimizer.optimizeInitialLoad();
-    
-    // Préchargement basé sur le rôle
-    if (userRole) {
-      this.preloader.preloadByRole(userRole);
-    }
-    
-    // Rapport de performance après 5 secondes
+    // Démarrage des optimisations avec délai
     setTimeout(() => {
-      this.performanceMonitor.reportPerformance();
-    }, 5000);
+      this.performanceMonitor.startMonitoring();
+      
+      // Préchargement basé sur le rôle avec délai supplémentaire
+      if (userRole) {
+        setTimeout(() => {
+          this.preloader.preloadByRole(userRole);
+        }, 1000);
+      }
+      
+      // Rapport de performance après 10 secondes
+      setTimeout(() => {
+        this.performanceMonitor.reportPerformance();
+      }, 8000);
+    }, 500);
   },
 
   // Nettoyage lors de la fermeture
@@ -306,12 +258,20 @@ export const performanceOptimizer = {
   }
 };
 
-// ✅ PERFORMANCE - Auto-initialisation
+// ✅ PERFORMANCE - Initialisation conditionnelle
 if (typeof window !== 'undefined') {
-  // Initialisation différée pour ne pas bloquer le chargement initial
-  requestIdleCallback(() => {
-    performanceOptimizer.initialize();
-  });
+  // Initialisation seulement si la page est complètement chargée
+  if (document.readyState === 'complete') {
+    setTimeout(() => {
+      performanceOptimizer.initialize();
+    }, 1000);
+  } else {
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        performanceOptimizer.initialize();
+      }, 1000);
+    });
+  }
   
   // Nettoyage lors de la fermeture de la page
   window.addEventListener('beforeunload', () => {

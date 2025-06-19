@@ -156,7 +156,6 @@ export const AutoDocumentForm = () => {
 
           <FormActions 
             isLoading={mutation.isPending}
-            onSubmit={handleSubmit}
           />
         </>
       )}

@@ -4,49 +4,61 @@ export const fixClientCategories = async () => {
   console.log("🔧 Début de la correction des catégories clients...");
   
   try {
-    // 1. Corriger les clients avec point_operation aéroport
-    const { data: aeroportUpdate, error: aeroportError } = await supabase
+    // 1. D'abord, récupérer tous les clients pour voir leur état actuel
+    const { data: allClients, error: fetchError } = await supabase
       .from('clients')
-      .update({ categorie: 'aeroport' })
-      .or('point_operation.ilike.aeroport%,point_operation.ilike.%aeroport%')
-      .or('categorie.is.null,categorie.eq.,categorie.eq.agence');
+      .select('id, nom, prenom, point_operation, categorie')
+      .order('created_at', { ascending: false });
 
-    if (aeroportError) {
-      console.error("❌ Erreur lors de la mise à jour aéroport:", aeroportError);
-    } else {
-      console.log("✅ Clients aéroport mis à jour");
+    if (fetchError) {
+      console.error("❌ Erreur lors de la récupération:", fetchError);
+      return { success: false, error: fetchError };
     }
 
-    // 2. Corriger les clients avec point_operation navire
-    const { data: navireUpdate, error: navireError } = await supabase
-      .from('clients')
-      .update({ categorie: 'navire' })
-      .or('point_operation.ilike.navire%,point_operation.ilike.%navire%,point_operation.ilike.%port%')
-      .or('categorie.is.null,categorie.eq.,categorie.eq.agence');
+    console.log(`📊 Total clients à vérifier: ${allClients?.length || 0}`);
 
-    if (navireError) {
-      console.error("❌ Erreur lors de la mise à jour navire:", navireError);
-    } else {
-      console.log("✅ Clients navire mis à jour");
+    let aeroportCount = 0;
+    let navireCount = 0;
+    let agenceCount = 0;
+
+    // 2. Corriger chaque client individuellement avec une logique claire
+    if (allClients) {
+      for (const client of allClients) {
+        let newCategorie = null;
+        const pointOp = client.point_operation?.toLowerCase() || '';
+        
+        // Déterminer la nouvelle catégorie basée sur point_operation
+        if (pointOp.includes('aeroport')) {
+          newCategorie = 'aeroport';
+          aeroportCount++;
+        } else if (pointOp.includes('navire') || pointOp.includes('port')) {
+          newCategorie = 'navire';
+          navireCount++;
+        } else {
+          newCategorie = 'agence';
+          agenceCount++;
+        }
+
+        // Mettre à jour seulement si la catégorie a changé
+        if (client.categorie !== newCategorie) {
+          console.log(`🔄 Mise à jour: ${client.nom} ${client.prenom} - ${client.point_operation} → ${newCategorie}`);
+          
+          const { error: updateError } = await supabase
+            .from('clients')
+            .update({ categorie: newCategorie })
+            .eq('id', client.id);
+
+          if (updateError) {
+            console.error(`❌ Erreur mise à jour client ${client.id}:`, updateError);
+          }
+        }
+      }
     }
 
-    // 3. Vérifier les résultats
-    const { data: stats, error: statsError } = await supabase
-      .from('clients')
-      .select('categorie, point_operation')
-      .order('categorie');
-
-    if (statsError) {
-      console.error("❌ Erreur lors de la vérification:", statsError);
-    } else {
-      const categorieStats = stats?.reduce((acc, client) => {
-        const cat = client.categorie || 'non_defini';
-        acc[cat] = (acc[cat] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-      
-      console.log("📊 Statistiques après correction:", categorieStats);
-    }
+    console.log("📊 Résultats de la correction:");
+    console.log(`  ✈️  Aéroport: ${aeroportCount} clients`);
+    console.log(`  🚢 Navire: ${navireCount} clients`);
+    console.log(`  🏢 Agence: ${agenceCount} clients`);
 
     console.log("🎉 Correction des catégories terminée avec succès !");
     return { success: true };
