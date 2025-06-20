@@ -75,7 +75,7 @@ export const usePassportMarocainMRZHandler = ({
     };
 
     onConfirmData(dataToConfirm);
-    toast.success("Données confirmées et appliquées au formulaire");
+            toast.success("Données confirmées et appliquées au formulaire");
   };
 
   return {

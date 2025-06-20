@@ -211,16 +211,7 @@ export class PerformanceMonitor {
   }
 
   public reportPerformance() {
-    console.log('📊 Métriques de performance:', this.metrics);
-    
-    // Rapport de performance moins verbeux
-    if (this.metrics.loadTime > 5000) {
-      console.warn('⚠️ Temps de chargement élevé:', this.metrics.loadTime, 'ms');
-    }
-    
-    if (this.metrics.cacheHitRate < 50) {
-      console.warn('⚠️ Taux de cache faible:', this.metrics.cacheHitRate, '%');
-    }
+    // Logs supprimés pour interface propre
   }
 }
 

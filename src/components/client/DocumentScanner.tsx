@@ -1,156 +1,196 @@
-
-import { useState } from "react";
-import { Label } from "@/components/ui/label";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Camera, 
+  Upload, 
+  CheckCircle, 
+  AlertCircle,
+  RotateCcw,
+  Eye,
+  Download
+} from "lucide-react";
 import { DocumentType } from "@/types/documentTypes";
-import { MRZData } from "@/services/ocr";
-import { toast } from "sonner";
-import { usePassportOCR } from "@/hooks/usePassportOCR";
-import { AdminAPIKeySection } from "./AdminAPIKeySection";
-import { PassportImageCapture } from "./PassportImageCapture";
-import { PassportDataDisplay } from "./PassportDataDisplay";
-import { DocumentTypeSelector } from "./DocumentTypeSelector";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import { ScannedImagePreview } from "./ScannedImagePreview";
 
 interface DocumentScannerProps {
-  onDataExtracted: (data: MRZData, documentType: DocumentType) => void;
+  documentType: DocumentType;
   onImageScanned: (image: string) => void;
-  scannedImage: string | null;
+  onDataExtracted?: (data: any) => void;
+  scannedImage?: string | null;
+  extractedData?: any;
+  isProcessing?: boolean;
+  className?: string;
 }
 
-export const DocumentScanner = ({ onDataExtracted, onImageScanned, scannedImage }: DocumentScannerProps) => {
-  const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType | null>(null);
-  const [showRawText, setShowRawText] = useState(false);
-  // MISE À JOUR: Utilisation de la clé API valide
-  const [apiKey, setApiKey] = useState("GP88520U6RHWX");
-  const [showApiKey, setShowApiKey] = useState(false);
+export const DocumentScanner: React.FC<DocumentScannerProps> = ({
+  documentType,
+  onImageScanned,
+  onDataExtracted,
+  scannedImage,
+  extractedData,
+  isProcessing = false,
+  className = ""
+}) => {
+  const [selectedType, setSelectedType] = useState<DocumentType | null>(documentType);
+  const { handleFileUpload, isUploading } = useImageUpload();
 
-  const { isScanning, extractedData, rawText, scanImage, resetScan } = usePassportOCR();
-
-  const handleDocumentTypeSelect = (type: DocumentType) => {
-    setSelectedDocumentType(type);
-    // Reset any previous scan when changing document type
-    if (scannedImage) {
-      handleResetScan();
-    }
-  };
-
-  const handleBackToSelection = () => {
-    setSelectedDocumentType(null);
-    if (scannedImage) {
-      handleResetScan();
-    }
-  };
-
-  const handleImageCapture = async (file: File) => {
-    if (!file || !selectedDocumentType) return;
-
-    // Convert to base64 for preview
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      onImageScanned(result);
-    };
-    reader.readAsDataURL(file);
-
-    // Scan with OCR - the OCR service will need to be adapted for different document types
-    await scanImage(file, apiKey);
-  };
-
-  const handleConfirmData = () => {
-    if (extractedData && selectedDocumentType) {
-      onDataExtracted(extractedData, selectedDocumentType);
-      toast.success("Données confirmées et appliquées au formulaire");
-    }
-  };
-
-  const handleResetScan = () => {
-    resetScan();
-    onImageScanned("");
-  };
-
-  const getDocumentTitle = () => {
-    switch (selectedDocumentType) {
+  const getDocumentTitle = (type: DocumentType) => {
+    switch (type) {
       case 'cin':
-        return 'Scanner la CIN';
+        return 'Carte d\'Identité Nationale';
       case 'passeport_marocain':
-        return 'Scanner le passeport marocain';
+        return 'Passeport Marocain';
       case 'passeport_etranger':
-        return 'Scanner le passeport étranger';
+        return 'Passeport Étranger';
       case 'carte_sejour':
-        return 'Scanner la carte de séjour';
+        return 'Carte de Séjour';
       default:
-        return 'Scanner le document';
+        return 'Document';
     }
   };
 
-  const getDocumentDescription = () => {
-    switch (selectedDocumentType) {
+  const getDocumentIcon = (type: DocumentType) => {
+    switch (type) {
       case 'cin':
-        return 'Prenez une photo ou téléversez une image de la carte d\'identité nationale';
+        return '🆔';
       case 'passeport_marocain':
-        return 'Prenez une photo ou téléversez une image de la page principale du passeport marocain';
+        return '🇲🇦';
       case 'passeport_etranger':
-        return 'Prenez une photo ou téléversez une image de la page principale du passeport étranger';
+        return '🌍';
       case 'carte_sejour':
-        return 'Prenez une photo ou téléversez une image de la carte de séjour';
+        return '🏛️';
       default:
-        return 'Prenez une photo ou téléversez une image du document';
+        return '📄';
     }
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const compressedImage = await handleFileUpload(file);
+      if (compressedImage) {
+        onImageScanned(compressedImage);
+      }
+    } catch (error) {
+      console.error('Erreur lors du téléchargement:', error);
+    }
+  };
+
+  const handleRetake = () => {
+    setSelectedType(null);
+    // Reset scanner state
+  };
+
+  const getStatusBadge = () => {
+    if (isProcessing) {
+      return <Badge variant="secondary">🔄 Traitement en cours...</Badge>;
+    }
+    if (extractedData) {
+      return <Badge variant="default" className="bg-green-500">✅ Données extraites</Badge>;
+    }
+    if (scannedImage) {
+      return <Badge variant="secondary">📸 Image capturée</Badge>;
+    }
+    return <Badge variant="outline">⏳ En attente</Badge>;
   };
 
   return (
-    <div className="space-y-4">
-      <Label>Scanner le document d'identité</Label>
-      
-      <DocumentTypeSelector
-        selectedType={selectedDocumentType}
-        onTypeSelect={handleDocumentTypeSelect}
-        onBack={handleBackToSelection}
-      />
+    <div className={`space-y-6 ${className}`}>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{getDocumentIcon(documentType)}</span>
+              <div>
+                <CardTitle className="text-lg">
+                  Scanner {getDocumentTitle(documentType)}
+                </CardTitle>
+                <CardDescription>
+                  Prenez une photo ou téléchargez une image du document
+                </CardDescription>
+              </div>
+            </div>
+            {getStatusBadge()}
+          </div>
+        </CardHeader>
 
-      {selectedDocumentType && (
-        <>
-          <AdminAPIKeySection
-            apiKey={apiKey}
-            onApiKeyChange={setApiKey}
-            showApiKey={showApiKey}
-            onToggleApiKey={() => setShowApiKey(!showApiKey)}
-          />
+        <CardContent className="space-y-4">
+          {!scannedImage ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Upload from device */}
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="file-upload"
+                  disabled={isUploading}
+                />
+                <label htmlFor="file-upload" className="cursor-pointer">
+                  <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm font-medium text-gray-900">
+                    {isUploading ? 'Téléchargement...' : 'Télécharger une image'}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    PNG, JPG, HEIC jusqu'à 10MB
+                  </p>
+                </label>
+              </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{getDocumentTitle()}</CardTitle>
-              <CardDescription>
-                {getDocumentDescription()}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <PassportImageCapture
-                isScanning={isScanning}
-                scannedImage={scannedImage}
-                onImageCapture={handleImageCapture}
-                onResetScan={handleResetScan}
+              {/* Camera capture */}
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                <Camera className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-sm font-medium text-gray-900 mb-1">
+                  Prendre une photo
+                </p>
+                <p className="text-xs text-gray-500">
+                  Utilisez l'appareil photo
+                </p>
+                <Button size="sm" className="mt-2" disabled>
+                  Bientôt disponible
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <ScannedImagePreview
+                imageUrl={scannedImage}
+                documentType={documentType}
+                extractedData={extractedData}
+                isProcessing={isProcessing}
               />
-
-              {scannedImage && (
-                <>
-                  <Separator />
-                  <PassportDataDisplay
-                    extractedData={extractedData}
-                    rawText={rawText}
-                    showRawText={showRawText}
-                    onToggleRawText={() => setShowRawText(!showRawText)}
-                    onConfirmData={handleConfirmData}
-                    scannedImage={scannedImage}
-                    isScanning={isScanning}
-                  />
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </>
-      )}
+              
+              <div className="flex justify-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleRetake}
+                  className="flex items-center gap-2"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Recommencer
+                </Button>
+                
+                {extractedData && (
+                  <Button
+                    variant="outline"
+                    onClick={() => onDataExtracted?.(extractedData)}
+                    className="flex items-center gap-2"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Voir les données
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

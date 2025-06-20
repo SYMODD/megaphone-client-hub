@@ -8,6 +8,8 @@ import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
 import { SmartRedirect } from "./components/auth/SmartRedirect";
 import { Suspense, lazy, useEffect } from "react";
+import { SmartNotificationContainer, useSmartNotifications } from "@/components/ui/smart-notification";
+
 
 const SuspenseFallback = ({ message = "Chargement..." }: { message?: string }) => (
   <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
@@ -56,6 +58,12 @@ const PassportMarocainScanner = lazy(() => import("./pages/PassportMarocainScann
 const PassportEtrangerScanner = lazy(() => import("./pages/PassportEtrangerScanner"));
 const CarteSejourScanner = lazy(() => import("./pages/CarteSejourScanner"));
 
+// Workflow pages
+const CINWorkflow = lazy(() => import("./pages/workflows/CINWorkflow"));
+const PassportMarocainWorkflow = lazy(() => import("./pages/workflows/PassportMarocainWorkflow"));
+const PassportEtrangerWorkflow = lazy(() => import("./pages/workflows/PassportEtrangerWorkflow"));
+const CarteSejourWorkflow = lazy(() => import("./pages/workflows/CarteSejourWorkflow"));
+
 const Contracts = lazy(() => 
   import("./pages/Contracts").then(module => {
     if (window.location.pathname.includes('contracts')) {
@@ -68,6 +76,8 @@ const Contracts = lazy(() =>
 import { queryClient } from "./lib/queryClient";
 
 const App = () => {
+  const { notifications } = useSmartNotifications();
+
   useEffect(() => {
     const timer = setTimeout(() => {
       const currentPath = window.location.pathname;
@@ -181,6 +191,39 @@ const App = () => {
                   </Suspense>
                 </ProtectedRoute>
               } />
+
+              {/* Workflow routes */}
+              <Route path="/workflow/cin" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<SuspenseFallback message="Chargement du workflow CIN..." />}>
+                    <CINWorkflow />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/workflow/passeport-marocain" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<SuspenseFallback message="Chargement du workflow passeport marocain..." />}>
+                    <PassportMarocainWorkflow />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/workflow/passeport-etranger" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<SuspenseFallback message="Chargement du workflow passeport étranger..." />}>
+                    <PassportEtrangerWorkflow />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/workflow/carte-sejour" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<SuspenseFallback message="Chargement du workflow carte de séjour..." />}>
+                    <CarteSejourWorkflow />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
               
               <Route path="/users" element={
                 <RoleProtectedRoute allowedRoles={['admin']}>
@@ -213,6 +256,8 @@ const App = () => {
         
         <Toaster />
         <Sonner />
+        <SmartNotificationContainer notifications={notifications} />
+  
       </TooltipProvider>
     </QueryClientProvider>
   );

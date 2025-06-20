@@ -24,6 +24,6 @@ export const validateInputs = (templateFile: File, client: any, fieldMappings: a
   }
   
   if (!fieldMappings || fieldMappings.length === 0) {
-    console.warn('⚠️ Aucun mapping de champ fourni, génération du PDF sans remplacement');
+    // Mapping optionnel, génération du PDF sans remplacement
   }
 };

@@ -1,67 +1,47 @@
 import { ClientFormData } from "../types";
 
 export const logFormSubmissionStart = (formData: ClientFormData) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log("📝 Form submission started");
-  }
+  // Logs supprimés pour interface propre
 };
 
 export const logUserAuthentication = (user: any) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log("✅ User authenticated:", user.id);
-  }
+  // Logs supprimés pour interface propre
 };
 
 export const logAuthError = () => {
-  console.error("❌ User not authenticated");
+  // Logs supprimés pour interface propre
 };
 
 export const logPayloadValidation = (dataToInsert: any, isUrlValid: boolean) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log("📋 Payload validated", { hasUrl: isUrlValid });
-  }
+  // Logs supprimés pour interface propre
 };
 
 export const logSupabaseCall = (dataToInsert: any) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log("🔄 Inserting client data");
-  }
+  // Logs supprimés pour interface propre
 };
 
 export const logSupabaseError = (error: any, dataToInsert: any) => {
-  console.error("❌ Supabase insertion error:", error.message);
+  // Logs supprimés pour interface propre
 };
 
 export const logInsertionSuccess = (data: any) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log("✅ Client inserted successfully");
-  }
+  // Logs supprimés pour interface propre
 };
 
 export const logPostInsertionValidation = (savedClient: any, dataToInsert: any, formData: ClientFormData) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log("🔍 Post-insertion validation", { clientId: savedClient.id });
-  }
+  // Logs supprimés pour interface propre
 };
 
 export const logSuccessResult = (savedClient: any) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log("✅ Client created successfully:", savedClient.id);
-  }
+  // Logs supprimés pour interface propre
 };
 
 export const logFormReset = () => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log("🔄 Form reset");
-  }
+  // Logs supprimés pour interface propre
 };
 
 export const logGeneralError = (error: any) => {
-  if (error?.code === '23505' && error?.message?.includes('clients_numero_passeport_key')) {
-    console.error("❌ Duplicate passport number error");
-  } else {
-    console.error("❌ Submission error:", error instanceof Error ? error.message : (error?.message || String(error)));
-  }
+  // Logs supprimés pour interface propre
 };
 
 export const logSubmissionEnd = () => {

@@ -37,10 +37,11 @@
   color: #64748b !important;
 }
 
-/* Toast viewport positioning */
+/* Toast viewport positioning - FORCE TOP POSITION */
 [data-radix-toast-viewport] {
   position: fixed !important;
-  bottom: 0 !important;
-  right: 0 !important;
+  top: 1rem !important;
+  right: 1rem !important;
+  bottom: auto !important;
   z-index: 100 !important;
 }

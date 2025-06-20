@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface CINDataConfirmationProps {
   extractedData: any;
@@ -15,11 +16,25 @@ export const CINDataConfirmation = ({
   isScanning,
   onConfirmData 
 }: CINDataConfirmationProps) => {
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  useEffect(() => {
+    if (dataConfirmed) {
+      setShowConfirmation(true);
+      // Auto-hide après 1 seconde
+      const timer = setTimeout(() => {
+        setShowConfirmation(false);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [dataConfirmed]);
+
   if (!extractedData || isScanning) {
     return null;
   }
 
-  if (dataConfirmed) {
+  if (dataConfirmed && showConfirmation) {
     return (
       <div className="text-center p-4 bg-green-100 border border-green-300 rounded-lg">
         <div className="flex items-center justify-center gap-2 text-green-800">

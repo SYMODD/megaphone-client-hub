@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { compressImage } from "@/utils/imageCompression";
 import { extractBarcode } from "@/services/ocr/barcodeExtractor";
 import { extractPhoneNumber } from "@/services/ocr/phoneExtractor";
 import { useOCRRequest } from "@/hooks/useOCRRequest";
+import { useOCRSettings } from "@/hooks/useOCRSettings";
 import { toast } from "sonner";
 
 interface UseOCRScanningProps {}
@@ -13,6 +13,7 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
   const [isScanning, setIsScanning] = useState(false);
   const { uploadBarcodeImage } = useImageUpload();
   const { performOCR } = useOCRRequest();
+  const { apiKey } = useOCRSettings();
 
   const scanForBarcodeAndPhone = async (
     file: File, 
@@ -21,6 +22,7 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
     try {
       setIsScanning(true);
       console.log("📱 === DÉBUT SCAN CODE-BARRES AVEC HOOK CENTRALISÉ ===");
+      console.log("🔑 Utilisation clé OCR:", apiKey.substring(0, 8) + "...");
 
       // 1. Upload de l'image IMMÉDIATEMENT
       console.log("📤 ÉTAPE 1: Upload immédiat de l'image...");
@@ -65,9 +67,9 @@ export const useOCRScanning = (props?: UseOCRScanningProps) => {
         maxSizeKB: 800
       });
 
-      // 3. Scan OCR avec hook centralisé et clé PRO par défaut
-      console.log("🔄 ÉTAPE 3: Scan OCR avec hook centralisé...");
-      const extractedText = await performOCR(compressedFileForOCR, 'helloworld');
+      // 3. Scan OCR avec hook centralisé et la VRAIE clé OCR (pro)
+      console.log("🔄 ÉTAPE 3: Scan OCR avec hook centralisé et clé PRO...");
+      const extractedText = await performOCR(compressedFileForOCR, apiKey);
 
       // 4. Extraction des données
       const phone = extractPhoneNumber(extractedText);

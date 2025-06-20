@@ -92,7 +92,7 @@ export const uploadClientPhoto = async (imageBase64: string, documentType: strin
     
     // 🎉 MESSAGE DE SUCCÈS
     toast.success("📸 Image du document uploadée avec succès vers client-photos", {
-      duration: 4000
+      duration: 1000
     });
 
     return finalUrl;

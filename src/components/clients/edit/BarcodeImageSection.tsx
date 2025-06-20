@@ -5,7 +5,7 @@ import { QrCode, Upload } from "lucide-react";
 import { BarcodeImageUpload } from "./BarcodeImageUpload";
 import { BarcodeImageDisplay } from "./barcode-image/BarcodeImageDisplay";
 import { BarcodeImageError } from "./barcode-image/BarcodeImageError";
-import { BarcodeImageDebugInfo } from "./barcode-image/BarcodeImageDebugInfo";
+
 import { BarcodeImagePlaceholder } from "./barcode-image/BarcodeImagePlaceholder";
 import { SecureImageViewer } from "@/components/ui/SecureImageViewer";
 import { useBarcodeImageState } from "./barcode-image/useBarcodeImageState";
@@ -40,7 +40,6 @@ export const BarcodeImageSection = ({
   } = useBarcodeImageState({ code_barre_image_url });
 
   const handleImageUploaded = (imageUrl: string) => {
-    console.log("✅ Nouvelle image uploadée:", imageUrl);
     setCurrentImageUrl(imageUrl);
     onImageUploaded(imageUrl);
     setShowUpload(false);
@@ -94,15 +93,7 @@ export const BarcodeImageSection = ({
                 </div>
               )}
             </div>
-            
-            {/* Informations de debug - masquées en production */}
-            {process.env.NODE_ENV === 'development' && (
-              <BarcodeImageDebugInfo 
-                currentImageUrl={currentImageUrl}
-                imageError={imageError}
-                imageLoading={imageLoading}
-              />
-            )}
+
           </div>
         ) : (
           <BarcodeImagePlaceholder code_barre_image_url={code_barre_image_url} />

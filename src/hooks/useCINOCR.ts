@@ -48,7 +48,7 @@ export const useCINOCR = () => {
 
       if (extractedFields.length > 0) {
         toast.success(`✅ Données CIN extraites: ${extractedFields.join(", ")} (${extractedFields.length}/5 champs)`, {
-          duration: 4000
+          duration: 1000
         });
       } else {
         toast.warning("⚠️ Scanner terminé mais aucune donnée CIN reconnue");

@@ -7,7 +7,6 @@ export const useAuthErrorHandling = () => {
   const [success, setSuccess] = useState<string | null>(null);
 
   const handleAuthError = (error: any, defaultMessage: string) => {
-    console.error("Auth error:", error);
     
     let userFriendlyMessage = defaultMessage;
     

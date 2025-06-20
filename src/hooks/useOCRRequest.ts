@@ -172,9 +172,9 @@ export const useOCRRequest = () => {
           try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => {
-              console.log("⏰ TIMEOUT - Annulation après 45 secondes");
+              console.log("⏰ TIMEOUT - Annulation après 30 secondes");
               controller.abort();
-            }, 45000);
+            }, 30000);
 
             console.log("📡 Headers d'authentification:", { apikey: apiKey.substring(0, 8) + "..." });
             
