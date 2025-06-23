@@ -1,4 +1,3 @@
-
 import React, { memo, useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +5,7 @@ import { Users, Plus, Database, FileText, Shield, UserPlus, Menu, X } from "luci
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { RoleIndicator } from "../dashboard/RoleIndicator";
+import { AnimatedNavContainer, AnimatedNavItem, AnimatedMobileMenu, AnimatedMobileMenuItem } from "@/components/ui/animated-nav";
 
 const Navigation = memo(() => {
   const { profile, user } = useAuth();
@@ -51,18 +51,20 @@ const Navigation = memo(() => {
       <div className="container mx-auto px-3">
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center justify-between py-3">
-          <div className="flex items-center space-x-2 overflow-x-auto">
+          <AnimatedNavContainer className="flex items-center space-x-2 overflow-x-auto">
             {navigationItems.map((item) => (
-              <Link key={item.to + item.label} to={item.to}>
-                <Button variant="ghost" size="sm" className="whitespace-nowrap hover:scale-105 transition-all duration-200 min-w-fit text-slate-700 hover:text-slate-900 hover:bg-slate-50">
-                  <div className={`w-4 h-4 mr-2 bg-gradient-to-r ${item.color} rounded p-0.5`}>
-                    <item.icon className="w-full h-full text-white" />
-                  </div>
-                  {item.label}
-                </Button>
-              </Link>
+              <AnimatedNavItem key={item.to + item.label}>
+                <Link to={item.to}>
+                  <Button variant="ghost" size="sm" className="whitespace-nowrap hover:scale-105 transition-all duration-200 min-w-fit text-slate-700 hover:text-slate-900 hover:bg-slate-50">
+                    <div className={`w-4 h-4 mr-2 bg-gradient-to-r ${item.color} rounded p-0.5`}>
+                      <item.icon className="w-full h-full text-white" />
+                    </div>
+                    {item.label}
+                  </Button>
+                </Link>
+              </AnimatedNavItem>
             ))}
-          </div>
+          </AnimatedNavContainer>
           
           {profile && (
             <div className="flex items-center">
@@ -90,15 +92,14 @@ const Navigation = memo(() => {
           </div>
 
           {/* Mobile Menu - Enhanced Grid Layout */}
-          {isMobileMenuOpen && (
-            <div className="pb-4 space-y-3 border-t border-slate-100 mt-2 pt-4 animate-fade-in">
-              <div className="grid grid-cols-1 gap-3">
-                {navigationItems.map((item) => (
-                  <Link 
-                    key={item.to + item.label} 
-                    to={item.to}
-                    onClick={closeMobileMenu}
-                  >
+          <AnimatedMobileMenu 
+            isOpen={isMobileMenuOpen} 
+            className="pb-4 space-y-3 border-t border-slate-100 mt-2 pt-4 animate-fade-in"
+          >
+            <div className="grid grid-cols-1 gap-3">
+              {navigationItems.map((item) => (
+                <AnimatedMobileMenuItem key={item.to + item.label} onClick={closeMobileMenu}>
+                  <Link to={item.to}>
                     <Button 
                       variant="ghost" 
                       size="lg" 
@@ -119,10 +120,10 @@ const Navigation = memo(() => {
                       </div>
                     </Button>
                   </Link>
-                ))}
-              </div>
+                </AnimatedMobileMenuItem>
+              ))}
             </div>
-          )}
+          </AnimatedMobileMenu>
         </div>
       </div>
     </nav>

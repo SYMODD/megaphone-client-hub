@@ -1,7 +1,7 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnimatedCard, AnimatedCardList } from "@/components/ui/animated-card";
 import { Shield, Eye, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -19,7 +19,7 @@ const roleLinks: RoleLink[] = [
   {
     role: "admin",
     title: "Administrateur",
-    description: "Accès complet au système de gestion",
+    description: "Accès complet au système Sud Megaphone",
     icon: Shield,
     color: "text-red-600",
     bgGradient: "from-red-500 to-red-600",
@@ -28,7 +28,7 @@ const roleLinks: RoleLink[] = [
   {
     role: "superviseur", 
     title: "Superviseur",
-    description: "Supervision et gestion des agents",
+    description: "Gestion d'équipe et supervision",
     icon: Eye,
     color: "text-purple-600",
     bgGradient: "from-purple-500 to-purple-600",
@@ -39,7 +39,7 @@ const roleLinks: RoleLink[] = [
     title: "Agent",
     description: "Gestion des clients et contrats",
     icon: Users,
-    color: "text-blue-600",
+    color: "text-blue-600", 
     bgGradient: "from-blue-500 to-blue-600",
     url: "/agent"
   }
@@ -47,24 +47,29 @@ const roleLinks: RoleLink[] = [
 
 export const RoleLoginLinks = () => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-slate-800 mb-2">
           Choisissez votre type de connexion
         </h2>
         <p className="text-slate-600">
-          Sélectionnez le type de compte qui correspond à votre rôle
+          Sélectionnez votre rôle pour accéder à l'interface appropriée
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
-        {roleLinks.map((roleLink) => (
+      <AnimatedCardList className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
+        {roleLinks.map((roleLink, index) => (
           <Link 
             key={roleLink.role}
             to={roleLink.url}
             className="block transition-transform hover:scale-105"
           >
-            <Card className="h-full border-2 hover:border-slate-300 transition-colors cursor-pointer group">
+            <AnimatedCard 
+              className="h-full border-2 hover:border-slate-300 transition-colors cursor-pointer group"
+              enableHover={true}
+              clickable={true}
+              delay={index * 0.1}
+            >
               <CardHeader className="text-center pb-4">
                 <div className={`mx-auto w-16 h-16 rounded-full bg-gradient-to-r ${roleLink.bgGradient} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
                   <roleLink.icon className="w-8 h-8 text-white" />
@@ -89,10 +94,10 @@ export const RoleLoginLinks = () => {
                   </span>
                 </div>
               </CardContent>
-            </Card>
+            </AnimatedCard>
           </Link>
         ))}
-      </div>
+      </AnimatedCardList>
 
       <div className="text-center pt-4">
         <Link 

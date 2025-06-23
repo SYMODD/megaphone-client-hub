@@ -1,6 +1,6 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { AnimatedButton } from "@/components/ui/animated-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -47,9 +47,9 @@ export const LoginForm = ({ onLogin, onShowPasswordReset, isLoading }: LoginForm
           required
         />
       </div>
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <AnimatedButton type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? "Connexion..." : "Se connecter"}
-      </Button>
+      </AnimatedButton>
       
       <div className="text-center">
         <button

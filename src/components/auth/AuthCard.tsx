@@ -1,5 +1,5 @@
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnimatedCard } from "@/components/ui/animated-card";
 
 interface AuthCardProps {
   title: string;
@@ -9,7 +9,7 @@ interface AuthCardProps {
 
 export const AuthCard = ({ title, description, children }: AuthCardProps) => {
   return (
-    <Card>
+    <AnimatedCard enableHover={false}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
@@ -17,6 +17,6 @@ export const AuthCard = ({ title, description, children }: AuthCardProps) => {
       <CardContent>
         {children}
       </CardContent>
-    </Card>
+    </AnimatedCard>
   );
 };
