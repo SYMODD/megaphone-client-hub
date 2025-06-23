@@ -1,42 +1,99 @@
-
 import { MRZData } from "@/types/ocrTypes";
 import { normalizeNationality } from "@/utils/nationalityNormalizer";
+import { isValidName } from "@/utils/passportEtranger/stringUtils";
+import { convertMainTextNationality } from "@/utils/passportEtranger/nationalityUtils";
 
 export const extractMRZData = (text: string): MRZData => {
-  console.log("🔍 === DÉBUT EXTRACTION MRZ AMÉLIORÉE ===");
+  console.log("🔍 === DÉBUT EXTRACTION MRZ ULTRA-OPTIMISÉE ===");
   console.log("📝 Texte analysé:", text.substring(0, 300) + "...");
   
   const lines = text.split('\n').map(line => line.trim());
   const mrzData: MRZData = {};
 
-  // Recherche des lignes MRZ avec critères assouplis
+  // DÉTECTION MRZ RENFORCÉE - Support multi-format avec debug
   const mrzLines = lines.filter(line => {
-    const cleanLine = line.replace(/\s/g, '');
-    return (
-      cleanLine.startsWith('P<') || 
-      cleanLine.includes('<<') ||
-      (cleanLine.length > 20 && /^[A-Z0-9<]+$/.test(cleanLine)) ||
-      (cleanLine.length > 25 && cleanLine.split('<').length > 3)
+    const cleanLine = line.replace(/\s/g, '').replace(/[^\w<]/g, ''); // Enlever caractères parasites
+    const originalClean = line.replace(/\s/g, '');
+    
+    console.log("🔍 Ligne analysée:", line);
+    console.log("🧹 Ligne nettoyée:", cleanLine);
+    
+    const isMRZ = (
+      // Format standard: P<COUNTRY (minimum 5 caractères)
+      (cleanLine.startsWith('P<') && cleanLine.length >= 5) || 
+      (originalClean.startsWith('P<') && originalClean.length >= 5) ||
+      // CORRECTION CRITIQUE - Erreurs OCR sur le P
+      (cleanLine.startsWith("'<") && cleanLine.length >= 5) ||     // P devient '
+      (originalClean.startsWith("'<") && originalClean.length >= 5) ||
+      (cleanLine.startsWith('I<') && cleanLine.length >= 5) ||     // P devient I
+      (originalClean.startsWith('I<') && originalClean.length >= 5) ||
+      (cleanLine.startsWith('1<') && cleanLine.length >= 5) ||     // P devient 1
+      (originalClean.startsWith('1<') && originalClean.length >= 5) ||
+      // Format canadien alternatif: PPCAN (minimum 5 caractères)
+      (cleanLine.startsWith('PP') && cleanLine.length >= 5) ||
+      (originalClean.startsWith('PP') && originalClean.length >= 5) ||
+      // Format suisse: PMCHE (minimum 5 caractères pour éviter "PM" isolé)
+      (cleanLine.startsWith('PM') && cleanLine.length >= 5) ||
+      (originalClean.startsWith('PM') && originalClean.length >= 5) ||
+      // CORRECTION STRICTE - Ligne 2 MRZ : formats multiples
+      // Format standard: NUM_PASSPORT + CODE_PAYS + DATES
+      (cleanLine.length >= 30 && 
+       (/^[A-Z0-9]{6,12}[A-Z0-9]{1,3}<<\d{6}[A-Z]\d{6}/.test(cleanLine) ||     // Format avec <<
+        /^[A-Z0-9]{6,12}[A-Z0-9]{3}\d{6,7}[MF]\d{6,7}/.test(cleanLine) ||      // Format polonais/européen
+        /^[A-Z0-9]{8,12}[A-Z0-9]{3}\d{6,7}[MF]\d{6,7}/.test(cleanLine) ||      // Format suisse étendu
+        /^[A-Z0-9]{8}<\d[A-Z]{3}\d{7}[MF]\d{7}<<</.test(cleanLine)))           // Format suisse XOY28U44<3CHE7306125F3211153<<<
     );
+    
+    if (isMRZ) {
+      console.log("🎯 LIGNE MRZ DÉTECTÉE:", originalClean);
+    }
+    
+    return isMRZ;
   });
 
-  console.log("📋 Lignes MRZ potentielles détectées:", mrzLines.length);
+  console.log("📋 Lignes MRZ détectées:", mrzLines.length);
   mrzLines.forEach((line, index) => {
-    console.log(`MRZ ${index + 1}:`, line);
+    console.log(`📝 Ligne MRZ ${index + 1}:`, line);
   });
 
   if (mrzLines.length >= 2) {
-    console.log("✅ Format MRZ standard détecté (2+ lignes)");
-    processMRZStandard(mrzLines, mrzData);
+    console.log("✅ Traitement MRZ double ligne");
+    
+    // CORRECTION CRITIQUE - Identifier les vraies lignes MRZ
+    let nameLine = '';
+    let dataLine = '';
+    
+    for (const line of mrzLines) {
+      const cleanLine = line.replace(/\s/g, '');
+      // Ligne nom : commence par P<, '<, I<, 1<, PP ou PM
+      if (cleanLine.startsWith('P<') || cleanLine.startsWith("'<") || 
+          cleanLine.startsWith('I<') || cleanLine.startsWith('1<') || 
+          cleanLine.startsWith('PP') || cleanLine.startsWith('PM')) {
+        nameLine = line;
+        console.log("🎯 LIGNE NOM MRZ identifiée:", line);
+      }
+      // Ligne données : contient numéro passeport + dates (formats multiples)
+      else if (cleanLine.length >= 30 && 
+               (/^[A-Z0-9]{6,12}[A-Z0-9]{1,3}<<\d{6}[A-Z]\d{6}/.test(cleanLine) ||     // Format avec <<
+                /^[A-Z0-9]{6,12}[A-Z0-9]{3}\d{6,7}[MF]\d{6,7}/.test(cleanLine) ||      // Format polonais/européen
+                /^[A-Z0-9]{8,12}[A-Z0-9]{3}\d{6,7}[MF]\d{6,7}/.test(cleanLine) ||      // Format suisse étendu
+                /^[A-Z0-9]{8}<\d[A-Z]{3}\d{7}[MF]\d{7}<<</.test(cleanLine))) {          // Format suisse XOY28U44<3CHE7306125F3211153<<<
+        dataLine = line;
+        console.log("🎯 LIGNE DONNÉES MRZ identifiée:", line);
+      }
+    }
+    
+    if (nameLine && dataLine) {
+      console.log("✅ Lignes MRZ correctes identifiées");
+      processMRZStandard([nameLine, dataLine], mrzData);
+    } else {
+      console.log("⚠️ Impossible d'identifier les bonnes lignes MRZ, fallback");
+      processMRZStandard(mrzLines, mrzData);
+    }
   } else if (mrzLines.length === 1) {
-    console.log("⚠️ Une seule ligne MRZ détectée, tentative d'extraction");
+    console.log("⚠️ Traitement MRZ ligne unique");
     processSingleMRZLine(mrzLines[0], mrzData);
   } else {
-    console.log("⚠️ Aucune ligne MRZ standard, extraction depuis texte général");
-  }
-
-  // Extraction de secours depuis le texte général
-  if (!mrzData.nom || !mrzData.prenom) {
     console.log("🔍 Extraction de secours depuis texte général...");
     extractFromGeneralText(text, mrzData);
   }
@@ -53,39 +110,101 @@ function processMRZStandard(mrzLines: string[], mrzData: MRZData): void {
   console.log("📝 Première ligne MRZ:", firstLine);
   console.log("📝 Deuxième ligne MRZ:", secondLine);
 
-  // Première ligne: P<COUNTRY<SURNAME<<GIVEN_NAMES<<<<<<<<<<
-  if (firstLine.startsWith('P<')) {
-    const countryCode = firstLine.substring(2, 5);
-    const restOfFirstLine = firstLine.substring(5);
-    
-    console.log("🌍 Code pays détecté:", countryCode);
-    
-    // Extraction du nom et prénom avec gestion améliorée
-    const namesPart = restOfFirstLine.split('<<')[0];
-    const names = namesPart.split('<').filter(name => name.length > 0);
-    
-    console.log("👤 Noms extraits de la MRZ:", names);
-    
-    if (names.length >= 1) {
-      mrzData.nom = names[0];
-      console.log("✅ Nom MRZ extrait:", mrzData.nom);
-    }
-    if (names.length >= 2) {
-      mrzData.prenom = names.slice(1).join(' ');
-      console.log("✅ Prénom MRZ extrait:", mrzData.prenom);
-    }
+  // CORRECTION MAJEURE - Support formats P< et PP + erreurs OCR
+  let countryCode = '';
+  let restOfFirstLine = '';
 
-    // Conversion du code pays vers nationalité
-    if (countryCode && countryCode.length === 3) {
-      mrzData.nationalite = normalizeNationality(convertCountryCodeToNationality(countryCode));
-      console.log("✅ Nationalité MRZ extraite:", mrzData.nationalite);
+  if (firstLine.startsWith('P<')) {
+    // Format standard: P<COUNTRY
+    countryCode = firstLine.substring(2, 5);
+    restOfFirstLine = firstLine.substring(5);
+  } else if (firstLine.startsWith('PP')) {
+    // Format canadien: PPCAN
+    countryCode = firstLine.substring(2, 5);
+    restOfFirstLine = firstLine.substring(5);
+  } else if (firstLine.startsWith('PM')) {
+    // Format suisse: PMCHE
+    countryCode = firstLine.substring(2, 5);
+    restOfFirstLine = firstLine.substring(5);
+    console.log("🇨🇭 Format suisse PM détecté - Code pays:", countryCode, "Reste:", restOfFirstLine);
+  } else if (firstLine.startsWith("'<") || firstLine.startsWith('I<') || firstLine.startsWith('1<')) {
+    // CORRECTION CRITIQUE - Erreurs OCR sur le P
+    console.log("🔧 Correction erreur OCR détectée sur P:", firstLine.substring(0, 3));
+    countryCode = firstLine.substring(2, 5);
+    restOfFirstLine = firstLine.substring(5);
+  }
+  
+  console.log("🌍 Code pays détecté:", countryCode);
+  console.log("📝 Reste de la ligne:", restOfFirstLine);
+  
+  if (restOfFirstLine) {
+    // NOUVELLE LOGIQUE CRITIQUE - Extraction complète nom/prénom
+    const doubleSeparatorIndex = restOfFirstLine.indexOf('<<');
+    if (doubleSeparatorIndex !== -1) {
+      // Format standard: NOM<<PRENOMS
+      const surnameSection = restOfFirstLine.substring(0, doubleSeparatorIndex);
+      const givenNamesSection = restOfFirstLine.substring(doubleSeparatorIndex + 2);
+      
+      console.log("👤 Section nom:", surnameSection);
+      console.log("👤 Section prénoms:", givenNamesSection);
+      
+      // Extraction nom (peut contenir des < pour noms composés)
+      const surnames = surnameSection.split('<').filter(name => name.length > 0);
+      if (surnames.length > 0) {
+        mrzData.nom = surnames.join(' '); // Combine noms composés
+        console.log("✅ Nom MRZ extrait (corrigé):", mrzData.nom);
+      }
+      
+      // Extraction prénoms (enlever les < de remplissage)
+      const givenNames = givenNamesSection.split('<').filter(name => name.length > 0);
+      if (givenNames.length > 0) {
+        // CORRECTION OCR : J0 → JO, O0 →  OO
+        const correctedGivenNames = givenNames.map(name => 
+          name.replace(/J0/g, 'JO').replace(/O0/g, 'OO').replace(/0O/g, 'OO')
+        );
+        mrzData.prenom = correctedGivenNames.join(' ');
+        console.log("✅ Prénom MRZ extrait (corrigé):", mrzData.prenom);
+      }
+    } else {
+      // Fallback - pas de double séparateur
+      const allNames = restOfFirstLine.split('<').filter(name => name.length > 0);
+      if (allNames.length >= 1) {
+        mrzData.nom = allNames[0];
+        console.log("✅ Nom MRZ extrait (fallback):", mrzData.nom);
+      }
+      if (allNames.length >= 2) {
+        mrzData.prenom = allNames.slice(1).join(' ');
+        console.log("✅ Prénom MRZ extrait (fallback):", mrzData.prenom);
+      }
     }
+  }
+
+  // Conversion nationalité avec support codes manquants
+  if (countryCode && countryCode.length >= 1) {
+    mrzData.nationalite = normalizeNationality(convertCountryCodeToNationality(countryCode));
+    console.log("✅ Nationalité MRZ extraite:", mrzData.nationalite);
   }
 
   // Deuxième ligne: numéro passeport, dates, etc.
   if (secondLine.length >= 28) {
-    // Numéro de passeport (positions 0-8)
-    const passportNumber = secondLine.substring(0, 9).replace(/</g, '');
+    // Numéro de passeport (positions 0-8, 0-9 ou 0-10 selon format)
+    let passportNumber = '';
+    
+    // Format suisse: XOY28U44<3CHE... (numéro de passeport de 8 caractères)
+    if (/^[A-Z0-9]{8}<\d[A-Z]{3}/.test(secondLine)) {
+      passportNumber = secondLine.substring(0, 8).replace(/</g, '');
+      console.log("🇨🇭 Format suisse détecté - numéro 8 caractères");
+    }
+    // Format polonais: EK08079646P0L... (numéro de passeport de 10 caractères)
+    else if (/^[A-Z0-9]{10}[A-Z0-9]{3}/.test(secondLine)) {
+      passportNumber = secondLine.substring(0, 10).replace(/</g, '');
+      console.log("🇵🇱 Format polonais détecté - numéro 10 caractères");
+    } else {
+      // Format standard: numéro de passeport de 9 caractères
+      passportNumber = secondLine.substring(0, 9).replace(/</g, '');
+      console.log("🌍 Format standard détecté - numéro 9 caractères");
+    }
+    
     if (passportNumber && passportNumber.length >= 6) {
       mrzData.numero_passeport = passportNumber;
       console.log("✅ Numéro passeport MRZ extrait:", mrzData.numero_passeport);
@@ -112,18 +231,47 @@ function processSingleMRZLine(mrzLine: string, mrzData: MRZData): void {
   
   const cleanLine = mrzLine.replace(/\s/g, '');
   
-  // Tentative d'extraction des noms depuis une ligne unique
+  // Support formats P< et PP pour ligne unique + erreurs OCR
+  let countryCode = '';
+  let restOfLine = '';
+  
   if (cleanLine.startsWith('P<')) {
-    const parts = cleanLine.split('<').filter(part => part.length > 0);
+    countryCode = cleanLine.substring(2, 5);
+    restOfLine = cleanLine.substring(5);
+  } else if (cleanLine.startsWith('PP')) {
+    countryCode = cleanLine.substring(2, 5);
+    restOfLine = cleanLine.substring(5);
+  } else if (cleanLine.startsWith('PM')) {
+    countryCode = cleanLine.substring(2, 5);
+    restOfLine = cleanLine.substring(5);
+  } else if (cleanLine.startsWith("'<") || cleanLine.startsWith('I<') || cleanLine.startsWith('1<')) {
+    // CORRECTION CRITIQUE - Erreurs OCR sur le P
+    console.log("🔧 Correction erreur OCR ligne unique sur P:", cleanLine.substring(0, 3));
+    countryCode = cleanLine.substring(2, 5);
+    restOfLine = cleanLine.substring(5);
+  }
+  
+  if (restOfLine) {
+    const parts = restOfLine.split('<').filter(part => part.length > 0);
     console.log("📝 Parties extraites:", parts);
     
-    if (parts.length >= 3) {
-      // Format probable: P, CODE_PAYS, NOM, PRENOM(S)
-      mrzData.nom = parts[2];
-      if (parts.length >= 4) {
-        mrzData.prenom = parts.slice(3).join(' ');
-      }
-      console.log("✅ Nom/Prénom extraits de ligne unique:", mrzData.nom, mrzData.prenom);
+    if (parts.length >= 1) {
+      mrzData.nom = parts[0];
+      console.log("✅ Nom extrait de ligne unique:", mrzData.nom);
+    }
+    if (parts.length >= 2) {
+      // CORRECTION OCR : J0 → JO, O0 →  OO
+      const correctedPrenoms = parts.slice(1).map(name => 
+        name.replace(/J0/g, 'JO').replace(/O0/g, 'OO').replace(/0O/g, 'OO')
+      );
+      mrzData.prenom = correctedPrenoms.join(' ');
+      console.log("✅ Prénom extrait de ligne unique:", mrzData.prenom);
+    }
+    
+    // Extraction nationalité
+    if (countryCode) {
+      mrzData.nationalite = normalizeNationality(convertCountryCodeToNationality(countryCode));
+      console.log("✅ Nationalité extraite:", mrzData.nationalite);
     }
   }
   
@@ -148,27 +296,79 @@ function convertCountryCodeToNationality(countryCode: string): string {
     'ESP': 'Espagne',
     'DEU': 'Allemagne',
     'GER': 'Allemagne',
+    'D': 'Allemagne',           // ← FORMAT ALLEMAND
     'ITA': 'Italie',
     'GBR': 'Royaume-Uni',
     'USA': 'États-Unis',
     'CAN': 'Canada',
-    'BEL': 'Belgique',
+    'BEL': 'Belgique',          // ← AJOUT CRITIQUE BELGE
+    'POL': 'Pologne',           // ← AJOUT CRITIQUE POLONAIS
+    'SVK': 'Slovaquie',         // ← AJOUT CRITIQUE SLOVAQUE
+    'COL': 'Colombie',          // ← AJOUT CRITIQUE COLOMBIEN
     'NLD': 'Pays-Bas',
-    'CHE': 'Suisse',
     'PRT': 'Portugal',
-    'DZA': 'Algérie',
+    'CHE': 'Suisse',
+    'AUT': 'Autriche',
     'TUN': 'Tunisie',
+    'DZA': 'Algérie',
+    'ALG': 'Algérie',
+    'EGY': 'Égypte',
+    'LBY': 'Libye',
+    'SEN': 'Sénégal',
+    'CIV': 'Côte d\'Ivoire',
+    'MLI': 'Mali',
+    'BFA': 'Burkina Faso',
+    'NER': 'Niger',
+    'TCD': 'Tchad',
+    'CMR': 'Cameroun',
+    'GAB': 'Gabon',
+    'COD': 'République démocratique du Congo',
+    'COG': 'République du Congo',
+    'CAF': 'République centrafricaine',
+    'TGO': 'Togo',
+    'BEN': 'Bénin',
+    'GHA': 'Ghana',
+    'NGA': 'Nigeria',
+    'ETH': 'Éthiopie',
+    'KEN': 'Kenya',
+    'UGA': 'Ouganda',
+    'TZA': 'Tanzanie',
+    'MDG': 'Madagascar',
+    'MUS': 'Maurice',
+    'SYC': 'Seychelles',
+    'COM': 'Comores',
+    'ZAF': 'Afrique du Sud',
+    'BWA': 'Botswana',
+    'NAM': 'Namibie',
+    'LSO': 'Lesotho',
+    'SWZ': 'Eswatini',
+    'MWI': 'Malawi',
+    'ZMB': 'Zambie',
+    'ZWE': 'Zimbabwe',
+    'MOZ': 'Mozambique',
+    'AGO': 'Angola',
     'TUR': 'Turquie',
-    'RUS': 'Russie',
-    'CHN': 'Chine',
-    'JPN': 'Japon',
-    'IND': 'Inde',
-    'BRA': 'Brésil',
-    'MEX': 'Mexique',
-    'ARG': 'Argentine'
+    'IRN': 'Iran',
+    'IRQ': 'Irak',
+    'SYR': 'Syrie',
+    'LBN': 'Liban',
+    'JOR': 'Jordanie',
+    'ISR': 'Israël',
+    'PSE': 'Palestine',
+    'SAU': 'Arabie saoudite',
+    'ARE': 'Émirats arabes unis',
+    'QAT': 'Qatar',
+    'KWT': 'Koweït',
+    'BHR': 'Bahreïn',
+    'OMN': 'Oman',
+    'YEM': 'Yémen'
   };
 
-  return countryMapping[countryCode] || countryCode;
+  // Nettoyage et recherche
+  const cleanCode = countryCode.replace(/[<\s]/g, '').toUpperCase();
+  console.log(`🌍 Conversion code pays: ${cleanCode} → ${countryMapping[cleanCode] || cleanCode}`);
+  
+  return countryMapping[cleanCode] || cleanCode;
 }
 
 function formatMRZDate(mrzDate: string): string {
@@ -190,19 +390,33 @@ function extractFromGeneralText(text: string, mrzData: MRZData): void {
   const lines = text.split('\n').map(line => line.trim());
   
   for (const line of lines) {
+    // SKIP les lignes qui contiennent des mots-clés de passeport
+    const lineUpper = line.toUpperCase();
+    const skipKeywords = ['REISEPASS', 'PASSEPORT', 'PASSPORT', 'PASZPORT', 'PASZPORTI', 'PASAPORTE', 'PASSAPORTO', 'PASPOORT'];
+    const shouldSkipLine = skipKeywords.some(keyword => lineUpper.includes(keyword));
+    
+    if (shouldSkipLine) {
+      console.log("⚠️ Ligne ignorée (contient mot-clé passeport):", line);
+      continue;
+    }
+    
     // Recherche patterns nom/prénom avec plus de flexibilité
     if (!mrzData.nom) {
       const nomPatterns = [
         /(?:SURNAME|NOM|FAMILY\s*NAME)\s*:?\s*([A-Z\s]{2,30})/i,
-        /(?:APELLIDO|NACHNAME|COGNOME)\s*:?\s*([A-Z\s]{2,30})/i
+        /(?:APELLIDO|NACHNAME|COGNOME|NAZWISKO)\s*:?\s*([A-Z\s]{2,30})/i
       ];
       
       for (const pattern of nomPatterns) {
         const nomMatch = line.match(pattern);
         if (nomMatch && nomMatch[1] && nomMatch[1].trim().length >= 2) {
-          mrzData.nom = nomMatch[1].trim();
-          console.log("✅ Nom extrait du texte général:", mrzData.nom);
-          break;
+          const candidateName = nomMatch[1].trim();
+          // Vérification avec validation complète
+          if (isValidName(candidateName)) {
+            mrzData.nom = candidateName;
+            console.log("✅ Nom extrait du texte général:", mrzData.nom);
+            break;
+          }
         }
       }
     }
@@ -210,15 +424,19 @@ function extractFromGeneralText(text: string, mrzData: MRZData): void {
     if (!mrzData.prenom) {
       const prenomPatterns = [
         /(?:GIVEN\s*NAMES?|PRENOM|FIRST\s*NAME)\s*:?\s*([A-Z\s]{2,30})/i,
-        /(?:NOMBRE|VORNAME|NOME)\s*:?\s*([A-Z\s]{2,30})/i
+        /(?:NOMBRE|VORNAME|NOME|IMIE|IMIONA)\s*:?\s*([A-Z\s]{2,30})/i
       ];
       
       for (const pattern of prenomPatterns) {
         const prenomMatch = line.match(pattern);
         if (prenomMatch && prenomMatch[1] && prenomMatch[1].trim().length >= 2) {
-          mrzData.prenom = prenomMatch[1].trim();
-          console.log("✅ Prénom extrait du texte général:", mrzData.prenom);
-          break;
+          const candidateFirstName = prenomMatch[1].trim();
+          // Vérification avec validation complète  
+          if (isValidName(candidateFirstName)) {
+            mrzData.prenom = candidateFirstName;
+            console.log("✅ Prénom extrait du texte général:", mrzData.prenom);
+            break;
+          }
         }
       }
     }
@@ -226,7 +444,7 @@ function extractFromGeneralText(text: string, mrzData: MRZData): void {
     // Recherche numéro passeport avec patterns étendus
     if (!mrzData.numero_passeport) {
       const passportPatterns = [
-        /(?:PASSPORT\s*NO|N°\s*PASSEPORT|PASAPORTE\s*N|REISEPASS\s*NR)\s*:?\s*([A-Z0-9]{6,15})/i,
+        /(?:PASSPORT\s*NO|N°\s*PASSEPORT|PASAPORTE\s*N|REISEPASS\s*NR|PASZPORT\s*NR)\s*:?\s*([A-Z0-9]{6,15})/i,
         /(?:DOCUMENT\s*NO|DOC\s*NO)\s*:?\s*([A-Z0-9]{6,15})/i
       ];
       
@@ -242,50 +460,40 @@ function extractFromGeneralText(text: string, mrzData: MRZData): void {
     
     // Recherche nationalité avec patterns étendus
     if (!mrzData.nationalite) {
+      // Pattern spécial pour détecter directement Canadian/canadienne dans le texte
+      if (lineUpper.includes('CANADIAN/CANADIENNE') || lineUpper.includes('CANADIEN/CANADIENNE')) {
+        mrzData.nationalite = 'Canada';
+        console.log("✅ Nationalité canadienne détectée directement:", mrzData.nationalite);
+        continue;
+      }
+      
       const nationalityPatterns = [
-        /(?:NATIONALITY|NATIONALITE|NACIONALIDAD|STAATSANGEHÖRIGKEIT)\s*:?\s*([A-Z\s]{3,25})/i,
-        /(?:CITIZEN\s*OF|CITTADINANZA)\s*:?\s*([A-Z\s]{3,25})/i
+        /(?:NATIONALITY|NATIONALITE|NACIONALIDAD|STAATSANGEHÖRIGKEIT|OBYWATELSTWO)\s*:?\s*([A-Z\s\/]{3,30})/i,
+        /(?:CITTADINANZA|NACIONALIDADE|NATIONALITEIT)\s*:?\s*([A-Z\s\/]{3,30})/i,
+        // Pattern direct pour les nationalités sans étiquette
+        /(CANADIAN\/CANADIENNE|CANADIEN\/CANADIENNE|BRITISH\s+CITIZEN|COLOMBIANA|POLSKIE|SLOVENSKÁ\s+REPUBLIKA)/i
       ];
       
       for (const pattern of nationalityPatterns) {
         const nationalityMatch = line.match(pattern);
         if (nationalityMatch && nationalityMatch[1] && nationalityMatch[1].trim().length >= 3) {
-          mrzData.nationalite = normalizeNationality(nationalityMatch[1].trim());
-          console.log("✅ Nationalité extraite du texte général:", mrzData.nationalite);
-          break;
-        }
-      }
-    }
-
-    // Recherche dates avec patterns étendus
-    if (!mrzData.date_naissance) {
-      const birthDatePatterns = [
-        /(?:DATE\s*OF\s*BIRTH|NEE?\s*LE|FECHA\s*DE\s*NACIMIENTO|GEBURTSDATUM)\s*:?\s*(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{4})/i
-      ];
-      
-      for (const pattern of birthDatePatterns) {
-        const birthMatch = line.match(pattern);
-        if (birthMatch && birthMatch[1]) {
-          mrzData.date_naissance = birthMatch[1];
-          console.log("✅ Date naissance extraite du texte général:", mrzData.date_naissance);
-          break;
-        }
-      }
-    }
-
-    if (!mrzData.date_expiration) {
-      const expiryDatePatterns = [
-        /(?:DATE\s*OF\s*EXPIRY|EXPIRE|VALABLE\s*JUSQU|VÁLIDO\s*HASTA|GÜLTIG\s*BIS)\s*:?\s*(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{4})/i
-      ];
-      
-      for (const pattern of expiryDatePatterns) {
-        const expiryMatch = line.match(pattern);
-        if (expiryMatch && expiryMatch[1]) {
-          mrzData.date_expiration = expiryMatch[1];
-          console.log("✅ Date expiration extraite du texte général:", mrzData.date_expiration);
-          break;
+          const candidateNationality = nationalityMatch[1].trim();
+          // Conversion et normalisation complète avec debug
+          console.log("🔍 Nationalité candidate:", candidateNationality);
+          const convertedNationality = convertMainTextNationality(candidateNationality);
+          console.log("🔄 Après conversion:", convertedNationality);
+          const normalizedNationality = normalizeNationality(convertedNationality);
+          console.log("✨ Après normalisation:", normalizedNationality);
+          
+          if (normalizedNationality.length >= 3) {
+            mrzData.nationalite = normalizedNationality;
+            console.log("✅ Nationalité extraite et normalisée:", mrzData.nationalite);
+            break;
+          }
         }
       }
     }
   }
 }
+
+// Fonction supprimée - on utilise maintenant isValidName() du module stringUtils qui est plus complète

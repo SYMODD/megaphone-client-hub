@@ -98,6 +98,8 @@ export const normalizeNationality = (nationality: string): string => {
     "canadien": "Canada",
     "canadienne": "Canada",
     "canadian": "Canada",
+    "canadian/ canadienne": "Canada",
+    "canadian/canadienne": "Canada",
     
     "états-unis": "États-Unis",
     "etats-unis": "États-Unis",
@@ -113,7 +115,42 @@ export const normalizeNationality = (nationality: string): string => {
     "anglais": "Royaume-Uni",
     "english": "Royaume-Uni",
     "uk": "Royaume-Uni",
-    "united kingdom": "Royaume-Uni"
+    "united kingdom": "Royaume-Uni",
+
+    // Pays d'Europe de l'Est
+    "slovaquie": "Slovaquie",
+    "slovak": "Slovaquie",
+    "slovakia": "Slovaquie",
+    "slovenská republika": "Slovaquie",
+    "slovenska republika": "Slovaquie",
+    
+    "république tchèque": "République tchèque",
+    "republique tcheque": "République tchèque",
+    "czech": "République tchèque",
+    "czech republic": "République tchèque",
+    "ceska": "République tchèque",
+    "ceska republika": "République tchèque",
+    "česká republika": "République tchèque",
+    "ceska republika / czech republic": "République tchèque",
+    "česká republika / czech republic": "République tchèque",
+    "tchèque": "République tchèque",
+    
+    "pologne": "Pologne",
+    "polish": "Pologne",
+    "polska": "Pologne",
+    "polonaise": "Pologne",
+    
+    "hongrie": "Hongrie",
+    "hungarian": "Hongrie",
+    "magyar": "Hongrie",
+    "hongroise": "Hongrie",
+    
+    // Colombie
+    "colombie": "Colombie",
+    "colombia": "Colombie",
+    "colombian": "Colombie",
+    "colombiana": "Colombie",
+    "colombiano": "Colombie"
   };
 
   const result = nationalityMapping[normalizedNationality] || 

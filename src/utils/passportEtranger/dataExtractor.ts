@@ -33,23 +33,68 @@ export const extractPassportEtrangerData = (text: string): PassportEtrangerData 
   // Étape 2.5: LOGIQUE DE PRIORITÉ - Texte principal prioritaire pour certains champs
   console.log("🔄 ÉTAPE 2.5 - Application de la logique de priorité...");
   
-  // PRIORITÉ TEXTE PRINCIPAL pour le numéro de passeport (plus fiable)
-  if (mainTextData.numero_passeport && mainTextData.numero_passeport.length >= 6) {
-    console.log(`✅ Numéro passeport: TEXTE PRINCIPAL prioritaire "${mainTextData.numero_passeport}" vs MRZ "${result.numero_passeport}"`);
-    result.numero_passeport = mainTextData.numero_passeport;
-  } else if (!result.numero_passeport && mrzData.numero_passeport) {
-    console.log(`✅ Numéro passeport: Utilisation MRZ en fallback "${mrzData.numero_passeport}"`);
-    result.numero_passeport = mrzData.numero_passeport;
+  // DÉTECTION MRZ CORROMPUE - caractères invalides ou codes pays invalides
+  const isMRZCorrupted = (
+    (result.nom && (result.nom.includes('+') || result.nom.includes('*') || result.nom.length < 2)) ||
+    (result.prenom && (result.prenom.includes('*') || result.prenom === '**' || result.prenom.length < 2)) ||
+    (result.nationalite && !['Canada', 'Allemagne', 'France', 'Espagne', 'Italie', 'Pologne', 'Slovaquie', 'Belgique', 'États-Unis', 'Royaume-Uni', 'Suisse', 'République tchèque', 'Colombie'].includes(result.nationalite))
+  );
+  
+  if (isMRZCorrupted) {
+    console.log("⚠️ MRZ CORROMPUE DÉTECTÉE - Priorité au texte principal");
   }
   
-  // PRIORITÉ TEXTE PRINCIPAL pour nom et prénom (plus précis)
-  if (mainTextData.nom && mainTextData.nom.length >= 2) {
-    console.log(`✅ Nom: TEXTE PRINCIPAL prioritaire "${mainTextData.nom}" vs MRZ "${result.nom}"`);
+  // PRIORITÉ INTELLIGENTE pour le numéro de passeport
+  // Si MRZ corrompue, privilégier ABSOLUMENT le texte principal
+  if (isMRZCorrupted && mainTextData.numero_passeport && mainTextData.numero_passeport.length >= 6) {
+    console.log(`✅ Numéro passeport: TEXTE PRINCIPAL prioritaire (MRZ corrompue) "${mainTextData.numero_passeport}" vs MRZ "${result.numero_passeport}"`);
+    result.numero_passeport = mainTextData.numero_passeport;
+  } else if (result.numero_passeport && result.numero_passeport.length >= 6) {
+    console.log(`✅ Numéro passeport: MRZ PRIORITAIRE "${result.numero_passeport}" vs TEXTE "${mainTextData.numero_passeport}"`);
+    // Garder MRZ
+  } else if (mainTextData.numero_passeport && mainTextData.numero_passeport.length >= 6) {
+    console.log(`✅ Numéro passeport: TEXTE PRINCIPAL en fallback "${mainTextData.numero_passeport}"`);
+    result.numero_passeport = mainTextData.numero_passeport;
+  }
+
+    // PRIORITÉ INTELLIGENTE pour nom et prénom
+  // Si MRZ corrompue, privilégier ABSOLUMENT le texte principal
+  if (isMRZCorrupted) {
+    console.log("🔄 MRZ corrompue : privilégier texte principal pour nom/prénom");
+    if (mainTextData.nom && mainTextData.nom.length >= 2) {
+      result.nom = mainTextData.nom;
+      console.log(`✅ Nom: TEXTE PRINCIPAL prioritaire (MRZ corrompue) "${mainTextData.nom}"`);
+    }
+    if (mainTextData.prenom && mainTextData.prenom.length >= 2) {
+      result.prenom = mainTextData.prenom;
+      console.log(`✅ Prénom: TEXTE PRINCIPAL prioritaire (MRZ corrompue) "${mainTextData.prenom}"`);
+    }
+  }
+  // Si MRZ disponible ET fiable ET non corrompue, elle est prioritaire (plus précise)
+  else if (result.nom && result.prenom && result.nom.length >= 2 && result.prenom.length >= 2 && !isMRZCorrupted) {
+    console.log(`✅ Nom/Prénom: MRZ PRIORITAIRE - "${result.nom}" / "${result.prenom}"`);
+    // Garder les données MRZ, ne pas écraser
+  } else {
+    // Sinon utiliser texte principal en fallback
+    if (mainTextData.nom && mainTextData.nom.length >= 2 && !result.nom) {
+      console.log(`✅ Nom: TEXTE PRINCIPAL en fallback "${mainTextData.nom}"`);
+      result.nom = mainTextData.nom;
+    }
+    
+    if (mainTextData.prenom && mainTextData.prenom.length >= 2 && !result.prenom) {
+      console.log(`✅ Prénom: TEXTE PRINCIPAL en fallback "${mainTextData.prenom}"`);
+      result.prenom = mainTextData.prenom;
+    }
+  }
+  
+  // Compléter avec texte principal si MRZ manque quelque chose
+  if (!result.nom && mainTextData.nom && mainTextData.nom.length >= 2) {
+    console.log(`✅ Nom: TEXTE PRINCIPAL pour compléter MRZ "${mainTextData.nom}"`);
     result.nom = mainTextData.nom;
   }
   
-  if (mainTextData.prenom && mainTextData.prenom.length >= 2) {
-    console.log(`✅ Prénom: TEXTE PRINCIPAL prioritaire "${mainTextData.prenom}" vs MRZ "${result.prenom}"`);
+  if (!result.prenom && mainTextData.prenom && mainTextData.prenom.length >= 2) {
+    console.log(`✅ Prénom: TEXTE PRINCIPAL pour compléter MRZ "${mainTextData.prenom}"`);
     result.prenom = mainTextData.prenom;
   }
   
@@ -79,14 +124,14 @@ export const extractPassportEtrangerData = (text: string): PassportEtrangerData 
   // Étape 4: Validation et nettoyage
   console.log("🔍 ÉTAPE 4 - Validation finale...");
   
-  // Nettoyage des noms (enlever caractères parasites)
+  // Nettoyage des noms (enlever caractères parasites mais garder les accents)
   if (result.nom) {
-    result.nom = result.nom.replace(/[^A-Z\s]/g, '').trim();
+    result.nom = result.nom.replace(/[®©™\+\•\*]/g, '').trim();  // Enlever seulement les caractères parasites spécifiques
     if (result.nom.length < 2) result.nom = undefined;
   }
   
   if (result.prenom) {
-    result.prenom = result.prenom.replace(/[^A-Z\s]/g, '').trim();
+    result.prenom = result.prenom.replace(/[®©™\+\•\*]/g, '').trim();  // Enlever seulement les caractères parasites spécifiques
     if (result.prenom.length < 2) result.prenom = undefined;
   }
 
