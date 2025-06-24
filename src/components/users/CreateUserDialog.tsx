@@ -118,7 +118,7 @@ export const CreateUserDialog = ({ operationPoints, isAdmin, onUserCreated, onEr
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <Button className="bg-blue-600 hover:bg-blue-700 w-full md:w-auto">
           <Plus className="w-4 h-4 mr-2" />
           Nouvel Utilisateur
         </Button>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -73,10 +72,10 @@ export const PDFTemplateSelector = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            Gestion des Templates PDF
+            <span className="text-lg sm:text-xl">Gestion des Templates PDF</span>
           </div>
           {onForceReload && (
             <Button
@@ -84,14 +83,14 @@ export const PDFTemplateSelector = ({
               size="sm"
               onClick={handleForceReload}
               disabled={isReloading}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 w-full sm:w-auto"
             >
               <RefreshCw className={`w-4 h-4 ${isReloading ? 'animate-spin' : ''}`} />
               {isReloading ? 'Rechargement...' : 'Actualiser'}
             </Button>
           )}
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm sm:text-base">
           {isAdmin 
             ? "Gérez vos templates : sélectionnez, renommez ou uploadez-en de nouveaux"
             : "Sélectionnez un template parmi ceux disponibles"
@@ -111,7 +110,7 @@ export const PDFTemplateSelector = ({
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex-1">
               <Select value={selectedTemplateId || ''} onValueChange={onTemplateSelect}>
                 <SelectTrigger>
@@ -133,7 +132,7 @@ export const PDFTemplateSelector = ({
               </Select>
             </div>
             {isAdmin && (
-              <Button onClick={onUploadNew} variant="outline">
+              <Button onClick={onUploadNew} variant="outline" className="w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 Nouveau Template
               </Button>
@@ -142,25 +141,27 @@ export const PDFTemplateSelector = ({
 
           {selectedTemplate && (
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="space-y-2 flex-1">
                   {editingTemplateId === selectedTemplate.id ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                       <Input
                         value={editingName}
                         onChange={(e) => setEditingName(e.target.value)}
-                        className="font-medium"
+                        className="font-medium flex-1"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') handleSaveEdit();
                           if (e.key === 'Escape') handleCancelEdit();
                         }}
                       />
-                      <Button size="sm" onClick={handleSaveEdit} variant="outline">
-                        <Save className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" onClick={handleCancelEdit} variant="ghost">
-                        <X className="w-4 h-4" />
-                      </Button>
+                      <div className="flex gap-2 w-full sm:w-auto">
+                        <Button size="sm" onClick={handleSaveEdit} variant="outline" className="flex-1 sm:flex-none">
+                          <Save className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" onClick={handleCancelEdit} variant="ghost" className="flex-1 sm:flex-none">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
@@ -177,10 +178,10 @@ export const PDFTemplateSelector = ({
                       )}
                     </div>
                   )}
-                  <div className="flex items-center gap-4 text-sm text-blue-700">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-blue-700">
                     <div className="flex items-center gap-1">
                       <FileText className="w-4 h-4" />
-                      {selectedTemplate.fileName}
+                      <span className="truncate">{selectedTemplate.fileName}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
@@ -193,9 +194,10 @@ export const PDFTemplateSelector = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => onDeleteTemplate(selectedTemplate.id)}
-                    className="text-red-600 hover:text-red-700"
+                    className="text-red-600 hover:text-red-700 w-full sm:w-auto"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 mr-2 sm:mr-0" />
+                    <span className="sm:hidden">Supprimer</span>
                   </Button>
                 )}
               </div>

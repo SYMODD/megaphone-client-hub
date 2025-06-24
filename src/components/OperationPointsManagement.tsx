@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -231,9 +230,9 @@ export const OperationPointsManagement = () => {
       {/* Categories Section */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <CardTitle className="flex items-center">
+              <CardTitle className="flex items-center text-lg sm:text-xl">
                 <Tag className="w-5 h-5 mr-2" />
                 Catégories ({categories.length})
               </CardTitle>
@@ -243,7 +242,7 @@ export const OperationPointsManagement = () => {
             </div>
             <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                <Button size="sm" className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">
                   <Plus className="w-4 h-4 mr-2" />
                   Nouvelle Catégorie
                 </Button>
@@ -319,9 +318,9 @@ export const OperationPointsManagement = () => {
       {/* Operation Points Section */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <CardTitle className="flex items-center">
+              <CardTitle className="flex items-center text-lg sm:text-xl">
                 <MapPin className="w-5 h-5 mr-2" />
                 Points d'Opération ({operationPoints.length})
               </CardTitle>
@@ -331,7 +330,7 @@ export const OperationPointsManagement = () => {
             </div>
             <Dialog open={isAddPointOpen} onOpenChange={setIsAddPointOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
                   <Plus className="w-4 h-4 mr-2" />
                   Nouveau Point
                 </Button>
@@ -401,33 +400,86 @@ export const OperationPointsManagement = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead>Code</TableHead>
-                <TableHead>Catégorie</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {operationPoints.map((point) => (
-                <TableRow key={point.id}>
-                  <TableCell className="font-medium">{point.nom}</TableCell>
-                  <TableCell>
-                    <code className="text-sm bg-slate-100 px-2 py-1 rounded">
-                      {point.code}
-                    </code>
-                  </TableCell>
-                  <TableCell>{getCategoryName(point.categorie_id)}</TableCell>
-                  <TableCell>
-                    <Badge variant={point.actif ? "default" : "destructive"}>
-                      {point.actif ? "Actif" : "Inactif"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
+          {/* Desktop Table */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Catégorie</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {operationPoints.map((point) => (
+                  <TableRow key={point.id}>
+                    <TableCell className="font-medium">{point.nom}</TableCell>
+                    <TableCell>
+                      <code className="text-sm bg-slate-100 px-2 py-1 rounded">
+                        {point.code}
+                      </code>
+                    </TableCell>
+                    <TableCell>{getCategoryName(point.categorie_id)}</TableCell>
+                    <TableCell>
+                      <Badge variant={point.actif ? "default" : "destructive"}>
+                        {point.actif ? "Actif" : "Inactif"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            openEditPoint(point);
+                            setIsAddPointOpen(true);
+                          }}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDeletePoint(point.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-4">
+            {operationPoints.map((point) => (
+              <Card key={point.id} className="border-l-4 border-l-blue-500">
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-base">{point.nom}</h3>
+                        <div className="mt-1">
+                          <code className="text-sm bg-slate-100 px-2 py-1 rounded">
+                            {point.code}
+                          </code>
+                        </div>
+                      </div>
+                      <Badge variant={point.actif ? "default" : "destructive"}>
+                        {point.actif ? "Actif" : "Inactif"}
+                      </Badge>
+                    </div>
+                    
+                    <div>
+                      <span className="text-sm text-slate-600">Catégorie: </span>
+                      <span className="text-sm font-medium">{getCategoryName(point.categorie_id)}</span>
+                    </div>
+
+                    <div className="flex space-x-2 pt-2">
                       <Button
                         size="sm"
                         variant="outline"
@@ -435,22 +487,26 @@ export const OperationPointsManagement = () => {
                           openEditPoint(point);
                           setIsAddPointOpen(true);
                         }}
+                        className="flex-1"
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="w-4 h-4 mr-2" />
+                        Modifier
                       </Button>
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => handleDeletePoint(point.id)}
+                        className="flex-1"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Supprimer
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -82,33 +81,98 @@ export const PDFContractTabs = ({
   const initialMappings = selectedTemplateId ? templateMappings[selectedTemplateId] || [] : [];
 
   return (
-    <Tabs defaultValue="templates" className="space-y-6">
-      <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-3'}`}>
-        <TabsTrigger value="templates" className="flex items-center gap-2">
-          <FileText className="w-4 h-4" />
-          Templates
-        </TabsTrigger>
-        {isAdmin && (
-          <TabsTrigger value="fields" className="flex items-center gap-2">
-            <Settings className="w-4 h-4" />
-            Champs
+    <Tabs defaultValue="templates" className="space-y-4 sm:space-y-6">
+      {/* Mobile: Scrollable tabs */}
+      <div className="md:hidden">
+        <TabsList className="w-full h-auto p-1 bg-slate-100 rounded-lg overflow-x-auto">
+          <div className="flex gap-1 min-w-max">
+            <TabsTrigger 
+              value="templates" 
+              className="flex items-center gap-2 px-3 py-2 text-xs whitespace-nowrap data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+            >
+              <FileText className="w-4 h-4" />
+              Templates
+            </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger 
+                value="fields" 
+                className="flex items-center gap-2 px-3 py-2 text-xs whitespace-nowrap data-[state=active]:bg-green-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+              >
+                <Settings className="w-4 h-4" />
+                Champs
+              </TabsTrigger>
+            )}
+            <TabsTrigger 
+              value="client" 
+              className="flex items-center gap-2 px-3 py-2 text-xs whitespace-nowrap data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+            >
+              <span className="w-4 h-4 rounded-full bg-current flex items-center justify-center text-xs">👤</span>
+              Client
+            </TabsTrigger>
+            <TabsTrigger 
+              value="generate" 
+              className="flex items-center gap-2 px-3 py-2 text-xs whitespace-nowrap data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+            >
+              <FileDown className="w-4 h-4" />
+              Générer
+            </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger 
+                value="diagnostic" 
+                className="flex items-center gap-2 px-3 py-2 text-xs whitespace-nowrap data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+              >
+                <Info className="w-4 h-4" />
+                Diagnostic
+              </TabsTrigger>
+            )}
+          </div>
+        </TabsList>
+      </div>
+
+      {/* Desktop: Grid tabs */}
+      <div className="hidden md:block">
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-3'} bg-slate-100 p-1 rounded-lg`}>
+          <TabsTrigger 
+            value="templates" 
+            className="flex items-center gap-1 px-2 py-3 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+          >
+            <FileText className="w-4 h-4" />
+            <span className={`${isAdmin ? 'hidden lg:inline' : 'hidden sm:inline'}`}>Templates</span>
           </TabsTrigger>
-        )}
-        <TabsTrigger value="client" className="flex items-center gap-2">
-          <span className="w-4 h-4 rounded-full bg-current flex items-center justify-center text-xs">👤</span>
-          Client
-        </TabsTrigger>
-        <TabsTrigger value="generate" className="flex items-center gap-2">
-          <FileDown className="w-4 h-4" />
-          Générer
-        </TabsTrigger>
-        {isAdmin && (
-          <TabsTrigger value="diagnostic" className="flex items-center gap-2">
-            <Info className="w-4 h-4" />
-            Diagnostic
+          {isAdmin && (
+            <TabsTrigger 
+              value="fields" 
+              className="flex items-center gap-1 px-2 py-3 data-[state=active]:bg-green-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+            >
+              <Settings className="w-4 h-4" />
+              <span className="hidden lg:inline">Champs</span>
+            </TabsTrigger>
+          )}
+          <TabsTrigger 
+            value="client" 
+            className="flex items-center gap-1 px-2 py-3 data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+          >
+            <span className="w-4 h-4 rounded-full bg-current flex items-center justify-center text-xs">👤</span>
+            <span className={`${isAdmin ? 'hidden lg:inline' : 'hidden sm:inline'}`}>Client</span>
           </TabsTrigger>
-        )}
-      </TabsList>
+          <TabsTrigger 
+            value="generate" 
+            className="flex items-center gap-1 px-2 py-3 data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+          >
+            <FileDown className="w-4 h-4" />
+            <span className={`${isAdmin ? 'hidden lg:inline' : 'hidden sm:inline'}`}>Générer</span>
+          </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger 
+              value="diagnostic" 
+              className="flex items-center gap-1 px-2 py-3 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200"
+            >
+              <Info className="w-4 h-4" />
+              <span className="hidden lg:inline">Diagnostic</span>
+            </TabsTrigger>
+          )}
+        </TabsList>
+      </div>
 
       <TabsContent value="templates">
         {showUpload && isAdmin ? (

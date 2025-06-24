@@ -90,32 +90,34 @@ const UserManagement = () => {
       <Navigation />
       
       <main className="container mx-auto px-4 py-8 space-y-8">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-2">
               Gestion des Utilisateurs
             </h1>
-            <p className="text-slate-600">
+            <p className="text-slate-600 text-sm md:text-base">
               Créer, modifier et gérer les utilisateurs du système
             </p>
           </div>
-          <div className="flex space-x-3">
+          <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-3">
             {isAdmin && (
               <Button 
                 variant="outline" 
                 onClick={() => setIsPointsManagementOpen(true)}
-                className="bg-slate-600 hover:bg-slate-700 text-white"
+                className="bg-slate-600 hover:bg-slate-700 text-white w-full md:w-auto"
               >
                 <Settings className="w-4 h-4 mr-2" />
                 Gérer les Points
               </Button>
             )}
-            <CreateUserDialog
-              operationPoints={operationPoints}
-              isAdmin={isAdmin}
-              onUserCreated={handleUserCreated}
-              onError={setError}
-            />
+            <div className="w-full md:w-auto">
+              <CreateUserDialog
+                operationPoints={operationPoints}
+                isAdmin={isAdmin}
+                onUserCreated={handleUserCreated}
+                onError={setError}
+              />
+            </div>
           </div>
         </div>
 
