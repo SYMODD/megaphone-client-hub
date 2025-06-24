@@ -76,18 +76,24 @@ export const CreateUserDialog = ({ operationPoints, isAdmin, onUserCreated, onEr
       if (authError) throw authError;
 
       if (authData.user) {
-        setTimeout(async () => {
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .update({ statut: form.statut })
-            .eq("id", authData.user.id);
+        // Créer le profil manuellement après la création du user
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({
+            id: authData.user.id,
+            nom: form.nom,
+            prenom: form.prenom,
+            role: form.role,
+            point_operation: pointOperation as PointOperation,
+            statut: form.statut,
+          });
 
-          if (profileError) {
-            console.error("Error updating profile status:", profileError);
-          }
-          
-          onUserCreated();
-        }, 1000);
+        if (profileError) {
+          console.error("Error creating profile:", profileError);
+          throw new Error("Erreur lors de la création du profil utilisateur");
+        }
+        
+        onUserCreated();
       }
 
       setForm({

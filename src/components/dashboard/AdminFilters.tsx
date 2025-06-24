@@ -1,9 +1,11 @@
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Filter, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AdminFiltersProps {
   selectedPoint: string | null;
@@ -13,14 +15,13 @@ interface AdminFiltersProps {
   onClearFilters: () => void;
 }
 
-const pointOptions = [
-  { value: "aeroport_marrakech", label: "Aéroport Marrakech" },
-  { value: "aeroport_casablanca", label: "Aéroport Casablanca" },
-  { value: "aeroport_agadir", label: "Aéroport Agadir" },
-  { value: "navire_atlas", label: "Navire Atlas" },
-  { value: "navire_meridien", label: "Navire Méridien" },
-  { value: "agence_centrale", label: "Agence Centrale" }
-];
+interface OperationPoint {
+  id: string;
+  nom: string;
+  code: string;
+  categorie_id: string;
+  actif: boolean;
+}
 
 const categoryOptions = [
   { value: "aeroport", label: "Aéroports" },
@@ -35,20 +36,44 @@ export const AdminFilters = ({
   onCategoryChange, 
   onClearFilters 
 }: AdminFiltersProps) => {
+  const [operationPoints, setOperationPoints] = useState<OperationPoint[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchOperationPoints();
+  }, []);
+
+  const fetchOperationPoints = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("points_operation")
+        .select("*")
+        .eq("actif", true)
+        .order("nom");
+
+      if (error) throw error;
+      setOperationPoints(data || []);
+    } catch (error) {
+      console.error("Error fetching operation points:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const hasActiveFilters = selectedPoint || selectedCategory;
 
   const getPointsByCategory = (category: string | null) => {
-    if (!category) return pointOptions;
+    if (!category) return operationPoints;
     
     switch (category) {
       case "aeroport":
-        return pointOptions.filter(point => point.value.startsWith("aeroport"));
+        return operationPoints.filter(point => point.code.startsWith("aeroport"));
       case "navire":
-        return pointOptions.filter(point => point.value.startsWith("navire"));
+        return operationPoints.filter(point => point.code.startsWith("navire"));
       case "agence":
-        return pointOptions.filter(point => point.value.startsWith("agence"));
+        return operationPoints.filter(point => point.code.startsWith("agence"));
       default:
-        return pointOptions;
+        return operationPoints;
     }
   };
 
@@ -111,8 +136,8 @@ export const AdminFilters = ({
                 <SelectContent>
                   <SelectItem value="all">Tous les points</SelectItem>
                   {availablePoints.map((point) => (
-                    <SelectItem key={point.value} value={point.value}>
-                      {point.label}
+                    <SelectItem key={point.code} value={point.code}>
+                      {point.nom}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -149,7 +174,7 @@ export const AdminFilters = ({
               )}
               {selectedPoint && (
                 <Badge variant="secondary" className="flex items-center gap-1">
-                  Point: {pointOptions.find(p => p.value === selectedPoint)?.label}
+                  Point: {operationPoints.find(p => p.code === selectedPoint)?.nom}
                   <X 
                     className="w-3 h-3 cursor-pointer hover:text-red-600 transition-colors" 
                     onClick={() => onPointChange(null)}
