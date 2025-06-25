@@ -47,7 +47,7 @@ const Navigation = memo(() => {
   }, []);
 
   return (
-    <nav className="bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm sticky top-16 z-40">
+    <nav className="bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm sticky top-16 z-50">
       <div className="container mx-auto px-3">
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center justify-between py-3">

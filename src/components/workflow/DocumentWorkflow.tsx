@@ -183,8 +183,8 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
         />
       </div>
 
-      {/* Contenu principal avec padding-top pour mobile (stepper fixed) */}
-      <div className="p-1 sm:p-4 pt-24 lg:pt-1">
+      {/* Contenu principal avec padding normal (stepper sticky) */}
+      <div className="p-1 sm:p-4 pt-1 lg:pt-1">
         <div className="max-w-4xl mx-auto">
           {/* En-tête avec titre - MICRO COMPACT */}
           <div className="mb-1 sm:mb-3">
