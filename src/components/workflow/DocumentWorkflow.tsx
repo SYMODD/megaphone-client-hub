@@ -172,124 +172,121 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-2 sm:p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* En-tête avec titre et stepper */}
-        <div className="mb-4 sm:mb-6">
-          <div className="text-center mb-3 sm:mb-4">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 responsive-title">
-              {getDocumentTitle(documentType)}
-            </h1>
-            <p className="text-gray-600 responsive-subtitle text-sm">
-              Suivez les étapes pour traiter votre document
-            </p>
-          </div>
-
-          {/* Stepper fixe sur mobile */}
-          <div className="mb-3 sm:mb-4">
-            <Stepper
-              steps={workflowState.steps}
-              currentStep={workflowState.currentStep}
-              onStepClick={goToStep}
-              className="w-full"
-            />
-          </div>
-        </div>
-
-        {/* Contenu de l'étape actuelle */}
-        <Card className="responsive-card shadow-lg border-0">
-          <CardHeader className="p-3 sm:p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <div className={cn(
-                "w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-xs",
-                currentStep?.status === 'completed' ? "bg-green-500" : "bg-blue-500"
-              )}>
-                {workflowState.currentStep}
-              </div>
-              <div>
-                <CardTitle className="responsive-title text-base">
-                  {currentStep?.title}
-                </CardTitle>
-                <CardDescription className="responsive-body text-xs mt-0.5">
-                  {currentStep?.description}
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-3 sm:p-4">
-            {renderCurrentStep()}
-          </CardContent>
-        </Card>
-
-        {/* Navigation */}
-        <div className="flex justify-between items-center mt-3 sm:mt-4 gap-4">
-          <Button
-            variant="outline"
-            onClick={onCancel}
-            className="responsive-button"
-          >
-            Annuler
-          </Button>
-
-          <div className="flex gap-2">
-            {!isFirstStep && (
-              <Button 
-                onClick={handlePrevious}
-                disabled={isFirstStep}
-                className={cn(
-                  "responsive-button font-semibold transition-all duration-200",
-                  "bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700",
-                  "shadow-lg hover:shadow-xl hover:scale-105 active:scale-95",
-                  "disabled:from-gray-300 disabled:to-gray-400 disabled:shadow-none disabled:scale-100"
-                )}
-              >
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Précédent
-              </Button>
-            )}
-
-            {!isLastStep && (
-              <Button 
-                onClick={handleNext}
-                disabled={!canProceed}
-                className={cn(
-                  "responsive-button font-semibold transition-all duration-200",
-                  "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700",
-                  "shadow-lg hover:shadow-xl hover:scale-105 active:scale-95",
-                  "disabled:from-gray-300 disabled:to-gray-400 disabled:shadow-none disabled:scale-100",
-                  canProceed && "animate-pulse"
-                )}
-              >
-                <ChevronRight className="w-4 h-4 mr-2" />
-                Suivant
-                <Sparkles className="w-4 h-4 ml-2" />
-              </Button>
-            )}
-
-            {isLastStep && (
-              <Button 
-                onClick={handleNext}
-                disabled={!canProceed}
-                className={cn(
-                  "flex-1 sm:min-w-[180px] text-sm sm:text-base font-bold transition-all duration-200",
-                  "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700",
-                  "shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 ring-2 ring-green-200",
-                  "disabled:from-gray-300 disabled:to-gray-400 disabled:shadow-none disabled:scale-100 disabled:ring-0",
-                  canProceed && "animate-pulse shadow-green-300"
-                )}
-              >
-                <Save className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                <span className="hidden sm:inline font-semibold">Enregistrer le client</span>
-                <span className="sm:hidden font-semibold">Enregistrer</span>
-              </Button>
-            )}
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Stepper sticky indépendant - HORS DU CONTAINER */}
+      <div className="lg:hidden">
+        <Stepper
+          steps={workflowState.steps}
+          currentStep={workflowState.currentStep}
+          onStepClick={goToStep}
+          className="w-full"
+        />
       </div>
 
-      {/* Logs debug repositionnés (compatibilité) */}
-      <DebugLogs logs={debugLogs} />
+      {/* Contenu principal avec padding-top pour mobile (stepper sticky) */}
+      <div className="p-1 sm:p-4 pt-20 lg:pt-1">
+        <div className="max-w-4xl mx-auto">
+          {/* En-tête avec titre - MICRO COMPACT */}
+          <div className="mb-1 sm:mb-3">
+            <div className="text-center mb-1">
+              <h1 className="text-xs sm:text-lg md:text-xl font-bold text-gray-900 mb-0 px-2">
+                {getDocumentIcon(documentType)} {getDocumentTitle(documentType)}
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-600 px-2">
+                Suivez les étapes pour traiter votre document
+              </p>
+            </div>
+
+            {/* Stepper desktop uniquement */}
+            <div className="hidden lg:block px-1 sm:px-0">
+              <Stepper
+                steps={workflowState.steps}
+                currentStep={workflowState.currentStep}
+                onStepClick={goToStep}
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          {/* Contenu de l'étape actuelle - BOUTON ANNULER REPOSITIONNÉ */}
+          <Card className="shadow-lg border-0 mx-1 sm:mx-0 responsive-card relative">
+            {/* Bouton Annuler repositionné en haut à droite */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onCancel}
+              className="absolute top-2 right-2 z-10 text-xs sm:text-sm px-2 sm:px-3"
+            >
+              Annuler
+            </Button>
+
+            <CardHeader className="pb-1 sm:pb-3 px-2 sm:px-6 pr-16 sm:pr-20">
+              <div className="flex items-center space-x-2 min-w-0 flex-1">
+                <Badge 
+                  variant="secondary" 
+                  className="shrink-0 text-xs sm:text-sm"
+                >
+                  Étape {workflowState.currentStep + 1}
+                </Badge>
+                <CardTitle className="text-sm sm:text-base md:text-lg truncate">
+                  {currentStep.title}
+                </CardTitle>
+              </div>
+              
+              <CardDescription className="text-xs sm:text-sm text-gray-600">
+                {currentStep.description}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="px-2 sm:px-6 pb-2 sm:pb-4">
+              {/* Contenu principal responsive - ULTRA COMPACT */}
+              <div className="space-y-1 sm:space-y-2">
+                {renderCurrentStep()}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Navigation - MICRO COMPACTE */}
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mt-1 sm:mt-3 space-y-1 sm:space-y-0 sm:space-x-4 px-1 sm:px-0">
+            <Button
+              onClick={handlePrevious}
+              disabled={isFirstStep}
+              variant="outline"
+              className="w-full sm:w-auto order-2 sm:order-1 responsive-button"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Précédent
+            </Button>
+
+            <div className="flex-1 text-center order-1 sm:order-2">
+              <p className="text-xs sm:text-sm text-gray-500">
+                {workflowState.currentStep + 1} sur {workflowState.steps.length} étapes
+              </p>
+            </div>
+
+            <Button
+              onClick={handleNext}
+              disabled={!canProceed}
+              className="w-full sm:w-auto order-3 sm:order-3 responsive-button bg-blue-600 hover:bg-blue-700"
+            >
+              {isLastStep ? (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Finaliser
+                </>
+              ) : (
+                <>
+                  Suivant
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Logs debug repositionnés pour mobile */}
+          <DebugLogs logs={debugLogs} />
+        </div>
+      </div>
     </div>
   );
 }; 

@@ -125,26 +125,27 @@ export const WorkflowStepScanner: React.FC<WorkflowStepProps> = ({
 
   // Toujours afficher le scanner réel - les instructions sont intégrées
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-6">
       {renderScanner()}
       
       {/* Option manuelle après délai */}
       {showManualOption && !workflowData.extractedData && (
         <Card className="border-orange-200 bg-orange-50">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center gap-2 justify-center mb-3">
-              <Clock className="w-5 h-5 text-orange-600" />
-              <span className="font-medium text-orange-800">
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="flex items-center gap-2 justify-center mb-2 sm:mb-3">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
+              <span className="font-medium text-orange-800 text-sm sm:text-base">
                 Traitement en cours... ({waitingTime}s)
               </span>
             </div>
-            <p className="text-orange-700 text-sm mb-3 break-words">
+            <p className="text-orange-700 text-xs sm:text-sm mb-2 sm:mb-3 break-words">
               Le traitement prend plus de temps que prévu. Vous pouvez continuer manuellement.
             </p>
             <Button
               onClick={handleContinueManually}
               variant="outline"
-              className="border-orange-300 text-orange-700 hover:bg-orange-100"
+              size="sm"
+              className="border-orange-300 text-orange-700 hover:bg-orange-100 text-xs sm:text-sm"
             >
               ✋ Continuer manuellement
             </Button>

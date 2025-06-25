@@ -24,13 +24,12 @@ const PassportEtrangerWorkflow = () => {
       <AuthenticatedHeader />
       <Navigation />
       
-      <main className="container mx-auto px-2 sm:px-4 py-3 sm:py-8">
-        <DocumentWorkflow
-          documentType="passeport_etranger"
-          onComplete={handleComplete}
-          onCancel={handleCancel}
-        />
-      </main>
+      {/* DocumentWorkflow gère maintenant son propre stepper sticky */}
+      <DocumentWorkflow
+        documentType="passeport_etranger"
+        onComplete={handleComplete}
+        onCancel={handleCancel}
+      />
     </div>
   );
 };

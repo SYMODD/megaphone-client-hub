@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, XCircle } from "lucide-react";
@@ -24,10 +23,10 @@ export const PassportEtrangerDataDisplay = ({
 }: PassportEtrangerDataDisplayProps) => {
   if (extractedData) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h4 className="font-semibold text-green-700 flex items-center">
-            <CheckCircle className="w-4 h-4 mr-2" />
+      <div className="space-y-3 sm:space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+          <h4 className="font-semibold text-green-700 flex items-center text-sm sm:text-base">
+            <CheckCircle className="w-4 h-4 mr-2 shrink-0" />
             Données Passeport Étranger extraites
           </h4>
           <Button
@@ -35,45 +34,66 @@ export const PassportEtrangerDataDisplay = ({
             variant="outline"
             size="sm"
             onClick={onToggleRawText}
+            className="w-full sm:w-auto text-xs sm:text-sm responsive-button"
           >
             {showRawText ? "Masquer" : "Voir"} texte brut
           </Button>
         </div>
 
         {showRawText && rawText && (
-          <Alert>
+          <Alert className="max-h-32 sm:max-h-48 overflow-y-auto">
             <AlertDescription>
-              <pre className="text-xs whitespace-pre-wrap">{rawText}</pre>
+              <pre className="text-xs whitespace-pre-wrap break-words">
+                {rawText}
+              </pre>
             </AlertDescription>
           </Alert>
         )}
 
-        <div className="grid grid-cols-2 gap-4 p-4 bg-green-50 rounded-lg">
-          <div>
-            <strong>Nom:</strong> {extractedData.nom || "Non détecté"}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 p-3 sm:p-4 bg-green-50 rounded-lg">
+          <div className="space-y-1">
+            <strong className="text-xs sm:text-sm text-gray-700">Nom:</strong>
+            <p className="text-sm sm:text-base break-words">
+              {extractedData.nom || "Non détecté"}
+            </p>
           </div>
-          <div>
-            <strong>Prénom:</strong> {extractedData.prenom || "Non détecté"}
+          <div className="space-y-1">
+            <strong className="text-xs sm:text-sm text-gray-700">Prénom:</strong>
+            <p className="text-sm sm:text-base break-words">
+              {extractedData.prenom || "Non détecté"}
+            </p>
           </div>
-          <div>
-            <strong>N° Passeport:</strong> {extractedData.numero_passeport || "Non détecté"}
+          <div className="space-y-1">
+            <strong className="text-xs sm:text-sm text-gray-700">N° Passeport:</strong>
+            <p className="text-sm sm:text-base break-words font-mono">
+              {extractedData.numero_passeport || "Non détecté"}
+            </p>
           </div>
-          <div>
-            <strong>Nationalité:</strong> {extractedData.nationalite || "Non détecté"}
+          <div className="space-y-1">
+            <strong className="text-xs sm:text-sm text-gray-700">Nationalité:</strong>
+            <p className="text-sm sm:text-base break-words">
+              {extractedData.nationalite || "Non détecté"}
+            </p>
           </div>
-          <div>
-            <strong>Date naissance:</strong> {extractedData.date_naissance || "Non détecté"}
+          <div className="space-y-1">
+            <strong className="text-xs sm:text-sm text-gray-700">Date naissance:</strong>
+            <p className="text-sm sm:text-base break-words font-mono">
+              {extractedData.date_naissance || "Non détecté"}
+            </p>
           </div>
-          <div>
-            <strong>Date expiration:</strong> {extractedData.date_expiration || "Non détecté"}
+          <div className="space-y-1">
+            <strong className="text-xs sm:text-sm text-gray-700">Date expiration:</strong>
+            <p className="text-sm sm:text-base break-words font-mono">
+              {extractedData.date_expiration || "Non détecté"}
+            </p>
           </div>
         </div>
 
-        <div className="flex justify-center">
+        <div className="flex justify-center pt-2">
           <Button
             type="button"
             onClick={onConfirmData}
-            className="bg-green-600 hover:bg-green-700"
+            className="w-full sm:w-auto bg-green-600 hover:bg-green-700 responsive-button"
           >
             <CheckCircle className="w-4 h-4 mr-2" />
             Confirmer et utiliser ces données
@@ -85,9 +105,9 @@ export const PassportEtrangerDataDisplay = ({
 
   if (scannedImage && !extractedData && !isScanning) {
     return (
-      <Alert>
+      <Alert className="border-orange-200 bg-orange-50">
         <XCircle className="w-4 h-4" />
-        <AlertDescription>
+        <AlertDescription className="text-sm sm:text-base">
           Aucune donnée MRZ détectée. Assurez-vous que l'image contient la zone MRZ du passeport et réessayez.
         </AlertDescription>
       </Alert>

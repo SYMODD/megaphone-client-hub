@@ -26,72 +26,76 @@ export const Stepper: React.FC<StepperProps> = ({
 }) => {
   return (
     <div className={cn("w-full", className)}>
-      {/* Version mobile FIXÉE EN HAUT avec scroll horizontal optimisé */}
+      {/* Version mobile - STICKY POSITION CORRIGÉE */}
       <div className="block lg:hidden">
-        {/* Conteneur fixe pour mobile */}
-        <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-200 shadow-sm">
-          <div className="px-2 py-3">
-            <div className="flex overflow-x-auto pb-1 gap-2 scrollbar-thin">
+        {/* Conteneur mobile épinglé - POSITION STICKY FORCÉE APRÈS HEADER+NAV */}
+        <div className="sticky top-[112px] z-[9999] bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+          <div className="px-2 py-2">
+            <div className="flex overflow-x-auto gap-1 scrollbar-thin">
               {steps.map((step, index) => (
                 <div
                   key={step.id}
                   className={cn(
-                    "flex-shrink-0 flex flex-col items-center cursor-pointer transition-all duration-200 min-w-[70px] px-1",
+                    "flex-shrink-0 flex flex-col items-center cursor-pointer transition-all duration-200 min-w-[60px] px-1",
                     index <= currentStep ? "opacity-100" : "opacity-60"
                   )}
                   onClick={() => onStepClick?.(index)}
                 >
-                  {/* Cercle compact optimisé pour mobile */}
+                  {/* Cercle compact */}
                   <div
                     className={cn(
-                      "w-7 h-7 rounded-full flex items-center justify-center text-white font-semibold text-xs mb-1 transition-all duration-200 shadow-sm",
-                      step.status === 'completed' && "bg-green-500 shadow-green-200",
-                      step.status === 'active' && "bg-blue-500 ring-2 ring-blue-200 shadow-blue-200 scale-110",
-                      step.status === 'error' && "bg-red-500 shadow-red-200",
-                      step.status === 'pending' && "bg-gray-300"
+                      "w-6 h-6 rounded-full flex items-center justify-center text-white font-semibold text-[10px] mb-1 transition-all duration-200 shadow-sm",
+                      step.status === 'completed' && "bg-green-500",
+                      step.status === 'active' && "bg-blue-500 ring-2 ring-blue-200 scale-110",
+                      step.status === 'error' && "bg-red-500",
+                      step.status === 'pending' && "bg-gray-400"
                     )}
                   >
                     {step.status === 'completed' ? (
-                      <Check className="w-3 h-3" />
+                      <Check className="w-2.5 h-2.5" />
                     ) : step.status === 'error' ? (
-                      <X className="w-3 h-3" />
+                      <X className="w-2.5 h-2.5" />
                     ) : (
-                      <span className="text-xs">{step.icon}</span>
+                      <span className="text-[9px]">{step.icon}</span>
                     )}
                   </div>
 
-                  {/* Titre ultra-compact */}
-                  <div className="text-center max-w-[70px]">
+                  {/* Titre compact */}
+                  <div className="text-center max-w-[60px]">
                     <div
                       className={cn(
-                        "text-xs font-medium truncate leading-tight",
-                        step.status === 'active' && "text-blue-600 font-semibold",
+                        "text-[9px] font-medium leading-tight text-center",
+                        step.status === 'active' && "text-blue-600 font-bold",
                         step.status === 'completed' && "text-green-600",
                         step.status === 'error' && "text-red-600",
-                        step.status === 'pending' && "text-gray-500"
+                        step.status === 'pending' && "text-gray-600"
                       )}
                       title={step.title}
                     >
-                      {step.title.length > 8 ? step.title.substring(0, 8) + '.' : step.title}
+                      {step.title.length > 7 ? step.title.substring(0, 7) + '.' : step.title}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
             
-            {/* Ligne de progression mobile */}
-            <div className="relative mt-2">
-              <div className="absolute top-0 left-0 w-full h-0.5 bg-gray-200 rounded"></div>
+            {/* Ligne de progression */}
+            <div className="relative mt-1.5">
+              <div className="w-full h-0.5 bg-gray-300 rounded"></div>
               <div
                 className="absolute top-0 left-0 h-0.5 bg-blue-500 transition-all duration-500 rounded"
                 style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
               ></div>
             </div>
+            
+            {/* Indicateur compact */}
+            <div className="text-center mt-1">
+              <span className="text-[9px] text-gray-600 font-semibold">
+                {currentStep + 1}/{steps.length}
+              </span>
+            </div>
           </div>
         </div>
-        
-        {/* Spacer pour compenser la position fixe */}
-        <div className="h-20"></div>
       </div>
 
       {/* Version desktop améliorée */}

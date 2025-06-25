@@ -24,13 +24,12 @@ const CarteSejourWorkflow = () => {
       <AuthenticatedHeader />
       <Navigation />
       
-      <main className="container mx-auto px-2 sm:px-4 py-3 sm:py-8">
-        <DocumentWorkflow
-          documentType="carte_sejour"
-          onComplete={handleComplete}
-          onCancel={handleCancel}
-        />
-      </main>
+      {/* DocumentWorkflow gère maintenant son propre stepper sticky */}
+      <DocumentWorkflow
+        documentType="carte_sejour"
+        onComplete={handleComplete}
+        onCancel={handleCancel}
+      />
     </div>
   );
 };

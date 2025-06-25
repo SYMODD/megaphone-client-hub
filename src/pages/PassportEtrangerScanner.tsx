@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -15,34 +14,41 @@ const PassportEtrangerScanner = () => {
       <AuthenticatedHeader />
       <Navigation />
       
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+      {/* Main content - Mobile optimisé */}
+      <main className="smart-container py-3 sm:py-4 md:py-8">
+        <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
+          {/* Header - Mobile responsive */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
             <Button 
               variant="outline" 
               size="sm" 
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto responsive-button"
               onClick={() => navigate("/nouveau-client")}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Retour
             </Button>
-            <div className="w-full sm:w-auto">
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Scanner Passeport Étranger</h1>
-              <p className="text-sm sm:text-base text-slate-600 mt-1">Scanner et traiter un passeport étranger</p>
+            <div className="flex-1 min-w-0">
+              <h1 className="responsive-title font-bold text-slate-800">
+                🌍 Scanner Passeport Étranger
+              </h1>
+              <p className="responsive-subtitle text-slate-600 mt-1">
+                Scanner et traiter un passeport étranger
+              </p>
             </div>
           </div>
 
-          <Card className="shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+          {/* Card content - Mobile first */}
+          <Card className="shadow-lg border-0 responsive-card">
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="responsive-subtitle flex items-center gap-2">
                 🌍 Passeport Étranger
               </CardTitle>
-              <CardDescription className="text-sm sm:text-base">
+              <CardDescription className="responsive-body">
                 Scannez le passeport étranger et remplissez les informations du client
               </CardDescription>
             </CardHeader>
-            <CardContent className="px-3 sm:px-6">
+            <CardContent className="responsive-p">
               <PassportEtrangerForm />
             </CardContent>
           </Card>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, Upload, RotateCcw } from "lucide-react";
@@ -100,28 +99,31 @@ export const PassportImageCapture = ({
     onResetScan();
   };
 
-  // Show captured image with options
+  // Show captured image with options - MOBILE AMÉLIORÉ
   if (!scannedImage) {
     return (
-      <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
-        <div className="space-y-4">
-          <div className="text-center mb-4">
-            <h4 className="font-medium text-gray-700 mb-2">Scanner le passeport</h4>
-            <p className="text-sm text-gray-500">
+      <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 sm:p-6 text-center">
+        <div className="space-y-3 sm:space-y-4">
+          <div className="text-center mb-3 sm:mb-4">
+            <h4 className="font-medium text-gray-700 mb-2 text-sm sm:text-base">
+              Scanner le passeport
+            </h4>
+            <p className="text-xs sm:text-sm text-gray-500 px-2">
               Prenez une photo claire de la page principale du passeport
             </p>
-            <p className="text-xs text-blue-600 mt-2">
+            <p className="text-xs text-blue-600 mt-2 px-2">
               L'image sera automatiquement compressée pour optimiser l'OCR
             </p>
           </div>
           
-          <div className="flex justify-center space-x-4">
+          {/* Boutons mobile-first - Pleine largeur sur mobile */}
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
             <Button 
               type="button" 
               variant="outline" 
               onClick={handleCameraCapture}
               disabled={isScanning || isCompressing}
-              className="flex-1 max-w-40"
+              className="w-full sm:w-auto sm:max-w-40 responsive-button flex items-center justify-center"
             >
               <Camera className="w-4 h-4 mr-2" />
               Appareil photo
@@ -131,22 +133,25 @@ export const PassportImageCapture = ({
               variant="outline" 
               onClick={handleFileUpload}
               disabled={isScanning || isCompressing}
-              className="flex-1 max-w-40"
+              className="w-full sm:w-auto sm:max-w-40 responsive-button flex items-center justify-center"
             >
               <Upload className="w-4 h-4 mr-2" />
               Téléverser
             </Button>
           </div>
           
+          {/* Status indicators - MOBILE OPTIMISÉ */}
           {(isScanning || isCompressing) && (
-            <div className="flex flex-col items-center justify-center space-y-2 mt-4">
+            <div className="flex flex-col items-center justify-center space-y-2 mt-4 p-3 bg-blue-50 rounded-lg">
               {isCompressing && (
                 <ImageCompressionStatus isCompressing={true} />
               )}
               {isScanning && !isCompressing && (
                 <div className="flex items-center justify-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  <span className="text-sm text-gray-600">Analyse OCR en cours...</span>
+                  <span className="text-xs sm:text-sm text-gray-600">
+                    Analyse OCR en cours...
+                  </span>
                 </div>
               )}
             </div>
@@ -157,22 +162,27 @@ export const PassportImageCapture = ({
   }
 
   return (
-    <div className="relative">
-      <img 
-        src={scannedImage} 
-        alt="Passeport scanné" 
-        className="max-w-full h-48 object-cover rounded border mx-auto"
-      />
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={handleResetScan}
-        className="absolute top-2 right-2"
-      >
-        Nouveau scan
-      </Button>
+    <div className="relative bg-gray-50 rounded-lg p-2 sm:p-3">
+      {/* Image responsive avec aspect ratio préservé */}
+      <div className="relative max-w-full">
+        <img 
+          src={scannedImage} 
+          alt="Passeport scanné" 
+          className="max-w-full h-32 sm:h-48 object-cover rounded border mx-auto shadow-sm"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleResetScan}
+          className="absolute top-2 right-2 text-xs sm:text-sm responsive-button"
+        >
+          <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+          Nouveau
+        </Button>
+      </div>
       
+      {/* Stats compression - Mobile responsive */}
       {compressionStats && (
         <div className="mt-2 flex justify-center">
           <ImageCompressionStatus
