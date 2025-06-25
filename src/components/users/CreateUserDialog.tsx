@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,6 +59,15 @@ export const CreateUserDialog = ({ operationPoints, isAdmin, onUserCreated, onEr
         ? "agence_centrale" 
         : form.point_operation;
 
+      console.log("🚀 Creating user with data:", {
+        email: form.email,
+        nom: form.nom,
+        prenom: form.prenom,
+        role: form.role,
+        point_operation: pointOperation
+      });
+
+      // Étape 1: Créer l'utilisateur
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
@@ -73,26 +81,80 @@ export const CreateUserDialog = ({ operationPoints, isAdmin, onUserCreated, onEr
         }
       });
 
-      if (authError) throw authError;
+      console.log("📧 SignUp response:", { 
+        user: authData?.user?.id, 
+        userEmail: authData?.user?.email,
+        userConfirmed: authData?.user?.email_confirmed_at,
+        error: authError?.message,
+        session: !!authData?.session,
+        fullResponse: authData
+      });
+
+      if (authError) {
+        console.error("❌ SignUp error:", authError);
+        throw authError;
+      }
 
       if (authData.user) {
-        // Créer le profil manuellement après la création du user
-        const { error: profileError } = await supabase
+        console.log("✅ User created successfully:", authData.user.id);
+        
+        // Étape 2: Vérifier que le profil a bien été créé par le trigger
+        console.log("🔍 Checking if profile was created by trigger...");
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const { data: existingProfile, error: checkError } = await supabase
           .from("profiles")
-          .insert({
-            id: authData.user.id,
-            nom: form.nom,
-            prenom: form.prenom,
-            role: form.role,
-            point_operation: pointOperation as PointOperation,
-            statut: form.statut,
-          });
+          .select("*")
+          .eq('id', authData.user.id)
+          .single();
 
-        if (profileError) {
-          console.error("Error creating profile:", profileError);
-          throw new Error("Erreur lors de la création du profil utilisateur");
+        console.log("🔍 Profile check result:", { 
+          profile: existingProfile, 
+          error: checkError?.message 
+        });
+
+        if (existingProfile) {
+          console.log("✅ Profile exists, updating with form data...");
+          // Étape 3: Mettre à jour le profil avec les bonnes données
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .update({
+              nom: form.nom,
+              prenom: form.prenom,
+              role: form.role,
+              point_operation: pointOperation as PointOperation,
+              statut: form.statut,
+            })
+            .eq('id', authData.user.id);
+
+          if (profileError) {
+            console.error("❌ Error updating profile:", profileError);
+          } else {
+            console.log("✅ Profile updated successfully");
+          }
+        } else {
+          console.log("⚠️ Profile not found, creating manually...");
+          // Si le trigger n'a pas fonctionné, créer le profil manuellement
+          const { error: createError } = await supabase
+            .from("profiles")
+            .insert({
+              id: authData.user.id,
+              nom: form.nom,
+              prenom: form.prenom,
+              role: form.role,
+              point_operation: pointOperation as PointOperation,
+              statut: form.statut,
+            });
+
+          if (createError) {
+            console.error("❌ Error creating profile manually:", createError);
+          } else {
+            console.log("✅ Profile created manually");
+          }
         }
         
+        // Rafraîchir la liste des utilisateurs
+        console.log("🔄 Refreshing user list...");
         onUserCreated();
       }
 
@@ -106,9 +168,15 @@ export const CreateUserDialog = ({ operationPoints, isAdmin, onUserCreated, onEr
         statut: "actif",
       });
       setIsOpen(false);
-      alert("Utilisateur créé avec succès ! Un email de confirmation a été envoyé.");
+      
+      const message = authData.user?.email_confirmed_at 
+        ? "Utilisateur créé avec succès !" 
+        : "Utilisateur créé avec succès ! Un email de confirmation a été envoyé.";
+      
+      alert(message);
+      
     } catch (error: any) {
-      console.error("Error creating user:", error);
+      console.error("❌ Error creating user:", error);
       onError(error.message || "Erreur lors de la création de l'utilisateur");
     } finally {
       setLoading(false);
@@ -164,12 +232,13 @@ export const CreateUserDialog = ({ operationPoints, isAdmin, onUserCreated, onEr
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="create-password">Mot de passe</Label>
+            <Label htmlFor="create-password">Mot de passe temporaire</Label>
             <Input
               id="create-password"
               type="password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
+              placeholder="L'utilisateur devra le changer"
               required
               minLength={6}
             />
@@ -236,4 +305,4 @@ export const CreateUserDialog = ({ operationPoints, isAdmin, onUserCreated, onEr
       </DialogContent>
     </Dialog>
   );
-};
+}; 

@@ -1,6 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { supabaseAdmin, isAdminClientAvailable } from "@/integrations/supabase/admin-client";
 import { Database } from "@/integrations/supabase/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -59,18 +59,51 @@ export const useUserManagement = () => {
   };
 
   const deleteUser = async (userId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ?")) return;
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action supprimera complètement l'utilisateur de Supabase.")) return;
 
     try {
-      const { error } = await supabase
+      console.log("🗑️ Deleting user:", userId);
+
+      // Vérifier si le client admin est disponible
+      if (!isAdminClientAvailable()) {
+        console.warn("⚠️ Client admin non disponible. Seul le profil sera supprimé.");
+        alert("⚠️ Configuration incomplète : l'utilisateur ne sera supprimé que de la liste, pas complètement de Supabase. Contactez l'administrateur système.");
+      }
+
+      // Étape 1: Supprimer le profil
+      const { error: profileError } = await supabase
         .from("profiles")
         .delete()
         .eq("id", userId);
 
-      if (error) throw error;
+      if (profileError) {
+        console.error("Error deleting profile:", profileError);
+        throw profileError;
+      }
+
+      console.log("✅ Profile deleted successfully");
+
+      // Étape 2: Supprimer l'utilisateur de auth.users (admin API)
+      if (isAdminClientAvailable() && supabaseAdmin) {
+        try {
+          const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+
+          if (authError) {
+            console.error("Error deleting auth user:", authError);
+            // Ne pas faire échouer complètement si la suppression auth échoue
+            console.warn("Profile deleted but auth user deletion failed:", authError.message);
+            alert(`⚠️ Profil supprimé mais problème avec la suppression complète: ${authError.message}`);
+          } else {
+            console.log("✅ Auth user deleted successfully");
+            alert("✅ Utilisateur supprimé complètement avec succès !");
+          }
+        } catch (adminError) {
+          console.error("Admin deletion error:", adminError);
+          alert("⚠️ Profil supprimé mais erreur lors de la suppression auth. Vérifiez la configuration admin.");
+        }
+      }
 
       fetchUsers();
-      alert("Profil utilisateur supprimé avec succès !");
     } catch (error: any) {
       console.error("Error deleting user:", error);
       setError(error.message || "Erreur lors de la suppression de l'utilisateur");
