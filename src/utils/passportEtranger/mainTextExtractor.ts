@@ -15,6 +15,36 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
     const line = lines[i];
     const lineUpper = line.toUpperCase();
     
+    // PATTERN SÉQUENTIEL NUMÉRO DE PASSEPORT : Passport No./N° de passeport -> ligne suivante
+    if (!passportData.numero_passeport && (
+      lineUpper.includes('PASSPORT NO') ||
+      lineUpper.includes('N° DE PASSEPORT') ||
+      lineUpper.includes('DOCUMENT NO') ||
+      lineUpper.includes('NUMERO PASSEPORT') ||
+      lineUpper.includes('PASSEPORT N°')
+    )) {
+      console.log(`✅ Ligne indicatrice numéro document trouvée ligne ${i+1}:`, line);
+      
+      // Chercher dans les 3 lignes suivantes
+      for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+        const nextLine = safeStringTrim(lines[j]);
+        console.log(`🔍 Ligne suivante candidat numéro (${j+1}):`, nextLine);
+        
+        // Pattern pour numéro de passeport (lettres + chiffres, 6-15 caractères)
+        if (nextLine && /^[A-Z0-9]{6,15}$/i.test(nextLine) && 
+            !['CANADA', 'CAN', 'USA', 'DEU', 'FRA', 'ESP', 'ITA', 'BEL', 'CHE', 'PASSPORT', 'PASSEPORT'].includes(nextLine.toUpperCase())) {
+          
+          passportData.numero_passeport = nextLine.toUpperCase();
+          console.log("✅ Numéro passeport extrait (pattern séquentiel):", passportData.numero_passeport);
+          break;
+        }
+      }
+      
+      if (passportData.numero_passeport) {
+        break;
+      }
+    }
+    
     // PATTERN SÉQUENTIEL NOM : Formats courts universels
     // ✨ SUPPORT UNIVERSEL : Formats longs ET courts de tous pays
     if (!passportData.nom && (lineUpper.includes('SURNAME') || lineUpper.includes('/NOM') || 
@@ -82,10 +112,10 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
         
         // Tester avec la version nettoyée pour éviter les problèmes de regex avec caractères spéciaux
         if (nextLine && nextLine.length >= 2 && 
-            /^[A-Z\s\-]+$/i.test(testLine) &&  // Pattern simple + insensible à la casse
+            /^[A-ZÀ-ÿ\s\-]+$/i.test(testLine) &&  // Pattern avec caractères accentués
             !isExcluded) {
           
-          if (cleanName.length >= 2) {
+                  if (cleanName.length >= 2) {
             passportData.nom = cleanName;
             console.log("✅ Nom extrait (pattern séquentiel):", passportData.nom);
             
@@ -99,7 +129,7 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
                 console.log(`🔍 Test prénom ligne ${k+1}: "${prenomLine}" -> "${testPrenomLine}"`);
                 
                 if (prenomLine && prenomLine.length >= 2 && 
-                    /^[A-Z\s\-]+$/i.test(testPrenomLine) &&
+                    /^[A-ZÀ-ÿ\s\-]+$/i.test(testPrenomLine) &&
                     !prenomLine.toUpperCase().includes('GIVEN') &&
                     !prenomLine.toUpperCase().includes('NAME') &&
                     !prenomLine.toUpperCase().includes('NATIONALITY') &&
@@ -113,7 +143,8 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
                 }
               }
             }
-            break;
+            // 🔧 CORRECTION CRITIQUE : Arrêter la recherche après avoir trouvé le premier nom valide !
+            break;  // SORTIR DE LA BOUCLE DES LIGNES SUIVANTES - j loop
           }
         }
       }
@@ -162,7 +193,7 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
         // Tester avec la version nettoyée pour éviter les problèmes de regex avec caractères spéciaux
         const testPrenom = nextLine.replace(/[®©™\+\•]+$/g, '').trim();
         if (nextLine && nextLine.length >= 2 && 
-            /^[A-Z\s\-]+$/i.test(testPrenom) &&  // Pattern simple + insensible à la casse
+            /^[A-ZÀ-ÿ\s\-]+$/i.test(testPrenom) &&  // Pattern avec caractères accentués
             !nextLine.includes('NAME') && 
             !nextLine.includes('GIVEN') &&
             !nextLine.includes('PASSPORT') &&
@@ -240,6 +271,23 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
         
         // Pattern universel pour numéro de document
         const docCandidate = nextLine.match(/\b([A-Z0-9]+(?:\s+[A-Z0-9]+)*)\b/);
+        console.log(`🔍 Debug numéro candidat "${nextLine}":`, {
+          docCandidate: docCandidate ? docCandidate[1] : null,
+          longueur: docCandidate ? docCandidate[1].length : 0,
+          aDesChiffres: docCandidate ? /[0-9]/.test(docCandidate[1]) : false,
+          pasPassport: docCandidate ? !docCandidate[1].includes('PASSPORT') : false,
+          pasCodePays: docCandidate ? !['SVK', 'CAN', 'USA', 'DEU', 'FRA', 'ESP', 'ITA'].includes(docCandidate[1]) : false
+        });
+        
+        // Debug supplémentaire pour AW550166
+        if (nextLine.includes('AW550166')) {
+          console.log(`🚨 TROUVÉ AW550166 ! Pattern test:`, {
+            ligne: nextLine,
+            match: docCandidate,
+            pattern: /\b([A-Z0-9]+(?:\s+[A-Z0-9]+)*)\b/.exec(nextLine)
+          });
+        }
+        
         if (docCandidate && docCandidate[1] && 
             docCandidate[1].length >= 6 && 
             /[0-9]/.test(docCandidate[1]) && 
@@ -250,6 +298,8 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
           passportData.numero_passeport = docCandidate[1].replace(/\s+/g, '');
           console.log("✅ Numéro document extrait (pattern séquentiel):", passportData.numero_passeport);
           break;
+        } else if (docCandidate && docCandidate[1]) {
+          console.log("❌ Numéro candidat rejeté:", docCandidate[1]);
         }
       }
     }
@@ -305,15 +355,16 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
         }
       }
       
-      // Patterns directs universels (formats longs ET courts)
+      // Patterns directs universels (formats longs ET courts) - BEAUCOUP PLUS RESTRICTIFS
       if (!passportData.nom) {
         const surnamePatterns = [
           /(?:SURNAME|FAMILY\s*NAME|APELLIDOS|COGNOME|NACHNAME|SOBRENOME|ACHTERNAAM)\s*[\/:]?\s*([A-ZÀ-ÿ\s]{2,30})/i,
           /(?:1\.\s*)?(?:SURNAME|FAMILY|NOM\s*DE\s*FAMILLE)\s*[\/:]?\s*([A-ZÀ-ÿ\s]{2,30})/i,
           /(?:FAMILY\s+NAME|NOM\s+DE\s+FAMILLE)\s*[\/:]?\s*([A-ZÀ-ÿ\s]{2,30})/i,
-          // FORMATS COURTS UNIVERSELS
-          /(?:NOM|NOME|APELLIDO|SURNAME|LAST\s*NAME|FAMILIA)\s+([A-ZÀ-ÿ\s]{2,30})/i,
-          /(?:NOM)\s*[\/:]?\s*([A-ZÀ-ÿ\s]{2,30})/i  // Français très simple
+          // FORMATS COURTS UNIVERSELS - LIGNE DÉDIÉE SEULEMENT
+          /^(?:APELLIDO|SURNAME|LAST\s*NAME|FAMILIA)\s+([A-ZÀ-ÿ\s]{2,30})$/i,
+          // SUPPRIMER ce pattern trop agressif qui extrait "NOM" des étiquettes :
+          // /(?:NOM)\s*[\/:]?\s*([A-ZÀ-ÿ\s]{2,30})/i  // ❌ TROP AGRESSIF - SUPPRIMÉ
         ];
         
         for (const pattern of surnamePatterns) {
@@ -322,7 +373,14 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
             let candidate = safeStringTrim(surnameMatch[1]);
             // Nettoyer caractères parasites (®, ©, etc.)
             candidate = candidate.replace(/[®©™]/g, '').trim();
-            if (candidate.length >= 2 && /^[A-ZÀ-ÿ\s\-]+$/.test(candidate)) {
+            
+            // AJOUTER EXCLUSIONS STRICTES pour éviter d'extraire des étiquettes
+            const excludedTerms = ['NOM', 'SURNAME', 'FAMILY', 'GIVEN', 'NAMES', 'TRENCM', 'PRENOMS', 'PRENOM', 'APELLIDOS', 'SURAME'];
+            const isExcluded = excludedTerms.some(term => 
+              candidate.toUpperCase().includes(term.toUpperCase())
+            );
+            
+            if (!isExcluded && candidate.length >= 2 && /^[A-ZÀ-ÿ\s\-]+$/.test(candidate)) {
               passportData.nom = candidate;
               console.log("✅ Nom extrait (pattern fallback universel):", passportData.nom);
               break;
@@ -347,7 +405,9 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
             'FARM', 'CODE', 'TYPE', 'PASS', 'FORM',
             // EXCLUSIONS PRÉNOMS TRÈS FRÉQUENTS SEULEMENT
             'MARIE', 'ANNE', 'PIERRE', 'MICHEL', 'PHILIPPE', 'NICOLAS', 'LAURENT', 'DAVID',
-            'STEPHANIE', 'CATHERINE', 'FRANCOISE', 'ISABELLE', 'MARTINE', 'CHRISTINE', 'DOMINIQUE', 'PATRICIA'].includes(cleanLine.toUpperCase())) {
+            'STEPHANIE', 'CATHERINE', 'FRANCOISE', 'ISABELLE', 'MARTINE', 'CHRISTINE', 'DOMINIQUE', 'PATRICIA',
+            // 🔧 EXCLUSIONS SPÉCIFIQUES POUR ÉVITER LES PRÉNOMS COMPOSÉS COMME NOM
+            'JO-ANNIE', 'JEAN-CLAUDE', 'MARIE-CLAIRE', 'ANNE-MARIE', 'PIERRE-LOUIS'].includes(cleanLine.toUpperCase())) {
         
         passportData.nom = cleanLine;
         console.log("✅ Nom extrait (pattern isolé universel):", passportData.nom);
@@ -372,9 +432,11 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
         /(?:GIVEN\s*NAMES?|FIRST\s*NAMES?|PRENOMS?|NOMBRE|NOME|VORNAME|VOORNAAM|PRIMEIRO\s*NOME)\s*[\/:]?\s*([A-ZÀ-ÿ\s]{2,30})/i,
         /(?:2\.\s*)?(?:GIVEN|FIRST|PRÉNOM)\s*[\/:]?\s*([A-ZÀ-ÿ\s]{2,30})/i,
         /(?:GIVEN\s+NAMES?|FIRST\s+NAMES?)\s*[\/:]?\s*([A-ZÀ-ÿ\s]{2,30})/i,
-        // FORMATS COURTS UNIVERSELS
-        /(?:PRENOM|PRENOMST|NOME|NAME|FIRST|GIVEN)\s+([A-ZÀ-ÿ\s]{2,30})/i,
-        /(?:PRENOM|PRÉNOM)\s*[\/:]?\s*([A-ZÀ-ÿ\s]{2,30})/i  // Français très simple
+        // FORMATS COURTS UNIVERSELS - LIGNE DÉDIÉE SEULEMENT
+        /^(?:FIRST|GIVEN)\s+([A-ZÀ-ÿ\s]{2,30})$/i,
+        // SUPPRIMER ces patterns trop agressifs qui extraient "TRENCM" des étiquettes :
+        // /(?:PRENOM|PRENOMST|NOME|NAME|FIRST|GIVEN)\s+([A-ZÀ-ÿ\s]{2,30})/i,  // ❌ TROP AGRESSIF - SUPPRIMÉ
+        // /(?:PRENOM|PRÉNOM)\s*[\/:]?\s*([A-ZÀ-ÿ\s]{2,30})/i  // ❌ TROP AGRESSIF - SUPPRIMÉ
       ];
       
               for (const pattern of givenPatterns) {
@@ -383,7 +445,14 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
             let candidate = safeStringTrim(givenMatch[1]);
             // Nettoyer caractères parasites (®, ©, etc.)
             candidate = candidate.replace(/[®©™]/g, '').trim();
-            if (candidate.length >= 2 && /^[A-ZÀ-ÿ\s\-]+$/.test(candidate)) {
+            
+            // AJOUTER EXCLUSIONS STRICTES pour éviter d'extraire des étiquettes
+            const excludedTerms = ['GIVEN', 'NAMES', 'PRENOM', 'PRENOMS', 'TRENCM', 'JMENQ', 'FIRST', 'NOMBRES'];
+            const isExcluded = excludedTerms.some(term => 
+              candidate.toUpperCase().includes(term.toUpperCase())
+            );
+            
+            if (!isExcluded && candidate.length >= 2 && /^[A-ZÀ-ÿ\s\-]+$/.test(candidate)) {
               passportData.prenom = candidate;
               console.log("✅ Prénom extrait (pattern fallback universel):", passportData.prenom);
               break;

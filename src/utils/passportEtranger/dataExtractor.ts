@@ -58,8 +58,27 @@ export const extractPassportEtrangerData = (text: string): PassportEtrangerData 
   }
 
     // PRIORITÉ INTELLIGENTE pour nom et prénom
+  // DÉTECTION DE MÉLANGE NOM/PRÉNOM DANS LA MRZ
+  const isMRZMixedUpNames = (
+    result.nom && result.prenom && mainTextData.nom && mainTextData.prenom &&
+    (
+      // Le prénom MRZ contient le nom du texte principal (ex: "GALVIS LEYDI GRACIELA" contient "GALVIS")
+      result.prenom.toUpperCase().includes(mainTextData.nom.split(' ')[mainTextData.nom.split(' ').length - 1]?.toUpperCase()) ||
+      // Le nom MRZ est incomplet par rapport au texte principal (ex: "MALDONADO" vs "MALDONADO GALVIS")
+      (mainTextData.nom.split(' ').length > 1 && result.nom === mainTextData.nom.split(' ')[0])
+    )
+  );
+  
+  if (isMRZMixedUpNames) {
+    console.log("🔄 MRZ a mélangé nom/prénom : privilégier texte principal plus précis");
+    console.log(`   MRZ: "${result.nom}" / "${result.prenom}"`);
+    console.log(`   TEXTE: "${mainTextData.nom}" / "${mainTextData.prenom}"`);
+    result.nom = mainTextData.nom;
+    result.prenom = mainTextData.prenom;
+    console.log(`✅ Nom/Prénom: TEXTE PRINCIPAL prioritaire (MRZ mélangée) - "${result.nom}" / "${result.prenom}"`);
+  }
   // Si MRZ corrompue, privilégier ABSOLUMENT le texte principal
-  if (isMRZCorrupted) {
+  else if (isMRZCorrupted) {
     console.log("🔄 MRZ corrompue : privilégier texte principal pour nom/prénom");
     if (mainTextData.nom && mainTextData.nom.length >= 2) {
       result.nom = mainTextData.nom;
@@ -70,7 +89,7 @@ export const extractPassportEtrangerData = (text: string): PassportEtrangerData 
       console.log(`✅ Prénom: TEXTE PRINCIPAL prioritaire (MRZ corrompue) "${mainTextData.prenom}"`);
     }
   }
-  // Si MRZ disponible ET fiable ET non corrompue, elle est prioritaire (plus précise)
+  // Si MRZ disponible ET fiable ET non corrompue ET non mélangée, elle est prioritaire (plus précise)
   else if (result.nom && result.prenom && result.nom.length >= 2 && result.prenom.length >= 2 && !isMRZCorrupted) {
     console.log(`✅ Nom/Prénom: MRZ PRIORITAIRE - "${result.nom}" / "${result.prenom}"`);
     // Garder les données MRZ, ne pas écraser

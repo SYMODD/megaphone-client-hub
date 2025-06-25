@@ -1,9 +1,8 @@
-
 export function isValidNameCandidate(name: string): boolean {
   if (!name || name.length < 2) return false;
   
-  // Doit contenir uniquement des lettres et espaces
-  if (!/^[A-Z\s]+$/.test(name)) return false;
+  // Doit contenir uniquement des lettres, espaces et tirets - SUPPORT ACCENTS
+  if (!/^[A-ZÀ-ÿ\s\-]+$/i.test(name)) return false;
   
   return true;
 }

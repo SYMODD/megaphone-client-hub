@@ -1,4 +1,3 @@
-
 import { CINData } from "@/types/cinTypes";
 import { extractNames } from "./cin/nameExtractor";
 import { extractCINNumber } from "./cin/cinNumberExtractor";
@@ -32,15 +31,15 @@ export const extractCINData = (text: string): CINData => {
     console.log("✅ Nom extrait:", cinData.nom);
   } else {
     console.log("❌ Nom non trouvé - tentative de patterns alternatifs");
-    // Patterns alternatifs plus souples
+    // Patterns alternatifs plus souples avec support des accents
     for (const line of lines) {
       const cleanLine = line.toUpperCase().trim();
-      // Recherche de mots isolés qui pourraient être des noms
-      if (cleanLine.length >= 3 && cleanLine.length <= 25 && /^[A-Z\s]+$/.test(cleanLine)) {
+      // Recherche de mots isolés qui pourraient être des noms - SUPPORT ACCENTS
+      if (cleanLine.length >= 3 && cleanLine.length <= 25 && /^[A-ZÀ-ÿ\s\-]+$/i.test(cleanLine)) {
         const words = cleanLine.split(/\s+/).filter(w => w.length >= 2);
         if (words.length === 1 && !cinData.nom && !['CIN', 'CARTE', 'IDENTITE', 'ROYAUME', 'MAROC'].includes(words[0])) {
           cinData.nom = words[0];
-          console.log("✅ Nom extrait (pattern alternatif):", cinData.nom);
+          console.log("✅ Nom extrait (pattern alternatif avec accents):", cinData.nom);
           break;
         }
       }
@@ -52,15 +51,15 @@ export const extractCINData = (text: string): CINData => {
     console.log("✅ Prénom extrait:", cinData.prenom);
   } else {
     console.log("❌ Prénom non trouvé - tentative de patterns alternatifs");
-    // Recherche alternative pour le prénom
+    // Recherche alternative pour le prénom avec support des accents
     for (const line of lines) {
       const cleanLine = line.toUpperCase().trim();
-      if (cleanLine.length >= 3 && cleanLine.length <= 25 && /^[A-Z\s]+$/.test(cleanLine)) {
+      if (cleanLine.length >= 3 && cleanLine.length <= 25 && /^[A-ZÀ-ÿ\s\-]+$/i.test(cleanLine)) {
         const words = cleanLine.split(/\s+/).filter(w => w.length >= 2);
         if (words.length === 1 && !cinData.prenom && cinData.nom && words[0] !== cinData.nom && 
             !['CIN', 'CARTE', 'IDENTITE', 'ROYAUME', 'MAROC'].includes(words[0])) {
           cinData.prenom = words[0];
-          console.log("✅ Prénom extrait (pattern alternatif):", cinData.prenom);
+          console.log("✅ Prénom extrait (pattern alternatif avec accents):", cinData.prenom);
           break;
         }
       }

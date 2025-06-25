@@ -403,8 +403,8 @@ function extractFromGeneralText(text: string, mrzData: MRZData): void {
     // Recherche patterns nom/prénom avec plus de flexibilité
     if (!mrzData.nom) {
       const nomPatterns = [
-        /(?:SURNAME|NOM|FAMILY\s*NAME)\s*:?\s*([A-Z\s]{2,30})/i,
-        /(?:APELLIDO|NACHNAME|COGNOME|NAZWISKO)\s*:?\s*([A-Z\s]{2,30})/i
+        /(?:SURNAME|NOM|FAMILY\s*NAME)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,30})/i,
+        /(?:APELLIDO|NACHNAME|COGNOME|NAZWISKO)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,30})/i
       ];
       
       for (const pattern of nomPatterns) {
@@ -414,7 +414,7 @@ function extractFromGeneralText(text: string, mrzData: MRZData): void {
           // Vérification avec validation complète
           if (isValidName(candidateName)) {
             mrzData.nom = candidateName;
-            console.log("✅ Nom extrait du texte général:", mrzData.nom);
+            console.log("✅ Nom extrait du texte général (avec accents):", mrzData.nom);
             break;
           }
         }
@@ -423,8 +423,8 @@ function extractFromGeneralText(text: string, mrzData: MRZData): void {
     
     if (!mrzData.prenom) {
       const prenomPatterns = [
-        /(?:GIVEN\s*NAMES?|PRENOM|FIRST\s*NAME)\s*:?\s*([A-Z\s]{2,30})/i,
-        /(?:NOMBRE|VORNAME|NOME|IMIE|IMIONA)\s*:?\s*([A-Z\s]{2,30})/i
+        /(?:GIVEN\s*NAMES?|PRENOM|FIRST\s*NAME)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,30})/i,
+        /(?:NOMBRE|VORNAME|NOME|IMIE|IMIONA)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,30})/i
       ];
       
       for (const pattern of prenomPatterns) {
@@ -434,7 +434,7 @@ function extractFromGeneralText(text: string, mrzData: MRZData): void {
           // Vérification avec validation complète  
           if (isValidName(candidateFirstName)) {
             mrzData.prenom = candidateFirstName;
-            console.log("✅ Prénom extrait du texte général:", mrzData.prenom);
+            console.log("✅ Prénom extrait du texte général (avec accents):", mrzData.prenom);
             break;
           }
         }
@@ -468,8 +468,8 @@ function extractFromGeneralText(text: string, mrzData: MRZData): void {
       }
       
       const nationalityPatterns = [
-        /(?:NATIONALITY|NATIONALITE|NACIONALIDAD|STAATSANGEHÖRIGKEIT|OBYWATELSTWO)\s*:?\s*([A-Z\s\/]{3,30})/i,
-        /(?:CITTADINANZA|NACIONALIDADE|NATIONALITEIT)\s*:?\s*([A-Z\s\/]{3,30})/i,
+        /(?:NATIONALITY|NATIONALITE|NACIONALIDAD|STAATSANGEHÖRIGKEIT|OBYWATELSTWO)\s*:?\s*([A-ZÀ-ÿ\s\/]{3,30})/i,
+        /(?:CITTADINANZA|NACIONALIDADE|NATIONALITEIT)\s*:?\s*([A-ZÀ-ÿ\s\/]{3,30})/i,
         // Pattern direct pour les nationalités sans étiquette
         /(CANADIAN\/CANADIENNE|CANADIEN\/CANADIENNE|BRITISH\s+CITIZEN|COLOMBIANA|POLSKIE|SLOVENSKÁ\s+REPUBLIKA)/i
       ];

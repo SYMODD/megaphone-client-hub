@@ -1,4 +1,3 @@
-
 import { normalizeNationality } from "./nationalityNormalizer";
 
 export interface CarteSejourData {
@@ -56,9 +55,9 @@ export const extractCarteSejourData = (text: string): CarteSejourData => {
       console.log("👤 Recherche du nom...");
       
       const nomPatterns = [
-        /(?:NOM|SURNAME|FAMILY\s*NAME)\s*:?\s*([A-Z\s]{2,30})/i,
-        /(?:FAMILLE)\s*:?\s*([A-Z\s]{2,30})/i,
-        /(?:1\.\s*)?(?:NOM|SURNAME)\s*:?\s*([A-Z\s]{2,30})/i
+        /(?:NOM|SURNAME|FAMILY\s*NAME)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,30})/i,
+        /(?:FAMILLE)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,30})/i,
+        /(?:1\.\s*)?(?:NOM|SURNAME)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,30})/i
       ];
       
       for (const pattern of nomPatterns) {
@@ -70,11 +69,11 @@ export const extractCarteSejourData = (text: string): CarteSejourData => {
         }
       }
       
-      // Pattern alternatif: recherche de mots isolés potentiels
-      if (!carteData.nom && /^[A-Z]{3,20}$/.test(line.trim()) && 
-          !['CARTE', 'SEJOUR', 'TITRE', 'RESIDENCE', 'FRANCE'].includes(line.trim())) {
+      // Pattern alternatif: recherche de mots isolés potentiels - SUPPORT ACCENTS
+      if (!carteData.nom && /^[A-ZÀ-ÿ\s\-]{3,20}$/i.test(line.trim()) && 
+          !['CARTE', 'SEJOUR', 'TITRE', 'RESIDENCE', 'FRANCE'].includes(line.trim().toUpperCase())) {
         carteData.nom = line.trim();
-        console.log("✅ Nom trouvé (pattern isolé):", carteData.nom);
+        console.log("✅ Nom trouvé (pattern isolé avec accents):", carteData.nom);
       }
     }
 
@@ -83,9 +82,9 @@ export const extractCarteSejourData = (text: string): CarteSejourData => {
       console.log("👤 Recherche du prénom...");
       
       const prenomPatterns = [
-        /(?:PRENOM|GIVEN\s*NAME|FIRST\s*NAME)\s*:?\s*([A-Z\s]{2,30})/i,
-        /(?:PRENOMS)\s*:?\s*([A-Z\s]{2,30})/i,
-        /(?:2\.\s*)?(?:PRENOM|GIVEN)\s*:?\s*([A-Z\s]{2,30})/i
+        /(?:PRENOM|GIVEN\s*NAME|FIRST\s*NAME)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,30})/i,
+        /(?:PRENOMS)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,30})/i,
+        /(?:2\.\s*)?(?:PRENOM|GIVEN)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,30})/i
       ];
       
       for (const pattern of prenomPatterns) {
@@ -97,12 +96,12 @@ export const extractCarteSejourData = (text: string): CarteSejourData => {
         }
       }
       
-      // Pattern alternatif si on a déjà le nom
-      if (!carteData.prenom && carteData.nom && /^[A-Z]{2,20}$/.test(line.trim()) && 
-          line.trim() !== carteData.nom && 
-          !['CARTE', 'SEJOUR', 'TITRE', 'RESIDENCE', 'FRANCE'].includes(line.trim())) {
+      // Pattern alternatif si on a déjà le nom - SUPPORT ACCENTS
+      if (!carteData.prenom && carteData.nom && /^[A-ZÀ-ÿ\s\-]{2,20}$/i.test(line.trim()) && 
+          line.trim().toUpperCase() !== carteData.nom.toUpperCase() && 
+          !['CARTE', 'SEJOUR', 'TITRE', 'RESIDENCE', 'FRANCE'].includes(line.trim().toUpperCase())) {
         carteData.prenom = line.trim();
-        console.log("✅ Prénom trouvé (pattern isolé):", carteData.prenom);
+        console.log("✅ Prénom trouvé (pattern isolé avec accents):", carteData.prenom);
       }
     }
 
@@ -111,10 +110,10 @@ export const extractCarteSejourData = (text: string): CarteSejourData => {
       console.log("🌍 Recherche de la nationalité...");
       
       const nationalitePatterns = [
-        /(?:NATIONALITE|NATIONALITY)\s*:?\s*([A-Z\s]{3,30})/i,
-        /(?:PAYS\s*D.ORIGINE|COUNTRY)\s*:?\s*([A-Z\s]{3,30})/i,
-        /(?:3\.\s*)?(?:NATIONALITE)\s*:?\s*([A-Z\s]{3,30})/i,
-        /(?:CITIZEN\s*OF)\s*:?\s*([A-Z\s]{3,30})/i
+        /(?:NATIONALITE|NATIONALITY)\s*:?\s*([A-ZÀ-ÿ\s\/]{3,30})/i,
+        /(?:PAYS\s*D.ORIGINE|COUNTRY)\s*:?\s*([A-ZÀ-ÿ\s\/]{3,30})/i,
+        /(?:3\.\s*)?(?:NATIONALITE)\s*:?\s*([A-ZÀ-ÿ\s\/]{3,30})/i,
+        /(?:CITIZEN\s*OF)\s*:?\s*([A-ZÀ-ÿ\s\/]{3,30})/i
       ];
       
       for (const pattern of nationalitePatterns) {
@@ -216,8 +215,8 @@ function isValidName(name: string): boolean {
     return false;
   }
   
-  // Doit contenir principalement des lettres
-  const letterCount = (name.match(/[A-Za-z]/g) || []).length;
+  // Doit contenir principalement des lettres (SUPPORT ACCENTS)
+  const letterCount = (name.match(/[A-Za-zÀ-ÿ]/g) || []).length;
   const isValid = letterCount >= name.length * 0.7;
   
   console.log(`${isValid ? '✅' : '❌'} Validation nom "${name}": ${letterCount}/${name.length} lettres`);

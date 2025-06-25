@@ -28,10 +28,10 @@ export function extractNames(text: string): { nom?: string; prenom?: string } {
         
         console.log(`🔍 Analyse ligne suivante ${j}:`, candidatLine);
         
-        // Vérifier si c'est un candidat nom valide
+        // Vérifier si c'est un candidat nom valide - SUPPORT ACCENTS
         if (candidatLine.length >= 3 && 
             candidatLine.length <= 25 &&
-            /^[A-Z\s]+$/.test(candidatLine) && // Que des majuscules et espaces
+            /^[A-ZÀ-ÿ\s\-]+$/i.test(candidatLine) && // Support des caractères accentués
             !isExcludedWord(candidatLine) &&
             !candidatLine.includes('Née') &&
             !candidatLine.includes('ROYAUME') &&
@@ -39,10 +39,10 @@ export function extractNames(text: string): { nom?: string; prenom?: string } {
           
           if (!result.nom) {
             result.nom = candidatLine;
-            console.log("✅ Nom trouvé (séquentiel):", result.nom);
+            console.log("✅ Nom trouvé (séquentiel avec accents):", result.nom);
           } else if (!result.prenom && candidatLine !== result.nom) {
             result.prenom = candidatLine;
-            console.log("✅ Prénom trouvé (séquentiel):", result.prenom);
+            console.log("✅ Prénom trouvé (séquentiel avec accents):", result.prenom);
             break; // On a trouvé les deux, on peut arrêter
           }
         }
@@ -60,12 +60,12 @@ export function extractNames(text: string): { nom?: string; prenom?: string } {
     console.log("🔍 Recherche avec patterns spécifiques...");
     
     const namePatterns = [
-      // Patterns directs avec ponctuation flexible
-      /(?:NOM|SURNAME|FAMILY\s*NAME)\s*:?\s*([A-Z\s]{2,25})/gi,
-      /(?:PRENOM|GIVEN\s*NAME|FIRST\s*NAME)\s*:?\s*([A-Z\s]{2,25})/gi,
-      // Patterns avec numérotation
-      /(?:1\.\s*)?(?:NOM|SURNAME)\s*:?\s*([A-Z\s]{2,25})/gi,
-      /(?:2\.\s*)?(?:PRENOM|GIVEN)\s*:?\s*([A-Z\s]{2,25})/gi,
+      // Patterns directs avec ponctuation flexible - SUPPORT ACCENTS
+      /(?:NOM|SURNAME|FAMILY\s*NAME)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,25})/gi,
+      /(?:PRENOM|GIVEN\s*NAME|FIRST\s*NAME)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,25})/gi,
+      // Patterns avec numérotation - SUPPORT ACCENTS
+      /(?:1\.\s*)?(?:NOM|SURNAME)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,25})/gi,
+      /(?:2\.\s*)?(?:PRENOM|GIVEN)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,25})/gi,
     ];
 
     // Recherche dans les lignes avec patterns spécifiques
@@ -82,11 +82,11 @@ export function extractNames(text: string): { nom?: string; prenom?: string } {
         continue;
       }
       
-      // Recherche pattern NOM avec variations
+      // Recherche pattern NOM avec variations - SUPPORT ACCENTS
       const nomPatterns = [
-        /(?:NOM|SURNAME)\s*:?\s*([A-Z\s]{2,25})/i,
-        /(?:1\.\s*)?(?:NOM|SURNAME)\s*:?\s*([A-Z\s]{2,25})/i,
-        /(?:FAMILY\s*NAME)\s*:?\s*([A-Z\s]{2,25})/i
+        /(?:NOM|SURNAME)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,25})/i,
+        /(?:1\.\s*)?(?:NOM|SURNAME)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,25})/i,
+        /(?:FAMILY\s*NAME)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,25})/i
       ];
       
       if (!result.nom) {
@@ -97,18 +97,18 @@ export function extractNames(text: string): { nom?: string; prenom?: string } {
             console.log("🔍 Candidat nom pattern:", candidateNom);
             if (isValidNameCandidate(candidateNom) && !isExcludedWord(candidateNom)) {
               result.nom = candidateNom;
-              console.log("✅ Nom trouvé (pattern):", result.nom);
+              console.log("✅ Nom trouvé (pattern avec accents):", result.nom);
               break;
             }
           }
         }
       }
       
-      // Recherche pattern PRÉNOM avec variations
+      // Recherche pattern PRÉNOM avec variations - SUPPORT ACCENTS
       const prenomPatterns = [
-        /(?:PRENOM|GIVEN|FIRST)\s*:?\s*([A-Z\s]{2,25})/i,
-        /(?:2\.\s*)?(?:PRENOM|GIVEN)\s*:?\s*([A-Z\s]{2,25})/i,
-        /(?:GIVEN\s*NAME|FIRST\s*NAME)\s*:?\s*([A-Z\s]{2,25})/i
+        /(?:PRENOM|GIVEN|FIRST)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,25})/i,
+        /(?:2\.\s*)?(?:PRENOM|GIVEN)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,25})/i,
+        /(?:GIVEN\s*NAME|FIRST\s*NAME)\s*:?\s*([A-ZÀ-ÿ\s\-]{2,25})/i
       ];
       
       if (!result.prenom) {
@@ -119,19 +119,19 @@ export function extractNames(text: string): { nom?: string; prenom?: string } {
             console.log("🔍 Candidat prénom pattern:", candidatePrenom);
             if (isValidNameCandidate(candidatePrenom) && !isExcludedWord(candidatePrenom)) {
               result.prenom = candidatePrenom;
-              console.log("✅ Prénom trouvé (pattern):", result.prenom);
+              console.log("✅ Prénom trouvé (pattern avec accents):", result.prenom);
               break;
             }
           }
         }
       }
       
-      // Pattern général nom + prénom sur la même ligne (amélioré)
+      // Pattern général nom + prénom sur la même ligne (amélioré) - SUPPORT ACCENTS
       if (!result.nom || !result.prenom) {
         const generalPatterns = [
-          /^([A-Z]{2,20})\s+([A-Z]{2,20})$/,          // Deux mots séparés
-          /^([A-Z]{2,20})\s+([A-Z]{2,20})\s+[A-Z]/,   // Deux premiers mots d'une ligne
-          /([A-Z]{3,20})\s+([A-Z]{3,20})(?:\s|$)/     // Mots au milieu de ligne
+          /^([A-ZÀ-ÿ\s\-]{2,20})\s+([A-ZÀ-ÿ\s\-]{2,20})$/,          // Deux mots séparés
+          /^([A-ZÀ-ÿ\s\-]{2,20})\s+([A-ZÀ-ÿ\s\-]{2,20})\s+[A-ZÀ-ÿ]/,   // Deux premiers mots d'une ligne
+          /([A-ZÀ-ÿ\s\-]{3,20})\s+([A-ZÀ-ÿ\s\-]{3,20})(?:\s|$)/     // Mots au milieu de ligne
         ];
         
         for (const pattern of generalPatterns) {
@@ -144,13 +144,13 @@ export function extractNames(text: string): { nom?: string; prenom?: string } {
             
             if (isValidNameCandidate(candidateNom) && !isExcludedWord(candidateNom) && !result.nom) {
               result.nom = candidateNom;
-              console.log("✅ Nom trouvé (pattern général):", result.nom);
+              console.log("✅ Nom trouvé (pattern général avec accents):", result.nom);
             }
             
             if (isValidNameCandidate(candidatePrenom) && !isExcludedWord(candidatePrenom) && 
                 !result.prenom && candidatePrenom !== result.nom) {
               result.prenom = candidatePrenom;
-              console.log("✅ Prénom trouvé (pattern général):", result.prenom);
+              console.log("✅ Prénom trouvé (pattern général avec accents):", result.prenom);
             }
             
             if (result.nom && result.prenom) break;
@@ -164,7 +164,7 @@ export function extractNames(text: string): { nom?: string; prenom?: string } {
   if (!result.nom || !result.prenom) {
     console.log("🔍 Recherche fallback dans mots isolés...");
     
-    const words = text.replace(/[^A-Z\s]/g, ' ')
+    const words = text.replace(/[^A-ZÀ-ÿ\s]/g, ' ')  // Support des accents dans le nettoyage
                      .split(/\s+/)
                      .filter(word => 
                        word.length >= 3 && 
@@ -186,10 +186,10 @@ export function extractNames(text: string): { nom?: string; prenom?: string } {
     for (const word of sortedWords) {
       if (!result.nom) {
         result.nom = word;
-        console.log("✅ Nom assigné (mot candidat):", result.nom);
+        console.log("✅ Nom assigné (mot candidat avec accents):", result.nom);
       } else if (!result.prenom && word !== result.nom) {
         result.prenom = word;
-        console.log("✅ Prénom assigné (mot candidat):", result.prenom);
+        console.log("✅ Prénom assigné (mot candidat avec accents):", result.prenom);
         break;
       }
     }
