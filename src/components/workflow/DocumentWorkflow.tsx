@@ -17,6 +17,7 @@ interface DocumentWorkflowProps {
   documentType: DocumentType;
   onComplete: (data: any) => void;
   onCancel: () => void;
+  onStepChange?: (currentStep: number, steps: any[]) => void;
 }
 
 const getDocumentTitle = (type: DocumentType): string => {
@@ -79,7 +80,8 @@ const DebugLogs: React.FC<{ logs: string[] }> = ({ logs }) => {
 export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
   documentType,
   onComplete,
-  onCancel
+  onCancel,
+  onStepChange
 }) => {
   const {
     workflowState,
@@ -96,6 +98,11 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
   } = useDocumentWorkflow(documentType);
 
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
+
+  // Notifier le parent du changement d'étape
+  React.useEffect(() => {
+    onStepChange?.(workflowState.currentStep, workflowState.steps);
+  }, [workflowState.currentStep, workflowState.steps, onStepChange]);
 
   // Fonctions pour gérer les étapes avec logs non-bloquants
   const addDebugLog = (message: string) => {
@@ -172,19 +179,9 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Stepper sticky indépendant - HORS DU CONTAINER */}
-      <div className="lg:hidden">
-        <Stepper
-          steps={workflowState.steps}
-          currentStep={workflowState.currentStep}
-          onStepClick={goToStep}
-          className="w-full"
-        />
-      </div>
-
-      {/* Contenu principal avec padding-top pour stepper fixed mobile */}
-      <div className="p-1 sm:p-4 pt-20 lg:pt-1">
+    <div className="bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Contenu principal avec padding normal */}
+      <div className="p-1 sm:p-4 pt-2 lg:pt-1">
         <div className="max-w-4xl mx-auto">
           {/* En-tête avec titre - MICRO COMPACT */}
           <div className="mb-1 sm:mb-3">
