@@ -28,8 +28,8 @@ export const Stepper: React.FC<StepperProps> = ({
     <div className={cn("w-full", className)}>
       {/* Version mobile - STICKY POSITION CORRIGÉE */}
       <div className="block lg:hidden">
-        {/* Conteneur mobile épinglé - POSITION STICKY FORCÉE APRÈS HEADER+NAV */}
-        <div className="sticky top-[112px] z-[9999] bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        {/* Conteneur mobile épinglé - POSITION FIXED POUR RESTER VISIBLE */}
+        <div className="fixed top-[110px] left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-lg">
           <div className="px-2 py-2">
             <div className="flex overflow-x-auto gap-1 scrollbar-thin">
               {steps.map((step, index) => (

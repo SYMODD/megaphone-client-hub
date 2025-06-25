@@ -172,10 +172,10 @@ export const PassportImageCapture = ({
         />
         <Button
           type="button"
-          variant="outline"
+          variant="default"
           size="sm"
           onClick={handleResetScan}
-          className="absolute top-2 right-2 text-xs sm:text-sm responsive-button"
+          className="absolute top-2 right-2 text-xs sm:text-sm bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 shadow-md"
         >
           <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
           Nouveau
