@@ -1,9 +1,30 @@
 
 import React, { memo } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, MapPin } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+
+// Helper pour formater le nom du point d'opération
+const formatOperationPoint = (pointOperation: string | undefined): string => {
+  if (!pointOperation) return "Non défini";
+  
+  const pointLabels: Record<string, string> = {
+    "aeroport_marrakech": "Aéroport Marrakech",
+    "aeroport_casablanca": "Aéroport Casablanca", 
+    "aeroport_agadir": "Aéroport Agadir",
+    "aeroport_rabat": "Aéroport Rabat",
+    "aeroport_fes": "Aéroport Fès",
+    "aeroport_nador": "Aéroport Nador",
+    "aeroport_oujda": "Aéroport Oujda",
+    "aeroport_tanger": "Aéroport Tanger",
+    "navire_atlas": "Navire Atlas",
+    "navire_meridien": "Navire Méridien",
+    "agence_centrale": "Agence Centrale"
+  };
+  
+  return pointLabels[pointOperation] || pointOperation;
+};
 
 const AuthenticatedHeader = memo(() => {
   const { signOut, profile } = useAuth();
@@ -44,14 +65,26 @@ const AuthenticatedHeader = memo(() => {
           </div>
 
           {/* User Info & Logout */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {profile && (
-              <div className="hidden sm:flex items-center space-x-2 text-sm text-slate-600">
-                <User className="w-4 h-4" />
-                <span>{profile.prenom} {profile.nom}</span>
-                <span className="text-xs bg-slate-100 px-2 py-1 rounded">
-                  {profile.role}
-                </span>
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 text-xs sm:text-sm text-slate-600">
+                {/* Info utilisateur */}
+                <div className="flex items-center space-x-1 sm:space-x-2">
+                  <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="font-medium truncate max-w-[100px] sm:max-w-none">
+                    {profile.prenom} {profile.nom}
+                  </span>
+                </div>
+                
+                {/* Point d'opération - visible sur mobile aussi */}
+                {profile.point_operation && (
+                  <div className="flex items-center space-x-1 text-xs text-slate-500">
+                    <MapPin className="w-3 h-3" />
+                    <span className="truncate max-w-[120px] sm:max-w-none">
+                      {formatOperationPoint(profile.point_operation)}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
             

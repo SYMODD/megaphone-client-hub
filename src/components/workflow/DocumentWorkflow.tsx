@@ -17,7 +17,7 @@ interface DocumentWorkflowProps {
   documentType: DocumentType;
   onComplete: (data: any) => void;
   onCancel: () => void;
-  onStepChange?: (currentStep: number, steps: any[]) => void;
+  onStepChange?: (currentStep: number, steps: any[], currentStepData?: any) => void;
 }
 
 const getDocumentTitle = (type: DocumentType): string => {
@@ -101,8 +101,8 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
 
   // Notifier le parent du changement d'étape
   React.useEffect(() => {
-    onStepChange?.(workflowState.currentStep, workflowState.steps);
-  }, [workflowState.currentStep, workflowState.steps, onStepChange]);
+    onStepChange?.(workflowState.currentStep, workflowState.steps, currentStep);
+  }, [workflowState.currentStep, workflowState.steps, currentStep, onStepChange]);
 
   // Fonctions pour gérer les étapes avec logs non-bloquants
   const addDebugLog = (message: string) => {

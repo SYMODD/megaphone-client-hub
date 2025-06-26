@@ -12,6 +12,7 @@ const PassportEtrangerWorkflow = () => {
   // État pour le badge (synchronisé avec DocumentWorkflow)
   const [currentStep, setCurrentStep] = React.useState(0);
   const [steps, setSteps] = React.useState<any[]>([]);
+  const [currentStepData, setCurrentStepData] = React.useState<any>(null);
 
   const handleComplete = (data: any) => {
     console.log("🎯 PASSPORT ETRANGER WORKFLOW - Traitement terminé:", data);
@@ -24,9 +25,10 @@ const PassportEtrangerWorkflow = () => {
     navigate("/nouveau-client");
   };
 
-  const handleStepChange = (step: number, stepList: any[]) => {
+  const handleStepChange = (step: number, stepList: any[], stepData?: any) => {
     setCurrentStep(step);
     setSteps(stepList);
+    setCurrentStepData(stepData);
   };
 
   return (
@@ -34,15 +36,20 @@ const PassportEtrangerWorkflow = () => {
       <AuthenticatedHeader />
       <Navigation />
       
-      {/* Badge flottant mobile - AU-DESSUS DE TOUT */}
-      <div className="lg:hidden fixed bottom-20 right-4 z-[9999]">
-        <div className="bg-blue-600 text-white px-3 py-2 rounded-full shadow-lg flex items-center space-x-2 min-w-[80px]">
+      {/* Badge flottant mobile - Positionné sous le badge de rôle */}
+      <div className="lg:hidden fixed top-28 right-4 z-[9999]">
+        <div className="bg-blue-600 text-white px-3 py-2 rounded-full shadow-lg flex items-center space-x-2 min-w-[120px] backdrop-blur-sm bg-opacity-95">
           <span className="text-lg">
             {steps[currentStep]?.icon || '📱'}
           </span>
-          <span className="font-semibold text-sm">
-            {currentStep + 1}/{steps.length}
-          </span>
+          <div className="flex flex-col">
+            <span className="font-semibold text-xs leading-tight">
+              {currentStepData?.title || 'Chargement...'}
+            </span>
+            <span className="text-xs opacity-80">
+              {currentStep + 1}/{steps.length}
+            </span>
+          </div>
         </div>
       </div>
       
