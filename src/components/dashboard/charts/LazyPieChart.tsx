@@ -21,8 +21,24 @@ const LazyPieChart = ({ data }: LazyPieChartProps) => {
             <Cell key={`cell-${index}-${entry.name}`} fill={entry.color} />
           ))}
         </Pie>
-        <Tooltip formatter={(value, name) => [value, name]} />
-        <Legend />
+        <Tooltip 
+          formatter={(value: number, name: string) => [
+            `${value} client${value > 1 ? 's' : ''}`, 
+            name
+          ]}
+          contentStyle={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
+            borderRadius: '6px',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+          }}
+        />
+        <Legend 
+          wrapperStyle={{
+            paddingTop: '20px',
+            fontSize: '14px'
+          }}
+        />
       </PieChart>
     </ResponsiveContainer>
   );
