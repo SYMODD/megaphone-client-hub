@@ -133,17 +133,17 @@ export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScan
 
         {/* Résultats en attente de confirmation */}
         {pendingResults && (
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="font-medium text-blue-900">📊 Résultats du scan</h4>
+          <div className="p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+              <h4 className="font-medium text-blue-900 text-sm sm:text-base">📊 Résultats du scan</h4>
               {!isEditing && (
                 <Button
                   onClick={handleStartEditing}
                   variant="outline"
                   size="sm"
-                  className="text-blue-700 border-blue-300 hover:bg-blue-100"
+                  className="text-blue-700 border-blue-300 hover:bg-blue-100 w-full sm:w-auto text-xs sm:text-sm"
                 >
-                  <Edit3 className="w-4 h-4 mr-2" />
+                  <Edit3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                   Corriger
                 </Button>
               )}
@@ -151,30 +151,30 @@ export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScan
             
             {!isEditing ? (
               // Mode affichage
-              <div className="space-y-2 text-sm">
+              <div className="space-y-3">
                 {pendingResults.barcode && (
                   <div>
-                    <span className="font-medium text-blue-800">Code-barres:</span>
-                    <span className="ml-2 font-mono text-blue-700">{pendingResults.barcode}</span>
+                    <span className="font-medium text-blue-800 text-xs sm:text-sm">Code-barres:</span>
+                    <span className="ml-2 font-mono text-blue-700 text-xs sm:text-sm break-all">{pendingResults.barcode}</span>
                   </div>
                 )}
                 
                 {pendingResults.phone && (
                   <div>
-                    <span className="font-medium text-blue-800">Téléphone:</span>
-                    <span className="ml-2 font-mono text-blue-700">{pendingResults.phone}</span>
+                    <span className="font-medium text-blue-800 text-xs sm:text-sm">Téléphone:</span>
+                    <span className="ml-2 font-mono text-blue-700 text-xs sm:text-sm break-all">{pendingResults.phone}</span>
                   </div>
                 )}
                 
                 {pendingResults.barcodeImageUrl && (
                   <div>
-                    <span className="font-medium text-blue-800">Image:</span>
-                    <span className="ml-2 text-blue-700">✅ Uploadée avec succès</span>
+                    <span className="font-medium text-blue-800 text-xs sm:text-sm">Image:</span>
+                    <span className="ml-2 text-blue-700 text-xs sm:text-sm">✅ Uploadée avec succès</span>
                     <div className="mt-2">
                       <img 
                         src={pendingResults.barcodeImageUrl} 
                         alt="Image du code-barres"
-                        className="w-24 h-16 object-cover rounded border"
+                        className="w-20 sm:w-24 h-12 sm:h-16 object-cover rounded border"
                       />
                     </div>
                   </div>
@@ -183,16 +183,16 @@ export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScan
             ) : (
               // Mode édition
               <div className="space-y-4">
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800 mb-2">
+                <div className="p-2 sm:p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-xs sm:text-sm text-yellow-800">
                     ✏️ <strong>Mode correction :</strong> Modifiez les champs ci-dessous si l'OCR a fait des erreurs
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-4">
                   {/* Champ Code-barres */}
                   <div>
-                    <Label htmlFor="edit-barcode" className="text-sm font-medium text-blue-800">
+                    <Label htmlFor="edit-barcode" className="text-xs sm:text-sm font-medium text-blue-800">
                       Code-barres
                     </Label>
                     <Input
@@ -200,10 +200,10 @@ export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScan
                       value={editedBarcode}
                       onChange={(e) => setEditedBarcode(e.target.value)}
                       placeholder="Saisissez le code-barres correct"
-                      className="mt-1 font-mono"
+                      className="mt-1 font-mono text-xs sm:text-sm"
                     />
                     {pendingResults.barcode && (
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-gray-500 mt-1 break-all">
                         Original détecté : {pendingResults.barcode}
                       </p>
                     )}
@@ -211,7 +211,7 @@ export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScan
 
                   {/* Champ Téléphone */}
                   <div>
-                    <Label htmlFor="edit-phone" className="text-sm font-medium text-blue-800">
+                    <Label htmlFor="edit-phone" className="text-xs sm:text-sm font-medium text-blue-800">
                       Numéro de téléphone
                     </Label>
                     <Input
@@ -219,10 +219,10 @@ export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScan
                       value={editedPhone}
                       onChange={(e) => setEditedPhone(e.target.value)}
                       placeholder="Saisissez le numéro de téléphone correct"
-                      className="mt-1 font-mono"
+                      className="mt-1 font-mono text-xs sm:text-sm"
                     />
                     {pendingResults.phone && (
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-gray-500 mt-1 break-all">
                         Original détecté : {pendingResults.phone}
                       </p>
                     )}
@@ -232,12 +232,12 @@ export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScan
                 {/* Image (non éditable) */}
                 {pendingResults.barcodeImageUrl && (
                   <div>
-                    <Label className="text-sm font-medium text-blue-800">Image du code-barres</Label>
+                    <Label className="text-xs sm:text-sm font-medium text-blue-800">Image du code-barres</Label>
                     <div className="mt-2">
                       <img 
                         src={pendingResults.barcodeImageUrl} 
                         alt="Image du code-barres"
-                        className="w-32 h-20 object-cover rounded border"
+                        className="w-24 sm:w-32 h-16 sm:h-20 object-cover rounded border"
                       />
                       <p className="text-xs text-blue-600 mt-1">✅ Image sauvegardée (non modifiable)</p>
                     </div>
@@ -246,15 +246,15 @@ export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScan
               </div>
             )}
 
-            <div className="flex gap-2 pt-2">
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
               {isEditing ? (
                 <>
                   <Button 
                     onClick={handleConfirmResults}
                     size="sm"
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-green-600 hover:bg-green-700 w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    <Check className="w-4 h-4 mr-2" />
+                    <Check className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                     Confirmer les corrections
                   </Button>
                   
@@ -262,8 +262,9 @@ export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScan
                     onClick={handleCancelEditing}
                     variant="outline"
                     size="sm"
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    <X className="w-4 h-4 mr-2" />
+                    <X className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                     Annuler les modifications
                   </Button>
                 </>
@@ -272,9 +273,9 @@ export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScan
                   <Button 
                     onClick={handleConfirmResults}
                     size="sm"
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-green-600 hover:bg-green-700 w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    <Check className="w-4 h-4 mr-2" />
+                    <Check className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                     Confirmer
                   </Button>
                   
@@ -282,8 +283,9 @@ export const BarcodeScanner = ({ onBarcodeScanned, currentBarcode }: BarcodeScan
                     onClick={handleCancelResults}
                     variant="outline"
                     size="sm"
+                    className="w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    <X className="w-4 h-4 mr-2" />
+                    <X className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                     Annuler
                   </Button>
                 </>
