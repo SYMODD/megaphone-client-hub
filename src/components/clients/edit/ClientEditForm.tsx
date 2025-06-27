@@ -53,6 +53,15 @@ export const ClientEditForm = ({ client, formData, onUpdate, onClientUpdated }: 
     }
   };
 
+  const handlePhotoUpdated = (photoUrl: string) => {
+    console.log("✅ ClientEditForm - Photo document mise à jour:", photoUrl);
+    
+    // Notifier le parent pour rafraîchir les données
+    if (onClientUpdated) {
+      onClientUpdated();
+    }
+  };
+
   console.log("📊 ClientEditForm - État actuel:", {
     client_id: client.id,
     client_code_barre_image_url: client.code_barre_image_url,
@@ -63,7 +72,10 @@ export const ClientEditForm = ({ client, formData, onUpdate, onClientUpdated }: 
 
   return (
     <div className="space-y-6">
-      <ClientPhotoSection client={client} />
+      <ClientPhotoSection 
+        client={client} 
+        onPhotoUpdated={handlePhotoUpdated}
+      />
       
       <PersonalInfoFields 
         formData={{

@@ -1,6 +1,6 @@
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NationalityCombobox } from "@/components/client/NationalityCombobox";
 
 interface PersonalInfoFieldsProps {
   formData: {
@@ -40,12 +40,9 @@ export const PersonalInfoFields = ({ formData, onUpdate }: PersonalInfoFieldsPro
 
       <div className="space-y-2">
         <Label htmlFor="nationalite" className="text-sm">Nationalité</Label>
-        <Input
-          id="nationalite"
+        <NationalityCombobox
           value={formData.nationalite}
-          onChange={(e) => onUpdate('nationalite', e.target.value)}
-          placeholder="Nationalité"
-          className="text-sm"
+          onValueChange={(value) => onUpdate('nationalite', value)}
         />
       </div>
 
