@@ -2,6 +2,7 @@ import { PassportEtrangerData } from "@/types/passportEtrangerTypes";
 import { extractMRZData } from "@/services/ocr/mrzDataExtractor";
 import { extractDataFromMainText } from "./mainTextExtractor";
 import { normalizeNationality } from "../nationalityNormalizer";
+import { detectCountryCodeInName, correctOCRNameErrors } from "./nationalityUtils";
 
 export const extractPassportEtrangerData = (text: string): PassportEtrangerData => {
   console.log("🌍 === DÉBUT EXTRACTION PASSEPORT ÉTRANGER ===");
@@ -37,7 +38,7 @@ export const extractPassportEtrangerData = (text: string): PassportEtrangerData 
   const isMRZCorrupted = (
     (result.nom && (result.nom.includes('+') || result.nom.includes('*') || result.nom.length < 2)) ||
     (result.prenom && (result.prenom.includes('*') || result.prenom === '**' || result.prenom.length < 2)) ||
-    (result.nationalite && !['Canada', 'Allemagne', 'France', 'Espagne', 'Italie', 'Pologne', 'Slovaquie', 'Belgique', 'États-Unis', 'Royaume-Uni', 'Suisse', 'République tchèque', 'Colombie'].includes(result.nationalite))
+    (result.nationalite && !['Canada', 'Allemagne', 'France', 'Espagne', 'Italie', 'Pologne', 'Slovaquie', 'Belgique', 'États-Unis', 'Royaume-Uni', 'Suisse', 'République tchèque', 'Colombie', 'Maroc', 'Algérie', 'Tunisie', 'Portugal', 'Pays-Bas', 'Autriche', 'Irlande', 'Brésil', 'Argentine', 'Chili', 'Pérou', 'Venezuela', 'Équateur', 'Mexique', 'Turquie', 'Grèce', 'Hongrie', 'Roumanie', 'Bulgarie', 'Croatie', 'Slovénie', 'Serbie', 'Russie', 'Ukraine'].includes(result.nationalite))
   );
   
   if (isMRZCorrupted) {
@@ -142,6 +143,52 @@ export const extractPassportEtrangerData = (text: string): PassportEtrangerData 
 
   // Étape 4: Validation et nettoyage
   console.log("🔍 ÉTAPE 4 - Validation finale...");
+  
+  // 🆕 DÉTECTION ET CORRECTION DES CODES PAYS DANS LES NOMS
+  if (result.nom) {
+    const codeDetectionNom = detectCountryCodeInName(result.nom);
+    if (codeDetectionNom.isCountryCode) {
+      console.log(`⚠️ CODE PAYS DÉTECTÉ DANS LE NOM: "${result.nom}" → Nationalité suggérée: "${codeDetectionNom.suggestedNationality}"`);
+      
+      // Si on n'a pas de nationalité, utiliser celle suggérée
+      if (!result.nationalite && codeDetectionNom.suggestedNationality) {
+        result.nationalite = codeDetectionNom.suggestedNationality;
+        console.log(`✅ Nationalité corrigée depuis nom: "${result.nationalite}"`);
+      }
+      
+      // Nettoyer le nom ou le vider si c'était juste un code pays
+      const cleanedNom = correctOCRNameErrors(result.nom);
+      if (cleanedNom && cleanedNom.length >= 2) {
+        result.nom = cleanedNom;
+        console.log(`✅ Nom nettoyé: "${result.nom}"`);
+      } else {
+        console.log(`⚠️ Nom était uniquement un code pays, suppression`);
+        result.nom = undefined;  // Le nom était juste un code pays
+      }
+    }
+  }
+  
+  // Même logique pour le prénom
+  if (result.prenom) {
+    const codeDetectionPrenom = detectCountryCodeInName(result.prenom);
+    if (codeDetectionPrenom.isCountryCode) {
+      console.log(`⚠️ CODE PAYS DÉTECTÉ DANS LE PRÉNOM: "${result.prenom}" → Nationalité suggérée: "${codeDetectionPrenom.suggestedNationality}"`);
+      
+      if (!result.nationalite && codeDetectionPrenom.suggestedNationality) {
+        result.nationalite = codeDetectionPrenom.suggestedNationality;
+        console.log(`✅ Nationalité corrigée depuis prénom: "${result.nationalite}"`);
+      }
+      
+      const cleanedPrenom = correctOCRNameErrors(result.prenom);
+      if (cleanedPrenom && cleanedPrenom.length >= 2) {
+        result.prenom = cleanedPrenom;
+        console.log(`✅ Prénom nettoyé: "${result.prenom}"`);
+      } else {
+        console.log(`⚠️ Prénom était uniquement un code pays, suppression`);
+        result.prenom = undefined;
+      }
+    }
+  }
   
   // Nettoyage des noms (enlever caractères parasites mais garder les accents)
   if (result.nom) {

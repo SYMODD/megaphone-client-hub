@@ -1,7 +1,7 @@
 import React, { memo, useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Database, FileText, Shield, UserPlus, Menu, X } from "lucide-react";
+import { Users, Plus, Database, FileText, Shield, UserPlus, Menu, X, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { RoleIndicator } from "../dashboard/RoleIndicator";
@@ -11,6 +11,15 @@ const Navigation = memo(() => {
   const { profile, user } = useAuth();
   const isAdmin = profile?.role === "admin" || user?.email?.toLowerCase() === "essbane.salim@gmail.com";
   const isAgent = profile?.role === "agent";
+  
+  // 🔍 DEBUG - Navigation role detection
+  console.log('🧭 Navigation DEBUG:', {
+    userEmail: user?.email?.toLowerCase(),
+    profileRole: profile?.role,
+    isAdmin,
+    isAgent,
+    profileData: profile
+  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Navigation items mémorisés pour éviter les recalculs
@@ -27,6 +36,7 @@ const Navigation = memo(() => {
         { to: "/", icon: Users, label: "Dashboard", color: "from-blue-500 to-blue-600" },
         { to: "/nouveau-client", icon: Plus, label: "Nouveau Client", color: "from-green-500 to-emerald-600" },
         { to: "/base-clients", icon: Database, label: "Base Clients", color: "from-blue-500 to-blue-600" },
+        { to: "/audit-clients", icon: Search, label: "Audit Clients", color: "from-orange-500 to-orange-600" },
         { to: "/contracts", icon: FileText, label: "Contrats", color: "from-purple-500 to-purple-600" },
       ];
 

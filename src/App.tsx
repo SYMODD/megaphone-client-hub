@@ -73,6 +73,8 @@ const Contracts = lazy(() =>
   })
 );
 
+const ClientAudit = lazy(() => import("./pages/ClientAudit"));
+
 import { queryClient } from "./lib/queryClient";
 
 const App = () => {
@@ -231,6 +233,16 @@ const App = () => {
                     <UserManagement />
                   </Suspense>
                 </RoleProtectedRoute>
+              } />
+              
+              <Route path="/audit-clients" element={
+                <ProtectedRoute>
+                  <RoleProtectedRoute allowedRoles={['admin', 'superviseur']} redirectTo="/dashboard">
+                    <Suspense fallback={<SuspenseFallback message="Chargement de l'audit des clients..." />}>
+                      <ClientAudit />
+                    </Suspense>
+                  </RoleProtectedRoute>
+                </ProtectedRoute>
               } />
               
               <Route path="/contracts" element={

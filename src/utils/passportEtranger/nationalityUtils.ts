@@ -1,4 +1,3 @@
-
 import { safeStringTrim } from "./stringUtils";
 
 export const convertMainTextNationality = (nationality: string): string => {
@@ -16,6 +15,14 @@ export const convertMainTextNationality = (nationality: string): string => {
     "BRITISH": "Royaume-Uni",
     "BRITISH CITIZEN": "Royaume-Uni",        // ← AJOUT CRITIQUE TEST
     "ENGLISH": "Royaume-Uni",
+    
+    // Irlandais
+    "IRISH": "Irlande",
+    "IRELAND": "Irlande",
+    "ÉIRE": "Irlande",
+    "EIRE": "Irlande",
+    "ÉIRE/IRELAND/IRLANDE": "Irlande",
+    "EIRE/IRELAND/IRLANDE": "Irlande",
     
     // Allemand
     "DEUTSCH": "Allemagne",
@@ -150,10 +157,11 @@ export const checkForNationalityInLine = (line: string): string | null => {
   const knownNationalities = [
     // Européennes
     "DEUTSCH", "DEUTSCHE", "GERMAN", "CANADIAN", "CANADIENNE", "FRENCH", "FRANÇAISE", "FRANCAISE",
-    "AMERICAN", "BRITISH", "SPANISH", "ESPAÑOLA", "ESPANOLA", "ITALIAN", "ITALIANA", "BELGIAN", "BELGE",
-    "DUTCH", "NEDERLANDSE", "SWISS", "SCHWEIZ", "SUISSE", "AUSTRIAN", "ÖSTERREICH", "OSTERREICH",
-    "PORTUGUESE", "PORTUGUESA", "NORWEGIAN", "NORSK", "SWEDISH", "SVENSK", "DANISH", "DANSK",
-    "FINNISH", "SUOMI", "GREEK", "ELLINIKI", "POLISH", "POLSKA", "RUSSIAN", "ROSSIYSKAYA",
+    "AMERICAN", "BRITISH", "IRISH", "IRELAND", "ÉIRE", "EIRE", "SPANISH", "ESPAÑOLA", "ESPANOLA", 
+    "ITALIAN", "ITALIANA", "BELGIAN", "BELGE", "DUTCH", "NEDERLANDSE", "SWISS", "SCHWEIZ", "SUISSE", 
+    "AUSTRIAN", "ÖSTERREICH", "OSTERREICH", "PORTUGUESE", "PORTUGUESA", "NORWEGIAN", "NORSK", 
+    "SWEDISH", "SVENSK", "DANISH", "DANSK", "FINNISH", "SUOMI", "GREEK", "ELLINIKI", "POLISH", 
+    "POLSKA", "RUSSIAN", "ROSSIYSKAYA",
     
     // Maghreb et Moyen-Orient
     "MOROCCAN", "MAROCAINE", "TUNISIAN", "TUNISIENNE", "ALGERIAN", "ALGERIENNE", "TURKISH", "TURK",
@@ -173,4 +181,101 @@ export const checkForNationalityInLine = (line: string): string | null => {
   }
 
   return null;
+};
+
+/**
+ * 🔧 DÉTECTION ERREURS CODES PAYS DANS NOMS
+ * Détecte quand un code pays ISO se retrouve dans un champ nom/prénom
+ * et suggère la nationalité correspondante
+ */
+export const detectCountryCodeInName = (name: string): { isCountryCode: boolean; suggestedNationality?: string } => {
+  const nameUpper = name.toUpperCase().trim();
+  
+  // Codes pays ISO 3 lettres les plus courants
+  const countryCodeMapping: Record<string, string> = {
+    'IRL': 'Irlande',
+    'GBR': 'Royaume-Uni',
+    'USA': 'États-Unis',
+    'CAN': 'Canada',
+    'FRA': 'France',
+    'DEU': 'Allemagne',
+    'ESP': 'Espagne',
+    'ITA': 'Italie',
+    'BEL': 'Belgique',
+    'CHE': 'Suisse',
+    'AUT': 'Autriche',
+    'NLD': 'Pays-Bas',
+    'COL': 'Colombie',
+    'BRA': 'Brésil',
+    'PRT': 'Portugal',
+    'POL': 'Pologne',
+    'CZE': 'République tchèque',
+    'SVK': 'Slovaquie',
+    'RUS': 'Russie',
+    'TUR': 'Turquie',
+    'GRC': 'Grèce',
+    'MAR': 'Maroc',
+    'DZA': 'Algérie',
+    'TUN': 'Tunisie'
+  };
+  
+  // Vérifier si le nom est exactement un code pays
+  if (countryCodeMapping[nameUpper]) {
+    return {
+      isCountryCode: true,
+      suggestedNationality: countryCodeMapping[nameUpper]
+    };
+  }
+  
+  // Vérifier les codes pays de 2 lettres courants
+  const countryCode2Mapping: Record<string, string> = {
+    'IE': 'Irlande',
+    'GB': 'Royaume-Uni', 
+    'US': 'États-Unis',
+    'CA': 'Canada',
+    'FR': 'France',
+    'DE': 'Allemagne',
+    'ES': 'Espagne',
+    'IT': 'Italie',
+    'BE': 'Belgique',
+    'CH': 'Suisse',
+    'AT': 'Autriche',
+    'NL': 'Pays-Bas'
+  };
+  
+  if (countryCode2Mapping[nameUpper]) {
+    return {
+      isCountryCode: true,
+      suggestedNationality: countryCode2Mapping[nameUpper]
+    };
+  }
+  
+  return { isCountryCode: false };
+};
+
+/**
+ * 🔧 CORRECTION INTELLIGENTE DES ERREURS DE SAISIE OCR
+ * Corrige les erreurs communes d'OCR dans les noms irlandais et autres
+ */
+export const correctOCRNameErrors = (name: string): string => {
+  if (!name) return name;
+  
+  let corrected = name;
+  
+  // Corrections spécifiques irlandaises
+  corrected = corrected
+    .replace(/^IRL\s*/i, '')  // Supprimer "IRL" au début
+    .replace(/\s*IRL$/i, '')  // Supprimer "IRL" à la fin
+    .replace(/\bIRL\b/gi, '') // Supprimer "IRL" au milieu
+    .trim();
+  
+  // Corrections OCR communes
+  corrected = corrected
+    .replace(/0/g, 'O')    // 0 → O
+    .replace(/1/g, 'I')    // 1 → I  
+    .replace(/5/g, 'S')    // 5 → S
+    .replace(/8/g, 'B')    // 8 → B
+    .trim();
+  
+  return corrected;
 };

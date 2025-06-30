@@ -5,7 +5,13 @@ import { Navigate } from "react-router-dom";
 export const SmartRedirect = () => {
   const { user, profile, loading } = useAuth();
 
-  console.log("SmartRedirect - User:", !!user, "Profile:", profile?.role, "Loading:", loading);
+  console.log("🔀 SmartRedirect DEBUG:", {
+    hasUser: !!user,
+    userEmail: user?.email,
+    profileRole: profile?.role,
+    loading,
+    profileData: profile
+  });
 
   // Show loading while checking auth state
   if (loading) {

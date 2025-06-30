@@ -1,13 +1,10 @@
-
 export const normalizeNationality = (nationality: string): string => {
   if (!nationality) return "";
   
   const normalizedNationality = nationality.toLowerCase().trim();
+
   
-  console.log("🌍 Normalisation nationalité:", {
-    entrée: nationality,
-    normalisée: normalizedNationality
-  });
+
   
   // Mapping complet des nationalités vers le format standard
   const nationalityMapping: Record<string, string> = {
@@ -18,6 +15,8 @@ export const normalizeNationality = (nationality: string): string => {
     "moroccan": "Maroc",
     "morocco": "Maroc",
     "royaume du maroc": "Maroc",
+    "mar": "Maroc",
+    "ma": "Maroc",
     
     // France
     "france": "France",
@@ -28,6 +27,8 @@ export const normalizeNationality = (nationality: string): string => {
     "french": "France",
     "république française": "France",
     "republique francaise": "France",
+    "fra": "France",
+    "fr": "France",
     
     // Espagne
     "espagne": "Espagne",
@@ -38,6 +39,8 @@ export const normalizeNationality = (nationality: string): string => {
     "spanish": "Espagne",
     "spain": "Espagne",
     "reino de españa": "Espagne",
+    "esp": "Espagne",
+    "es": "Espagne",
     
     // Algérie
     "algérie": "Algérie",
@@ -62,6 +65,9 @@ export const normalizeNationality = (nationality: string): string => {
     "deutsch": "Allemagne",
     "deutsche": "Allemagne",
     "germany": "Allemagne",
+    "deu": "Allemagne",
+    "de": "Allemagne",
+    "ger": "Allemagne",
     
     "italie": "Italie",
     "italien": "Italie",
@@ -69,6 +75,8 @@ export const normalizeNationality = (nationality: string): string => {
     "italian": "Italie",
     "italy": "Italie",
     "italiana": "Italie",
+    "ita": "Italie",
+    "it": "Italie",
     
     "portugal": "Portugal",
     "portugais": "Portugal",
@@ -80,6 +88,8 @@ export const normalizeNationality = (nationality: string): string => {
     "belge": "Belgique",
     "belgian": "Belgique",
     "belgium": "Belgique",
+    "bel": "Belgique",
+    "be": "Belgique",
     
     "pays-bas": "Pays-Bas",
     "pays bas": "Pays-Bas",
@@ -88,11 +98,15 @@ export const normalizeNationality = (nationality: string): string => {
     "dutch": "Pays-Bas",
     "netherlands": "Pays-Bas",
     "nederland": "Pays-Bas",
+    "nld": "Pays-Bas",
+    "nl": "Pays-Bas",
     
     "suisse": "Suisse",
     "swiss": "Suisse",
     "schweiz": "Suisse",
     "switzerland": "Suisse",
+    "che": "Suisse",
+    "ch": "Suisse",
     
     "canada": "Canada",
     "canadien": "Canada",
@@ -108,6 +122,7 @@ export const normalizeNationality = (nationality: string): string => {
     "américain": "États-Unis",
     "americain": "États-Unis",
     "united states": "États-Unis",
+    "us": "États-Unis",
     
     "royaume-uni": "Royaume-Uni",
     "royaume uni": "Royaume-Uni",
@@ -116,6 +131,20 @@ export const normalizeNationality = (nationality: string): string => {
     "english": "Royaume-Uni",
     "uk": "Royaume-Uni",
     "united kingdom": "Royaume-Uni",
+    "gbr": "Royaume-Uni",
+    "gb": "Royaume-Uni",
+    
+    // Irlande
+    "irlande": "Irlande",
+    "ireland": "Irlande",
+    "irish": "Irlande",
+    "irlandais": "Irlande",
+    "irlandaise": "Irlande",
+    "éire": "Irlande",
+    "eire": "Irlande",
+    "éire/ireland/irlande": "Irlande",
+    "eire/ireland/irlande": "Irlande",
+    "irl": "Irlande",
 
     // Pays d'Europe de l'Est
     "slovaquie": "Slovaquie",
@@ -150,12 +179,15 @@ export const normalizeNationality = (nationality: string): string => {
     "colombia": "Colombie",
     "colombian": "Colombie",
     "colombiana": "Colombie",
-    "colombiano": "Colombie"
+    "colombiano": "Colombie",
+    
+    // 🆕 Mappings supplémentaires sécurisés basés sur l'audit
+    "thai": "Thaïlande",
+    "thailand": "Thaïlande",
+    "united states of america": "États-Unis",
+    "british citizen": "Royaume-Uni"
   };
 
-  const result = nationalityMapping[normalizedNationality] || 
-                nationality.charAt(0).toUpperCase() + nationality.slice(1).toLowerCase();
-  
-  console.log("✅ Nationalité normalisée:", result);
-  return result;
+  return nationalityMapping[normalizedNationality] || 
+         nationality.charAt(0).toUpperCase() + nationality.slice(1).toLowerCase();
 };

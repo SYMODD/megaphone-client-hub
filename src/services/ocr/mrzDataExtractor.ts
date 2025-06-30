@@ -299,6 +299,7 @@ function convertCountryCodeToNationality(countryCode: string): string {
     'D': 'Allemagne',           // ← FORMAT ALLEMAND
     'ITA': 'Italie',
     'GBR': 'Royaume-Uni',
+    'IRL': 'Irlande',
     'USA': 'États-Unis',
     'CAN': 'Canada',
     'BEL': 'Belgique',          // ← AJOUT CRITIQUE BELGE

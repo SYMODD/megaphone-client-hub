@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useClientData } from "@/hooks/useClientData";
@@ -75,9 +74,26 @@ export const useBaseClientsLogic = () => {
     await forceRefreshClients();
   }, [forceRefreshClients]);
 
-  // Gérer les états de navigation depuis le dashboard
+  // Gérer les états de navigation depuis le dashboard ET les liens directs d'audit
   useEffect(() => {
     const state = location.state as any;
+    const urlParams = new URLSearchParams(location.search);
+    const editClientId = urlParams.get('editClient');
+    
+    // 🆕 NAVIGATION DIRECTE depuis audit CSV
+    if (editClientId && clients.length > 0) {
+      const clientToEdit = clients.find(c => c.id === editClientId);
+      if (clientToEdit) {
+        console.log('🔧 Ouverture automatique édition depuis audit:', clientToEdit);
+        handleEditClient(clientToEdit);
+        
+        // Nettoyer l'URL pour éviter les réouvertures
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+      }
+    }
+    
+    // Navigation existante depuis le dashboard
     if (state && clients.length > 0) {
       // Si on vient du dashboard avec un ID de client à visualiser
       if (state.viewClientId && state.action === 'view') {
@@ -100,7 +116,7 @@ export const useBaseClientsLogic = () => {
       // Nettoyer l'état de navigation pour éviter les réouvertures
       window.history.replaceState({}, document.title);
     }
-  }, [location.state, clients, handleViewClient, handleEditClient]);
+  }, [location.state, location.search, clients, handleViewClient, handleEditClient]);
 
   return {
     // Données des clients

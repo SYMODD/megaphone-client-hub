@@ -57,6 +57,10 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
                               lineUpper.includes('SOBRENOME') ||        // Portugais
                               lineUpper.includes('ACHTERNAAM') ||       // Néerlandais
                               lineUpper.includes('NAAM/SUMAME') ||      // Belge/Néerlandais (erreur OCR)
+                              // 🆕 FORMATS IRLANDAIS SPÉCIFIQUES
+                              lineUpper.includes('SLOINNE') ||          // Irlandais : Nom de famille
+                              lineUpper.includes('AINM TEAGHLAIGH') ||  // Irlandais : Nom de famille
+                              lineUpper.includes('FAMILY') && !lineUpper.includes('NAME') || // Irlandais court
                               // FORMATS SUISSES
                               lineUpper.includes('NAME • NOS • COGNONE') || // Suisse multilingue
                               lineUpper.includes('SURNANE') ||          // Suisse (avec erreur OCR surname)
@@ -76,21 +80,22 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
         const nextLine = safeStringTrim(lines[j]);
         console.log(`🔍 Ligne suivante candidat nom (${j+1}):`, nextLine);
         
-        // EXCLUSIONS SPÉCIFIQUES pour éviter faux positifs
-        const isExcluded = (
-          /^[A-Z]{2}\d{6,9}$/.test(nextLine) ||  // Numéro passeport format AW320731
-          /^\d+$/.test(nextLine) ||              // Numéros purs
-          nextLine.includes('/') ||              // Lignes indicatrices avec /
-          nextLine.includes('NAME') ||
-          nextLine.includes('GIVEN') ||
-          nextLine.includes('PASSPORT') ||
-          nextLine.includes('REPUBLIC') ||
-          // Exclure les lignes d'indicateurs suisses
-          nextLine.includes('VORNANE(N)') ||
-          nextLine.includes('PRÉNON[S)') ||
-          nextLine.includes('PREMUSIS)') ||
-          ['COL', 'CAN', 'USA', 'DEU', 'FRA', 'ESP', 'ITA', 'BEL', 'SVK', 'POL', 'CZE'].includes(nextLine)  // Codes pays
-        );
+                    // EXCLUSIONS SPÉCIFIQUES pour éviter faux positifs
+            const isExcluded = (
+              /^[A-Z]{2}\d{6,9}$/.test(nextLine) ||  // Numéro passeport format AW320731
+              /^\d+$/.test(nextLine) ||              // Numéros purs
+              nextLine.includes('/') ||              // Lignes indicatrices avec /
+              nextLine.includes('NAME') ||
+              nextLine.includes('GIVEN') ||
+              nextLine.includes('PASSPORT') ||
+              nextLine.includes('REPUBLIC') ||
+              // Exclure les lignes d'indicateurs suisses
+              nextLine.includes('VORNANE(N)') ||
+              nextLine.includes('PRÉNON[S)') ||
+              nextLine.includes('PREMUSIS)') ||
+              // 🆕 EXCLUSIONS CODES PAYS ÉTENDUES (Inclure IRL pour éviter qu'il soit pris comme nom)
+              ['COL', 'CAN', 'USA', 'DEU', 'FRA', 'ESP', 'ITA', 'BEL', 'SVK', 'POL', 'CZE', 'IRL', 'GBR', 'IND'].includes(nextLine)  // Codes pays étendus
+            );
         
         // Nettoyer d'abord les caractères parasites pour le test
         let cleanName = nextLine.trim().replace(/[®©™\+\•]+$/g, '').trim();
@@ -169,6 +174,11 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
                                 lineUpper.includes('PRIMEIRO NOME') ||  // Portugais
                                 lineUpper.includes('VOORNAAM') ||       // Néerlandais
                                 lineUpper.includes('VOORAMEN/ GIVEN') || // Belge/Néerlandais
+                                // 🆕 FORMATS IRLANDAIS SPÉCIFIQUES
+                                lineUpper.includes('CÉAD AINM') ||       // Irlandais : Prénom
+                                lineUpper.includes('AINMNEACHA') ||      // Irlandais : Prénoms
+                                lineUpper.includes('FORENAME') ||        // Irlandais anglais
+                                lineUpper.includes('FORENAMES') ||       // Irlandais anglais pluriel
                                 // FORMATS SUISSES
                                 lineUpper.includes('VORNANE(N)') ||      // Suisse allemand
                                 lineUpper.includes('PRÉNON[S)') ||       // Suisse français (avec erreur OCR)

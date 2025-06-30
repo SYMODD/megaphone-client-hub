@@ -9,6 +9,7 @@ export const nationalityCodeMapping: Record<string, string> = {
   "DEU": "Allemagne",
   "GER": "Allemagne", // Code alternatif pour l'Allemagne
   "GBR": "Royaume-Uni",
+  "IRL": "Irlande",
   "USA": "États-Unis",
   "CAN": "Canada",
   "BEL": "Belgique",
