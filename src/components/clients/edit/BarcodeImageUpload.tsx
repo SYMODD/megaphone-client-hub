@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, X, Loader2 } from "lucide-react";
@@ -19,45 +18,71 @@ export const BarcodeImageUpload = ({ currentImageUrl, onImageUploaded, onCancel 
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    console.log("📁 BarcodeImageUpload - Fichier sélectionné:", {
+      name: file?.name,
+      size: file?.size,
+      type: file?.type
+    });
+    
     if (!file) return;
 
     // Créer un aperçu
     const reader = new FileReader();
     reader.onload = (event) => {
-      setPreviewImage(event.target?.result as string);
+      const result = event.target?.result as string;
+      console.log("🖼️ BarcodeImageUpload - Aperçu créé, taille:", result.length);
+      setPreviewImage(result);
     };
     reader.readAsDataURL(file);
   };
 
   const handleUpload = async () => {
+    console.log("🚀 BarcodeImageUpload - DÉBUT handleUpload");
+    
     const file = fileInputRef.current?.files?.[0];
     if (!file) {
+      console.error("❌ BarcodeImageUpload - Aucun fichier sélectionné");
       toast.error("Veuillez sélectionner une image");
       return;
     }
+
+    console.log("📤 BarcodeImageUpload - Fichier trouvé:", {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
 
     setIsUploading(true);
     console.log("📤 Upload image code-barres depuis edit form...");
 
     try {
+      console.log("🔄 BarcodeImageUpload - Appel uploadBarcodeImage...");
       const imageUrl = await uploadBarcodeImage(file);
+      
+      console.log("📥 BarcodeImageUpload - Résultat uploadBarcodeImage:", imageUrl);
       
       if (imageUrl) {
         console.log("✅ Upload réussi:", imageUrl);
         toast.success("Image du code-barres uploadée avec succès");
+        
+        console.log("🔄 BarcodeImageUpload - Appel onImageUploaded...");
         onImageUploaded(imageUrl);
+        console.log("✅ BarcodeImageUpload - onImageUploaded terminé");
       } else {
+        console.error("❌ BarcodeImageUpload - imageUrl est null ou undefined");
         toast.error("Erreur lors de l'upload de l'image");
       }
     } catch (error) {
       console.error("❌ Erreur upload:", error);
       toast.error("Erreur lors de l'upload");
     } finally {
+      console.log("🏁 BarcodeImageUpload - Fin handleUpload, setIsUploading(false)");
       setIsUploading(false);
     }
   };
 
   const resetSelection = () => {
+    console.log("🔄 BarcodeImageUpload - Reset sélection");
     setPreviewImage(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";

@@ -1,16 +1,18 @@
-
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { QrCode, Upload } from "lucide-react";
 import { BarcodeImageUpload } from "./BarcodeImageUpload";
 import { BarcodeImageDisplay } from "./barcode-image/BarcodeImageDisplay";
 import { BarcodeImageError } from "./barcode-image/BarcodeImageError";
-
 import { BarcodeImagePlaceholder } from "./barcode-image/BarcodeImagePlaceholder";
 import { SecureImageViewer } from "@/components/ui/SecureImageViewer";
 import { useBarcodeImageState } from "./barcode-image/useBarcodeImageState";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Client } from "@/hooks/useClientData/types";
 
 interface BarcodeImageSectionProps {
+  client: Client;
   code_barre: string;
   code_barre_image_url: string;
   onUpdate: (field: string, value: string) => void;
@@ -18,6 +20,7 @@ interface BarcodeImageSectionProps {
 }
 
 export const BarcodeImageSection = ({ 
+  client,
   code_barre, 
   code_barre_image_url, 
   onUpdate, 
@@ -39,12 +42,22 @@ export const BarcodeImageSection = ({
     testImageUrl
   } = useBarcodeImageState({ code_barre_image_url });
 
-  const handleImageUploaded = (imageUrl: string) => {
-    setCurrentImageUrl(imageUrl);
+  const handleImageUploaded = async (imageUrl: string) => {
+    console.log("✅ BarcodeImageSection - Image uploadée:", imageUrl);
+    
+    // 🎯 CORRECTION: Supprimer la sauvegarde immédiate en base pour éviter les conflits
+    // La sauvegarde sera faite par le formulaire principal lors du clic sur "Sauvegarder"
+    console.log("✅ Image uploadée avec succès, mise à jour du formulaire seulement");
+    toast.success("Image du code-barres uploadée avec succès");
+    
+    // Mettre à jour le formData via onImageUploaded AVANT les états locaux
     onImageUploaded(imageUrl);
+    
+    // Puis mettre à jour les états locaux pour l'affichage
+    setCurrentImageUrl(imageUrl);
     setShowUpload(false);
     setImageError(false);
-    setImageLoading(true);
+    setImageLoading(false); // Pas besoin de loading puisque l'image est déjà disponible
   };
 
   const handleCancelUpload = () => {

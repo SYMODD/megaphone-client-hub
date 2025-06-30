@@ -19,6 +19,8 @@ export interface Client {
   updated_at?: string;
   photo_url?: string;
   code_barre_image_url?: string;
+  code_barre?: string;
+  observations?: string;
 }
 
 export interface ClientFilters {

@@ -1,8 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-// ❌ SUPPRIMÉ: import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { Globe } from "lucide-react";
 import { useEffect, useState, Suspense, lazy } from "react";
 
-// ✅ LAZY LOADING SIMPLIFIÉ - Chargement dynamique de tout le module recharts
+// ✅ LAZY LOADING SIMPLIFIÉ - Chargement dynamique du graphique
 const LazyPieChart = lazy(() => import("./charts/LazyPieChart"));
 
 interface NationalityChartProps {

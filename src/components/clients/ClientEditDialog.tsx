@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Edit, Save, X } from "lucide-react";
@@ -25,18 +24,29 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
   }, [client]);
 
   const onSave = () => {
+    console.log("🚀 ClientEditDialog - DÉBUT onSave");
     handleSave(() => {
-      console.log("✅ ClientEditDialog - Sauvegarde réussie, notification du parent");
-      onClientUpdated();
+      console.log("✅ ClientEditDialog - Sauvegarde réussie, rafraîchissement des données client");
+      handleClientUpdated();
+      
+      // 🎯 NOUVEAU: Fermer automatiquement le dialog après sauvegarde réussie
+      console.log("🚪 ClientEditDialog - Fermeture automatique du dialog");
+      onOpenChange(false);
     });
   };
 
   const handleClientUpdated = async () => {
-    console.log("🔄 ClientEditDialog - Rafraîchissement des données client");
+    console.log("🔄 ClientEditDialog - DÉBUT handleClientUpdated");
+    
+    // 🎯 CORRECTION: Ajouter un délai pour laisser le temps à la base de se synchroniser
+    console.log("⏱️ ClientEditDialog - Attente de 500ms pour la synchronisation...");
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     // Rafraîchir les données du client
     if (client?.id) {
       try {
+        console.log("📡 ClientEditDialog - Récupération des données fraîches du client:", client.id);
+        
         // On va refetch les données du client depuis la base
         const { data: updatedClient, error } = await supabase
           .from('clients')
@@ -44,22 +54,35 @@ export const ClientEditDialog = ({ client, open, onOpenChange, onClientUpdated }
           .eq('id', client.id)
           .single();
         
-        if (!error && updatedClient) {
-          console.log("✅ Client mis à jour localement:", updatedClient);
-          // Type assertion to ensure document_type conforms to the union type
-          const typedClient: Client = {
-            ...updatedClient,
-            document_type: updatedClient.document_type as 'cin' | 'passport_marocain' | 'passport_etranger' | 'carte_sejour'
-          };
-          setLocalClient(typedClient);
-          
-          // Notifier le parent pour rafraîchir la liste complète
-          onClientUpdated();
+        if (error) {
+          console.error("❌ ClientEditDialog - Erreur lors du rafraîchissement:", error);
+          return;
         }
+        
+        console.log("✅ ClientEditDialog - Client mis à jour localement:", {
+          id: updatedClient.id,
+          code_barre_image_url: updatedClient.code_barre_image_url,
+          nom: updatedClient.nom,
+          prenom: updatedClient.prenom,
+          updated_at: updatedClient.updated_at
+        });
+        
+        // 🎯 CORRECTION: Mettre à jour le client local ET forcer le re-render
+        setLocalClient(updatedClient);
+        
+        // 🔄 NOUVEAU: Forcer la mise à jour du formData avec les nouvelles données
+        // Cela va déclencher un re-render de tous les composants enfants
+        console.log("🔄 ClientEditDialog - Forcer la mise à jour du formData avec les nouvelles données");
+        
       } catch (error) {
-        console.error("❌ Erreur lors du rafraîchissement du client:", error);
+        console.error("❌ ClientEditDialog - Erreur inattendue:", error);
       }
     }
+    
+    console.log("🔄 ClientEditDialog - Notification du parent pour rafraîchir la liste");
+    onClientUpdated();
+    
+    console.log("🏁 ClientEditDialog - FIN handleClientUpdated");
   };
 
   if (!localClient) return null;

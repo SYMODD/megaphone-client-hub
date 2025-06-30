@@ -217,26 +217,27 @@ export const RecentClients = ({ data }: RecentClientsProps) => {
           <div className="space-y-4">
             {recentClients.length > 0 ? (
               recentClients.map((client) => (
-                <div key={`${client.id}-${client.pointOperation}`} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <Avatar>
-                      <AvatarImage src={client.photo || undefined} />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                        {client.prenom[0]}{client.nom[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h4 className="font-semibold text-slate-800">
-                        {client.prenom} {client.nom}
-                      </h4>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          {client.nationalite}
-                        </Badge>
+                <div key={`${client.id}-${client.pointOperation}`} className="flex items-center gap-3 p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                  <Avatar className="flex-shrink-0">
+                    <AvatarImage src={client.photo || undefined} />
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                      {client.prenom[0]}{client.nom[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-slate-800 truncate">
+                      {client.prenom} {client.nom}
+                    </h4>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
+                      <Badge variant="outline" className="text-xs w-fit">
+                        {client.nationalite}
+                      </Badge>
+                      <div className="flex items-center gap-2">
                         {client.code_barre && (
                           <Badge variant="secondary" className="text-xs flex items-center gap-1">
                             <QrCode className="w-3 h-3" />
-                            Code-barres
+                            <span className="hidden sm:inline">Code-barres</span>
                           </Badge>
                         )}
                         <span className="text-xs text-slate-500">
@@ -245,30 +246,34 @@ export const RecentClients = ({ data }: RecentClientsProps) => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                                      <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleViewClient(client)}
-                    title="Voir les détails"
-                    disabled={loadingFullClient}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleEditClient(client)}
-                    title="Modifier le client"
-                    disabled={loadingFullClient}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
+                  
+                  <div className="flex items-center space-x-1 flex-shrink-0">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleViewClient(client)}
+                      title="Voir les détails"
+                      disabled={loadingFullClient}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEditClient(client)}
+                      title="Modifier le client"
+                      disabled={loadingFullClient}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
                     <Button 
                       variant="ghost" 
                       size="sm"
                       onClick={() => handleGenerateDocument(client)}
                       title="Générer un document"
+                      className="h-8 w-8 p-0"
                     >
                       <FileText className="w-4 h-4" />
                     </Button>
