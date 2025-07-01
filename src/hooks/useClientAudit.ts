@@ -282,21 +282,33 @@ export const useClientAudit = () => {
   const correctDocumentNumber = (docNumber: string): string => {
     if (!docNumber) return docNumber;
     
-    return docNumber
+    const cleaned = docNumber
       // Supprime les caractères parasites courants
       .replace(/[®©™\+\•\*\-\s\.]/g, '')
-      
-      // Corrections OCR pour les documents
-      .replace(/O/g, '0')    // O → 0
-      .replace(/I/g, '1')    // I → 1
-      .replace(/S/g, '5')    // S → 5
-      .replace(/B/g, '8')    // B → 8
-      .replace(/G/g, '6')    // G → 6
-      
-      // Met en majuscules et supprime caractères invalides
       .toUpperCase()
-      .replace(/[^A-Z0-9]/g, '')
       .trim();
+    
+    // 🚫 PAS DE CORRECTION OCR AGRESSIVE !
+    // Les numéros de passeports utilisent de vraies lettres (ex: YB5512726 italien)
+    // Correction OCR uniquement pour des erreurs évidentes en fin de chaîne numérique
+    
+    let corrected = cleaned;
+    
+    // Corrections OCR UNIQUEMENT dans les parties numériques isolées
+    // et seulement si c'est clairement une erreur OCR
+    if (/\d[OISG]\d/.test(corrected)) {
+      // Corrections au milieu des chiffres seulement
+      corrected = corrected
+        .replace(/(\d)O(\d)/g, '$10$2')    // 1O1 → 101
+        .replace(/(\d)I(\d)/g, '$11$2')    // 1I1 → 111
+        .replace(/(\d)S(\d)/g, '$15$2')    // 1S1 → 151
+        .replace(/(\d)G(\d)/g, '$16$2');   // 1G1 → 161
+    }
+    
+    // ❌ NE PAS corriger les lettres en début de passeport !
+    // YB, AB, CD, etc. sont des préfixes valides pour de nombreux pays
+    
+    return corrected.replace(/[^A-Z0-9]/g, '');
   };
 
   /**
@@ -318,18 +330,35 @@ export const useClientAudit = () => {
       // Utiliser la correction intelligente
       const correctedNumber = correctDocumentNumber(client.numero_passeport);
       
-      // Patterns valides pour les documents
+      // Patterns valides pour les documents (formats internationaux étendus)
       const documentPatterns = [
-        /^[A-Z]{1,2}\d{6,8}$/,    // Format standard: A1234567
+        /^[A-Z]{1,2}\d{6,8}$/,    // Format standard: A1234567, YB5512726
+        /^[A-Z]{2}\d{7}$/,        // Format italien: YB5512726
         /^\d{8,9}$/,              // Format numérique pur
-        /^[A-Z]\d{7,8}$/          // Format mixte simple
+        /^[A-Z]\d{7,8}$/,         // Format mixte simple
+        /^[A-Z]{3}\d{5,6}$/,      // Format avec 3 lettres: ABC12345
+        /^[A-Z]{1,3}[0-9]{6,8}$/, // Format universel étendu
+        /^[0-9]{2}[A-Z]{2}[0-9]{5}$/ // Format français: 18CF85006
       ];
       
-      const isValidOriginal = documentPatterns.some(pattern => pattern.test(client.numero_passeport.replace(/[^A-Z0-9]/g, '')));
+      const cleanedOriginal = client.numero_passeport.replace(/[^A-Z0-9]/g, '');
+      const isValidOriginal = documentPatterns.some(pattern => pattern.test(cleanedOriginal));
       const isValidCorrected = documentPatterns.some(pattern => pattern.test(correctedNumber));
       
-      if (!isValidOriginal && isValidCorrected && correctedNumber !== client.numero_passeport) {
-        // Correction OCR possible
+      // ✅ NE PAS suggérer de correction si le numéro original est déjà valide
+      if (isValidOriginal && cleanedOriginal !== client.numero_passeport) {
+        // Juste nettoyer les caractères parasites, pas de correction OCR
+        issues.push({
+          clientId: client.id,
+          field: 'numero_passeport',
+          type: 'formatting',
+          description: 'Caractères parasites à supprimer du numéro de document',
+          currentValue: client.numero_passeport,
+          suggestedValue: cleanedOriginal,
+          autoFixable: true
+        });
+      } else if (!isValidOriginal && isValidCorrected && correctedNumber !== cleanedOriginal) {
+        // Correction OCR nécessaire seulement si le format original est invalide
         issues.push({
           clientId: client.id,
           field: 'numero_passeport',
@@ -339,18 +368,7 @@ export const useClientAudit = () => {
           suggestedValue: correctedNumber,
           autoFixable: true
         });
-      } else if (client.numero_passeport !== correctedNumber && correctedNumber.length >= 6) {
-        // Correction de formatage simple
-        issues.push({
-          clientId: client.id,
-          field: 'numero_passeport',
-          type: 'formatting',
-          description: 'Format du numéro de document à corriger',
-          currentValue: client.numero_passeport,
-          suggestedValue: correctedNumber,
-          autoFixable: true
-        });
-      } else if (correctedNumber.length < 6) {
+      } else if (!isValidOriginal && correctedNumber.length < 6) {
         // Trop court même après correction
         issues.push({
           clientId: client.id,
