@@ -181,6 +181,15 @@ export const normalizeNationality = (nationality: string): string => {
     "colombiana": "Colombie",
     "colombiano": "Colombie",
     
+    // Roumanie - AJOUT CRITIQUE pour cartes d'identité roumaines
+    "roumanie": "Roumanie",
+    "romanian": "Roumanie",
+    "română": "Roumanie",
+    "romana": "Roumanie",
+    "roumain": "Roumanie",
+    "roumaine": "Roumanie",
+    "romania": "Roumanie",
+    
     // 🆕 Mappings supplémentaires sécurisés basés sur l'audit
     "thai": "Thaïlande",
     "thailand": "Thaïlande",

@@ -575,38 +575,92 @@ export const useClientAudit = () => {
   };
 
   /**
-   * 🔧 FONCTION DE CORRECTION OCR AVANCÉE
-   * Corrige les erreurs OCR communes dans les noms et prénoms
+   * 🔧 FONCTION DE CORRECTION OCR ULTRA-INTELLIGENTE
+   * Corrige UNIQUEMENT les vraies erreurs OCR sans abimer les noms authentiques
    */
   const correctOCRErrors = (text: string): string => {
     if (!text) return text;
     
-    // Corrections OCR communes spécifiques aux noms français/européens
+    // 🛡️ LISTES DE PROTECTION : Noms valides à ne JAMAIS modifier
+    const validNamesWithRN = [
+      'BERNARD', 'BERN', 'ERNST', 'STERN', 'WERNER', 'ARNOLD', 'FERNAND', 
+      'FERDINAND', 'ERNESTINE', 'BERNADETTE', 'BARNABE', 'CARNIER', 'GARNIER',
+      'TURNER', 'CORNELIA', 'CORNILLE', 'MARNE', 'TERNE', 'VERNE', 'BJORN',
+      'BJORNE', 'THIRN', 'KARN', 'DORN', 'BORN', 'THORN', 'ANTOINE', 'BJOURNE'
+    ];
+    
+    const validNamesWithCL = [
+      'CLARA', 'CLAUDE', 'CLAIRE', 'CLEMENTINE', 'CLEMENCE', 'CLAIR', 'CLARISSE',
+      'CLOE', 'CLOTHILDE', 'CLAUDIA', 'CLAUDIO', 'CLODETTE', 'CLEVELAND',
+      'CLEO', 'CLEMONT', 'CLELIA', 'CLETUS', 'CLANCY', 'CLARK'
+    ];
+    
+    const validNamesWithYN = [
+      'CYNTHIA', 'WYNONA', 'LYNN', 'LYNNE', 'FLYNN', 'GLYNN', 'BRYNN',
+      'GWYNETH', 'DYLAN', 'EVELYN', 'KATHRYN', 'CAROLYN', 'BROOKLYN',
+      'MADELYN', 'JOCELYN', 'ROSALYN', 'GWENDOLYN', 'JACLYN', 'ASHLYN'
+    ];
+    
+    const validNamesWithII = [
+      'DIMITRII', 'YURI', 'MARIE', 'JULIE', 'SOPHIE', 'AURELIE', 'AMELIE',
+      'EMILIE', 'NATALIE', 'ROSALIE', 'NATHALIE', 'CORALIE', 'VALERIE',
+      'CECILE', 'LUCILE', 'CAMILLE', 'BASILE', 'EMILE', 'GILLES'
+    ];
+    
+    // Vérifications de protection
+    const upperText = text.toUpperCase().trim();
+    const hasValidRN = validNamesWithRN.some(name => upperText.includes(name) || name.includes(upperText));
+    const hasValidCL = validNamesWithCL.some(name => upperText.includes(name) || name.includes(upperText));
+    const hasValidYN = validNamesWithYN.some(name => upperText.includes(name) || name.includes(upperText));
+    const hasValidII = validNamesWithII.some(name => upperText.includes(name) || name.includes(upperText));
+    
+    // ✅ CORRECTIONS OCR SÉCURISÉES
     let corrected = text
-      // Corrections chiffres → lettres
+      // 🔤 Corrections chiffres → lettres SEULEMENT au début des mots
       .replace(/\b0(?=[a-z])/gi, 'O')      // 0livier → Olivier
-      .replace(/\b1(?=[a-z])/gi, 'I')      // 1sabelle → Isabelle  
-      .replace(/([a-z])0([a-z])/gi, '$1O$2') // Mar0c → Maroc, Nic0las → Nicolas
-      .replace(/([a-z])1([a-z])/gi, '$1I$2') // Mar1e → Marie, Dom1nique → Dominique
-      .replace(/5(?=t)/gi, 'S')            // 5tephane → Stephane
-      .replace(/8(?=e)/gi, 'B')            // 8ernard → Bernard
-      .replace(/3(?=e)/gi, 'E')            // 3lise → Elise
+      .replace(/\b1(?=[a-z])/gi, 'I')      // 1sabelle → Isabelle
+      .replace(/\b5(?=t)/gi, 'S')          // 5tephane → Stephane
+      .replace(/\b3(?=e)/gi, 'E')          // 3lise → Elise
       
-      // Corrections lettres → lettres (confusion OCR)
-      .replace(/rn/g, 'm')                 // Arrnaud → Armaud → Arnaud
-      .replace(/([A-Z])n([a-z])/g, '$1h$2') // Cnristine → Christine
-      .replace(/cl(?=a|o|u)/gi, 'd')       // Claurle → Claude
-      .replace(/([a-z])ii([a-z])/gi, '$1ll$2') // Miichel → Miichel → Michel
+      // 🔤 Corrections chiffres → lettres au MILIEU seulement si évident
+      // PAS de correction systématique pour éviter les erreurs
       
-      // Corrections caractères spéciaux parasites
-      .replace(/[®©™\+\•\*]+$/g, '')       // Supprime les caractères à la fin
-      .replace(/[®©™\+\•\*]/g, '')         // Supprime les caractères dans le texte
+      // 🧹 Suppression caractères parasites (SAFE)
+      .replace(/[®©™\+\•\*]+$/g, '')       // Supprime caractères à la fin
+      .replace(/[®©™\+\•\*]/g, '')         // Supprime caractères dans le texte
+      .replace(/\s+/g, ' ')                // Normalise les espaces
       
-      // Corrections spécifiques aux prénoms composés
-      .replace(/([A-Z][a-z]+)-([a-z])/g, '$1-$2'.replace(/^(.)/, c => c.toUpperCase())) // jean-claude → Jean-Claude
+      // ✨ Corrections prénoms composés
+      .replace(/([A-Z][a-z]+)-([a-z])/g, (match, p1, p2) => `${p1}-${p2.charAt(0).toUpperCase()}${p2.slice(1)}`)
       
-      // Nettoyage final
       .trim();
+    
+    // 🛡️ CORRECTIONS PROTÉGÉES : Seulement si le nom n'est pas dans les listes de protection
+    
+    // Correction "Cn" → "Ch" SEULEMENT si pas Cynthia, etc.
+    if (!hasValidYN) {
+      corrected = corrected.replace(/^Cn([a-z])/g, 'Ch$1'); // SEULEMENT au début : Cnristine → Christine
+    }
+    
+    // Correction "cl" → "d" SEULEMENT si pas Clara, Claude, etc. ET pattern évident d'erreur
+    if (!hasValidCL) {
+      corrected = corrected.replace(/\bClaur([a-z])/g, 'Claud$1'); // Claurle → Claude (cas spécifique)
+    }
+    
+    // Correction "ii" → "ll" SEULEMENT pour doubles lettres évidentes ET si pas Marie, Julie, etc.
+    if (!hasValidII) {
+      corrected = corrected.replace(/([a-z])ii(?=[a-z])/g, '$1ll'); // Miichel → Michel (double évident)
+    }
+    
+    // Correction "rn" → SEULEMENT pour erreurs évidentes comme "Arrnaud"
+    if (!hasValidRN) {
+      corrected = corrected.replace(/([A-Z][a-z]*?)rrn([a-z])/g, '$1rn$2'); // Arrnaud → Arnaud
+    }
+    
+    // ⚠️ SUPPRESSION des corrections dangereuses :
+    // - Plus de remplacement systématique B→8, O→0, I→1 au milieu des mots
+    // - Plus de correction 8e→Be (pouvait casser des séquences légitimes)
+    // - Plus de correction automatique des chiffres au milieu des noms
     
     return corrected;
   };

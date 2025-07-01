@@ -1,6 +1,7 @@
 
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { getDocumentTemplateVariables } from "@/utils/documentTypeUtils";
 
 interface Client {
   id: string;
@@ -33,14 +34,28 @@ export const generateContractHTML = (
     // Remplacer les variables dans le template personnalisé
     let html = customTemplate.template;
     
-    // Variables client
+    // 🎯 Obtenir les variables dynamiques selon le type de document
+    const documentVars = getDocumentTemplateVariables(client);
+    
+    // Variables client standard
     html = html.replace(/\{\{client\.prenom\}\}/g, client.prenom);
     html = html.replace(/\{\{client\.nom\}\}/g, client.nom);
     html = html.replace(/\{\{client\.nationalite\}\}/g, client.nationalite);
-    html = html.replace(/\{\{client\.numero_passeport\}\}/g, client.numero_passeport);
     html = html.replace(/\{\{client\.date_enregistrement\}\}/g, 
       format(new Date(client.date_enregistrement), "dd/MM/yyyy", { locale: fr }));
     html = html.replace(/\{\{client\.observations\}\}/g, client.observations || '');
+    
+    // 🎯 Variables de document dynamiques (NOUVELLES)
+    html = html.replace(/\{\{client\.numero_document\}\}/g, documentVars.numero_document);
+    html = html.replace(/\{\{client\.numero_cin\}\}/g, documentVars.numero_cin);
+    html = html.replace(/\{\{client\.numero_passeport_marocain\}\}/g, documentVars.numero_passeport_marocain);
+    html = html.replace(/\{\{client\.numero_passeport_etranger\}\}/g, documentVars.numero_passeport_etranger);
+    html = html.replace(/\{\{client\.numero_carte_sejour\}\}/g, documentVars.numero_carte_sejour);
+    html = html.replace(/\{\{client\.type_document\}\}/g, documentVars.type_document);
+    html = html.replace(/\{\{client\.document_complet\}\}/g, documentVars.document_complet);
+    
+    // Variables legacy pour compatibilité
+    html = html.replace(/\{\{client\.numero_passeport\}\}/g, client.numero_passeport);
     
     // Variables générales
     html = html.replace(/\{\{date\}\}/g, currentDate);

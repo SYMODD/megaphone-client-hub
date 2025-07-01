@@ -5,6 +5,7 @@ import { Download, Printer } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import DOMPurify from 'dompurify';
+import { getDocumentTemplateVariables } from "@/utils/documentTypeUtils";
 
 interface Client {
   id: string;
@@ -14,6 +15,7 @@ interface Client {
   numero_passeport: string;
   date_enregistrement: string;
   observations?: string;
+  document_type?: string;
 }
 
 interface ContractPreviewProps {
@@ -23,6 +25,9 @@ interface ContractPreviewProps {
 
 const getContractTemplate = (template: string, client: Client) => {
   const currentDate = format(new Date(), "dd MMMM yyyy", { locale: fr });
+  
+  // 🎯 Obtenir les variables dynamiques selon le type de document
+  const documentVars = getDocumentTemplateVariables(client);
   
   const templates = {
     service_agreement: `
@@ -37,7 +42,7 @@ const getContractTemplate = (template: string, client: Client) => {
           <p><strong>Prestataire :</strong> Sud Megaphone</p>
           <p><strong>Client :</strong> ${client.prenom} ${client.nom}</p>
           <p><strong>Nationalité :</strong> ${client.nationalite}</p>
-          <p><strong>Numéro de passeport :</strong> ${client.numero_passeport}</p>
+          <p><strong>${documentVars.type_document} :</strong> ${documentVars.numero_document}</p>
           <p><strong>Date d'enregistrement :</strong> ${format(new Date(client.date_enregistrement), "dd/MM/yyyy", { locale: fr })}</p>
         </div>
         
@@ -81,7 +86,7 @@ const getContractTemplate = (template: string, client: Client) => {
           <p><strong>Société :</strong> Sud Megaphone</p>
           <p><strong>Partenaire commercial :</strong> ${client.prenom} ${client.nom}</p>
           <p><strong>Nationalité :</strong> ${client.nationalite}</p>
-          <p><strong>Document d'identité :</strong> ${client.numero_passeport}</p>
+          <p><strong>${documentVars.type_document} :</strong> ${documentVars.numero_document}</p>
         </div>
         
         <div class="content">
@@ -120,7 +125,7 @@ const getContractTemplate = (template: string, client: Client) => {
           <p><strong>Bailleur :</strong> Sud Megaphone</p>
           <p><strong>Locataire :</strong> ${client.prenom} ${client.nom}</p>
           <p><strong>Nationalité :</strong> ${client.nationalite}</p>
-          <p><strong>Pièce d'identité :</strong> ${client.numero_passeport}</p>
+          <p><strong>${documentVars.type_document} :</strong> ${documentVars.numero_document}</p>
         </div>
         
         <div class="content">
@@ -163,7 +168,7 @@ const getContractTemplate = (template: string, client: Client) => {
           <p><strong>Transporteur :</strong> Sud Megaphone</p>
           <p><strong>Client :</strong> ${client.prenom} ${client.nom}</p>
           <p><strong>Nationalité :</strong> ${client.nationalite}</p>
-          <p><strong>Document :</strong> ${client.numero_passeport}</p>
+          <p><strong>${documentVars.type_document} :</strong> ${documentVars.numero_document}</p>
         </div>
         
         <div class="content">

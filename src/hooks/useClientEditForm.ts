@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Client } from "@/hooks/useClientData/types";
+import { validateDocumentNumber, DocumentType } from "@/utils/documentTypeUtils";
 
 interface FormData {
   nom: string;
@@ -13,6 +14,8 @@ interface FormData {
   date_enregistrement: string;
   observations: string;
   code_barre_image_url: string;
+  document_type: string;
+  categorie: string;
 }
 
 export const useClientEditForm = (client: Client | null) => {
@@ -27,7 +30,9 @@ export const useClientEditForm = (client: Client | null) => {
     code_barre: "",
     date_enregistrement: "",
     observations: "",
-    code_barre_image_url: ""
+    code_barre_image_url: "",
+    document_type: "cin",
+    categorie: "agence"
   });
 
   // Update form data when client changes, but preserve uploaded image URL
@@ -46,6 +51,8 @@ export const useClientEditForm = (client: Client | null) => {
           date_enregistrement: client.date_enregistrement,
           observations: client.observations || "",
           code_barre_image_url: client.code_barre_image_url || "",
+          document_type: client.document_type || "cin",
+          categorie: client.categorie || "agence",
         };
         
         console.log('🔄 useClientEditForm - Mise à jour formData:', {
@@ -77,6 +84,38 @@ export const useClientEditForm = (client: Client | null) => {
         all_formData: formData
       });
 
+      // 🔍 VALIDATION: Vérifier le format du numéro de document
+      const documentType = formData.document_type as DocumentType || 'cin';
+      if (formData.numero_passeport && !validateDocumentNumber(formData.numero_passeport, documentType)) {
+        toast({
+          title: "Erreur de validation",
+          description: `Le format du numéro de document est invalide pour le type "${documentType}".`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 🔍 VALIDATION: Vérifier si le numéro de document est déjà utilisé par un autre client
+      if (formData.numero_passeport && formData.numero_passeport !== client.numero_passeport) {
+        const { data: existingClient, error: checkError } = await supabase
+          .from('clients')
+          .select('id, nom, prenom')
+          .eq('numero_passeport', formData.numero_passeport)
+          .neq('id', client.id)
+          .single();
+
+        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = pas de résultat trouvé
+          console.error('❌ useClientEditForm - Erreur lors de la vérification:', checkError);
+        } else if (existingClient) {
+          toast({
+            title: "Numéro de document déjà utilisé",
+            description: `Le numéro "${formData.numero_passeport}" est déjà utilisé par ${existingClient.prenom} ${existingClient.nom}.`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
       // 🔍 DIAGNOSTIC: Vérifier les données avant la sauvegarde
       const updateData = {
         nom: formData.nom,
@@ -87,6 +126,8 @@ export const useClientEditForm = (client: Client | null) => {
         code_barre: formData.code_barre || null,
         code_barre_image_url: formData.code_barre_image_url || null,
         observations: formData.observations || null,
+        document_type: formData.document_type,
+        categorie: formData.categorie,
         updated_at: new Date().toISOString()
       };
       
@@ -103,11 +144,21 @@ export const useClientEditForm = (client: Client | null) => {
 
       if (error) {
         console.error('❌ useClientEditForm - Erreur lors de la sauvegarde:', error);
-        toast({
-          title: "Erreur",
-          description: "Erreur lors de la sauvegarde",
-          variant: "destructive",
-        });
+        
+        // 🔍 Gestion spécifique des erreurs de contrainte unique
+        if (error.code === '23505' && error.message.includes('clients_numero_passeport_key')) {
+          toast({
+            title: "Numéro de document déjà utilisé",
+            description: `Le numéro "${formData.numero_passeport}" est déjà utilisé par un autre client. Veuillez vérifier ou utiliser un numéro différent.`,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Erreur",
+            description: `Erreur lors de la sauvegarde: ${error.message}`,
+            variant: "destructive",
+          });
+        }
         return;
       }
 

@@ -1,6 +1,7 @@
 import { ClientPhotoSection } from "./ClientPhotoSection";
 import { PersonalInfoFields } from "./PersonalInfoFields";
 import { ContactInfoFields } from "./ContactInfoFields";
+import { DocumentInfoFields } from "./DocumentInfoFields";
 import { BarcodeImageSection } from "./BarcodeImageSection";
 import { Client } from "@/hooks/useClientData/types";
 
@@ -16,6 +17,8 @@ interface ClientEditFormProps {
     date_enregistrement: string;
     observations: string;
     code_barre_image_url: string;
+    document_type: string;
+    categorie: string;
   };
   onUpdate: (field: string, value: string) => void;
   onClientUpdated?: () => void;
@@ -61,7 +64,17 @@ export const ClientEditForm = ({ client, formData, onUpdate, onClientUpdated }: 
           prenom: formData.prenom,
           nom: formData.nom,
           nationalite: formData.nationalite,
-          numero_passeport: formData.numero_passeport
+          numero_passeport: formData.numero_passeport,
+          document_type: formData.document_type
+        }}
+        onUpdate={onUpdate}
+        clientId={client.id}
+      />
+      
+      <DocumentInfoFields 
+        formData={{
+          document_type: formData.document_type,
+          categorie: formData.categorie
         }}
         onUpdate={onUpdate}
       />

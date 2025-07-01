@@ -112,6 +112,8 @@ export const convertMainTextNationality = (nationality: string): string => {
     "MAGYAR": "Hongrie",
     "HONGROISE": "Hongrie",                  // ← AJOUT FORME FRANÇAISE
     "ROMANIAN": "Roumanie",
+    "ROMÂNĂ": "Roumanie",                    // ← AJOUT CRITIQUE pour cartes d'identité roumaines
+    "ROMANA": "Roumanie",                    // ← AJOUT CRITIQUE pour cartes d'identité roumaines
     "ROUMAINE": "Roumanie",
     "RUSSIAN": "Russie",
     "ROSSIYSKAYA": "Russie",
@@ -153,7 +155,35 @@ export const checkForNationalityInLine = (line: string): string | null => {
     return "Canada";
   }
   
-  // Liste étendue des nationalités reconnues
+  // 🆕 DÉTECTION PRIORITAIRE ESPAÑOLA/ESPANOLA pour passeports espagnols
+  if (lineUpper.includes("ESPAÑOLA") || lineUpper.includes("ESPANOLA")) {
+    console.log("🇪🇸 ESPAÑOLA détecté dans:", line);
+    return "Espagne";
+  }
+  
+  // 🆕 DÉTECTION AUTRES NATIONALITÉS FRÉQUENTES AVEC ET SANS ACCENTS
+  const priorityNationalities = [
+    { patterns: ["FRANÇAISE", "FRANCAISE"], nationality: "France" },
+    { patterns: ["ITALIANA"], nationality: "Italie" },
+    { patterns: ["DEUTSCHE"], nationality: "Allemagne" },
+    { patterns: ["PORTUGUESA"], nationality: "Portugal" },
+    { patterns: ["CANADIENNE"], nationality: "Canada" },
+    { patterns: ["BRITISH CITIZEN"], nationality: "Royaume-Uni" },
+    { patterns: ["COLOMBIANA"], nationality: "Colombie" },
+    { patterns: ["BRASILEIRA"], nationality: "Brésil" },
+    { patterns: ["ROMÂNĂ", "ROMANA"], nationality: "Roumanie" }
+  ];
+  
+  for (const {patterns, nationality} of priorityNationalities) {
+    for (const pattern of patterns) {
+      if (lineUpper.includes(pattern)) {
+        console.log(`🌍 ${pattern} détecté dans:`, line);
+        return nationality;
+      }
+    }
+  }
+  
+  // Liste étendue des nationalités reconnues (fallback)
   const knownNationalities = [
     // Européennes
     "DEUTSCH", "DEUTSCHE", "GERMAN", "CANADIAN", "CANADIENNE", "FRENCH", "FRANÇAISE", "FRANCAISE",
@@ -161,7 +191,7 @@ export const checkForNationalityInLine = (line: string): string | null => {
     "ITALIAN", "ITALIANA", "BELGIAN", "BELGE", "DUTCH", "NEDERLANDSE", "SWISS", "SCHWEIZ", "SUISSE", 
     "AUSTRIAN", "ÖSTERREICH", "OSTERREICH", "PORTUGUESE", "PORTUGUESA", "NORWEGIAN", "NORSK", 
     "SWEDISH", "SVENSK", "DANISH", "DANSK", "FINNISH", "SUOMI", "GREEK", "ELLINIKI", "POLISH", 
-    "POLSKA", "RUSSIAN", "ROSSIYSKAYA",
+    "POLSKA", "RUSSIAN", "ROSSIYSKAYA", "ROMANIAN", "ROMÂNĂ", "ROMANA",
     
     // Maghreb et Moyen-Orient
     "MOROCCAN", "MAROCAINE", "TUNISIAN", "TUNISIENNE", "ALGERIAN", "ALGERIENNE", "TURKISH", "TURK",

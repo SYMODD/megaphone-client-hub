@@ -220,8 +220,8 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
       }
     }
     
-    // PATTERN SÉQUENTIEL NATIONALITÉ : Nationality/Nation -> ligne suivante
-    // ✨ SUPPORT UNIVERSEL : Tous formats internationaux
+    // PATTERN SÉQUENTIEL NATIONALITÉ : Nationality/Nation -> ligne suivante  
+    // ✨ SUPPORT UNIVERSEL : Tous formats internationaux + détection directe ESPAÑOLA
     if (!passportData.nationalite && (lineUpper.includes('NATIONALITY') || 
                                      lineUpper.includes('NANIONALTON') ||   // OCR marocain
                                      lineUpper.includes('/NATION') ||
@@ -232,10 +232,29 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
                                      lineUpper.includes('NATIONALITEIT') || // Néerlandais
                                      lineUpper.includes('NACIONALIDADE') || // Portugais
                                      lineUpper.includes('CITIZENSHIP') ||   // Anglais alternatif
-                                     lineUpper.includes('CITIZEN OF'))) {   // Anglais
+                                     lineUpper.includes('CITIZEN OF') ||    // Anglais
+                                     // 🆕 DÉTECTION DIRECTE NATIONALITÉS ISOLÉES
+                                     lineUpper === 'ESPAÑOLA' ||            // Espagnol isolé
+                                     lineUpper === 'ESPANOLA' ||            // Espagnol sans accent
+                                     lineUpper === 'FRANÇAISE' ||           // Français isolé
+                                     lineUpper === 'FRANCAISE' ||           // Français sans accent
+                                     lineUpper === 'ITALIANA' ||            // Italien isolé
+                                     lineUpper === 'DEUTSCHE' ||            // Allemand isolé
+                                     lineUpper === 'PORTUGUESA')) {         // Portugais isolé
       console.log(`✅ Ligne indicatrice nationalité trouvée ligne ${i+1}:`, line);
       
-      if (i + 1 < lines.length) {
+      // 🆕 CAS SPÉCIAL : Nationalité directe isolée (ESPAÑOLA, FRANÇAISE, etc.)
+      if (lineUpper === 'ESPAÑOLA' || lineUpper === 'ESPANOLA' || 
+          lineUpper === 'FRANÇAISE' || lineUpper === 'FRANCAISE' ||
+          lineUpper === 'ITALIANA' || lineUpper === 'DEUTSCHE' || 
+          lineUpper === 'PORTUGUESA') {
+        console.log(`🎯 Nationalité isolée détectée directement: "${line}"`);
+        const convertedNationality = convertMainTextNationality(line);
+        passportData.nationalite = normalizeNationality(convertedNationality);
+        console.log("✅ Nationalité extraite (détection directe):", passportData.nationalite);
+      }
+      // CAS STANDARD : Pattern séquentiel (NATIONALITY -> ligne suivante)
+      else if (i + 1 < lines.length) {
         const nextLine = safeStringTrim(lines[i + 1]);
         console.log(`🔍 Ligne suivante candidat nationalité (${i+2}):`, nextLine);
         
@@ -482,33 +501,55 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
         console.log("✅ Nationalité extraite (fallback universel):", passportData.nationalite);
       }
       
-      // Patterns spécifiques universels pour NATIONALITY  
+      // Patterns spécifiques universels pour NATIONALITY + détection directe nationalités  
       const nationalityPatterns = [
         /(?:NATIONALITY|NATIONALITÉ|NACIONALIDAD|NAZIONALITÀ|STAATSANGEHÖRIGKEIT|NATIONALITEIT|NACIONALIDADE|NANIONALTON|CITIZENSHIP|CITIZEN\s*OF)\s*[\/:]?\s*([A-ZÀ-ÿ\s\/]{3,30})/i,
-        /(?:3\.\s*)?(?:NATIONALITY|NATIONALITÉ|CITIZENSHIP)\s*[\/:]?\s*([A-ZÀ-ÿ\s\/]{3,30})/i
+        /(?:3\.\s*)?(?:NATIONALITY|NATIONALITÉ|CITIZENSHIP)\s*[\/:]?\s*([A-ZÀ-ÿ\s\/]{3,30})/i,
+        // 🆕 PATTERNS DIRECTS POUR NATIONALITÉS ISOLÉES OU AVEC PRÉFIXES  
+        /\b(ESPAÑOLA|ESPANOLA|FRANÇAISE|FRANCAISE|ITALIANA|DEUTSCHE|PORTUGUESA|CANADIENNE|COLOMBIANA|BRASILEIRA)\b/i,
+        // Pattern pour format "KINGDOM OF SPAIN" -> "ESPAÑOLA"
+        /KINGDOM\s+OF\s+SPAIN|REIGN\s+OF\s+SPAIN|REINO\s+DE\s+ESPAÑA|REINO\s+DE\s+ESPANA/i
       ];
       
       // ÉVITER d'extraire des mots de la ligne indicatrice elle-même
       const excludeWords = ['NATIONALITY', 'NATIONALITÉ', 'NATIONALITE', 'CITIZENSHIP', 'CITIZEN', 'STATNE', 'OBTIANSTRO'];
       
-      for (const pattern of nationalityPatterns) {
-        const nationalityMatch = line.match(pattern);
-        if (nationalityMatch && nationalityMatch[1]) {
-          const candidate = safeStringTrim(nationalityMatch[1]);
-          
-          // Éviter d'extraire des mots-clés de la ligne indicatrice
-          const isExcluded = excludeWords.some(word => 
-            candidate.toUpperCase().includes(word.toUpperCase())
-          );
-          
-          if (!isExcluded && candidate.length >= 3) {
-            const convertedNationality = convertMainTextNationality(candidate);
-            passportData.nationalite = normalizeNationality(convertedNationality);
-            console.log("✅ Nationalité extraite (pattern fallback universel):", passportData.nationalite);
+              for (const pattern of nationalityPatterns) {
+          const nationalityMatch = line.match(pattern);
+          if (nationalityMatch && nationalityMatch[1]) {
+            const candidate = safeStringTrim(nationalityMatch[1]);
+            
+            // Éviter d'extraire des mots-clés de la ligne indicatrice
+            const isExcluded = excludeWords.some(word => 
+              candidate.toUpperCase().includes(word.toUpperCase())
+            );
+            
+            if (!isExcluded && candidate.length >= 3) {
+              const convertedNationality = convertMainTextNationality(candidate);
+              passportData.nationalite = normalizeNationality(convertedNationality);
+              console.log("✅ Nationalité extraite (pattern fallback universel):", passportData.nationalite);
+              break;
+            }
+          }
+          // 🆕 GESTION SPÉCIALE POUR PATTERNS DIRECTS (ESPAÑOLA, etc.)
+          else if (pattern.source.includes('ESPAÑOLA') && pattern.test(line)) {
+            console.log("🇪🇸 Pattern direct ESPAÑOLA détecté dans:", line);
+            const directMatch = line.match(pattern);
+            if (directMatch && directMatch[1]) {
+              const convertedNationality = convertMainTextNationality(directMatch[1]);
+              passportData.nationalite = normalizeNationality(convertedNationality);
+              console.log("✅ Nationalité extraite (pattern direct):", passportData.nationalite);
+              break;
+            }
+          }
+          // 🆕 GESTION SPÉCIALE POUR PATTERNS ROYAUME D'ESPAGNE
+          else if (pattern.source.includes('KINGDOM') && pattern.test(line)) {
+            console.log("👑 Pattern royaume d'Espagne détecté dans:", line);
+            passportData.nationalite = "Espagne";
+            console.log("✅ Nationalité extraite (royaume d'Espagne):", passportData.nationalite);
             break;
           }
         }
-      }
     }
     
     // Extraction du numéro de document (FALLBACK universel)

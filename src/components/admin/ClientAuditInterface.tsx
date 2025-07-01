@@ -88,7 +88,7 @@ export const ClientAuditInterface = () => {
         numero_passeport: client.numero_passeport || '',
         document_type: client.document_type || 'cin',
         point_operation: client.point_operation || '',
-        categorie: client.categorie || '',
+        categorie: client.categorie || 'agence',
         date_enregistrement: client.date_enregistrement || new Date().toISOString(),
         updated_at: client.updated_at || new Date().toISOString(),
         photo_url: client.photo_url || '',

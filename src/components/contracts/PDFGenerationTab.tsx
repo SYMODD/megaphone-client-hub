@@ -6,6 +6,7 @@ import { FileDown, Eye, AlertCircle, CheckCircle } from "lucide-react";
 import { usePDFContract } from './provider/PDFContractContext';
 import { useToast } from "@/hooks/use-toast";
 import { PDFPreview } from './PDFPreview';
+import { getDocumentTemplateVariables } from "@/utils/documentTypeUtils";
 
 export const PDFGenerationTab = () => {
   const {
@@ -126,7 +127,12 @@ export const PDFGenerationTab = () => {
                     <span className="ml-2 text-blue-600">{selectedClient.nationalite}</span>
                   </div>
                   <div>
-                    <span className="font-medium text-blue-700">Document:</span>
+                    <span className="font-medium text-blue-700">
+                      {(() => {
+                        const documentVars = getDocumentTemplateVariables(selectedClient);
+                        return documentVars.type_document + ':';
+                      })()}
+                    </span>
                     <span className="ml-2 text-blue-600">{selectedClient.numero_passeport}</span>
                   </div>
                   <div>
