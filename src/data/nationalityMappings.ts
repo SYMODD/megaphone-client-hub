@@ -19,6 +19,7 @@ export const nationalityCodeMapping: Record<string, string> = {
   "PRT": "Portugal",
   "TUN": "Tunisie",
   "DZA": "Algérie",
+  "DZ": "Algérie",   // Version courte du code algérien
   "EGY": "Égypte",
   "SAU": "Arabie saoudite",
   "ARE": "Émirats arabes unis",
@@ -128,6 +129,23 @@ export const nationalityCodeMapping: Record<string, string> = {
   "MHL": "Îles Marshall",
   "COK": "Îles Cook",
   "NIU": "Niue",
+  
+  // Pays manquants fréquents en OCR
+  "SOM": "Somalie",
+  "LBY": "Libye", 
+  "SDN": "Soudan",
+  "SSD": "Soudan du Sud",
+  "ERI": "Érythrée",
+  "DJI": "Djibouti",
+  "NOR": "Norvège",
+  "SWE": "Suède", 
+  "DNK": "Danemark",
+  "FIN": "Finlande",
+  "ISL": "Islande",
+  "LTU": "Lituanie",
+  "LVA": "Lettonie",
+  "EST": "Estonie",
+  
   // Ajout spécifique pour gérer le cas du passeport allemand
   "D": "Allemagne" // Pour les cas où seul "D" est extrait
 };

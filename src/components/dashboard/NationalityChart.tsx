@@ -46,7 +46,7 @@ export const NationalityChart = ({ data }: NationalityChartProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-80">
+        <div className="h-96 sm:h-80 md:h-96">  {/* ✅ CORRECTION MOBILE : Plus de hauteur sur mobile pour la légende */}
           {nationalityData.length > 0 ? (
             chartVisible ? (
               <Suspense fallback={

@@ -92,15 +92,15 @@ export const ClientFilters = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Première ligne : champs de filtres */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
+          {/* ✅ CORRECTION MOBILE : Champs de filtres responsive */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <div className="relative col-span-1 sm:col-span-2 lg:col-span-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
               <Input
-                placeholder="Rechercher par nom, prénom, passeport ou code-barres"
+                placeholder="Rechercher par nom, prénom..."
                 value={localSearchTerm}
                 onChange={(e) => setLocalSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 text-sm"
               />
             </div>
             
@@ -109,55 +109,77 @@ export const ClientFilters = ({
               onChange={(e) => setLocalSelectedNationality(e.target.value)}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
             >
-              <option value="">Toutes les nationalités</option>
+              <option value="">Toutes nationalités</option>
               {nationalities.map(nationality => (
                 <option key={nationality} value={nationality}>{nationality}</option>
               ))}
             </select>
 
-            <DateRangePicker
-              dateRange={localDateRange}
-              onDateRangeChange={setLocalDateRange}
-            />
+            <div className="col-span-1 sm:col-span-1 lg:col-span-1">
+              <DateRangePicker
+                dateRange={localDateRange}
+                onDateRangeChange={setLocalDateRange}
+              />
+            </div>
           </div>
 
-          {/* Deuxième ligne : boutons d'action */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Button 
-                onClick={handleApplyFilters}
-                disabled={isApplyingFilters}
-                className="flex items-center gap-2"
-                variant={hasChanges ? "default" : "outline"}
-              >
-                <Play className="w-4 h-4" />
-                {isApplyingFilters ? "Application..." : "Appliquer les filtres"}
-              </Button>
-
-              {hasActiveFilters && (
+          {/* Deuxième ligne : boutons d'action - Layout responsive */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2">
+            {/* Groupe de boutons principaux */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              {/* Ligne des boutons */}
+              <div className="flex items-center gap-2">
                 <Button 
-                  onClick={handleClearFilters}
-                  variant="outline"
+                  onClick={handleApplyFilters}
+                  disabled={isApplyingFilters}
+                  className="flex items-center gap-2 text-xs sm:text-sm"
+                  variant={hasChanges ? "default" : "outline"}
                   size="sm"
-                  className="flex items-center gap-2"
                 >
-                  <RotateCcw className="w-4 h-4" />
-                  Réinitialiser
+                  <Play className="w-3 h-3 sm:w-4 sm:h-4" />
+                  {isApplyingFilters ? "Application..." : "Appliquer"}
                 </Button>
-              )}
 
+                {hasActiveFilters && (
+                  <Button 
+                    onClick={handleClearFilters}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2 text-xs sm:text-sm"
+                  >
+                    <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden xs:inline">Réinitialiser</span>
+                    <span className="xs:hidden">Reset</span>
+                  </Button>
+                )}
+              </div>
+
+              {/* ✅ CORRECTION MOBILE : Message d'état optimisé */}
               {hasChanges && (
-                <span className="text-sm text-orange-600 font-medium">
-                  Filtres modifiés - Cliquez sur "Appliquer" pour voir les résultats
-                </span>
+                <div className="flex items-center gap-2">
+                  {/* Version mobile : Badge compact */}
+                  <div className="sm:hidden">
+                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 border border-orange-200 rounded text-xs text-orange-700 font-medium">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                      <span>Filtres modifiés</span>
+                    </div>
+                  </div>
+                  
+                  {/* Version desktop : Message complet */}
+                  <span className="hidden sm:inline text-sm text-orange-600 font-medium">
+                    Filtres modifiés - Cliquez sur "Appliquer" pour voir les résultats
+                  </span>
+                </div>
               )}
             </div>
             
+            {/* Bouton export */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Download className="w-4 h-4" />
-                  Exporter
+                <Button variant="outline" size="sm" className="flex items-center gap-2 text-xs sm:text-sm w-full sm:w-auto">
+                  <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Exporter</span>
+                  <span className="xs:hidden">Export</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>

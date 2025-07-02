@@ -16,6 +16,14 @@ export const convertMainTextNationality = (nationality: string): string => {
     "BRITISH CITIZEN": "Royaume-Uni",        // ← AJOUT CRITIQUE TEST
     "ENGLISH": "Royaume-Uni",
     
+    // Nations Unies - Passeports officiels ONU
+    "UNITED NATIONS": "Nations Unies",
+    "NATIONS UNIES": "Nations Unies",
+    "UNITED NATIONS - NATIONS UNIES": "Nations Unies",
+    "NATIONS UNIES - UNITED NATIONS": "Nations Unies",
+    "UN": "Nations Unies",
+    "ONU": "Nations Unies",
+    
     // Irlandais
     "IRISH": "Irlande",
     "IRELAND": "Irlande",
@@ -58,6 +66,10 @@ export const convertMainTextNationality = (nationality: string): string => {
     // Néerlandais
     "DUTCH": "Pays-Bas",
     "NEDERLANDSE": "Pays-Bas",
+    "NEDERLAND": "Pays-Bas",                 // ← AJOUT CRITIQUE NÉERLANDAIS
+    "NEDERLANDS": "Pays-Bas",                // ← AJOUT VARIANTE
+    "HOLLAND": "Pays-Bas",                   // ← AJOUT TERME COURANT
+    "HOLLANDE": "Pays-Bas",                  // ← AJOUT FRANÇAIS
     "KONINKRIJK DER NEDERLANDEN": "Pays-Bas",
     "BELGIAN": "Belgique",
     "BELGE": "Belgique",
@@ -84,11 +96,25 @@ export const convertMainTextNationality = (nationality: string): string => {
     
     // Maghreb
     "MOROCCAN": "Maroc",
+    "MOROCAIN": "Maroc",                     // ← AJOUT CRITIQUE FRANÇAIS MASCULIN
     "MAROCAINE": "Maroc",
+    "MAROC": "Maroc",                        // ← AJOUT CRITIQUE FORME DIRECTE
+    "MOROCCO": "Maroc",                      // ← AJOUT FORME ANGLAISE
+    "ROYAUME DU MAROC": "Maroc",            // ← AJOUT FORME OFFICIELLE
+    "KINGDOM OF MOROCCO": "Maroc",          // ← AJOUT FORME ANGLAISE OFFICIELLE
     "TUNISIAN": "Tunisie",
     "TUNISIENNE": "Tunisie",
     "ALGERIAN": "Algérie",
     "ALGERIENNE": "Algérie",
+    
+    // Afrique subsaharienne
+    "SENEGALESE": "Sénégal",
+    "SÉNÉGALAISE": "Sénégal",                // ← AJOUT CRITIQUE SÉNÉGAL
+    "SENEGALAISE": "Sénégal",                // ← AJOUT SANS ACCENT
+    "SÉNÉGAL": "Sénégal",                    // ← AJOUT DIRECT
+    "SENEGAL": "Sénégal",                    // ← AJOUT SANS ACCENT
+    "RÉPUBLIQUE DU SÉNÉGAL": "Sénégal",     // ← AJOUT FORME OFFICIELLE
+    "REPUBLIQUE DU SENEGAL": "Sénégal",     // ← AJOUT SANS ACCENTS
     
     // Autres
     "TURKISH": "Turquie",
@@ -163,6 +189,7 @@ export const checkForNationalityInLine = (line: string): string | null => {
   
   // 🆕 DÉTECTION AUTRES NATIONALITÉS FRÉQUENTES AVEC ET SANS ACCENTS
   const priorityNationalities = [
+    { patterns: ["UNITED NATIONS", "NATIONS UNIES", "UNITED NATIONS - NATIONS UNIES"], nationality: "Nations Unies" },
     { patterns: ["FRANÇAISE", "FRANCAISE"], nationality: "France" },
     { patterns: ["ITALIANA"], nationality: "Italie" },
     { patterns: ["DEUTSCHE"], nationality: "Allemagne" },
@@ -171,7 +198,9 @@ export const checkForNationalityInLine = (line: string): string | null => {
     { patterns: ["BRITISH CITIZEN"], nationality: "Royaume-Uni" },
     { patterns: ["COLOMBIANA"], nationality: "Colombie" },
     { patterns: ["BRASILEIRA"], nationality: "Brésil" },
-    { patterns: ["ROMÂNĂ", "ROMANA"], nationality: "Roumanie" }
+    { patterns: ["ROMÂNĂ", "ROMANA"], nationality: "Roumanie" },
+    { patterns: ["SÉNÉGALAISE", "SENEGALAISE", "RÉPUBLIQUE DU SÉNÉGAL", "REPUBLIQUE DU SENEGAL"], nationality: "Sénégal" },
+    { patterns: ["MAROCAINE", "MOROCAIN", "MAROC", "ROYAUME DU MAROC", "KINGDOM OF MOROCCO"], nationality: "Maroc" }
   ];
   
   for (const {patterns, nationality} of priorityNationalities) {
@@ -188,14 +217,18 @@ export const checkForNationalityInLine = (line: string): string | null => {
     // Européennes
     "DEUTSCH", "DEUTSCHE", "GERMAN", "CANADIAN", "CANADIENNE", "FRENCH", "FRANÇAISE", "FRANCAISE",
     "AMERICAN", "BRITISH", "IRISH", "IRELAND", "ÉIRE", "EIRE", "SPANISH", "ESPAÑOLA", "ESPANOLA", 
-    "ITALIAN", "ITALIANA", "BELGIAN", "BELGE", "DUTCH", "NEDERLANDSE", "SWISS", "SCHWEIZ", "SUISSE", 
+    "ITALIAN", "ITALIANA", "BELGIAN", "BELGE", "DUTCH", "NEDERLANDSE", "NEDERLAND", "NEDERLANDS", "HOLLAND", "HOLLANDE", "SWISS", "SCHWEIZ", "SUISSE", 
     "AUSTRIAN", "ÖSTERREICH", "OSTERREICH", "PORTUGUESE", "PORTUGUESA", "NORWEGIAN", "NORSK", 
     "SWEDISH", "SVENSK", "DANISH", "DANSK", "FINNISH", "SUOMI", "GREEK", "ELLINIKI", "POLISH", 
     "POLSKA", "RUSSIAN", "ROSSIYSKAYA", "ROMANIAN", "ROMÂNĂ", "ROMANA",
     
     // Maghreb et Moyen-Orient
-    "MOROCCAN", "MAROCAINE", "TUNISIAN", "TUNISIENNE", "ALGERIAN", "ALGERIENNE", "TURKISH", "TURK",
+    "MOROCCAN", "MOROCAIN", "MAROCAINE", "MAROC", "MOROCCO", "ROYAUME DU MAROC", "KINGDOM OF MOROCCO",
+    "TUNISIAN", "TUNISIENNE", "ALGERIAN", "ALGERIENNE", "TURKISH", "TURK",
     "EGYPTIAN", "EGYPTIENNE", "LEBANESE", "LIBANAISE", "SYRIAN", "SYRIENNE", "JORDANIAN", "JORDANIENNE",
+    
+    // Afrique subsaharienne
+    "SENEGALESE", "SÉNÉGALAISE", "SENEGALAISE", "SÉNÉGAL", "SENEGAL", "RÉPUBLIQUE DU SÉNÉGAL", "REPUBLIQUE DU SENEGAL",
     
     // Autres
     "BRAZILIAN", "BRASILEIRA", "ARGENTINE", "ARGENTINO", "CHINESE", "JAPONAISE", "KOREAN", "INDIEN"
@@ -246,7 +279,9 @@ export const detectCountryCodeInName = (name: string): { isCountryCode: boolean;
     'GRC': 'Grèce',
     'MAR': 'Maroc',
     'DZA': 'Algérie',
-    'TUN': 'Tunisie'
+    'DZ': 'Algérie',   // Version courte du code algérien
+    'TUN': 'Tunisie',
+    'SEN': 'Sénégal'   // ← AJOUT CRITIQUE SÉNÉGAL
   };
   
   // Vérifier si le nom est exactement un code pays

@@ -34,12 +34,12 @@ export const ClientStats = ({ data }: ClientStatsProps) => {
 
       <Card className="bg-gradient-to-br from-green-500 to-emerald-600 text-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Nouveaux ce mois</CardTitle>
+          <CardTitle className="text-sm font-medium">Nouveaux (30 jours)</CardTitle>
           <TrendingUp className="h-4 w-4 opacity-80" />
         </CardHeader>
         <CardContent>
           <div className="text-xl sm:text-2xl font-bold">{newThisMonth}</div>
-          <p className="text-xs opacity-80">+8% vs mois dernier</p>
+          <p className="text-xs opacity-80">Sur les 30 derniers jours</p>
         </CardContent>
       </Card>
 

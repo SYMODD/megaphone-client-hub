@@ -8,15 +8,16 @@ export const normalizeNationality = (nationality: string): string => {
   
   // Mapping complet des nationalités vers le format standard
   const nationalityMapping: Record<string, string> = {
-    // Maroc
-    "maroc": "Maroc",
-    "marocain": "Maroc", 
-    "marocaine": "Maroc",
-    "moroccan": "Maroc",
-    "morocco": "Maroc",
-    "royaume du maroc": "Maroc",
-    "mar": "Maroc",
-    "ma": "Maroc",
+      // Maroc
+  "maroc": "Maroc",
+  "marocain": "Maroc",
+  "marocaine": "Maroc",
+  "moroccan": "Maroc",
+  "morocco": "Maroc",
+  "royaume du maroc": "Maroc",
+  "kingdom of morocco": "Maroc",           // ← AJOUT FORME ANGLAISE
+  "mar": "Maroc",
+  "ma": "Maroc",
     
     // France
     "france": "France",
@@ -95,9 +96,12 @@ export const normalizeNationality = (nationality: string): string => {
     "pays bas": "Pays-Bas",
     "néerlandais": "Pays-Bas",
     "neerlandais": "Pays-Bas",
+    "nederlands": "Pays-Bas",              // ← AJOUT CRITIQUE
     "dutch": "Pays-Bas",
     "netherlands": "Pays-Bas",
     "nederland": "Pays-Bas",
+    "holland": "Pays-Bas",                 // ← AJOUT CRITIQUE
+    "hollande": "Pays-Bas",                // ← AJOUT CRITIQUE
     "nld": "Pays-Bas",
     "nl": "Pays-Bas",
     
@@ -194,7 +198,41 @@ export const normalizeNationality = (nationality: string): string => {
     "thai": "Thaïlande",
     "thailand": "Thaïlande",
     "united states of america": "États-Unis",
-    "british citizen": "Royaume-Uni"
+    "british citizen": "Royaume-Uni",
+    
+    // Nations Unies - Passeports officiels ONU
+    "united nations": "Nations Unies",
+    "nations unies": "Nations Unies",
+    "united nations - nations unies": "Nations Unies",
+    "nations unies - united nations": "Nations Unies",
+    "onu": "Nations Unies",
+    "un": "Nations Unies",
+    
+    // Pays africains fréquents  
+    "dz": "Algérie",   // Code court algérien manquant
+    "dza": "Algérie",  // Code long algérien (déjà présent mais ajouté pour cohérence)
+    "somalie": "Somalie",
+    "somalien": "Somalie",
+    "somalienne": "Somalie",
+    "som": "Somalie",
+    "libye": "Libye",
+    "libyen": "Libye",
+    "libyenne": "Libye",
+    "soudan": "Soudan",
+    "soudanais": "Soudan",
+    "soudanaise": "Soudan",
+    
+    // Sénégal
+    "sénégal": "Sénégal",
+    "senegal": "Sénégal",
+    "sénégalais": "Sénégal",
+    "sénégalaise": "Sénégal", 
+    "senegalais": "Sénégal",
+    "senegalaise": "Sénégal",
+    "senegalese": "Sénégal",
+    "république du sénégal": "Sénégal",
+    "republique du senegal": "Sénégal",
+    "sen": "Sénégal"
   };
 
   return nationalityMapping[normalizedNationality] || 

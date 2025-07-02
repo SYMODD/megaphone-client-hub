@@ -195,12 +195,12 @@ function processMRZStandard(mrzLines: string[], mrzData: MRZData): void {
       passportNumber = secondLine.substring(0, 8).replace(/</g, '');
       console.log("🇨🇭 Format suisse détecté - numéro 8 caractères");
     }
-    // Format polonais: EK08079646P0L... (numéro de passeport de 10 caractères)
-    else if (/^[A-Z0-9]{10}[A-Z0-9]{3}/.test(secondLine)) {
+    // Format polonais SPÉCIFIQUE: EK08079646P0L... (numéro de passeport de 10 caractères + code POL)
+    else if (/^[A-Z0-9]{10}[A-Z0-9]POL/.test(secondLine)) {
       passportNumber = secondLine.substring(0, 10).replace(/</g, '');
-      console.log("🇵🇱 Format polonais détecté - numéro 10 caractères");
+      console.log("🇵🇱 Format polonais spécifique détecté - numéro 10 caractères");
     } else {
-      // Format standard: numéro de passeport de 9 caractères
+      // Format standard: numéro de passeport de 9 caractères (Italien, Français, etc.)
       passportNumber = secondLine.substring(0, 9).replace(/</g, '');
       console.log("🌍 Format standard détecté - numéro 9 caractères");
     }
@@ -312,6 +312,7 @@ function convertCountryCodeToNationality(countryCode: string): string {
     'AUT': 'Autriche',
     'TUN': 'Tunisie',
     'DZA': 'Algérie',
+    'DZ': 'Algérie',   // Version courte du code algérien
     'ALG': 'Algérie',
     'EGY': 'Égypte',
     'LBY': 'Libye',
@@ -362,7 +363,22 @@ function convertCountryCodeToNationality(countryCode: string): string {
     'KWT': 'Koweït',
     'BHR': 'Bahreïn',
     'OMN': 'Oman',
-    'YEM': 'Yémen'
+    'YEM': 'Yémen',
+    
+    // Pays manquants fréquents
+    'SOM': 'Somalie',
+    'SDN': 'Soudan',
+    'SSD': 'Soudan du Sud',
+    'ERI': 'Érythrée',
+    'DJI': 'Djibouti',
+    'NOR': 'Norvège',
+    'SWE': 'Suède',
+    'DNK': 'Danemark',
+    'FIN': 'Finlande',
+    'ISL': 'Islande',
+    'LTU': 'Lituanie',
+    'LVA': 'Lettonie',
+    'EST': 'Estonie'
   };
 
   // Nettoyage et recherche

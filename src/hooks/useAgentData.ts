@@ -107,18 +107,19 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
   const statistics = useMemo(() => {
     const totalClients = formattedClients.length;
     
-    // Clients nouveaux ce mois
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
+    // ✅ CORRECTION : Clients nouveaux sur les 30 derniers jours (plus intuitif que mois calendaire)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
     const newThisMonth = formattedClients.filter(client => {
       const clientDate = new Date(client.dateEnregistrement);
-      return clientDate.getMonth() === currentMonth && clientDate.getFullYear() === currentYear;
+      return clientDate >= thirtyDaysAgo;
     }).length;
 
     // Contrats générés (estimation 76% des clients)
     const contractsGenerated = Math.ceil(totalClients * 0.76);
 
-    console.log("📈 Statistiques calculées:", { totalClients, newThisMonth, contractsGenerated });
+    console.log("📈 Statistiques calculées (30 derniers jours):", { totalClients, newThisMonth, contractsGenerated });
     return { totalClients, newThisMonth, contractsGenerated };
   }, [formattedClients]);
 

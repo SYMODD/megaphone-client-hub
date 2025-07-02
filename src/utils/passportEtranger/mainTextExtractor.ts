@@ -31,17 +31,46 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
         console.log(`🔍 Ligne suivante candidat numéro (${j+1}):`, nextLine);
         
         // Pattern pour numéro de passeport (lettres + chiffres, 6-15 caractères)
-        if (nextLine && /^[A-Z0-9]{6,15}$/i.test(nextLine) && 
-            !['CANADA', 'CAN', 'USA', 'DEU', 'FRA', 'ESP', 'ITA', 'BEL', 'CHE', 'PASSPORT', 'PASSEPORT'].includes(nextLine.toUpperCase())) {
+        // Support spécial pour Nations Unies (format AUNB466734UN)
+        if (nextLine && (/^[A-Z0-9]{6,15}$/i.test(nextLine) || /^[A-Z0-9]{4,12}[A-Z]{2,3}$/i.test(nextLine)) && 
+            !['CANADA', 'CAN', 'USA', 'DEU', 'FRA', 'ESP', 'ITA', 'BEL', 'CHE', 'PASSPORT', 'PASSEPORT', 'UNITED', 'NATIONS'].includes(nextLine.toUpperCase())) {
           
-          passportData.numero_passeport = nextLine.toUpperCase();
+          let passportNumber = nextLine.toUpperCase();
+          
+          // 🔧 CORRECTION CRITIQUE : Nettoyer les codes pays algériens mal collés
+          if (passportNumber.endsWith('DZ') && passportNumber.length > 8) {
+            // Si le numéro se termine par "DZ" et est long, c'est probablement "numéro + code pays"
+            passportNumber = passportNumber.replace(/DZ$/i, '');
+            console.log(`🔧 Code pays DZ retiré du numéro: "${nextLine}" → "${passportNumber}"`);
+          } else if (passportNumber.endsWith('DZA') && passportNumber.length > 9) {
+            // Si le numéro se termine par "DZA" et est long, c'est probablement "numéro + code pays"  
+            passportNumber = passportNumber.replace(/DZA$/i, '');
+            console.log(`🔧 Code pays DZA retiré du numéro: "${nextLine}" → "${passportNumber}"`);
+          }
+          
+          // 🔧 CORRECTION OCR : G confondu avec 6 dans les numéros de passeports
+          if (passportNumber.startsWith('6') && passportNumber.length >= 8 && /^6[A-Z]/.test(passportNumber)) {
+            // Si le numéro commence par "6" suivi d'une lettre, c'est probablement "G" mal reconnu
+            const correctedNumber = passportNumber.replace(/^6/, 'G');
+            console.log(`🔧 Correction OCR G/6: "${passportNumber}" → "${correctedNumber}"`);
+            passportNumber = correctedNumber;
+          }
+          
+          // 🔧 CORRECTION BELGIQUE : Nettoyer formats belges avec caractères parasites  
+          if (/^[G6][A-Z]\d{7,9}/.test(passportNumber)) {
+            // Format belge : GC4322386 ou 6C4322386 (avec parasites possibles)
+            const belgianMatch = passportNumber.match(/^([G6][A-Z]\d{7})/);
+            if (belgianMatch) {
+              const cleanNumber = belgianMatch[1].replace(/^6/, 'G'); // Corriger 6->G si nécessaire
+              console.log(`🔧 Nettoyage format belge: "${passportNumber}" → "${cleanNumber}"`);
+              passportNumber = cleanNumber;
+            }
+          }
+          
+          passportData.numero_passeport = passportNumber;
           console.log("✅ Numéro passeport extrait (pattern séquentiel):", passportData.numero_passeport);
           break;
         }
-      }
-      
-      if (passportData.numero_passeport) {
-        break;
       }
     }
     
@@ -57,6 +86,13 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
                               lineUpper.includes('SOBRENOME') ||        // Portugais
                               lineUpper.includes('ACHTERNAAM') ||       // Néerlandais
                               lineUpper.includes('NAAM/SUMAME') ||      // Belge/Néerlandais (erreur OCR)
+                              // 🆕 FORMATS BELGES SPÉCIFIQUES  
+                              lineUpper.includes('NAAM/') ||            // Néerlandais belge "Naam/"
+                              lineUpper.includes('ACHTERNAAM/') ||      // Néerlandais complet
+                              lineUpper.includes('FAMILIENAAM') ||      // Néerlandais "nom de famille"
+                              lineUpper.includes('NAAM (') ||           // Format avec parenthèses
+                              lineUpper.includes('1. SURNAME') ||       // Format numéroté belge
+                              lineUpper.includes('1. NOM') ||           // Format numéroté français
                               // 🆕 FORMATS IRLANDAIS SPÉCIFIQUES
                               lineUpper.includes('SLOINNE') ||          // Irlandais : Nom de famille
                               lineUpper.includes('AINM TEAGHLAIGH') ||  // Irlandais : Nom de famille
@@ -93,6 +129,8 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
               nextLine.includes('VORNANE(N)') ||
               nextLine.includes('PRÉNON[S)') ||
               nextLine.includes('PREMUSIS)') ||
+              // 🆕 EXCLUSIONS LABELS SPÉCIFIQUES (éviter "PRÉNOMS", "PRENOMS", etc.)
+              ['PRÉNOMS', 'PRENOMS', 'PRENOMST', 'GIVEN', 'NAMES', 'FORENAMES', 'FIRST'].includes(nextLine.toUpperCase()) ||
               // 🆕 EXCLUSIONS CODES PAYS ÉTENDUES (Inclure IRL pour éviter qu'il soit pris comme nom)
               ['COL', 'CAN', 'USA', 'DEU', 'FRA', 'ESP', 'ITA', 'BEL', 'SVK', 'POL', 'CZE', 'IRL', 'GBR', 'IND'].includes(nextLine)  // Codes pays étendus
             );
@@ -174,6 +212,13 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
                                 lineUpper.includes('PRIMEIRO NOME') ||  // Portugais
                                 lineUpper.includes('VOORNAAM') ||       // Néerlandais
                                 lineUpper.includes('VOORAMEN/ GIVEN') || // Belge/Néerlandais
+                                // 🆕 FORMATS BELGES SPÉCIFIQUES
+                                lineUpper.includes('VOORNAAM/') ||      // Néerlandais belge "Voornaam/"
+                                lineUpper.includes('VOORNAMEN/') ||     // Néerlandais pluriel
+                                lineUpper.includes('GIVEN NAME(S)') ||  // Format anglais avec parenthèses  
+                                lineUpper.includes('2. GIVEN') ||       // Format numéroté belge
+                                lineUpper.includes('2. PRÉNOM') ||      // Format numéroté français
+                                lineUpper.includes('2. PRENOM') ||      // Format numéroté sans accent
                                 // 🆕 FORMATS IRLANDAIS SPÉCIFIQUES
                                 lineUpper.includes('CÉAD AINM') ||       // Irlandais : Prénom
                                 lineUpper.includes('AINMNEACHA') ||      // Irlandais : Prénoms
@@ -202,14 +247,22 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
         
         // Tester avec la version nettoyée pour éviter les problèmes de regex avec caractères spéciaux
         const testPrenom = nextLine.replace(/[®©™\+\•]+$/g, '').trim();
+        
+        // EXCLUSIONS SPÉCIFIQUES POUR PRÉNOMS (éviter labels et mots-clés)
+        const isPrenomExcluded = (
+          nextLine.includes('NAME') || 
+          nextLine.includes('GIVEN') ||
+          nextLine.includes('PASSPORT') ||
+          nextLine.includes('REPUBLIC') ||
+          nextLine.includes('/') ||
+          nextLine.includes('NATIONALITY') ||
+          // 🆕 EXCLUSIONS LABELS SPÉCIFIQUES
+          ['PRÉNOMS', 'PRENOMS', 'PRENOMST', 'GIVEN', 'NAMES', 'FORENAMES', 'FIRST', 'SURNAME', 'NOM'].includes(nextLine.toUpperCase())
+        );
+        
         if (nextLine && nextLine.length >= 2 && 
             /^[A-ZÀ-ÿ\s\-]+$/i.test(testPrenom) &&  // Pattern avec caractères accentués
-            !nextLine.includes('NAME') && 
-            !nextLine.includes('GIVEN') &&
-            !nextLine.includes('PASSPORT') &&
-            !nextLine.includes('REPUBLIC') &&
-            !nextLine.includes('/') &&
-            !nextLine.includes('NATIONALITY')) {
+            !isPrenomExcluded) {
           
           if (cleanPrenom.length >= 2) {
             passportData.prenom = cleanPrenom;
@@ -247,7 +300,11 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
       if (lineUpper === 'ESPAÑOLA' || lineUpper === 'ESPANOLA' || 
           lineUpper === 'FRANÇAISE' || lineUpper === 'FRANCAISE' ||
           lineUpper === 'ITALIANA' || lineUpper === 'DEUTSCHE' || 
-          lineUpper === 'PORTUGUESA') {
+          lineUpper === 'PORTUGUESA' || lineUpper === 'NEDERLANDSE' ||
+          lineUpper === 'NEDERLANDS' || lineUpper === 'HOLLAND' ||
+          lineUpper === 'HOLLANDE' || lineUpper === 'SÉNÉGALAISE' ||
+          lineUpper === 'SENEGALAISE' || lineUpper === 'MAROCAINE' ||
+          lineUpper === 'MOROCAIN' || lineUpper === 'MAROC') {
         console.log(`🎯 Nationalité isolée détectée directement: "${line}"`);
         const convertedNationality = convertMainTextNationality(line);
         passportData.nationalite = normalizeNationality(convertedNationality);
@@ -338,6 +395,7 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
   console.log("📋 Nom séquentiel:", passportData.nom || "NON TROUVÉ");
   console.log("📋 Prénom séquentiel:", passportData.prenom || "NON TROUVÉ");
   console.log("📋 Nationalité séquentielle:", passportData.nationalite || "NON TROUVÉ");
+  console.log("📋 Numéro document séquentiel:", passportData.numero_passeport || "NON TROUVÉ");
   
   // ===== PHASE 2: PATTERNS DE FALLBACK UNIVERSELS =====
   console.log("🔄 PHASE 2 - Patterns de fallback universels...");
@@ -436,7 +494,9 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
             'MARIE', 'ANNE', 'PIERRE', 'MICHEL', 'PHILIPPE', 'NICOLAS', 'LAURENT', 'DAVID',
             'STEPHANIE', 'CATHERINE', 'FRANCOISE', 'ISABELLE', 'MARTINE', 'CHRISTINE', 'DOMINIQUE', 'PATRICIA',
             // 🔧 EXCLUSIONS SPÉCIFIQUES POUR ÉVITER LES PRÉNOMS COMPOSÉS COMME NOM
-            'JO-ANNIE', 'JEAN-CLAUDE', 'MARIE-CLAIRE', 'ANNE-MARIE', 'PIERRE-LOUIS'].includes(cleanLine.toUpperCase())) {
+            'JO-ANNIE', 'JEAN-CLAUDE', 'MARIE-CLAIRE', 'ANNE-MARIE', 'PIERRE-LOUIS',
+            // 🆕 EXCLUSIONS PRÉNOMS INTERNATIONAUX COURTS COURANTS
+            'ZIAD', 'OMAR', 'AHMED', 'SARA', 'LEILA', 'KARIM', 'NADIA', 'YOUSSEF', 'FATIMA', 'HASSAN'].includes(cleanLine.toUpperCase())) {
         
         passportData.nom = cleanLine;
         console.log("✅ Nom extrait (pattern isolé universel):", passportData.nom);
@@ -584,11 +644,32 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
       
       // DÉTECTION LIGNE ISOLÉE : numéro de passeport seul sur une ligne
       if (!passportData.numero_passeport && 
-          (/^[A-Z]{2}\d{7,9}$/.test(line.trim()) ||        // Format belge GA3987122
+          (/^[A-Z]{2}\d{7,9}/.test(line.trim()) ||        // Format belge GA3987122
            /^[A-Z]{3}\d{5,8}$/.test(line.trim()) ||        // Format suisse XOY28U44
-           /^\d{2}[A-Z]{2}\d{5,6}$/.test(line.trim())) &&  // Format français 18CF85006
+           /^\d{2}[A-Z]{2}\d{5,6}$/.test(line.trim()) ||   // Format français 18CF85006
+           /^6[A-Z]\d{6,8}$/.test(line.trim()) ||          // Format avec erreur OCR 6C5930791
+           /^[G6][A-Z]\d{7}/.test(line.trim())) &&         // Format belge avec caractères parasites
           !['BEL', 'FRA', 'USA', 'CAN', 'DEU', 'CHE'].includes(line.trim())) {
-        passportData.numero_passeport = line.trim();
+        
+        let isolatedNumber = line.trim();
+        
+        // 🔧 CORRECTION BELGIQUE : Nettoyer formats belges avec caractères parasites (en premier)
+        if (/^[G6][A-Z]\d{7,9}/.test(isolatedNumber)) {
+          const belgianIsolatedMatch = isolatedNumber.match(/^([G6][A-Z]\d{7})/);
+          if (belgianIsolatedMatch) {
+            isolatedNumber = belgianIsolatedMatch[1]; // Extraire seulement la partie propre
+            console.log(`🔧 Nettoyage format belge isolé: "${line.trim()}" → "${isolatedNumber}"`);
+          }
+        }
+        
+        // 🔧 CORRECTION OCR : G confondu avec 6 dans les numéros isolés (après nettoyage)
+        if (isolatedNumber.startsWith('6') && /^6[A-Z]/.test(isolatedNumber)) {
+          const correctedIsolated = isolatedNumber.replace(/^6/, 'G');
+          console.log(`🔧 Correction OCR G/6 (ligne isolée): "${isolatedNumber}" → "${correctedIsolated}"`);
+          isolatedNumber = correctedIsolated;
+        }
+        
+        passportData.numero_passeport = isolatedNumber;
         console.log("✅ Numéro document extrait (ligne isolée):", passportData.numero_passeport);
       }
     }

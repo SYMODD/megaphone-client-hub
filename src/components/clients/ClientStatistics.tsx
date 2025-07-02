@@ -1,29 +1,59 @@
 import { Card, CardContent } from "@/components/ui/card";
-
-interface Client {
-  id: string;
-  nom: string;
-  prenom: string;
-  nationalite: string;
-  numero_passeport: string;
-  date_enregistrement: string;
-  photo_url?: string;
-  observations?: string;
-  created_at: string;
-  updated_at: string;
-  agent_id: string;
-}
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Client } from "@/hooks/useClientData/types";
 
 interface ClientStatisticsProps {
   totalCount: number;
-  clients: Client[];
+  clients: Client[]; // Clients de la page actuelle seulement
   nationalities: string[];
 }
 
 export const ClientStatistics = ({ totalCount, clients, nationalities }: ClientStatisticsProps) => {
-  const newThisMonth = (clients || []).filter(c => 
-    new Date(c.date_enregistrement) >= new Date(Date.now() - 30*24*60*60*1000)
-  ).length;
+  // ✅ CORRECTION : Récupérer TOUS les clients pour le calcul des nouveaux clients
+  const { data: allClients = [] } = useQuery({
+    queryKey: ['all-clients-for-statistics'],
+    queryFn: async () => {
+      console.log("📊 Récupération de TOUS les clients pour calcul nouveaux clients...");
+      const { data, error } = await supabase
+        .from('clients')
+        .select('date_enregistrement')
+        .order('date_enregistrement', { ascending: false });
+      
+      if (error) {
+        console.error("❌ Erreur récupération tous clients:", error);
+        throw error;
+      }
+      
+      console.log(`✅ ${data.length} clients récupérés pour calcul`);
+      return data as Client[];
+    },
+    staleTime: 5 * 60 * 1000, // Cache 5 minutes
+  });
+
+  // ✅ CORRECTION : Calcul cohérent des nouveaux clients sur 30 jours avec TOUS les clients
+  const newThisMonth = useMemo(() => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+
+    const newClientsCount = allClients.filter(c => 
+      c.date_enregistrement && c.date_enregistrement >= thirtyDaysAgoStr
+    ).length;
+
+    // 🐛 DEBUG : Afficher les détails du calcul
+    console.log("🧮 ClientStatistics DEBUG:", {
+      totalClients: totalCount,
+      allClientsCount: allClients.length,
+      clientsPageCount: clients.length, // Pour comparaison
+      thirtyDaysAgo: thirtyDaysAgoStr,
+      newThisMonth: newClientsCount,
+      sampleDates: allClients.slice(0, 3).map(c => c.date_enregistrement)
+    });
+
+    return newClientsCount;
+  }, [allClients, totalCount, clients.length]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -36,7 +66,7 @@ export const ClientStatistics = ({ totalCount, clients, nationalities }: ClientS
       <Card>
         <CardContent className="p-4">
           <div className="text-2xl font-bold text-green-600">{newThisMonth}</div>
-          <p className="text-sm text-slate-600">Nouveaux ce mois</p>
+          <p className="text-sm text-slate-600">Nouveaux (30 jours)</p>
         </CardContent>
       </Card>
       <Card>

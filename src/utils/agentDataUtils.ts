@@ -61,10 +61,23 @@ export const filterClientsByRole = (
 
 export const calculateStatistics = (clients: ClientData[]) => {
   const totalClients = clients.length;
-  const newThisMonth = Math.ceil(totalClients * 0.25);
+  
+  // ✅ CORRECTION : Calcul réel des nouveaux clients ce mois (30 derniers jours)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  
+  const newThisMonth = clients.filter(client => {
+    const clientDate = new Date(client.dateEnregistrement);
+    return clientDate >= thirtyDaysAgo;
+  }).length;
+  
   const contractsGenerated = Math.ceil(totalClients * 0.76);
 
-  console.log("📈 STATISTIQUES CALCULÉES:", { totalClients, newThisMonth, contractsGenerated });
+  console.log("📈 STATISTIQUES CALCULÉES (CORRIGÉES):", { 
+    totalClients, 
+    newThisMonth: `${newThisMonth} (sur 30 jours)`,
+    contractsGenerated 
+  });
   return { totalClients, newThisMonth, contractsGenerated };
 };
 

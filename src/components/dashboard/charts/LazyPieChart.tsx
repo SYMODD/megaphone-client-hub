@@ -1,3 +1,4 @@
+import React from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 interface LazyPieChartProps {
@@ -79,55 +80,112 @@ const LazyPieChart = ({ data }: LazyPieChartProps) => {
     );
   };
 
+  // ✅ Hook pour détecter la taille d'écran
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    // ✅ Injecter CSS pour supprimer outlines sur mobile
+    const style = document.createElement('style');
+    style.textContent = `
+      .recharts-wrapper svg,
+      .recharts-wrapper svg *,
+      .recharts-sector,
+      .recharts-legend-item {
+        outline: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+      }
+      
+      .recharts-sector:focus,
+      .recharts-sector:active,
+      .recharts-legend-item:focus,
+      .recharts-legend-item:active {
+        outline: none !important;
+        box-shadow: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      document.head.removeChild(style);
+    };
+  }, []);
+
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart key={JSON.stringify(processedData)}>
-        <defs>
-          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000000" floodOpacity="0.1"/>
-          </filter>
-        </defs>
-        <Pie
-          data={processedData}
-          cx="50%"
-          cy="50%"
-          labelLine={false}
-          label={renderCustomLabel}
-          innerRadius={65}
-          outerRadius={130}
-          dataKey="value"
-          paddingAngle={2}
-          style={{ filter: 'url(#shadow)' }}
+    <div style={{ 
+      width: '100%', 
+      height: '100%',
+      outline: 'none',
+      WebkitTapHighlightColor: 'transparent'
+    }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart 
+          key={JSON.stringify(processedData)}
+          style={{ outline: 'none' }}
         >
-          {processedData.map((entry, index) => (
-            <Cell 
-              key={`cell-${index}-${entry.name}`} 
-              fill={entry.color}
-              stroke="white"
-              strokeWidth={2}
-            />
-          ))}
-        </Pie>
-        <Tooltip 
-          formatter={(value: number, name: string) => [
-            `${value} client${value > 1 ? 's' : ''}`, 
-            name
-          ]}
-          contentStyle={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e5e7eb',
-            borderRadius: '6px',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-          }}
-        />
-        <Legend 
-          wrapperStyle={{
-            paddingTop: '20px',
-            fontSize: '14px'
-          }}
-        />
-      </PieChart>
-    </ResponsiveContainer>
+          <defs>
+            <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000000" floodOpacity="0.1"/>
+            </filter>
+          </defs>
+          <Pie
+            data={processedData}
+            cx="50%"
+            cy={isMobile ? "40%" : "50%"}  // ✅ CORRECTION MOBILE : Remonter centre sur mobile
+            labelLine={false}
+            label={renderCustomLabel}
+            innerRadius={isMobile ? 45 : 65}  // ✅ Plus petit sur mobile
+            outerRadius={isMobile ? 95 : 130}  // ✅ Plus petit sur mobile
+            dataKey="value"
+            paddingAngle={2}
+            style={{ 
+              filter: 'url(#shadow)',
+              outline: 'none'
+            }}
+          >
+            {processedData.map((entry, index) => (
+              <Cell 
+                key={`cell-${index}-${entry.name}`} 
+                fill={entry.color}
+                stroke="white"
+                strokeWidth={2}
+                style={{ 
+                  outline: 'none',
+                  cursor: 'default'
+                }}
+              />
+            ))}
+          </Pie>
+          <Tooltip 
+            formatter={(value: number, name: string) => [
+              `${value} client${value > 1 ? 's' : ''}`, 
+              name
+            ]}
+            contentStyle={{
+              backgroundColor: '#ffffff',
+              border: '1px solid #e5e7eb',
+              borderRadius: '6px',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              outline: 'none'
+            }}
+          />
+          <Legend 
+            wrapperStyle={{
+              paddingTop: isMobile ? '8px' : '20px',  // ✅ Moins d'espace sur mobile
+              fontSize: isMobile ? '11px' : '14px',   // ✅ Plus petit sur mobile
+              outline: 'none'
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
 

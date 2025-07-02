@@ -3,6 +3,7 @@ import { extractMRZData } from "@/services/ocr/mrzDataExtractor";
 import { extractDataFromMainText } from "./mainTextExtractor";
 import { normalizeNationality } from "../nationalityNormalizer";
 import { detectCountryCodeInName, correctOCRNameErrors } from "./nationalityUtils";
+import { detectAndCorrectNameInversion } from "./nameInversionDetector";
 
 export const extractPassportEtrangerData = (text: string): PassportEtrangerData => {
   console.log("🌍 === DÉBUT EXTRACTION PASSEPORT ÉTRANGER ===");
@@ -31,8 +32,18 @@ export const extractPassportEtrangerData = (text: string): PassportEtrangerData 
   
   console.log("📋 Données du texte principal extraites:", mainTextData);
   
-  // Étape 2.5: LOGIQUE DE PRIORITÉ - Texte principal prioritaire pour certains champs
-  console.log("🔄 ÉTAPE 2.5 - Application de la logique de priorité...");
+  // Étape 2.5: DÉTECTION ET CORRECTION INVERSION NOM/PRÉNOM
+  console.log("🔄 ÉTAPE 2.5 - Détection inversion nom/prénom...");
+  const inversionAnalysis = detectAndCorrectNameInversion(result, mainTextData);
+  
+  if (inversionAnalysis.isInverted && inversionAnalysis.correctedData) {
+    console.log(`🔄 CORRECTION INVERSION APPLIQUÉE: Confiance ${inversionAnalysis.confidence}%`);
+    result.nom = inversionAnalysis.correctedData.nom;
+    result.prenom = inversionAnalysis.correctedData.prenom;
+  }
+  
+  // Étape 2.6: LOGIQUE DE PRIORITÉ - Texte principal prioritaire pour certains champs
+  console.log("🔄 ÉTAPE 2.6 - Application de la logique de priorité...");
   
   // DÉTECTION MRZ CORROMPUE - caractères invalides ou codes pays invalides
   const isMRZCorrupted = (
