@@ -143,10 +143,10 @@ const Security = () => {
       <AuthenticatedHeader />
       <Navigation />
       
-      <main className="container mx-auto px-4 py-6 max-w-4xl">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Sécurité</h1>
-          <p className="text-gray-600 mt-2">Gérez vos paramètres de sécurité et surveillez votre compte</p>
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-4xl">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Sécurité</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Gérez vos paramètres de sécurité et surveillez votre compte</p>
         </div>
 
         {/* Score de sécurité */}
@@ -181,11 +181,11 @@ const Security = () => {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="mfa" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="mfa">MFA</TabsTrigger>
-            <TabsTrigger value="devices">Appareils</TabsTrigger>
-            <TabsTrigger value="activity">Activité</TabsTrigger>
+        <Tabs defaultValue="mfa" className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-3 h-10 sm:h-auto">
+            <TabsTrigger value="mfa" className="text-xs sm:text-sm px-2 sm:px-3">MFA</TabsTrigger>
+            <TabsTrigger value="devices" className="text-xs sm:text-sm px-1 sm:px-3">Appareils</TabsTrigger>
+            <TabsTrigger value="activity" className="text-xs sm:text-sm px-1 sm:px-3">Activité</TabsTrigger>
           </TabsList>
 
           {/* Onglet MFA */}
@@ -201,29 +201,29 @@ const Security = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg space-y-3 sm:space-y-0">
                   <div className="flex items-center">
-                    <QrCode className="h-8 w-8 text-blue-600 mr-3" />
+                    <QrCode className="h-8 w-8 text-blue-600 mr-3 flex-shrink-0" />
                     <div>
-                      <div className="font-medium">Application d'authentification</div>
-                      <div className="text-sm text-gray-600">Google Authenticator, Authy, Microsoft Authenticator</div>
+                      <div className="font-medium text-sm sm:text-base">Application d'authentification</div>
+                      <div className="text-xs sm:text-sm text-gray-600">Google Authenticator, Authy, Microsoft Authenticator</div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center justify-between sm:justify-end sm:space-x-3">
                     {stats.mfaEnabled ? (
                       <>
-                        <Badge variant="default" className="flex items-center bg-green-100 text-green-800">
+                        <Badge variant="default" className="flex items-center bg-green-100 text-green-800 text-xs">
                           <CheckCircle className="h-3 w-3 mr-1" />
                           Activé
                         </Badge>
-                        <Button variant="outline" size="sm" onClick={handleDisableMFA}>
+                        <Button variant="outline" size="sm" onClick={handleDisableMFA} className="text-xs sm:text-sm">
                           Désactiver
                         </Button>
                       </>
                     ) : (
                       <>
-                        <Badge variant="secondary">Inactif</Badge>
-                        <Button size="sm" onClick={handleStartMFASetup}>
+                        <Badge variant="secondary" className="text-xs">Inactif</Badge>
+                        <Button size="sm" onClick={handleStartMFASetup} className="text-xs sm:text-sm">
                           Configurer
                         </Button>
                       </>
@@ -243,10 +243,10 @@ const Security = () => {
                             {/* QR Code */}
                             {qrCodeUrl && (
                               <div className="flex flex-col items-center space-y-3">
-                                <div className="bg-white p-4 rounded-lg border">
-                                  <img src={qrCodeUrl} alt="QR Code MFA" className="w-48 h-48" />
+                                <div className="bg-white p-3 sm:p-4 rounded-lg border">
+                                  <img src={qrCodeUrl} alt="QR Code MFA" className="w-32 h-32 sm:w-48 sm:h-48" />
                                 </div>
-                                <p className="text-sm text-center text-gray-600">
+                                <p className="text-xs sm:text-sm text-center text-gray-600 px-2">
                                   Scannez ce QR code avec votre application d'authentification
                                 </p>
                               </div>
@@ -276,11 +276,11 @@ const Security = () => {
                               )}
                             </div>
 
-                            <div className="flex space-x-2">
-                              <Button size="sm" onClick={() => setSetupStep(2)}>
+                            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                              <Button size="sm" onClick={() => setSetupStep(2)} className="w-full sm:w-auto h-10">
                                 Suivant
                               </Button>
-                              <Button variant="outline" size="sm" onClick={() => setShowMFASetup(false)}>
+                              <Button variant="outline" size="sm" onClick={() => setShowMFASetup(false)} className="w-full sm:w-auto h-10">
                                 Annuler
                               </Button>
                             </div>
@@ -297,28 +297,29 @@ const Security = () => {
                             <p><strong>Étape 2 : Vérifiez votre configuration</strong></p>
                             <p className="text-sm">Entrez le code à 6 chiffres généré par votre application :</p>
                             
-                            <div className="flex items-center space-x-2">
+                            <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-2">
                               <Input
                                 placeholder="123456"
                                 value={verificationCode}
                                 onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                className="w-32 text-center font-mono text-lg"
+                                className="w-full sm:w-32 text-center font-mono text-lg h-12 sm:h-10"
                                 maxLength={6}
                               />
                               <Button 
                                 size="sm" 
                                 onClick={handleVerifyCode}
                                 disabled={verificationCode.length !== 6}
+                                className="w-full sm:w-auto h-10"
                               >
                                 Vérifier
                               </Button>
                             </div>
 
-                            <div className="flex space-x-2">
-                              <Button variant="outline" size="sm" onClick={() => setSetupStep(1)}>
+                            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                              <Button variant="outline" size="sm" onClick={() => setSetupStep(1)} className="w-full sm:w-auto h-10">
                                 Retour
                               </Button>
-                              <Button variant="outline" size="sm" onClick={() => setShowMFASetup(false)}>
+                              <Button variant="outline" size="sm" onClick={() => setShowMFASetup(false)} className="w-full sm:w-auto h-10">
                                 Annuler
                               </Button>
                             </div>
@@ -372,22 +373,22 @@ const Security = () => {
                 <CardTitle>Statistiques de Sécurité</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-blue-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-blue-600">{stats.totalLogins}</div>
-                    <div className="text-sm text-gray-600">Connexions totales</div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="bg-blue-50 rounded-lg p-3 sm:p-4 text-center">
+                    <div className="text-xl sm:text-2xl font-bold text-blue-600">{stats.totalLogins}</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Connexions totales</div>
                   </div>
-                  <div className="bg-red-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-red-600">{stats.failedAttempts}</div>
-                    <div className="text-sm text-gray-600">Tentatives échouées</div>
+                  <div className="bg-red-50 rounded-lg p-3 sm:p-4 text-center">
+                    <div className="text-xl sm:text-2xl font-bold text-red-600">{stats.failedAttempts}</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Tentatives échouées</div>
                   </div>
-                  <div className="bg-green-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-green-600">{stats.deviceCount}</div>
-                    <div className="text-sm text-gray-600">Appareils autorisés</div>
+                  <div className="bg-green-50 rounded-lg p-3 sm:p-4 text-center">
+                    <div className="text-xl sm:text-2xl font-bold text-green-600">{stats.deviceCount}</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Appareils autorisés</div>
                   </div>
-                  <div className="bg-purple-50 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-purple-600">{stats.mfaEnabled ? 'ON' : 'OFF'}</div>
-                    <div className="text-sm text-gray-600">MFA Status</div>
+                  <div className="bg-purple-50 rounded-lg p-3 sm:p-4 text-center">
+                    <div className="text-xl sm:text-2xl font-bold text-purple-600">{stats.mfaEnabled ? 'ON' : 'OFF'}</div>
+                    <div className="text-xs sm:text-sm text-gray-600">MFA Status</div>
                   </div>
                 </div>
               </CardContent>
@@ -451,12 +452,12 @@ const Security = () => {
         </Tabs>
 
         {/* Informations utilisateur */}
-        <Card className="mt-6">
+        <Card className="mt-4 sm:mt-6">
           <CardHeader>
-            <CardTitle>Informations du Compte</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Informations du Compte</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-600">Email</label>
                 <div className="text-gray-900">{user?.email}</div>
