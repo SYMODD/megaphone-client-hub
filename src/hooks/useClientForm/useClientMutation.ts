@@ -42,7 +42,6 @@ export const useClientMutation = () => {
       if (error.code === '23505' && error.message.includes('clients_numero_passeport_key')) {
         toast.error("⚠️ Ce numéro de passeport existe déjà dans la base de données", {
           description: "Veuillez vérifier le numéro ou consulter le client existant.",
-          duration: 1000,
         });
       } else {
         // Autres erreurs

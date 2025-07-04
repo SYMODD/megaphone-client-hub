@@ -44,7 +44,7 @@ export const useLogin = () => {
         showSuccess("Vous êtes maintenant connecté.", "Connexion réussie");
         setTimeout(() => {
           clearMessages();
-        }, 2000);
+        }, 1000);
       }
     } catch (error) {
       handleAuthError(error, "Une erreur inattendue s'est produite lors de la connexion");

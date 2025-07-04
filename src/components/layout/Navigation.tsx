@@ -1,7 +1,7 @@
 import React, { memo, useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Database, FileText, Shield, UserPlus, Menu, X, Search } from "lucide-react";
+import { Users, Plus, Database, FileText, Shield, UserPlus, Menu, X, Search, UserCog } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { RoleIndicator } from "../dashboard/RoleIndicator";
@@ -25,7 +25,7 @@ const Navigation = memo(() => {
   // Navigation items mémorisés pour éviter les recalculs
   const navigationItems = useMemo(() => {
     if (isAgent) {
-      // Pour les agents : seulement nouveau client et contrats (sans dashboard)
+      // Pour les agents : seulement nouveau client et contrats (PAS de sécurité)
       return [
         { to: "/nouveau-client", icon: Plus, label: "Nouveau Client", color: "from-green-500 to-emerald-600" },
         { to: "/contracts", icon: FileText, label: "Contrats", color: "from-purple-500 to-purple-600" }
@@ -38,10 +38,11 @@ const Navigation = memo(() => {
         { to: "/base-clients", icon: Database, label: "Base Clients", color: "from-blue-500 to-blue-600" },
         { to: "/audit-clients", icon: Search, label: "Audit Clients", color: "from-orange-500 to-orange-600" },
         { to: "/contracts", icon: FileText, label: "Contrats", color: "from-purple-500 to-purple-600" },
+        { to: "/security", icon: Shield, label: "Sécurité", color: "from-red-500 to-red-600" },
       ];
 
       if (isAdmin) {
-        baseItems.push({ to: "/users", icon: Shield, label: "Gestion Utilisateurs", color: "from-red-500 to-red-600" });
+        baseItems.push({ to: "/users", icon: UserCog, label: "Gestion Utilisateurs", color: "from-indigo-500 to-indigo-600" });
       }
 
       return baseItems;
@@ -57,7 +58,7 @@ const Navigation = memo(() => {
   }, []);
 
   return (
-    <nav className="bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm sticky top-16 z-50">
+    <nav className="bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm sticky top-0 z-40" style={{ top: '64px' }}>
       <div className="container mx-auto px-3">
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center justify-between py-3">
@@ -124,7 +125,9 @@ const Navigation = memo(() => {
                           {item.label === "Dashboard" && "Vue d'ensemble"}
                           {item.label === "Nouveau Client" && "Ajouter un client"}
                           {item.label === "Base Clients" && "Consulter la liste"}
+                          {item.label === "Audit Clients" && "Vérifier les données"}
                           {item.label === "Contrats" && "Générer PDF"}
+                          {item.label === "Sécurité" && "Gérer la sécurité"}
                           {item.label === "Gestion Utilisateurs" && "Administration"}
                         </div>
                       </div>

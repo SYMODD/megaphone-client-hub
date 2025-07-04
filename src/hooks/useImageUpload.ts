@@ -118,9 +118,7 @@ export const useImageUpload = () => {
       console.log("✅ Upload terminé avec succès");
       
       // 🎉 MESSAGE DE SUCCÈS FINAL
-      toast.success("🎯 Image du code-barres uploadée avec succès vers barcode-images", {
-        duration: 1000
-      });
+      toast.success("🎯 Image du code-barres uploadée avec succès vers barcode-images");
       
       return finalUrl;
       

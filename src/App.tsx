@@ -10,7 +10,6 @@ import { SmartRedirect } from "./components/auth/SmartRedirect";
 import { Suspense, lazy, useEffect } from "react";
 import { SmartNotificationContainer, useSmartNotifications } from "@/components/ui/smart-notification";
 
-
 const SuspenseFallback = ({ message = "Chargement..." }: { message?: string }) => (
   <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
     <div className="text-center">
@@ -74,6 +73,7 @@ const Contracts = lazy(() =>
 );
 
 const ClientAudit = lazy(() => import("./pages/ClientAudit"));
+const Security = lazy(() => import("./pages/Security"));
 
 import { queryClient } from "./lib/queryClient";
 
@@ -101,7 +101,7 @@ const App = () => {
       <TooltipProvider>
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
+              <Routes>
               <Route path="/" element={<SmartRedirect />} />
               
               <Route path="/auth" element={
@@ -255,6 +255,16 @@ const App = () => {
               
               <Route path="/contrat" element={<Navigate to="/contracts" replace />} />
               <Route path="/contrats" element={<Navigate to="/contracts" replace />} />
+              
+              <Route path="/security" element={
+                <ProtectedRoute>
+                  <RoleProtectedRoute allowedRoles={['admin', 'superviseur']} redirectTo="/nouveau-client">
+                    <Suspense fallback={<SuspenseFallback message="Chargement des paramètres de sécurité..." />}>
+                      <Security />
+                    </Suspense>
+                  </RoleProtectedRoute>
+                </ProtectedRoute>
+              } />
               
               <Route path="/404" element={
                 <Suspense fallback={<SuspenseFallback />}>

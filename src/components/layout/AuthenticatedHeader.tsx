@@ -1,9 +1,10 @@
-
 import React, { memo } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { LogOut, User, MapPin } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 // Helper pour formater le nom du point d'opération
 const formatOperationPoint = (pointOperation: string | undefined): string => {
@@ -27,7 +28,7 @@ const formatOperationPoint = (pointOperation: string | undefined): string => {
 };
 
 const AuthenticatedHeader = memo(() => {
-  const { signOut, profile } = useAuth();
+  const { signOut, profile, user } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -53,49 +54,76 @@ const AuthenticatedHeader = memo(() => {
   };
 
   return (
-    <header className="bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm sticky top-0 z-50">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">SM</span>
-            </div>
-            <span className="text-xl font-bold text-slate-800">Sud Megaphone</span>
+    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+      <div className="container mx-auto px-3">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo à gauche - aligné avec le menu */}
+          <div className="flex items-center">
+            <Link to="/dashboard" className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">SM</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">Sud Megaphone</span>
+            </Link>
           </div>
-
-          {/* User Info & Logout */}
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            {profile && (
-              <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 text-xs sm:text-sm text-slate-600">
-                {/* Info utilisateur */}
-                <div className="flex items-center space-x-1 sm:space-x-2">
-                  <User className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="font-medium truncate max-w-[100px] sm:max-w-none">
-                    {profile.prenom} {profile.nom}
+          
+          {/* Tout à droite sur une ligne - responsive */}
+          <div className="flex items-center space-x-2 lg:space-x-4">
+            {/* Version desktop */}
+            <div className="hidden lg:flex items-center space-x-1">
+              <User className="h-4 w-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-900">
+                {profile?.prenom && profile?.nom ? `${profile.prenom} ${profile.nom}` : 
+                 profile?.first_name && profile?.last_name ? `${profile.first_name} ${profile.last_name}` :
+                 user?.email?.split('@')[0] || 'Utilisateur'}
+              </span>
+            </div>
+            
+            <div className="hidden lg:flex items-center space-x-1">
+              <MapPin className="h-4 w-4 text-gray-600" />
+              <span className="text-sm text-gray-600">
+                {formatOperationPoint(profile?.point_operation)}
+              </span>
+            </div>
+            
+            {/* Version mobile - tout dans le même conteneur aligné à droite */}
+            <div className="lg:hidden flex items-center space-x-2">
+              <div className="flex flex-col space-y-1">
+                <div className="flex items-center space-x-1">
+                  <User className="h-4 w-4 text-gray-600" />
+                  <span className="text-xs text-gray-900">
+                    {profile?.prenom && profile?.nom ? `${profile.prenom} ${profile.nom}` : 
+                     profile?.first_name && profile?.last_name ? `${profile.first_name} ${profile.last_name}` :
+                     user?.email?.split('@')[0] || 'Utilisateur'}
                   </span>
                 </div>
-                
-                {/* Point d'opération - visible sur mobile aussi */}
-                {profile.point_operation && (
-                  <div className="flex items-center space-x-1 text-xs text-slate-500">
-                    <MapPin className="w-3 h-3" />
-                    <span className="truncate max-w-[120px] sm:max-w-none">
-                      {formatOperationPoint(profile.point_operation)}
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center space-x-1">
+                  <MapPin className="h-4 w-4 text-gray-600" />
+                  <span className="text-xs text-gray-500 whitespace-nowrap">
+                    {formatOperationPoint(profile?.point_operation)}
+                  </span>
+                </div>
               </div>
-            )}
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSignOut}
+                className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-gray-300"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
             
-            <Button
-              variant="outline"
-              size="sm"
+            {/* Bouton desktop */}
+            <Button 
+              variant="outline" 
+              size="sm" 
               onClick={handleSignOut}
-              className="flex items-center space-x-2 hover:bg-red-50 hover:border-red-300"
+              className="hidden lg:flex text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-gray-300"
             >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Déconnexion</span>
+              <LogOut className="h-4 w-4 mr-2" />
+              <span>Déconnexion</span>
             </Button>
           </div>
         </div>

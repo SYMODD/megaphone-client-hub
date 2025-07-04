@@ -47,9 +47,7 @@ export const useCINOCR = () => {
       if (cinData.lieu_naissance) extractedFields.push("lieu naissance");
 
       if (extractedFields.length > 0) {
-        toast.success(`✅ Données CIN extraites: ${extractedFields.join(", ")} (${extractedFields.length}/5 champs)`, {
-          duration: 1000
-        });
+        toast.success(`✅ Données CIN extraites: ${extractedFields.join(", ")} (${extractedFields.length}/5 champs)`);
       } else {
         toast.warning("⚠️ Scanner terminé mais aucune donnée CIN reconnue");
       }

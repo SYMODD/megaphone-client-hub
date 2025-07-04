@@ -14,4 +14,66 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+// 🔐 SUPABASE PRO - Configuration avancée avec MFA et sécurité renforcée
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    // 🛡️ Activation des fonctionnalités Pro
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    // 📱 MFA Configuration
+    flowType: 'pkce',
+    // 🔒 Politique de sécurité stricte
+    storageKey: 'megaphone-auth-token',
+    storage: window.localStorage,
+    // 🎯 Hooks pour validation personnalisée
+    debug: import.meta.env.DEV
+  },
+  // 🌐 Configuration réseau optimisée
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
+  },
+  // 📊 Monitoring et performance
+  db: {
+    schema: 'public'
+  }
+});
+
+// 🔐 SUPABASE PRO - Client Admin pour opérations privilégiées
+export const supabaseAdmin = createClient<Database>(
+  SUPABASE_URL, 
+  import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || SUPABASE_PUBLISHABLE_KEY,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
+
+// 🎯 Export des types pour MFA
+export type MFAEnrollResponse = {
+  data: {
+    id: string;
+    type: 'totp';
+    totp: {
+      qr_code: string;
+      secret: string;
+      uri: string;
+    };
+  } | null;
+  error: any;
+};
+
+export type MFAVerifyResponse = {
+  data: {
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+    token_type: string;
+    user: any;
+  } | null;
+  error: any;
+};

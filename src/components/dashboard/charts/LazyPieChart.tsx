@@ -141,8 +141,8 @@ const LazyPieChart = ({ data }: LazyPieChartProps) => {
             cy={isMobile ? "40%" : "50%"}  // ✅ CORRECTION MOBILE : Remonter centre sur mobile
             labelLine={false}
             label={renderCustomLabel}
-            innerRadius={isMobile ? 45 : 65}  // ✅ Plus petit sur mobile
-            outerRadius={isMobile ? 95 : 130}  // ✅ Plus petit sur mobile
+            innerRadius={isMobile ? 60 : 65}  // ✅ CORRECTION : Augmenter rayon interne mobile
+            outerRadius={isMobile ? 120 : 130}  // ✅ CORRECTION : Augmenter rayon externe mobile
             dataKey="value"
             paddingAngle={2}
             style={{ 
