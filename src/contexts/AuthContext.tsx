@@ -24,6 +24,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
   loading: boolean;
+  needsMFAValidation: boolean;
+  completeMFAValidation: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,6 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [needsMFAValidation, setNeedsMFAValidation] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -212,7 +215,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const isNewDevice = await detectNewDevice(data.user.id);
           
           if (isNewDevice) {
-            console.log("🚨 NOUVEL APPAREIL DÉTECTÉ !");
+            console.log("🚨 NOUVEL APPAREIL DÉTECTÉ - VALIDATION MFA REQUISE !");
             
             // Déclencher une alerte de sécurité
             await triggerSecurityAlert(data.user.id, 'new_device', {
@@ -226,17 +229,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 timestamp: new Date().toISOString()
               }
             });
+            
+            // 🔒 FORCER LA VALIDATION MFA
+            setNeedsMFAValidation(true);
+            
+            // Enregistrer la tentative de connexion avec appareil non autorisé
+            await logSecurityEvent(data.user.id, 'device_detected', {
+              action: 'new_device_mfa_required',
+              device_info: {
+                email: normalizedEmail,
+                is_new_device: isNewDevice,
+                user_role: profileData.role,
+                validation_required: true
+              }
+            });
+            
+            // IMPORTANT : On ne termine pas la connexion ici
+            // L'utilisateur doit valider le MFA d'abord
+            
+          } else {
+            // Appareil connu - connexion normale
+            await logSecurityEvent(data.user.id, 'login', {
+              action: 'successful_login',
+              device_info: {
+                email: normalizedEmail,
+                is_new_device: isNewDevice,
+                user_role: profileData.role
+              }
+            });
           }
-          
-          // Enregistrer la connexion réussie
-          await logSecurityEvent(data.user.id, 'login', {
-            action: 'successful_login',
-            device_info: {
-              email: normalizedEmail,
-              is_new_device: isNewDevice,
-              user_role: profileData.role
-            }
-          });
         }
       } catch (securityError) {
         console.warn("⚠️ Erreur système de sécurité (connexion autorisée):", securityError);
@@ -252,6 +273,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) throw error;
   };
 
+  const completeMFAValidation = () => {
+    setNeedsMFAValidation(false);
+  };
+
   const value = {
     user,
     session,
@@ -260,6 +285,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signOut,
     loading,
+    needsMFAValidation,
+    completeMFAValidation,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

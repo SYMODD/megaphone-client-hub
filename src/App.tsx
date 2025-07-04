@@ -7,6 +7,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
 import { SmartRedirect } from "./components/auth/SmartRedirect";
+import { AuthWrapper } from "./components/auth/AuthWrapper";
 import { Suspense, lazy, useEffect } from "react";
 import { SmartNotificationContainer, useSmartNotifications } from "@/components/ui/smart-notification";
 
@@ -101,6 +102,7 @@ const App = () => {
       <TooltipProvider>
         <BrowserRouter>
           <AuthProvider>
+            <AuthWrapper>
               <Routes>
               <Route path="/" element={<SmartRedirect />} />
               
@@ -273,6 +275,7 @@ const App = () => {
               } />
               <Route path="*" element={<Navigate to="/404" replace />} />
             </Routes>
+            </AuthWrapper>
           </AuthProvider>
         </BrowserRouter>
         
