@@ -51,40 +51,76 @@ export const logSecurityEvent = async (
   }
 };
 
-// 🕵️ Détecter si c'est un nouvel appareil (simplifié)
+// 🕵️ Détecter si c'est un nouvel appareil (CORRIGÉ)
 export const detectNewDevice = async (userId: string): Promise<boolean> => {
   try {
-    const currentFingerprint = generateDeviceFingerprint();
+    console.log('🔍 DÉBUT détection nouvel appareil pour:', userId);
     
-    // Vérifier les dernières connexions pour cet utilisateur
+    const currentFingerprint = generateDeviceFingerprint();
+    console.log('🖥️ Fingerprint actuel:', currentFingerprint);
+    
+    // ✅ CORRECTION: Chercher TOUS les événements, pas seulement 'login'
     const { data: recentEvents, error } = await supabase
       .from('security_events')
-      .select('metadata')
+      .select('metadata, event_type, created_at')
       .eq('user_id', userId)
-      .eq('event_type', 'login')
+      .in('event_type', ['login', 'device_detected']) // Chercher login ET device_detected
       .order('created_at', { ascending: false })
-      .limit(10);
+      .limit(20); // Plus d'événements pour être sûr
+    
+    console.log('📊 Événements trouvés:', recentEvents?.length || 0);
     
     if (error) {
       console.warn('⚠️ Erreur vérification historique appareils:', error);
-      return false; // En cas d'erreur, on ne bloque pas
+      // ✅ CORRECTION: En cas d'erreur, considérer comme nouvel appareil
+      console.log('❌ Erreur DB → Traiter comme NOUVEL APPAREIL par sécurité');
+      return true;
+    }
+    
+    if (!recentEvents || recentEvents.length === 0) {
+      // ✅ CORRECTION: Aucun événement trouvé = premier appareil = nouvel appareil
+      console.log('🆕 Aucun événement trouvé → PREMIER APPAREIL = NOUVEL APPAREIL');
+      return true;
     }
     
     // Chercher si un fingerprint similaire existe
-    const deviceExists = recentEvents?.some(event => {
-      const deviceInfo = event.metadata?.device_info;
-      if (!deviceInfo) return false;
-      
-      // Comparaison simple basée sur userAgent et screenSize
-      return deviceInfo.userAgent === currentFingerprint.userAgent &&
-             deviceInfo.screenSize === currentFingerprint.screenSize &&
-             deviceInfo.platform === currentFingerprint.platform;
-    });
+    let deviceFound = false;
     
-    return !deviceExists;
+    for (const event of recentEvents) {
+      const deviceInfo = event.metadata?.device_info;
+      if (!deviceInfo) continue;
+      
+      console.log('🔍 Comparaison avec événement:', {
+        type: event.event_type,
+        date: event.created_at,
+        stored_userAgent: deviceInfo.userAgent?.substring(0, 50) + '...',
+        stored_screenSize: deviceInfo.screenSize,
+        stored_platform: deviceInfo.platform,
+        current_userAgent: currentFingerprint.userAgent?.substring(0, 50) + '...',
+        current_screenSize: currentFingerprint.screenSize,
+        current_platform: currentFingerprint.platform
+      });
+      
+      // Comparaison stricte
+      if (deviceInfo.userAgent === currentFingerprint.userAgent &&
+          deviceInfo.screenSize === currentFingerprint.screenSize &&
+          deviceInfo.platform === currentFingerprint.platform) {
+        console.log('✅ APPAREIL CONNU trouvé dans événement:', event.event_type);
+        deviceFound = true;
+        break;
+      }
+    }
+    
+    const isNewDevice = !deviceFound;
+    console.log('🎯 RÉSULTAT détection:', isNewDevice ? '🚨 NOUVEL APPAREIL' : '✅ APPAREIL CONNU');
+    
+    return isNewDevice;
+    
   } catch (error) {
-    console.warn('⚠️ Erreur détection nouvel appareil:', error);
-    return false;
+    console.error('❌ Erreur détection nouvel appareil:', error);
+    // ✅ CORRECTION: En cas d'erreur, traiter comme nouvel appareil par sécurité
+    console.log('❌ Exception → Traiter comme NOUVEL APPAREIL par sécurité');
+    return true;
   }
 };
 

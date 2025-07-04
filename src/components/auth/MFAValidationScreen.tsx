@@ -82,11 +82,21 @@ export const MFAValidationScreen: React.FC<MFAValidationScreenProps> = ({
         action: 'mfa_validation_success',
         device_info: {
           validation_method: 'totp',
-          attempts: attempts + 1
+          attempts: attempts + 1,
+          device_authorized: true
         }
       });
       
-      console.log('✅ Validation MFA réussie');
+      // ✅ CORRECTION: Enregistrer aussi un événement de connexion normale
+      await logSecurityEvent(user.id, 'login', {
+        action: 'successful_login_after_mfa',
+        device_info: {
+          validation_method: 'mfa_validated',
+          new_device_authorized: true
+        }
+      });
+      
+      console.log('✅ Validation MFA réussie - Appareil autorisé');
       onValidationSuccess();
       
     } catch (error) {

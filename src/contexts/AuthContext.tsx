@@ -230,9 +230,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
             });
             
-            // 🔒 FORCER LA VALIDATION MFA
-            setNeedsMFAValidation(true);
-            
             // Enregistrer la tentative de connexion avec appareil non autorisé
             await logSecurityEvent(data.user.id, 'device_detected', {
               action: 'new_device_mfa_required',
@@ -244,8 +241,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
             });
             
-            // IMPORTANT : On ne termine pas la connexion ici
-            // L'utilisateur doit valider le MFA d'abord
+            // 🔒 FORCER LA VALIDATION MFA
+            console.log("🔐 DÉFINITION needsMFAValidation = true");
+            setNeedsMFAValidation(true);
+            
+            // ✅ CORRECTION CRITIQUE : Attendre que l'état soit défini
+            await new Promise(resolve => setTimeout(resolve, 100));
+            console.log("🔐 État MFA défini, connexion en attente de validation");
             
           } else {
             // Appareil connu - connexion normale
