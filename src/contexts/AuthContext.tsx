@@ -2,10 +2,19 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/integrations/supabase/types";
 import { performanceOptimizer } from "@/utils/performanceOptimizer";
+import { logSecurityEvent, detectNewDevice, triggerSecurityAlert } from "@/utils/securityLogger";
 
-type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+type Profile = {
+  id: string;
+  nom: string;
+  prenom: string;
+  role: "agent" | "superviseur" | "admin";
+  point_operation: string;
+  statut: "actif" | "inactif";
+  created_at: string;
+  updated_at: string;
+};
 
 interface AuthContextType {
   user: User | null;
@@ -150,6 +159,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (error) {
       console.error("Supabase auth error:", error);
+      
+      // Note: On ne peut pas enregistrer les échecs de connexion anonymes car user_id est requis
+      
       return { data, error };
     }
 
@@ -187,6 +199,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       console.log("User is active, login successful");
+      
+      // 🔐 INTÉGRATION SYSTÈME DE SÉCURITÉ
+      try {
+        // Vérifier si c'est un rôle autorisé pour la sécurité
+        const isSecurityUser = profileData?.role === 'admin' || profileData?.role === 'superviseur';
+        
+        if (isSecurityUser) {
+          console.log("🔐 Utilisateur sécurisé détecté, activation monitoring...");
+          
+          // Détecter si c'est un nouvel appareil
+          const isNewDevice = await detectNewDevice(data.user.id);
+          
+          if (isNewDevice) {
+            console.log("🚨 NOUVEL APPAREIL DÉTECTÉ !");
+            
+            // Déclencher une alerte de sécurité
+            await triggerSecurityAlert(data.user.id, 'new_device', {
+              user_info: {
+                nom: profileData.nom,
+                prenom: profileData.prenom,
+                role: profileData.role
+              },
+              connection_info: {
+                email: normalizedEmail,
+                timestamp: new Date().toISOString()
+              }
+            });
+          }
+          
+          // Enregistrer la connexion réussie
+          await logSecurityEvent(data.user.id, 'login', {
+            action: 'successful_login',
+            device_info: {
+              email: normalizedEmail,
+              is_new_device: isNewDevice,
+              user_role: profileData.role
+            }
+          });
+        }
+      } catch (securityError) {
+        console.warn("⚠️ Erreur système de sécurité (connexion autorisée):", securityError);
+        // On continue même si le système de sécurité échoue
+      }
     }
 
     return { data, error };
