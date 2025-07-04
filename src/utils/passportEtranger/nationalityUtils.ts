@@ -29,6 +29,10 @@ export const convertMainTextNationality = (nationality: string): string => {
     "IRELAND": "Irlande",
     "ÉIRE": "Irlande",
     "EIRE": "Irlande",
+    "ÉIREANNACH": "Irlande",              // ← AJOUT CRITIQUE terme gaélique
+    "EIREANNACH": "Irlande",              // ← AJOUT CRITIQUE sans accent
+    "ÉIREANNACH/IRISH": "Irlande",        // ← AJOUT CRITIQUE format mixte
+    "EIREANNACH/IRISH": "Irlande",        // ← AJOUT CRITIQUE format mixte sans accent
     "ÉIRE/IRELAND/IRLANDE": "Irlande",
     "EIRE/IRELAND/IRLANDE": "Irlande",
     
@@ -190,6 +194,7 @@ export const checkForNationalityInLine = (line: string): string | null => {
   // 🆕 DÉTECTION AUTRES NATIONALITÉS FRÉQUENTES AVEC ET SANS ACCENTS
   const priorityNationalities = [
     { patterns: ["UNITED NATIONS", "NATIONS UNIES", "UNITED NATIONS - NATIONS UNIES"], nationality: "Nations Unies" },
+    { patterns: ["ÉIREANNACH", "EIREANNACH", "ÉIREANNACH/IRISH", "EIREANNACH/IRISH"], nationality: "Irlande" },
     { patterns: ["FRANÇAISE", "FRANCAISE"], nationality: "France" },
     { patterns: ["ITALIANA"], nationality: "Italie" },
     { patterns: ["DEUTSCHE"], nationality: "Allemagne" },
@@ -216,7 +221,7 @@ export const checkForNationalityInLine = (line: string): string | null => {
   const knownNationalities = [
     // Européennes
     "DEUTSCH", "DEUTSCHE", "GERMAN", "CANADIAN", "CANADIENNE", "FRENCH", "FRANÇAISE", "FRANCAISE",
-    "AMERICAN", "BRITISH", "IRISH", "IRELAND", "ÉIRE", "EIRE", "SPANISH", "ESPAÑOLA", "ESPANOLA", 
+    "AMERICAN", "BRITISH", "IRISH", "IRELAND", "ÉIRE", "EIRE", "ÉIREANNACH", "EIREANNACH", "SPANISH", "ESPAÑOLA", "ESPANOLA", 
     "ITALIAN", "ITALIANA", "BELGIAN", "BELGE", "DUTCH", "NEDERLANDSE", "NEDERLAND", "NEDERLANDS", "HOLLAND", "HOLLANDE", "SWISS", "SCHWEIZ", "SUISSE", 
     "AUSTRIAN", "ÖSTERREICH", "OSTERREICH", "PORTUGUESE", "PORTUGUESA", "NORWEGIAN", "NORSK", 
     "SWEDISH", "SVENSK", "DANISH", "DANSK", "FINNISH", "SUOMI", "GREEK", "ELLINIKI", "POLISH", 

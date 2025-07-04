@@ -293,7 +293,9 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
                                      lineUpper === 'FRANCAISE' ||           // Français sans accent
                                      lineUpper === 'ITALIANA' ||            // Italien isolé
                                      lineUpper === 'DEUTSCHE' ||            // Allemand isolé
-                                     lineUpper === 'PORTUGUESA')) {         // Portugais isolé
+                                     lineUpper === 'PORTUGUESA' ||          // Portugais isolé
+                                     lineUpper === 'ÉIREANNACH' ||          // Irlandais isolé
+                                     lineUpper === 'EIREANNACH')) {         // Portugais isolé
       console.log(`✅ Ligne indicatrice nationalité trouvée ligne ${i+1}:`, line);
       
       // 🆕 CAS SPÉCIAL : Nationalité directe isolée (ESPAÑOLA, FRANÇAISE, etc.)
@@ -304,7 +306,8 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
           lineUpper === 'NEDERLANDS' || lineUpper === 'HOLLAND' ||
           lineUpper === 'HOLLANDE' || lineUpper === 'SÉNÉGALAISE' ||
           lineUpper === 'SENEGALAISE' || lineUpper === 'MAROCAINE' ||
-          lineUpper === 'MOROCAIN' || lineUpper === 'MAROC') {
+          lineUpper === 'MOROCAIN' || lineUpper === 'MAROC' ||
+          lineUpper === 'ÉIREANNACH' || lineUpper === 'EIREANNACH') {
         console.log(`🎯 Nationalité isolée détectée directement: "${line}"`);
         const convertedNationality = convertMainTextNationality(line);
         passportData.nationalite = normalizeNationality(convertedNationality);
@@ -566,7 +569,7 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
         /(?:NATIONALITY|NATIONALITÉ|NACIONALIDAD|NAZIONALITÀ|STAATSANGEHÖRIGKEIT|NATIONALITEIT|NACIONALIDADE|NANIONALTON|CITIZENSHIP|CITIZEN\s*OF)\s*[\/:]?\s*([A-ZÀ-ÿ\s\/]{3,30})/i,
         /(?:3\.\s*)?(?:NATIONALITY|NATIONALITÉ|CITIZENSHIP)\s*[\/:]?\s*([A-ZÀ-ÿ\s\/]{3,30})/i,
         // 🆕 PATTERNS DIRECTS POUR NATIONALITÉS ISOLÉES OU AVEC PRÉFIXES  
-        /\b(ESPAÑOLA|ESPANOLA|FRANÇAISE|FRANCAISE|ITALIANA|DEUTSCHE|PORTUGUESA|CANADIENNE|COLOMBIANA|BRASILEIRA)\b/i,
+        /\b(ESPAÑOLA|ESPANOLA|FRANÇAISE|FRANCAISE|ITALIANA|DEUTSCHE|PORTUGUESA|CANADIENNE|COLOMBIANA|BRASILEIRA|ÉIREANNACH|EIREANNACH)\b/i,
         // Pattern pour format "KINGDOM OF SPAIN" -> "ESPAÑOLA"
         /KINGDOM\s+OF\s+SPAIN|REIGN\s+OF\s+SPAIN|REINO\s+DE\s+ESPAÑA|REINO\s+DE\s+ESPANA/i
       ];
