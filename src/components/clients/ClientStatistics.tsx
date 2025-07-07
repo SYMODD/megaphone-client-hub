@@ -19,7 +19,8 @@ export const ClientStatistics = ({ totalCount, clients, nationalities }: ClientS
       const { data, error } = await supabase
         .from('clients')
         .select('date_enregistrement')
-        .order('date_enregistrement', { ascending: false });
+        .order('date_enregistrement', { ascending: false })
+        .limit(10000); // ✅ CORRECTION: Récupérer tous les clients (limite élevée)
       
       if (error) {
         console.error("❌ Erreur récupération tous clients:", error);
@@ -27,6 +28,12 @@ export const ClientStatistics = ({ totalCount, clients, nationalities }: ClientS
       }
       
       console.log(`✅ ${data.length} clients récupérés pour calcul`);
+      
+      // ✅ DIAGNOSTIC: Vérifier si la limite de 1000 est dépassée
+      if (data.length >= 1000) {
+        console.log("📊 ATTENTION: Plus de 1000 clients récupérés - limite Supabase contournée pour statistiques");
+      }
+      
       return data as Client[];
     },
     staleTime: 5 * 60 * 1000, // Cache 5 minutes

@@ -14,6 +14,7 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [totalCount, setTotalCount] = useState(0); // ✅ NOUVEAU: Stocker le vrai nombre total
 
   // Force un re-render quand les filtres changent
   useEffect(() => {
@@ -30,42 +31,109 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
         setLoading(true);
         console.log("📊 Chargement des clients réels depuis Supabase avec filtres:", filters);
 
-        let query = supabase
+        // 🔥 NOUVELLE APPROCHE: Récupérer d'abord le count total
+        let countQuery = supabase
           .from('clients')
-          .select('*')
-          .order('created_at', { ascending: false });
+          .select('*', { count: 'exact', head: true });
 
-        // Filtrage par rôle - agents ne voient que leurs clients
+        // Appliquer les mêmes filtres pour le count
         if (profile.role === "agent") {
-          query = query.eq('agent_id', profile.id);
+          countQuery = countQuery.eq('agent_id', profile.id);
         }
 
-        // Filtrage par date
         if (filters?.dateRange?.from) {
           const fromDate = filters.dateRange.from.toISOString().split('T')[0];
-          query = query.gte('date_enregistrement', fromDate);
-          console.log("📅 Filtre date début:", fromDate);
+          countQuery = countQuery.gte('date_enregistrement', fromDate);
         }
 
         if (filters?.dateRange?.to) {
           const toDate = filters.dateRange.to.toISOString().split('T')[0];
-          query = query.lte('date_enregistrement', toDate);
-          console.log("📅 Filtre date fin:", toDate);
+          countQuery = countQuery.lte('date_enregistrement', toDate);
         }
 
-        // 🔥 NEW: Filtrage par catégorie
         if (filters?.selectedCategory && filters.selectedCategory !== "all") {
-          query = query.eq('categorie', filters.selectedCategory);
-          console.log("📂 Filtre par catégorie:", filters.selectedCategory);
+          countQuery = countQuery.eq('categorie', filters.selectedCategory);
         }
 
-        // 🔥 NEW: Filtrage par point d'opération
         if (filters?.selectedPoint && filters.selectedPoint !== "all") {
-          query = query.eq('point_operation', filters.selectedPoint);
-          console.log("📍 Filtre par point d'opération:", filters.selectedPoint);
+          countQuery = countQuery.eq('point_operation', filters.selectedPoint);
         }
 
-        const { data, error } = await query;
+        const { count: totalCount, error: countError } = await countQuery;
+
+        if (countError) {
+          console.error("❌ Erreur lors du comptage des clients:", countError);
+          return;
+        }
+
+        console.log("📊 Nombre total de clients:", totalCount);
+        
+        // ✅ SAUVEGARDER le nombre total pour les statistiques
+        setTotalCount(totalCount || 0);
+
+        // 🚀 RÉCUPÉRATION COMPLÈTE - Utiliser range() pour récupérer TOUS les clients
+        let allClients = [];
+        const batchSize = 1000;
+        let start = 0;
+        let hasMore = true;
+
+        // 🎯 OPTIMISATION: Pour de très grandes bases de données, 
+        // on peut limiter la récupération si on a juste besoin des stats
+        const maxClientsToFetch = totalCount > 50000 ? 10000 : totalCount;
+        
+        console.log(`📊 Récupération de ${Math.min(totalCount, maxClientsToFetch)} clients par lots de ${batchSize}...`);
+
+        while (hasMore && allClients.length < maxClientsToFetch) {
+          let query = supabase
+            .from('clients')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .range(start, start + batchSize - 1);
+
+          // Appliquer les mêmes filtres
+          if (profile.role === "agent") {
+            query = query.eq('agent_id', profile.id);
+          }
+
+          if (filters?.dateRange?.from) {
+            const fromDate = filters.dateRange.from.toISOString().split('T')[0];
+            query = query.gte('date_enregistrement', fromDate);
+          }
+
+          if (filters?.dateRange?.to) {
+            const toDate = filters.dateRange.to.toISOString().split('T')[0];
+            query = query.lte('date_enregistrement', toDate);
+          }
+
+          if (filters?.selectedCategory && filters.selectedCategory !== "all") {
+            query = query.eq('categorie', filters.selectedCategory);
+          }
+
+          if (filters?.selectedPoint && filters.selectedPoint !== "all") {
+            query = query.eq('point_operation', filters.selectedPoint);
+          }
+
+          const { data: batchData, error: batchError } = await query;
+
+          if (batchError) {
+            console.error("❌ Erreur lors du chargement du lot:", batchError);
+            break;
+          }
+
+          if (batchData && batchData.length > 0) {
+            allClients.push(...batchData);
+            console.log(`✅ Lot ${Math.floor(start/batchSize) + 1}: ${batchData.length} clients récupérés (total: ${allClients.length})`);
+            
+            // Continuer si on a récupéré un lot complet
+            hasMore = batchData.length === batchSize;
+            start += batchSize;
+          } else {
+            hasMore = false;
+          }
+        }
+
+        const data = allClients;
+        const error = null;
 
         if (error) {
           console.error("❌ Erreur lors du chargement des clients:", error);
@@ -73,6 +141,13 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
         }
 
         console.log("✅ Clients chargés depuis Supabase:", data?.length || 0);
+        console.log("📊 Nombre total calculé:", totalCount);
+        
+        // ✅ DIAGNOSTIC: Vérifier si tous les clients sont récupérés
+        if (data && totalCount && data.length < totalCount) {
+          console.log(`⚠️ ATTENTION: Seulement ${data.length}/${totalCount} clients récupérés`);
+        }
+        
         setClients(data || []);
 
       } catch (error) {
@@ -105,7 +180,8 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
 
   // Calcul des statistiques
   const statistics = useMemo(() => {
-    const totalClients = formattedClients.length;
+    // ✅ CORRECTION MAJEURE: Utiliser le vrai nombre total de clients
+    const totalClients = totalCount > 0 ? totalCount : formattedClients.length;
     
     // ✅ CORRECTION : Clients nouveaux sur les 30 derniers jours (plus intuitif que mois calendaire)
     const thirtyDaysAgo = new Date();
@@ -119,9 +195,15 @@ export const useAgentData = (filters?: AgentDataFilters): AgentDataResult => {
     // Contrats générés (estimation 76% des clients)
     const contractsGenerated = Math.ceil(totalClients * 0.76);
 
-    console.log("📈 Statistiques calculées (30 derniers jours):", { totalClients, newThisMonth, contractsGenerated });
+    console.log("📈 Statistiques calculées (30 derniers jours):", { 
+      totalClients, 
+      totalCountFromDB: totalCount,
+      formattedClientsLength: formattedClients.length,
+      newThisMonth, 
+      contractsGenerated 
+    });
     return { totalClients, newThisMonth, contractsGenerated };
-  }, [formattedClients]);
+  }, [formattedClients, totalCount]);
 
   // Données de nationalités
   const nationalityData = useMemo(() => {
