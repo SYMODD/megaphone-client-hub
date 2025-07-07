@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -208,11 +207,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Vérifier si c'est un rôle autorisé pour la sécurité
         const isSecurityUser = profileData?.role === 'admin' || profileData?.role === 'superviseur';
         
+        console.log("🔐 DIAGNOSTIC - Utilisateur connecté:", {
+          userId: data.user.id,
+          email: normalizedEmail,
+          role: profileData?.role,
+          isSecurityUser,
+          nom: profileData?.nom,
+          prenom: profileData?.prenom
+        });
+        
         if (isSecurityUser) {
           console.log("🔐 Utilisateur sécurisé détecté, activation monitoring...");
           
           // Détecter si c'est un nouvel appareil
+          console.log("🔍 LANCEMENT détection nouvel appareil...");
           const isNewDevice = await detectNewDevice(data.user.id);
+          console.log("🎯 RÉSULTAT détection nouvel appareil:", isNewDevice ? "🚨 NOUVEL APPAREIL" : "✅ APPAREIL CONNU");
           
           if (isNewDevice) {
             console.log("🚨 NOUVEL APPAREIL DÉTECTÉ - VALIDATION MFA REQUISE !");
@@ -251,6 +261,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
           } else {
             // Appareil connu - connexion normale
+            console.log("✅ Appareil connu - Connexion normale autorisée");
             await logSecurityEvent(data.user.id, 'login', {
               action: 'successful_login',
               device_info: {
@@ -260,8 +271,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
             });
           }
+        } else {
+          console.log("❌ Utilisateur NON sécurisé (rôle:", profileData?.role, ") - Pas de monitoring");
         }
       } catch (securityError) {
+        console.error("❌ ERREUR système de sécurité:", securityError);
         console.warn("⚠️ Erreur système de sécurité (connexion autorisée):", securityError);
         // On continue même si le système de sécurité échoue
       }

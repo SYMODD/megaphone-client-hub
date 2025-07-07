@@ -167,14 +167,20 @@ export const extractPassportEtrangerData = (text: string): PassportEtrangerData 
         console.log(`✅ Nationalité corrigée depuis nom: "${result.nationalite}"`);
       }
       
-      // Nettoyer le nom ou le vider si c'était juste un code pays
-      const cleanedNom = correctOCRNameErrors(result.nom);
-      if (cleanedNom && cleanedNom.length >= 2) {
-        result.nom = cleanedNom;
-        console.log(`✅ Nom nettoyé: "${result.nom}"`);
+      // CORRECTION CRITIQUE : Si le nom est exactement un code pays, le vider complètement
+      if (result.nom.length <= 3 && codeDetectionNom.isCountryCode) {
+        console.log(`⚠️ Nom était uniquement un code pays "${result.nom}", suppression complète`);
+        result.nom = undefined;  // Vider complètement si c'est juste un code pays
       } else {
-        console.log(`⚠️ Nom était uniquement un code pays, suppression`);
-        result.nom = undefined;  // Le nom était juste un code pays
+        // Sinon, essayer de nettoyer le nom
+        const cleanedNom = correctOCRNameErrors(result.nom);
+        if (cleanedNom && cleanedNom.length >= 2 && cleanedNom !== result.nom) {
+          result.nom = cleanedNom;
+          console.log(`✅ Nom nettoyé: "${result.nom}"`);
+        } else {
+          console.log(`⚠️ Nom était principalement un code pays, suppression`);
+          result.nom = undefined;
+        }
       }
     }
   }
@@ -190,13 +196,20 @@ export const extractPassportEtrangerData = (text: string): PassportEtrangerData 
         console.log(`✅ Nationalité corrigée depuis prénom: "${result.nationalite}"`);
       }
       
-      const cleanedPrenom = correctOCRNameErrors(result.prenom);
-      if (cleanedPrenom && cleanedPrenom.length >= 2) {
-        result.prenom = cleanedPrenom;
-        console.log(`✅ Prénom nettoyé: "${result.prenom}"`);
+      // CORRECTION CRITIQUE : Si le prénom est exactement un code pays, le vider complètement
+      if (result.prenom.length <= 3 && codeDetectionPrenom.isCountryCode) {
+        console.log(`⚠️ Prénom était uniquement un code pays "${result.prenom}", suppression complète`);
+        result.prenom = undefined;  // Vider complètement si c'est juste un code pays
       } else {
-        console.log(`⚠️ Prénom était uniquement un code pays, suppression`);
-        result.prenom = undefined;
+        // Sinon, essayer de nettoyer le prénom
+        const cleanedPrenom = correctOCRNameErrors(result.prenom);
+        if (cleanedPrenom && cleanedPrenom.length >= 2 && cleanedPrenom !== result.prenom) {
+          result.prenom = cleanedPrenom;
+          console.log(`✅ Prénom nettoyé: "${result.prenom}"`);
+        } else {
+          console.log(`⚠️ Prénom était principalement un code pays, suppression`);
+          result.prenom = undefined;
+        }
       }
     }
   }

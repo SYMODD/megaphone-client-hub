@@ -286,7 +286,39 @@ export const detectCountryCodeInName = (name: string): { isCountryCode: boolean;
     'DZA': 'Algérie',
     'DZ': 'Algérie',   // Version courte du code algérien
     'TUN': 'Tunisie',
-    'SEN': 'Sénégal'   // ← AJOUT CRITIQUE SÉNÉGAL
+    'SEN': 'Sénégal',   // ← AJOUT CRITIQUE SÉNÉGAL
+    'IND': 'Inde',      // ← AJOUT CRITIQUE INDE
+    'CHN': 'Chine',
+    'JPN': 'Japon',
+    'KOR': 'Corée du Sud',
+    'THA': 'Thaïlande',
+    'VNM': 'Vietnam',
+    'PHL': 'Philippines',
+    'IDN': 'Indonésie',
+    'MYS': 'Malaisie',
+    'SGP': 'Singapour',
+    'AUS': 'Australie',
+    'NZL': 'Nouvelle-Zélande',
+    'ZAF': 'Afrique du Sud',
+    'NGA': 'Nigeria',
+    'KEN': 'Kenya',
+    'ETH': 'Éthiopie',
+    'GHA': 'Ghana',
+    'CIV': 'Côte d\'Ivoire',
+    'EGY': 'Égypte',
+    'SAU': 'Arabie saoudite',
+    'ARE': 'Émirats arabes unis',
+    'JOR': 'Jordanie',
+    'LBN': 'Liban',
+    'SYR': 'Syrie',
+    'IRQ': 'Irak',
+    'IRN': 'Iran',
+    'AFG': 'Afghanistan',
+    'PAK': 'Pakistan',
+    'CYP': 'Chypre',
+    'ARM': 'Arménie',
+    'GEO': 'Géorgie',
+    'AZE': 'Azerbaïdjan'
   };
   
   // Vérifier si le nom est exactement un code pays
@@ -310,7 +342,11 @@ export const detectCountryCodeInName = (name: string): { isCountryCode: boolean;
     'BE': 'Belgique',
     'CH': 'Suisse',
     'AT': 'Autriche',
-    'NL': 'Pays-Bas'
+    'NL': 'Pays-Bas',
+    'IN': 'Inde',      // ← AJOUT CRITIQUE INDE 2 lettres
+    'BR': 'Brésil',   // ← AJOUT CRITIQUE BRÉSIL 2 lettres
+    'CN': 'Chine',
+    'JP': 'Japon'
   };
   
   if (countryCode2Mapping[nameUpper]) {
@@ -332,11 +368,33 @@ export const correctOCRNameErrors = (name: string): string => {
   
   let corrected = name;
   
-  // Corrections spécifiques irlandaises
+  // Vérifier d'abord si c'est un code pays pur
+  const codeDetection = detectCountryCodeInName(name);
+  if (codeDetection.isCountryCode && name.length <= 3) {
+    console.log(`🔧 Nom "${name}" détecté comme code pays pur, suppression`);
+    return '';  // Retourner chaîne vide si c'est juste un code pays
+  }
+  
+  // Corrections spécifiques des codes pays intégrés
   corrected = corrected
     .replace(/^IRL\s*/i, '')  // Supprimer "IRL" au début
     .replace(/\s*IRL$/i, '')  // Supprimer "IRL" à la fin
     .replace(/\bIRL\b/gi, '') // Supprimer "IRL" au milieu
+    .replace(/^IND\s*/i, '')  // Supprimer "IND" au début
+    .replace(/\s*IND$/i, '')  // Supprimer "IND" à la fin
+    .replace(/\bIND\b/gi, '') // Supprimer "IND" au milieu
+    .replace(/^BRA\s*/i, '')  // Supprimer "BRA" au début
+    .replace(/\s*BRA$/i, '')  // Supprimer "BRA" à la fin
+    .replace(/\bBRA\b/gi, '') // Supprimer "BRA" au milieu
+    .replace(/^CYP\s*/i, '')  // Supprimer "CYP" au début
+    .replace(/\s*CYP$/i, '')  // Supprimer "CYP" à la fin
+    .replace(/\bCYP\b/gi, '') // Supprimer "CYP" au milieu
+    .replace(/^POL\s*/i, '')  // Supprimer "POL" au début
+    .replace(/\s*POL$/i, '')  // Supprimer "POL" à la fin
+    .replace(/\bPOL\b/gi, '') // Supprimer "POL" au milieu
+    .replace(/^GBR\s*/i, '')  // Supprimer "GBR" au début
+    .replace(/\s*GBR$/i, '')  // Supprimer "GBR" à la fin
+    .replace(/\bGBR\b/gi, '') // Supprimer "GBR" au milieu
     .trim();
   
   // Corrections OCR communes
@@ -346,6 +404,12 @@ export const correctOCRNameErrors = (name: string): string => {
     .replace(/5/g, 'S')    // 5 → S
     .replace(/8/g, 'B')    // 8 → B
     .trim();
+  
+  // Si après nettoyage il ne reste rien ou presque rien, retourner chaîne vide
+  if (corrected.length < 2) {
+    console.log(`🔧 Nom "${name}" devient "${corrected}" après nettoyage, suppression`);
+    return '';
+  }
   
   return corrected;
 };

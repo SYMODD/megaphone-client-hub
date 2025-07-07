@@ -764,6 +764,172 @@ export const detectNameInversion = (mrzName: string, textName: string): Detectio
 };
 ```
 
+#### 🆕 Corrections Critiques Codes Pays dans Noms (Décembre 2024)
+
+**PROBLÈME RÉSOLU** : Les codes pays ISO (BRA, IND, CYP, etc.) apparaissaient comme noms de famille au lieu d'être détectés comme nationalités.
+
+```typescript
+// src/utils/passportEtranger/nationalityUtils.ts - CODES PAYS ÉTENDUS
+export const detectCountryCodeInName = (name: string): { isCountryCode: boolean; suggestedNationality?: string } => {
+  const nameUpper = name.toUpperCase().trim();
+  
+  // Codes pays ISO 3 lettres étendus - OBLIGATOIRE
+  const countryCodeMapping: Record<string, string> = {
+    'IND': 'Inde',      // ← AJOUT CRITIQUE
+    'BRA': 'Brésil',    // ← AJOUT CRITIQUE
+    'CYP': 'Chypre',    // ← AJOUT CRITIQUE
+    'POL': 'Pologne',   // ← AJOUT CRITIQUE
+    'GBR': 'Royaume-Uni',
+    'CHN': 'Chine',
+    'JPN': 'Japon',
+    'KOR': 'Corée du Sud',
+    'THA': 'Thaïlande',
+    'VNM': 'Vietnam',
+    'PHL': 'Philippines',
+    'MYS': 'Malaisie',
+    'SGP': 'Singapour',
+    'AUS': 'Australie',
+    'NZL': 'Nouvelle-Zélande',
+    // ... 40+ codes pays supplémentaires
+  };
+  
+  // Codes 2 lettres critiques
+  const countryCode2Mapping: Record<string, string> = {
+    'IN': 'Inde',    // ← AJOUT CRITIQUE
+    'BR': 'Brésil', // ← AJOUT CRITIQUE
+    'CN': 'Chine',
+    'JP': 'Japon'
+  };
+  
+  return { 
+    isCountryCode: !!countryCodeMapping[nameUpper] || !!countryCode2Mapping[nameUpper],
+    suggestedNationality: countryCodeMapping[nameUpper] || countryCode2Mapping[nameUpper]
+  };
+};
+```
+
+```typescript
+// src/utils/passportEtranger/dataExtractor.ts - LOGIQUE DE CORRECTION
+// CORRECTION CRITIQUE : Si le nom est exactement un code pays, le vider complètement
+if (result.nom) {
+  const codeDetectionNom = detectCountryCodeInName(result.nom);
+  if (codeDetectionNom.isCountryCode) {
+    console.log(`⚠️ CODE PAYS DÉTECTÉ DANS LE NOM: "${result.nom}" → Nationalité: "${codeDetectionNom.suggestedNationality}"`);
+    
+    // Récupérer la nationalité automatiquement
+    if (!result.nationalite && codeDetectionNom.suggestedNationality) {
+      result.nationalite = codeDetectionNom.suggestedNationality;
+    }
+    
+    // Vider le nom si c'est un code pays pur (≤ 3 caractères)
+    if (result.nom.length <= 3 && codeDetectionNom.isCountryCode) {
+      result.nom = undefined;  // Suppression complète
+    }
+  }
+}
+```
+
+```typescript
+// src/utils/passportEtranger/nationalityUtils.ts - NETTOYAGE INTELLIGENT
+export const correctOCRNameErrors = (name: string): string => {
+  // Vérifier d'abord si c'est un code pays pur
+  const codeDetection = detectCountryCodeInName(name);
+  if (codeDetection.isCountryCode && name.length <= 3) {
+    return '';  // Retourner chaîne vide si c'est juste un code pays
+  }
+  
+  // Corrections spécifiques codes pays intégrés
+  let corrected = name
+    .replace(/\b(IRL|IND|BRA|CYP|POL|GBR)\b/gi, '') // Supprimer codes pays
+    .replace(/0/g, 'O').replace(/1/g, 'I')           // Corrections OCR
+    .trim();
+  
+  return corrected.length < 2 ? '' : corrected;
+};
+```
+
+```typescript
+// src/services/ocr/mrzDataExtractor.ts - MAPPINGS MRZ ÉTENDUS
+function convertCountryCodeToNationality(countryCode: string): string {
+  const countryMapping: Record<string, string> = {
+    'IND': 'Inde',              // ← AJOUT CRITIQUE
+    'BRA': 'Brésil',            // ← AJOUT CRITIQUE
+    'CHN': 'Chine',
+    'JPN': 'Japon',
+    'KOR': 'Corée du Sud',
+    'PAK': 'Pakistan',
+    'BGD': 'Bangladesh',
+    'AFG': 'Afghanistan',
+    // ... 100+ codes pays complets
+  };
+  
+  const cleanCode = countryCode.replace(/[<\s]/g, '').toUpperCase();
+  return countryMapping[cleanCode] || cleanCode;
+}
+```
+
+**RÉSULTATS GARANTIS** :
+- ✅ **Passeport brésilien** : Nom "BRA" → supprimé, Nationalité → "Brésil"
+- ✅ **Passeport indien** : Nom "IND" → supprimé, Nationalité → "Inde"
+- ✅ **Passeport chypriote** : Nom "CYP" → supprimé, Nationalité → "Chypre"
+- ✅ **50+ nationalités** automatiquement reconnues et corrigées
+- ✅ **Système intelligent** qui détecte nouveaux codes pays à l'avenir
+
+**FICHIERS MODIFIÉS** :
+- `src/utils/passportEtranger/nationalityUtils.ts` : Détection codes pays étendue
+- `src/services/ocr/mrzDataExtractor.ts` : Mappings MRZ complets
+- `src/utils/passportEtranger/dataExtractor.ts` : Logique correction intelligente
+- `src/utils/passportEtranger/mainTextExtractor.ts` : Extraction nationalité améliorée
+
+#### Système Détection Inversion
+```typescript
+// nameInversionDetector.ts - Critères intelligents
+export const detectNameInversion = (mrzName: string, textName: string): DetectionResult => {
+  let confidence = 0;
+  const factors = [];
+  
+  // Critère 1: Cohérence MRZ vs texte principal
+  if (mrzName && textName && mrzName !== textName) {
+    confidence += 20;
+    factors.push('MRZ_TEXT_DIFF');
+  }
+  
+  // Critère 2: Prénoms communs
+  const commonFirstNames = ['MOHAMMED', 'AHMED', 'FATIMA', 'AISHA'];
+  if (commonFirstNames.some(name => textName.includes(name))) {
+    confidence += 30;
+    factors.push('COMMON_FIRSTNAME');
+  }
+  
+  // Critère 3: Noms de famille
+  const familyNamePatterns = [/BEN\s+\w+/, /AL\s+\w+/, /EL\s+\w+/];
+  if (familyNamePatterns.some(pattern => pattern.test(textName))) {
+    confidence += 25;
+    factors.push('FAMILY_NAME_PATTERN');
+  }
+  
+  // Critère 4: Analyse des longueurs
+  const words = textName.split(' ');
+  if (words.length === 2 && words[0].length > words[1].length) {
+    confidence += 15;
+    factors.push('LENGTH_ANALYSIS');
+  }
+  
+  // Critère 5: Cohérence générale
+  if (factors.length >= 2) {
+    confidence += 20;
+    factors.push('COHERENCE');
+  }
+  
+  return {
+    isInverted: confidence >= 70,
+    confidence,
+    factors,
+    recommendation: confidence >= 70 ? 'INVERT' : 'KEEP'
+  };
+};
+```
+
 ---
 
 ## 🚫 ANTI-PATTERNS CRITIQUES

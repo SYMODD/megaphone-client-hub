@@ -1,6 +1,6 @@
 import { PassportEtrangerData } from "@/types/passportEtrangerTypes";
 import { safeStringTrim } from "./stringUtils";
-import { checkForNationalityInLine, convertMainTextNationality } from "./nationalityUtils";
+import { checkForNationalityInLine, convertMainTextNationality, detectCountryCodeInName } from "./nationalityUtils";
 import { normalizeNationality } from "../nationalityNormalizer";
 
 export const extractDataFromMainText = (lines: string[], passportData: PassportEtrangerData): void => {
@@ -116,24 +116,33 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
         const nextLine = safeStringTrim(lines[j]);
         console.log(`🔍 Ligne suivante candidat nom (${j+1}):`, nextLine);
         
-                    // EXCLUSIONS SPÉCIFIQUES pour éviter faux positifs
-            const isExcluded = (
-              /^[A-Z]{2}\d{6,9}$/.test(nextLine) ||  // Numéro passeport format AW320731
-              /^\d+$/.test(nextLine) ||              // Numéros purs
-              nextLine.includes('/') ||              // Lignes indicatrices avec /
-              nextLine.includes('NAME') ||
-              nextLine.includes('GIVEN') ||
-              nextLine.includes('PASSPORT') ||
-              nextLine.includes('REPUBLIC') ||
-              // Exclure les lignes d'indicateurs suisses
-              nextLine.includes('VORNANE(N)') ||
-              nextLine.includes('PRÉNON[S)') ||
-              nextLine.includes('PREMUSIS)') ||
-              // 🆕 EXCLUSIONS LABELS SPÉCIFIQUES (éviter "PRÉNOMS", "PRENOMS", etc.)
-              ['PRÉNOMS', 'PRENOMS', 'PRENOMST', 'GIVEN', 'NAMES', 'FORENAMES', 'FIRST'].includes(nextLine.toUpperCase()) ||
-              // 🆕 EXCLUSIONS CODES PAYS ÉTENDUES (Inclure IRL pour éviter qu'il soit pris comme nom)
-              ['COL', 'CAN', 'USA', 'DEU', 'FRA', 'ESP', 'ITA', 'BEL', 'SVK', 'POL', 'CZE', 'IRL', 'GBR', 'IND'].includes(nextLine)  // Codes pays étendus
-            );
+        // EXCLUSIONS SPÉCIFIQUES pour éviter faux positifs
+        const isExcluded = (
+          /^[A-Z]{2}\d{6,9}$/.test(nextLine) ||  // Numéro passeport format AW320731
+          /^\d+$/.test(nextLine) ||              // Numéros purs
+          nextLine.includes('/') ||              // Lignes indicatrices avec /
+          nextLine.includes('NAME') ||
+          nextLine.includes('GIVEN') ||
+          nextLine.includes('PASSPORT') ||
+          nextLine.includes('REPUBLIC') ||
+          // Exclure les lignes d'indicateurs suisses
+          nextLine.includes('VORNANE(N)') ||
+          nextLine.includes('PRÉNON[S)') ||
+          nextLine.includes('PREMUSIS)') ||
+          // 🆕 EXCLUSIONS LABELS SPÉCIFIQUES (éviter "PRÉNOMS", "PRENOMS", etc.)
+          ['PRÉNOMS', 'PRENOMS', 'PRENOMST', 'GIVEN', 'NAMES', 'FORENAMES', 'FIRST'].includes(nextLine.toUpperCase()) ||
+          // 🆕 EXCLUSIONS CODES PAYS ÉTENDUES - mais maintenant on les détecte pour la nationalité
+          ['COL', 'CAN', 'USA', 'DEU', 'FRA', 'ESP', 'ITA', 'BEL', 'SVK', 'POL', 'CZE', 'IRL', 'GBR', 'IND', 'BRA', 'CYP', 'CHN', 'JPN'].includes(nextLine)
+        );
+        
+        // 🆕 DÉTECTION SPÉCIALE : Si la ligne est un code pays, l'utiliser pour la nationalité
+        if (!passportData.nationalite && ['IND', 'BRA', 'CYP', 'POL', 'GBR', 'USA', 'CAN', 'FRA', 'DEU', 'ESP', 'ITA', 'BEL', 'CHN', 'JPN', 'KOR', 'THA', 'VNM', 'PHL', 'MYS', 'SGP', 'AUS', 'NZL'].includes(nextLine.toUpperCase())) {
+          const codeDetection = detectCountryCodeInName(nextLine);
+          if (codeDetection.isCountryCode && codeDetection.suggestedNationality) {
+            passportData.nationalite = codeDetection.suggestedNationality;
+            console.log(`✅ Nationalité extraite depuis code pays dans ligne nom: "${nextLine}" → "${passportData.nationalite}"`);
+          }
+        }
         
         // Nettoyer d'abord les caractères parasites pour le test
         let cleanName = nextLine.trim().replace(/[®©™\+\•]+$/g, '').trim();
