@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, Smartphone, AlertTriangle, RefreshCw, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { logSecurityEvent } from '@/utils/securityLogger';
+import { TOTP } from 'totp-generator';
 
 interface MFAValidationScreenProps {
   user: any;
@@ -103,9 +104,29 @@ export const MFAValidationScreen: React.FC<MFAValidationScreenProps> = ({
     try {
       console.log('🔐 Validation code MFA:', mfaCode);
       
-      // Dans un vrai système, on vérifierait le code TOTP ici
-      // Pour la démo, on accepte n'importe quel code à 6 chiffres
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulation vérification
+      // 🔐 VRAIE VALIDATION TOTP - Récupérer le secret depuis la base de données
+      const { data: mfaData, error: mfaError } = await supabase
+        .from('user_mfa_status')
+        .select('secret_key')
+        .eq('user_id', user.id)
+        .eq('enabled', true)
+        .single();
+
+      if (mfaError || !mfaData?.secret_key) {
+        console.error('❌ Impossible de récupérer le secret MFA:', mfaError);
+        setError('Erreur de configuration MFA. Veuillez réessayer plus tard.');
+        return;
+      }
+
+      // 🔐 Valider le code TOTP avec le secret récupéré
+      const expectedCode = TOTP.generate(mfaData.secret_key, { period: 30 });
+      const isValidCode = mfaCode === expectedCode.otp;
+      
+      console.log('🔐 Code attendu:', expectedCode.otp, 'Code saisi:', mfaCode, 'Valide:', isValidCode);
+      
+      if (!isValidCode) {
+        throw new Error('Code MFA invalide');
+      }
       
       // Enregistrer la validation réussie
       await logSecurityEvent(user.id, 'login', {

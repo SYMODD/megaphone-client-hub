@@ -162,7 +162,7 @@ export const useSecuritySystem = () => {
   };
 
   // 🔐 Activer le MFA
-  const enableMFA = async () => {
+  const enableMFA = async (secret?: string) => {
     if (!isSecurityUser || !user?.id) return false;
     
     try {
@@ -174,6 +174,7 @@ export const useSecuritySystem = () => {
         .upsert({
           user_id: user.id,
           enabled: true,
+          secret_key: secret || null, // Stocker le secret TOTP
           enrolled_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }, {
@@ -212,6 +213,7 @@ export const useSecuritySystem = () => {
         .upsert({
           user_id: user.id,
           enabled: false,
+          secret_key: null, // Supprimer le secret TOTP
           enrolled_at: null,
           updated_at: new Date().toISOString()
         }, {

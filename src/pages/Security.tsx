@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import QRCode from 'qrcode';
 import { useSecuritySystem } from '@/hooks/useSecuritySystem';
+import { TOTP } from 'totp-generator';
 
 const Security = () => {
   const { user, profile } = useAuth();
@@ -87,9 +88,19 @@ const Security = () => {
     try {
       console.log('🔐 Tentative de vérification du code MFA:', verificationCode);
       
-      // Dans un vrai système, on vérifierait le code TOTP ici
-      // Pour la démo, on accepte n'importe quel code à 6 chiffres
-      const success = await enableMFA();
+      // 🔐 VRAIE VALIDATION TOTP - Vérifier le code avec le secret généré
+      const expectedCode = TOTP.generate(mfaSecret, { period: 30 });
+      const isValidCode = verificationCode === expectedCode.otp;
+      
+      console.log('🔐 Code attendu:', expectedCode.otp, 'Code saisi:', verificationCode, 'Valide:', isValidCode);
+      
+      if (!isValidCode) {
+        alert('❌ Code MFA invalide. Veuillez vérifier votre application d\'authentification.');
+        return;
+      }
+      
+      // Activer le MFA avec le secret
+      const success = await enableMFA(mfaSecret);
       
       if (success) {
         setShowMFASetup(false);

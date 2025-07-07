@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS user_mfa_status (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
     enabled boolean DEFAULT false,
+    secret_key text, -- Secret TOTP chiffré
     enrolled_at timestamp with time zone,
     last_verified timestamp with time zone,
     backup_codes text[], -- Codes de récupération chiffrés
