@@ -198,6 +198,32 @@ export const normalizeNationality = (nationality: string): string => {
     "thai": "Thaïlande",
     "thailand": "Thaïlande",
     "united states of america": "États-Unis",
+    
+    // Afrique du Sud - AJOUT CRITIQUE pour corriger le cycle auto-correction
+    "afrique du sud": "Afrique du Sud",
+    "south african": "Afrique du Sud", 
+    "south africa": "Afrique du Sud",
+    "republic of south africa": "Afrique du Sud",
+    "zaf": "Afrique du Sud",
+    "za": "Afrique du Sud",
+    
+    // Côte d'Ivoire - AJOUT CRITIQUE pour corriger le cycle auto-correction
+    "côte d'ivoire": "Côte d'Ivoire",
+    "cote d'ivoire": "Côte d'Ivoire",
+    "ivoirienne": "Côte d'Ivoire",
+    "ivoirien": "Côte d'Ivoire",
+    "ivory coast": "Côte d'Ivoire",
+    "république de côte d'ivoire": "Côte d'Ivoire",
+    "republique de cote d'ivoire": "Côte d'Ivoire",
+    "civ": "Côte d'Ivoire",
+    
+    // Pologne - AJOUT CRITIQUE pour corriger le cycle auto-correction (formes officielles uniquement)
+    "rzeczpospolita polska": "Pologne",
+    "republic of poland": "Pologne",
+    
+    // Chili - AJOUT CRITIQUE pour corriger le cycle auto-correction (formes officielles uniquement)
+    "república de chile": "Chili",
+    "republic of chile": "Chili",
     "british citizen": "Royaume-Uni",
     
     // Nations Unies - Passeports officiels ONU

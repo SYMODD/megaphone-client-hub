@@ -119,6 +119,15 @@ export const convertMainTextNationality = (nationality: string): string => {
     "SENEGAL": "Sénégal",                    // ← AJOUT SANS ACCENT
     "RÉPUBLIQUE DU SÉNÉGAL": "Sénégal",     // ← AJOUT FORME OFFICIELLE
     "REPUBLIQUE DU SENEGAL": "Sénégal",     // ← AJOUT SANS ACCENTS
+    "SOUTH AFRICAN": "Afrique du Sud",       // ← AJOUT CRITIQUE AFRIQUE DU SUD
+    "SOUTH AFRICA": "Afrique du Sud",        // ← AJOUT VARIANTE
+    "REPUBLIC OF SOUTH AFRICA": "Afrique du Sud", // ← AJOUT FORME OFFICIELLE
+    "IVOIRIENNE": "Côte d'Ivoire",           // ← AJOUT CRITIQUE CÔTE D'IVOIRE
+    "IVOIRIEN": "Côte d'Ivoire",             // ← AJOUT MASCULIN
+    "CÔTE D'IVOIRE": "Côte d'Ivoire",        // ← AJOUT DIRECT
+    "COTE D'IVOIRE": "Côte d'Ivoire",        // ← AJOUT SANS ACCENT
+    "RÉPUBLIQUE DE CÔTE D'IVOIRE": "Côte d'Ivoire", // ← AJOUT FORME OFFICIELLE
+    "REPUBLIQUE DE COTE D'IVOIRE": "Côte d'Ivoire", // ← AJOUT SANS ACCENTS
     
     // Autres
     "TURKISH": "Turquie",
@@ -129,6 +138,8 @@ export const convertMainTextNationality = (nationality: string): string => {
     "POLSKA": "Pologne",
     "POLSKIE": "Pologne",                    // ← AJOUT CRITIQUE TEST
     "POLONAISE": "Pologne",                  // ← AJOUT CRITIQUE TEST
+    "RZECZPOSPOLITA POLSKA": "Pologne",     // ← AJOUT FORME OFFICIELLE POLONAISE
+    "REPUBLIC OF POLAND": "Pologne",        // ← AJOUT FORME ANGLAISE OFFICIELLE
     "SLOVAK": "Slovaquie",
     "SLOVAKIA": "Slovaquie",
     "SLOVENSKÁ": "Slovaquie",
@@ -159,6 +170,8 @@ export const convertMainTextNationality = (nationality: string): string => {
     "ECUATORIANA": "Équateur",
     "CHILEAN": "Chili",
     "CHILENA": "Chili",
+    "REPÚBLICA DE CHILE": "Chili",          // ← AJOUT FORME OFFICIELLE ESPAGNOLE
+    "REPUBLIC OF CHILE": "Chili",           // ← AJOUT FORME ANGLAISE
     "ARGENTINE": "Argentine",
     "ARGENTINO": "Argentine",
     "MEXICANA": "Mexique",
@@ -205,7 +218,11 @@ export const checkForNationalityInLine = (line: string): string | null => {
     { patterns: ["BRASILEIRA"], nationality: "Brésil" },
     { patterns: ["ROMÂNĂ", "ROMANA"], nationality: "Roumanie" },
     { patterns: ["SÉNÉGALAISE", "SENEGALAISE", "RÉPUBLIQUE DU SÉNÉGAL", "REPUBLIQUE DU SENEGAL"], nationality: "Sénégal" },
-    { patterns: ["MAROCAINE", "MOROCAIN", "MAROC", "ROYAUME DU MAROC", "KINGDOM OF MOROCCO"], nationality: "Maroc" }
+    { patterns: ["MAROCAINE", "MOROCAIN", "MAROC", "ROYAUME DU MAROC", "KINGDOM OF MOROCCO"], nationality: "Maroc" },
+    { patterns: ["SOUTH AFRICAN", "SOUTH AFRICA", "REPUBLIC OF SOUTH AFRICA"], nationality: "Afrique du Sud" },
+    { patterns: ["IVOIRIENNE", "IVOIRIEN", "CÔTE D'IVOIRE", "COTE D'IVOIRE", "RÉPUBLIQUE DE CÔTE D'IVOIRE", "REPUBLIQUE DE COTE D'IVOIRE"], nationality: "Côte d'Ivoire" },
+    { patterns: ["POLSKA", "POLISH", "RZECZPOSPOLITA POLSKA", "REPUBLIC OF POLAND"], nationality: "Pologne" },
+    { patterns: ["CHILEAN", "CHILENA", "REPÚBLICA DE CHILE", "REPUBLIC OF CHILE"], nationality: "Chili" }
   ];
   
   for (const {patterns, nationality} of priorityNationalities) {
@@ -234,6 +251,8 @@ export const checkForNationalityInLine = (line: string): string | null => {
     
     // Afrique subsaharienne
     "SENEGALESE", "SÉNÉGALAISE", "SENEGALAISE", "SÉNÉGAL", "SENEGAL", "RÉPUBLIQUE DU SÉNÉGAL", "REPUBLIQUE DU SENEGAL",
+    "SOUTH AFRICAN", "SOUTH AFRICA", "REPUBLIC OF SOUTH AFRICA",
+    "IVOIRIENNE", "IVOIRIEN", "CÔTE D'IVOIRE", "COTE D'IVOIRE", "RÉPUBLIQUE DE CÔTE D'IVOIRE", "REPUBLIQUE DE COTE D'IVOIRE",
     
     // Autres
     "BRAZILIAN", "BRASILEIRA", "ARGENTINE", "ARGENTINO", "CHINESE", "JAPONAISE", "KOREAN", "INDIEN"

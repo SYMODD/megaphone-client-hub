@@ -313,10 +313,13 @@ export const extractDataFromMainText = (lines: string[], passportData: PassportE
           lineUpper === 'ITALIANA' || lineUpper === 'DEUTSCHE' || 
           lineUpper === 'PORTUGUESA' || lineUpper === 'NEDERLANDSE' ||
           lineUpper === 'NEDERLANDS' || lineUpper === 'HOLLAND' ||
-          lineUpper === 'HOLLANDE' || lineUpper === 'SÉNÉGALAISE' ||
-          lineUpper === 'SENEGALAISE' || lineUpper === 'MAROCAINE' ||
-          lineUpper === 'MOROCAIN' || lineUpper === 'MAROC' ||
-          lineUpper === 'ÉIREANNACH' || lineUpper === 'EIREANNACH') {
+          lineUpper === 'HOLLANDE' ||                                      lineUpper === 'SÉNÉGALAISE' ||
+                                     lineUpper === 'SENEGALAISE' || lineUpper === 'MAROCAINE' ||
+                                     lineUpper === 'MOROCAIN' || lineUpper === 'MAROC' ||
+                                     lineUpper === 'SOUTH AFRICAN' || lineUpper === 'SOUTH AFRICA' ||
+                                     lineUpper === 'IVOIRIENNE' || lineUpper === 'IVOIRIEN' ||
+                                     lineUpper === 'CÔTE D\'IVOIRE' || lineUpper === 'COTE D\'IVOIRE' ||
+                                     lineUpper === 'ÉIREANNACH' || lineUpper === 'EIREANNACH') {
         console.log(`🎯 Nationalité isolée détectée directement: "${line}"`);
         const convertedNationality = convertMainTextNationality(line);
         passportData.nationalite = normalizeNationality(convertedNationality);
